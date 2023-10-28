@@ -1,2 +1,2 @@
 # paudio
-A preamp
+A PC based advanced preamplifier
