@@ -15,7 +15,7 @@ LOUDNESS_REF_LEVEL = 83
 FS                 = 44100
 EQ_PCM_PATH        = '../eq/eq.pcm'
 #
-CURVES_FOLDER = f'{UHOME}/audiotools/brutefir_eq/curves_{FS}_N11'
+CURVES_FOLDER = f'{UHOME}/audiotools/convolver_eq/curves_{FS}_N11'
 BASS_PATH     = f'{CURVES_FOLDER}/bass_mag.dat'
 TREB_PATH     = f'{CURVES_FOLDER}/treble_mag.dat'
 LOUD_PATH     = f'{CURVES_FOLDER}/ref_{LOUDNESS_REF_LEVEL}_loudness_mag.dat'
