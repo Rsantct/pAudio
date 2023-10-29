@@ -8,6 +8,8 @@ import  json
 from    camilladsp import CamillaConnection
 import  make_eq as me
 
+# DRC FIRs
+DRC_OFFSET_DB = -5
 
 # CamillaDSP needs a new FIR filename in order to
 # reload the convolver coeffs
@@ -47,11 +49,9 @@ def reload_eq():
     toggle_last_eq()
 
 
-def set_level(dB):
-    me.spl = me.LOUDNESS_REF_LEVEL + dB
-    reload_eq()
-    PC.set_volume(dB)
-    return 'done'
+def get_state():
+    """ This is the internal camillaDSP state """
+    return json.dumps( str( PC.get_state() ) )
 
 
 def set_mute(mode):
@@ -61,9 +61,11 @@ def set_mute(mode):
     return res
 
 
-def get_state():
-    """ This is the internal camillaDSP state """
-    return json.dumps( str( PC.get_state() ) )
+def set_level(dB):
+    me.spl = me.LOUDNESS_REF_LEVEL + dB
+    reload_eq()
+    PC.set_volume(dB)
+    return 'done'
 
 
 def set_treble(dB):
@@ -86,3 +88,32 @@ def set_loudness(mode):
     me.equal_loudness = mode
     reload_eq()
     return 'done'
+
+
+def set_drc(drcID):
+
+    result = ''
+
+    cfg = PC.get_config()
+
+    if drcID == 'none':
+        cfg["pipeline"][1]['names'] = ['eq', 'vol']
+        cfg["pipeline"][2]['names'] = ['eq', 'vol']
+        PC.set_config(cfg)
+        v = PC.get_volume() + DRC_OFFSET_DB
+        PC.set_volume(v)
+        result = 'done'
+
+    else:
+        try:
+            cfg["pipeline"][1]['names'] = ['eq', f'drc.L.{drcID}', 'vol']
+            cfg["pipeline"][2]['names'] = ['eq', f'drc.R.{drcID}', 'vol']
+            PC.set_config(cfg)
+            v = PC.get_volume() - DRC_OFFSET_DB
+            PC.set_volume(v)
+            result = 'done'
+        except Exception as e:
+            result = str(e)
+
+    return result
+
