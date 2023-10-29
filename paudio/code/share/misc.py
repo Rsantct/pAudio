@@ -4,10 +4,20 @@
 
 
 def read_cmd_phrase(c):
+    """ Read a command phrase, extracting:
+            - command
+            - arguments
+            - the 'add' option for relative level, bass, treble, ...
+    """
     c = c.split(' ')
+    if 'add' in c:
+        add = True
+        c.remove('add')
+    else:
+        add = False
     cmd = c[0]
     args = ' '.join(c[1:])
-    return cmd, args
+    return cmd, args, add
 
 
 def x2int(x):
