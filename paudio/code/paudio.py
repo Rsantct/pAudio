@@ -6,7 +6,7 @@ import  subprocess as sp
 from    time import sleep
 import  json
 import  pcamilla
-from    misc import *
+from    miscel import *
 
 
 def load_state():
@@ -38,6 +38,7 @@ def init():
 
 def do(cph):
 
+
     def do_levels():
         dB = x2float(args)
         if add:
@@ -48,31 +49,49 @@ def do(cph):
                  }[cmd](dB)
         if result == 'done':
             state[cmd] = dB
+        return result
 
 
     def do_booleans():
-        field = {   'loudness': 'equal_loudness',
-                    'mute':     'muted'
+
+        field = {   'loudness':         'equal_loudness',
+                    'equal_loudness':   'equal_loudness',
+                    'mute':             'muted'
                 }[cmd]
+
         mode = x2bool(args, state[field])
-        result = {  'mute':     pcamilla.set_mute,
-                    'loudness': pcamilla.set_loudness
+
+        result = {  'mute':             pcamilla.set_mute,
+                    'loudness':         pcamilla.set_loudness,
+                    'equal_loudness':   pcamilla.set_loudness
                  }[cmd](mode)
+
         if result == 'done':
             state[field] = mode
 
+        return result
 
-    cmd, args, add = read_cmd_phrase(cph)
+
+    prefix, cmd, args, add = read_cmd_phrase(cph)
     result    = ''
+
+    if prefix == 'aux':
+        if cmd == 'get_web_config':
+            return json.dumps({})
+        else:
+            return ''
+
+    if prefix == 'players':
+        return ''
 
     if cmd == 'state':
         result = json.dumps(state)
 
     elif cmd in ('level', 'bass', 'treble'):
-        do_levels()
+        result = do_levels()
 
-    elif cmd in ('mute', 'loudness'):
-        do_booleans()
+    elif cmd in ('mute', 'loudness', 'equal_loudness'):
+        result = do_booleans()
 
     elif cmd == 'drc':
         new_drc = args
@@ -80,9 +99,14 @@ def do(cph):
             result = pcamilla.set_drc(new_drc)
             if result == 'done':
                 state["drc_set"] = new_drc
+        else:
+            result = 'nothing done'
 
     elif cmd == 'get_pipeline':
         result = json.dumps( pcamilla.PC.get_config()["pipeline"] )
+
+    else:
+        result = 'unknown'
 
 
     save_state()
