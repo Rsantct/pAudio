@@ -27,6 +27,7 @@ spl             = 83.0
 target          = '+0.0-0.0'
 equal_loudness  = False
 
+
 def save_eq_IR(pcm_path=EQ_PCM_PATH, mag_is_dB=True):
     # curve to FIR
     imp = semispectrum2impulse(eq, dB=mag_is_dB)
