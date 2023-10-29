@@ -27,6 +27,7 @@ def resume_audio_settings():
     pcamilla.set_bass       (state["bass"])
     pcamilla.set_treble     (state["treble"])
     pcamilla.set_mute       (state["muted"])
+    pcamilla.set_drc        (state["drc_set"])
 
 
 def init():
@@ -37,42 +38,48 @@ def init():
 
 def do(cph):
 
-    cmd, args = read_cmd_phrase(cph)
+    def do_levels():
+        dB = x2float(args)
+        if add:
+            dB += state[cmd]
+        result = {  'level':    pcamilla.set_level,
+                    'bass':     pcamilla.set_bass,
+                    'treble':   pcamilla.set_bass
+                 }[cmd](dB)
+        if result == 'done':
+            state[cmd] = dB
+
+
+    def do_booleans():
+        field = {   'loudness': 'equal_loudness',
+                    'mute':     'muted'
+                }[cmd]
+        mode = x2bool(args, state[field])
+        result = {  'mute':     pcamilla.set_mute,
+                    'loudness': pcamilla.set_loudness
+                 }[cmd](mode)
+        if result == 'done':
+            state[field] = mode
+
+
+    cmd, args, add = read_cmd_phrase(cph)
     result    = ''
 
     if cmd == 'state':
         result = json.dumps(state)
 
-    elif cmd == 'level':
-        dB = x2float(args)
-        result = pcamilla.set_level(dB)
-        if result == 'done':
-            state["level"] = dB
+    elif cmd in ('level', 'bass', 'treble'):
+        do_levels()
 
-    elif cmd == 'treble':
-        dB = x2int(args)
-        result = pcamilla.set_treble(dB)
-        if result == 'done':
-            state["treble"] = dB
+    elif cmd in ('mute', 'loudness'):
+        do_booleans()
 
-    elif cmd == 'bass':
-        dB = x2int(args)
-        result = pcamilla.set_bass(dB)
-        if result == 'done':
-            state["bass"] = dB
-
-    elif cmd == 'mute':
-        mode = x2bool(args, state["muted"])
-        result = pcamilla.set_mute(mode)
-        if result == 'done':
-            state["muted"] = mode
-
-    elif cmd == 'loudness':
-        mode = x2bool(args, state["equal_loudness"])
-        result = pcamilla.set_loudness(mode)
-        if result == 'done':
-            state["equal_loudness"] = mode
-
+    elif cmd == 'drc':
+        new_drc = args
+        if state["drc_set"] != new_drc:
+            result = pcamilla.set_drc(new_drc)
+            if result == 'done':
+                state["drc_set"] = new_drc
 
     save_state()
 
