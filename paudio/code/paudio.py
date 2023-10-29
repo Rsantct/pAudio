@@ -81,6 +81,10 @@ def do(cph):
             if result == 'done':
                 state["drc_set"] = new_drc
 
+    elif cmd == 'get_pipeline':
+        result = json.dumps( pcamilla.PC.get_config()["pipeline"] )
+
+
     save_state()
 
     return result
