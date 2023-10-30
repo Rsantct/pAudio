@@ -2,10 +2,8 @@
 
 # Copyright (c) Rafael Sánchez
 
-import  subprocess as sp
-from    time import sleep
 import  json
-import  pcamilla
+import  preamp
 from    miscel import *
 
 
@@ -21,95 +19,38 @@ def save_state():
         f.write(json.dumps(state))
 
 
-def resume_audio_settings():
-    pcamilla.set_level      (state["level"])
-    pcamilla.set_loudness   (state["equal_loudness"])
-    pcamilla.set_bass       (state["bass"])
-    pcamilla.set_treble     (state["treble"])
-    pcamilla.set_mute       (state["muted"])
-    pcamilla.set_drc        (state["drc_set"])
-
-
 def init():
     global state
     state = load_state()
-    resume_audio_settings()
+    preamp.state = state
+    preamp.resume_audio_settings()
 
 
 def do(cph):
 
-
-    def do_levels():
-        dB = x2float(args)
-        if add:
-            dB += state[cmd]
-        result = {  'level':    pcamilla.set_level,
-                    'bass':     pcamilla.set_bass,
-                    'treble':   pcamilla.set_bass
-                 }[cmd](dB)
-        if result == 'done':
-            state[cmd] = dB
-        return result
-
-
-    def do_booleans():
-
-        field = {   'loudness':         'equal_loudness',
-                    'equal_loudness':   'equal_loudness',
-                    'mute':             'muted'
-                }[cmd]
-
-        mode = x2bool(args, state[field])
-
-        result = {  'mute':             pcamilla.set_mute,
-                    'loudness':         pcamilla.set_loudness,
-                    'equal_loudness':   pcamilla.set_loudness
-                 }[cmd](mode)
-
-        if result == 'done':
-            state[field] = mode
-
-        return result
-
-
     prefix, cmd, args, add = read_cmd_phrase(cph)
     result    = ''
+    dosave    = True
 
-    if prefix == 'aux':
-        if cmd == 'get_web_config':
-            return json.dumps({})
-        else:
-            return ''
+    match prefix:
 
-    if prefix == 'players':
-        return ''
+        case 'preamp':
+            if cmd == 'state' or cmd.startswith('get_'):
+                dosave = False
+            result = preamp.do(cmd, args, add)
 
-    if cmd == 'state':
-        result = json.dumps(state)
+        case 'aux':
+            if cmd == 'get_web_config':
+                result = json.dumps({})
 
-    elif cmd in ('level', 'bass', 'treble'):
-        result = do_levels()
+        case 'players':
+            pass
 
-    elif cmd in ('mute', 'loudness', 'equal_loudness'):
-        result = do_booleans()
+        case _:
+            result = 'unknown'
 
-    elif cmd == 'drc':
-        new_drc = args
-        if state["drc_set"] != new_drc:
-            result = pcamilla.set_drc(new_drc)
-            if result == 'done':
-                state["drc_set"] = new_drc
-        else:
-            result = 'nothing done'
-
-    elif cmd == 'get_pipeline':
-        result = json.dumps( pcamilla.PC.get_config()["pipeline"] )
-
-    else:
-        result = 'unknown'
-
-
-    save_state()
+    if dosave:
+        save_state()
 
     return result
 
