@@ -8,7 +8,7 @@ import  json
 from    camilladsp import CamillaConnection
 import  make_eq as me
 
-# DRC FIRs
+# DRC FIRs LEVEL OFFSET
 DRC_OFFSET_DB = -5
 
 # CamillaDSP needs a new FIR filename in order to
@@ -28,6 +28,7 @@ sp.Popen("camilladsp -m -a 127.0.0.1 -p 1234 paudio.yml".split())
 sleep(1)
 PC = CamillaConnection("127.0.0.1", 1234)
 PC.connect()
+CFG0 = PC.get_config()
 
 
 def toggle_last_eq():
@@ -88,6 +89,25 @@ def set_loudness(mode):
     me.equal_loudness = mode
     reload_eq()
     return 'done'
+
+
+def get_inputs():
+    return []
+
+
+def get_xo_sets():
+    return []
+
+
+def get_drc_sets():
+    filters = CFG0["filters"]
+    drc_sets = []
+    for f in filters:
+        if f.startswith('drc'):
+            drc_set = f.split('.')[-1]
+            if not drc_set in drc_sets:
+                drc_sets.append(drc_set)
+    return drc_sets
 
 
 def set_drc(drcID):
