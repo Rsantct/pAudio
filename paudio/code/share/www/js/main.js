@@ -777,7 +777,7 @@ function page_update() {
     //player_get();
     //player_refresh();
     //
-    //LU_refresh();
+    LU_refresh();
     //
     //graphs_update();
     //
