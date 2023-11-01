@@ -81,15 +81,16 @@ def set_treble(dB):
     return pcamilla.set_treble(dB)
 
 
+def validate():
+    return True
+
+
 def do(cmd, args, add):
-
-
-    def validate():
-        return True
 
 
     def do_levels():
 
+        # getting absolute values from relative command
         dB = x2float(args)
         if add:
             dB += state[cmd]
@@ -125,14 +126,6 @@ def do(cmd, args, add):
         case 'state':
             result = json.dumps(state)
 
-        case 'mute':
-            curr =  state['muted']
-            new = switch(args, curr)
-            if type(new) == bool and new != curr:
-                result = set_mute(new)
-            if result == 'done':
-                state['muted'] = new
-
         case 'get_inputs':
             result = json.dumps(INPUTS)
 
@@ -141,6 +134,14 @@ def do(cmd, args, add):
 
         case 'get_xo_sets':
             result = json.dumps(XO_SETS)
+
+        case 'mute':
+            curr =  state['muted']
+            new = switch(args, curr)
+            if type(new) == bool and new != curr:
+                result = set_mute(new)
+            if result == 'done':
+                state['muted'] = new
 
         case 'level' | 'lu_offset' | 'bass' | 'treble':
             result = do_levels()
