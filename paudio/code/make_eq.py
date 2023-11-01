@@ -19,6 +19,9 @@ CURVES_FOLDER = f'{UHOME}/audiotools/convolver_eq/curves_{FS}_N11'
 BASS_PATH     = f'{CURVES_FOLDER}/bass_mag.dat'
 TREB_PATH     = f'{CURVES_FOLDER}/treble_mag.dat'
 LOUD_PATH     = f'{CURVES_FOLDER}/ref_{LOUDNESS_REF_LEVEL}_loudness_mag.dat'
+LOUD_CURVES   = np.loadtxt(LOUD_PATH)
+BASS_CURVES   = np.loadtxt(BASS_PATH)
+TREB_CURVES   = np.loadtxt(TREB_PATH)
 
 # Module global variables (initial values)
 bass            = 0
@@ -45,8 +48,8 @@ def make_tone_curve():
         raise Exception('Tone values must be in +/- 12 dB')
     bass_idx = b + 12
     treb_idx = t + 12
-    bass_curve = np.loadtxt(BASS_PATH)[bass_idx, :]
-    treb_curve = np.loadtxt(TREB_PATH)[treb_idx, :]
+    bass_curve = BASS_CURVES[bass_idx, :]
+    treb_curve = TREB_CURVES[treb_idx, :]
     return bass_curve + treb_curve
 
 
@@ -56,16 +59,23 @@ def get_target(targetID):
 
 
 def get_loudness(curve_index):
-    return np.loadtxt(LOUD_PATH)[curve_index, :]
+    max_index = LOUD_CURVES.shape[0] - 1
+    curve_index = min(max_index, max(0, curve_index))
+    return LOUD_CURVES[curve_index, :]
 
 
 def make_eq():
-    """ Composing EQ """
+    """ Composing EQ
+    """
+
     global eq
+
     if equal_loudness:
         loudness_curve_index = int(round(spl))
+
     else:
         loudness_curve_index = LOUDNESS_REF_LEVEL
+
     eq =   make_tone_curve() \
          + get_loudness(loudness_curve_index) \
          + get_target(target)
