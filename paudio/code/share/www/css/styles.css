@@ -1,0 +1,189 @@
+
+    /* styles used from index.html */
+
+    /* (The .xxxxx refers to classes definitions) */
+
+
+    /* GLOBAL THEME */
+    body    {   color:white;
+                background-color: rgb(38, 38, 38);
+                font-family: Verdana, Helvetica, Arial;
+                font-weight:bold;
+            }
+
+    /* GLOBAL BUTTONS STYLE */
+    button  {   background-color: rgb(100, 100, 100);
+                border-radius: 5px/5px;
+                border:2px solid rgb(120,120,120);
+                /* Text inside buttons: */
+                color: white;
+                font-weight:bold;
+                font-size:0.95em;   /* smaller than usual */
+            }
+
+    /* GLOBAL TABLES behavior */
+    table   {   width: 100%;
+            }
+
+    /* GLOBAL TABLES CELLS behavior */
+    th, td  {   padding: 5px;
+                text-align: center;
+                border: 1px solid gray;
+                font-size:1.0em;
+            }
+
+    /* GLOBAL SELECT behavior */
+    /* (i) Initial font color is grey, will uptate to white when changed */
+    select  {   font-size:          0.9em;
+                font-weight:        bold;
+                color:              rgb(200,200,200);
+                background-color:   rgb(25, 25, 25);
+            }
+
+
+    td#main_lside       { width:   5%; text-align: center; border: none; }
+    td#main_cside       { width:  90%; text-align: center; border: 1px solid white; border-radius: 10px/10px; }
+    td#main_rside       { width:   5%; text-align: center; border: none; }
+
+    td#OnOff            { width:   5%; text-align: center; border: none; }
+
+    td#levelInfo        { width:   5%; text-align: center; border: 1px solid white; border-radius: 10px/10px; }
+
+    td#LoudnessInfo     { width: 7%; border: none; font-size:0.6em;}
+    td#MonoInfo         { width: 7%; border: none; font-size:0.6em;}
+    td#SoloInfo         { width: 7%; border: none; font-size:0.6em;}
+    td#PolarityInfo     { width: 7%; border: none; font-size:0.6em;}
+
+    td#input            { width:  85%; text-align: right; border: none;}
+
+
+    td#treble           { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
+    td#bass             { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
+    td#balance          { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
+    td#target           { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
+
+
+    table#eq_table      { border: 1px solid grey; border-radius: 10px/10px; }
+    td#xo               { border: none; width: 32%; }
+    td#drc              { border: none; width: 32%; }
+    td#peq              { border: none; width: 32%; color:grey; }
+    td#graphs_toggle    { border: none; width: 4%; }
+
+
+    table#level_buttons_table  { }
+    td#level_buttons11   { border-style: none; width:18%; }
+    td#level_buttons12   { border-style: none; width:64%; }
+    td#level_buttons13   { border-style: none; width:18%; }
+    td#level_buttons21   { border-style: none; width:18%; }
+    td#level_buttons22   { border-style: none; width:64%; }
+    td#level_buttons23   { border-style: none; width:18%; }
+
+    /* --- LU OFFSET CELLS --- */
+    td#LU_meter_scope    { width:18%; border-style:none ; font-size:.8em; vertical-align: middle;}
+    td#LU_offset_value   { width:32%; border: 1px solid grey; border-radius: 10px/10px; font-size:0.8em; vertical-align: middle;}
+    td#LU_offset_slider  { width:50%; border-style:none; vertical-align: middle;}
+
+    /* --- LU OFFSET SLIDER class and handlers (type INPUT RANGE) */
+    .LU_slider {
+      -webkit-appearance:   none;
+      width:                100%;
+      height:               1.0em;
+      border-radius:        5px;
+      background:           rgb(120,120,120);
+      outline:              none;
+      opacity:              0.7;
+      -webkit-transition:   .2s;
+      transition:           opacity .2s;
+    }
+    /* The slider handler */
+    .LU_slider::-webkit-slider-thumb {
+      -webkit-appearance:   none;
+      appearance:           none;
+      width:                1.5em;
+      height:               1.5em;
+      border-radius:        50%;
+      background:           rgb(240,240,240);
+      cursor:               pointer;
+    }
+    .LU_slider::-moz-range-thumb {
+      width:                25px;
+      height:               25px;
+      border-radius:        50%;
+      background:           rgb(240,240,240);
+      cursor:               pointer;
+    }
+
+    /* --- LU MONITOR CELLS--- */
+    td#LU_meter_reset    { width:18%; border-style:none ; font-size:.8em; vertical-align: middle;}
+    td#LU_meter_value    { width:32%; border: 1px solid grey; border-radius: 10px/10px; font-size:.8em; vertical-align: middle;}
+    td#LU_meter_bar      { width:50%; border-style:none; vertical-align: middle;}
+
+    /* --- LU METER class and handlers (type METER) --- */
+    .LU_meter { width: 100%; height: 1.0em; border: 2px solid rgb(100,100,100);
+                border-radius: 5px;
+    }
+    /* As per we want an inverse bar look, we need to tweak here */
+    .LU_meter::-webkit-meter-bar {
+        background-image: linear-gradient(
+            90deg,
+            rgba(255, 0,     0, 0.6)    25%,
+            rgba(255, 255,   0, 0.6)    75%,
+            rgba(0,   255,   0, 0.6)    100%
+            );
+        border-radius: 5px;
+    }
+    .LU_meter::-webkit-meter-optimum-value {
+        background: none; /* Required to get rid of the default background property */
+        background-color: rgb(38, 38, 38);
+    }
+    .LU_meter::-webkit-meter-suboptimum-value {
+        background: none; /* Required to get rid of the default background property */
+        background-color: rgb(38, 38, 38);
+    }
+    .LU_meter::-webkit-meter-even-less-good-value {
+        background: none; /* Required to get rid of the default background property */
+        background-color: rgb(38, 38, 38);
+    }
+
+
+    table#player_info   { text-align: left; }
+    td#bitrate          { border: 1px solid grey; border-radius: 10px/10px; width: 5%; font-size:0.6em;}
+    td#artist           { border: 1px solid grey; border-radius: 10px/10px; }
+    td#track_info       { border: 1px solid grey; border-radius: 10px/10px; width: 3%; font-size:0.6em;}
+    td#time             { border: 1px solid grey; border-radius: 10px/10px; width: 7%; font-size:0.6em;}
+    td#album            { border: 1px solid grey; border-radius: 10px/10px; }
+    td#title            { border: 1px solid grey; border-radius: 10px/10px; }
+
+
+    table#playback_control{ border-style: none; }
+    td#playback_control_11  { border-style: none; width:10%; display:table-cell; }
+    td#playback_control_12  { border-style: none; width:80%; display:table-cell; }
+    td#playback_control_13  { border-style: none; width:10%; display:table-cell; }
+    td#playback_control_21  { border-style: none; width:10%; display:table-cell; }
+    td#playback_control_22  { border-style: none; width:80%; display:table-cell; }
+    td#playback_control_23  { border-style: none; width:10%; display:table-cell; }
+
+
+    table#macro_buttons{ border-style: none; }
+    .macro_cell { border-style: none; width:30%; }
+    .macro_button  {
+        width: 100%;
+        min-height: 2.7em;
+        box-shadow: 0 5px 10px 0 rgba(200,200,200,0.3), 0 3px 10px 0 rgba(0,0,0,0.1);
+        border:2px solid rgb(120,120,120);
+        border-radius: 10px/10px;
+        /* below is for text inside button: */
+        font-size:0.80em;
+        display: inline;
+    }
+    .macro_button_highlighted  {
+        width: 100%;
+        min-height: 2.7em;
+        box-shadow: 0 5px 10px 0 rgba(200,200,200,0.3), 0 3px 10px 0 rgba(0,0,0,0.1);
+        border:3px solid rgb(200,200,200);
+        border-radius: 10px/10px;
+        background-color: rgb(140, 140, 140);
+        /* below is for text inside button: */
+        font-size:0.80em;
+        display: inline;
+    }

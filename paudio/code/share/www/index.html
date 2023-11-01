@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <title>pe.audio.sys</title>
+
+    <!--
+    Copyright (c) Rafael Sánchez
+    This file is part of 'pAudio'
+    'pAudio', a PC based personal audio system.
+    -->
+
+    <!-- responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <!-- See details at https://favicon.io -->
+    <link rel="icon" type="image/png"   sizes="32x32"   href="./favicon-32x32.png">
+    <link rel="icon" type="image/png"   sizes="16x16"   href="./favicon-16x16.png">
+    <link rel="manifest" href="./site.webmanifest">
+
+
+    <!-- web-app behavoir (full screen when iconize at init screen on smartphones -->
+    <!-- some Androids: -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- iOS:  https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="pe.audio.sys">
+
+
+    <!-- The JAVASCRIPT functions used when an event occurs on this page body's -->
+    <script src="./js/main.js"></script>
+
+
+    <!-- CSS Styles -->
+    <link rel="stylesheet" href="./css/styles.css">
+
+</head>
+
+<!-- init() initializes the page and schedules periodic updates -->
+<body onload="init()">
+
+    <!-- :: pe.audio.sys :: Loudspeaker | advanced_controls_switch -->
+    <div>
+    <table id="main_title" >
+        <tr>
+            <td id="main_lside" style="display:none">
+                <button title="(!) pe.audio.sys RESTART" style="font-size:0.7em"
+                        onclick="ck_peaudiosys_restart()"> &#128585;
+                </button>
+            </td>
+            <td id="main_cside">
+            </td>
+            <td id="main_rside">
+                <button id="advanced_switch" title="advanced controls" style="font-size:0.7em" onclick="ck_display_advanced('toggle')">&#9881;</button>
+            </td>
+        </tr>
+    </table>
+    </div>
+
+    <!-- AMPLI + LEVEL + LOUDNESS + MONO + INPUTS -->
+    <div>
+    <table id="level_ampli_input">
+        <tr>
+            <!-- AMPLI switch -->
+            <td id="OnOff"     rowspan="2">
+                <button type="button" id="OnOffButton"
+                        title="Amplifier ON/OFF" onmousedown="omd_ampli_switch('toggle')">-</button>
+            </td>
+
+            <!-- LEVEL display -->
+            <td id="levelInfo" rowspan="2" title="Target volume">
+            </td>
+
+            <!-- LOUDNESS control -->
+            <td id="LoudnessInfo">
+                <button type="button" id="buttonLoud"
+                        title="Loudness Contour compensation" onmousedown="omd_equal_loudness_toggle()">LC</button>
+            </td>
+
+            <!-- SOLO control -->
+            <td id="SoloInfo" style="display:none">
+                <button type="button" id="buttonSolo"
+                        title="L|R solo control" onmousedown="omd_solo_rotate()">L|R</button>
+            </td>
+
+            <!-- INPUTS selector, will be filled by javascript -->
+            <td id="input"     rowspan="2">
+                <button id="url_button"
+                        title = "enter an URL to be played"
+                        style="text-align:center;font-size:0.7em;display:none"
+                        onclick="ck_play_url()">&#9901;
+                </button>
+                <button type="button"   id="track_number_button"
+                                        title="Enter a track number"
+                                        style="display:none; width:150px"
+                                        onmousedown="omd_select_track_number_dialog()" >#
+                </button>
+                <select                 id="playlist_selector"
+                                        title="load a playlist"
+                                        style="display:none; width:150px"
+                                        onchange="oc_load_playlist(this.value)" >
+                </select>
+                <select                 id="track_selector"
+                                        title="select a track"
+                                        style="display:none; width:150px"
+                                        onchange="oc_play_track_number(this.selectedIndex)" >
+                </select>
+                <select id="mainSelector"       style="width:150px"
+                        title="Source Selector" onchange="oc_main_select(this.value)" >
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <!-- MONO / STEREO control -->
+            <td id="MonoInfo">
+                <button type="button" id="buttonMono"
+                        title="Mono/Stereo" onmousedown="omd_mono_toggle()">M</button>
+            </td>
+
+            <!-- POLARITY control -->
+            <td id="PolarityInfo" style="display:none">
+                <button type="button" id="buttonPolarity"
+                        title="LR polarity control" onmousedown="omd_polarity_rotate()">++</button>
+            </td>
+        </tr>
+    </table>
+    </div>
+
+    <!-- LEVEL butttons -->
+    <div id="level_buttons" >
+        <table id="level_buttons_table">
+          <tr>
+            <td id="level_buttons11">
+                <button type="button" id="subsonic" style="display:none;font-size:0.7em"
+                        title="Subsonic Filter"
+                        onmousedown="control_cmd('preamp subsonic rotate')">
+                        SUBS.
+                </button>
+            </td>
+            <td id="level_buttons12">
+                <button type="button" onmousedown="omd_audio_change('level', -1)" >
+                        &nbsp;-1&nbsp;</button>
+                <button type="button" onmousedown="omd_mute_toggle()" id="buttonMute" >
+                        &#128263;</button>
+                <button type="button" onmousedown="omd_audio_change('level', +1)" >
+                        &nbsp;+1&nbsp;</button>
+            </td>
+            <td id="level_buttons13">
+            </td>
+          </tr>
+          <tr>
+            <td id="level_buttons21">
+                <button type="button" id="tone_defeat" style="display:none;font-size:0.7em"
+                        title="Tone Defeat Toggle"
+                        onmousedown="control_cmd('preamp tone_defeat toggle')">
+                        TONE DEF
+                </button>
+            </td>
+            <td id="level_buttons22">
+                <button type="button" onmousedown="omd_audio_change('level', -3)" >
+                        &nbsp;&nbsp;&nbsp;-3&nbsp;&nbsp;&nbsp;</button>
+                <button type="button" onmousedown="omd_audio_change('level', +3)" >
+                        &nbsp;&nbsp;&nbsp;+3&nbsp;&nbsp;&nbsp;</button>
+            </td>
+            <td id="level_buttons23">
+                <button type="button" id="buttAOD" style="display:none;font-size:0.7em"
+                        title="Toggle Output Delay"
+                        onmousedown="omd_delay_toggle()">
+                        0 ms
+                </button>
+            </td>
+          </tr>
+        </table>
+    </div>
+
+    <!-- LU OFFSET CONTROL - JS will manage this-->
+    <div id="LU_offset" style="display:block" >
+    <table>
+      <tr>
+        <td id="LU_meter_scope">
+          <select id="LUscopeSelector" title="LU scope selector"
+                  onchange="oc_LU_scope_select(this.value)">
+          </select>
+        </td>
+        <td id="LU_offset_value">LU offset: --
+        </td>
+        <td id="LU_offset_slider" >
+            <!-- Displayed in reverse mode in relation to its volume reduction effect -->
+            <input  id="LU_slider" class="LU_slider" type="range"
+                    min="0" step="3" max="15.0"
+                    title="Adjust as monitored LU to balance Loudness Compensation and target volume"
+                    oninput="oi_LU_slider_action(this.value)">
+        </td>
+      </tr>
+    </table>
+    </div>
+
+    <!-- LU MONITOR - JS will manage this -->
+    <div id="LU_monitor" style="display:none;" >
+    <table>
+      <tr>
+        <td id="LU_meter_reset">
+            <button type="button" id="buttonLoudMonReset" title="restart LU monitor measurement"
+                    onmousedown="control_cmd('aux reset_loudness_monitor')">
+                    reset
+            </button>
+        </td>
+        <td id="LU_meter_value">
+            LU monit: --
+        </td>
+        <td id="LU_meter_bar">
+        <!-- Displayed in reverse mode in relation to its volume reduction effect -->
+        <meter id="LU_meter" title="Loudness Units meter EBU R128" class="LU_meter"
+                value="0" min="-15" max="0" ></meter>
+        </td>
+      </tr>
+    </table>
+    </div>
+
+
+    <!-- ADVANCED CONTROLS (hidden by default, can be displayed through by a button) -->
+    <div id="div_advanced_controls" style="display:block; font-size:0.75em;">
+
+      <table>
+        <tr>
+            <td id="bass">
+                <button type="button"   id='bass-'    onmousedown="omd_audio_change('bass', -1)"  >-</button>
+                <span id="bassInfo">bass</span>
+                <button type="button"   id='bass+'    onmousedown="omd_audio_change('bass', +1)"  >+</button>
+            </td>
+            <td id="balance">
+                <button type="button"   id='bal-'     onmousedown="omd_audio_change('balance', -1)"  >-</button>
+                <span id="balInfo">BAL</span>
+                <button type="button"   id='bal+'     onmousedown="omd_audio_change('balance', +1)"  >+</button>
+            </td>
+        </tr>
+        <tr>
+            <td id="treble">
+                <button type="button"   id='treb-'    onmousedown="omd_audio_change('treble', -1)"  >-</button>
+                <span id="trebleInfo">treble</span>
+                <button type="button"   id='treb+'    onmousedown="omd_audio_change('treble', +1)"  >+</button>
+            </td>
+            <td id="target">
+                <span>
+                target c.&nbsp;<select id="targetSelector"  onchange="oc_target_select(this.value)" ></select>
+                </span>
+            </td>
+        </tr>
+      </table>
+      <table id="eq_table">
+        <tr>
+            <td id="xo">
+                <span>XO:
+                <select id="xoSelector"     onchange="oc_xo_select(this.value)" ></select>
+                </span>
+            </td>
+            <td id="drc">
+                <span >DRC:
+                <select id="drcSelector"    onchange="oc_drc_select(this.value)" ></select>
+                </span>
+            </td>
+            <td id="peq">
+            </td>
+            <td id="graphs_toggle">
+                <button type="button"            id ="button_toggleEQgraphs"
+                        title="toggle EQ graphs" onmousedown="omd_graphs_toggle()">G</button>
+            </td>
+        </tr>
+      </table>
+
+      <div id="bfeq_graph" style="display:none"> <!-- needs explicit config.yml-->
+        <img id="bfeq_img" src="images/brutefir_eq.png?dummy=33" title="Brutefir EQ coeff" style="width:100%">
+      </div>
+      <div id="drc_graph" style="display:none"> <!-- needs explicit config.yml-->
+        <img id="drc_img" src="" title="Brutefir DRC FIRs" style="width:100%">
+      </div>
+
+    </div>
+
+    <!-- PLAYING INFO -->
+    <div style="display:none;">
+      <table id="player_info" >
+        <tr>
+            <td id="bitrate"></td>
+            <td id="track_info"></td>
+            <td id="artist"></td>
+            <td id="time"></td>
+        </tr>
+        <tr>
+            <td id="album" colspan="4"></td>
+        </tr>
+        <tr>
+            <td id="title" colspan="4"></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- PLAYBACK CONTROL and MACROS TOGGLE-->
+    <div style="display:none;">
+      <table id="playback_control">
+        <tr> <!-- row1 -->
+            <td id="playback_control_11">
+            </td>
+            <td id="playback_control_12" >
+                <button type="button" id="buttonPrevious" onmousedown="omd_playerCtrl('previous')" >&lt;|           </button>
+                <button type="button" id="buttonRew"      onmousedown="omd_playerCtrl('rew')"      >&lt;&lt;        </button>
+                <button type="button" id="buttonFF"       onmousedown="omd_playerCtrl('ff')"       >&gt;&gt;        </button>
+                <button type="button" id="buttonNext"     onmousedown="omd_playerCtrl('next')"     >|&gt;           </button>
+            </td>
+            <td id="playback_control_13" >
+                <!-- random playback button -->
+                <button type="button" id="random_toggle_button"  onmousedown="omd_playerCtrl('random_toggle')"
+                        title="Toggle random playback">
+                    &#8644;
+                </button>
+            </td>
+       </tr>
+        <tr> <!-- row2 -->
+            <td id="playback_control_21" >
+            </td>
+            <td id="playback_control_22" >
+                <button type="button" id="buttonEject"    onmousedown="omd_playerCtrl('eject')"    >&nbsp;^&nbsp;   </button>
+                <button type="button" id="buttonStop"     onmousedown="omd_playerCtrl('stop')"     >&nbsp;[]&nbsp;  </button>
+                <button type="button" id="buttonPause"    onmousedown="omd_playerCtrl('pause')"    >&nbsp;||&nbsp;  </button>
+                <button type="button" id="buttonPlay"     onmousedown="omd_playerCtrl('play')"     >&nbsp;&gt;&nbsp;</button>
+            </td>
+            <td id="playback_control_23" >
+                <!-- MACROS button toggle-->
+                <button type="button" id="macros_toggle_button"  onmousedown="omd_macro_buttons_display_toggle()"
+                        title="Toggle macro buttons"             style="display:none">
+                    ::
+                </button>
+            </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- MACRO BUTTONS can be toggled -->
+    <!-- Nx3 buttons keypad for customizable user macros -->
+    <div style="display:none;">
+      <table id="macro_buttons" style="display:inline-table">
+      </table>
+    </div>
+
+    <!-- UNCOMMENT TO TEST JAVASCRIPT FUNCTIONS WITH THIS BUTTON
+    <div>
+        <button type="button" onclick="FUNCTION_TO_TEST()" >TEST HERE</button>
+    </div>
+    -->
+
+</body>
+</html>

@@ -2,18 +2,17 @@
 
 # Copyright (c) Rafael Sánchez
 
-import  subprocess as sp
-from    time import sleep
 import  json
-import  pcamilla
-from    misc import *
+import  preamp
+from    miscel import *
+
+state = {}
 
 
-def load_state():
+def read_state_from_disk():
     global state
     with open('../.state', 'r') as f:
         state = json.loads(f.read())
-    return state
 
 
 def save_state():
@@ -21,60 +20,41 @@ def save_state():
         f.write(json.dumps(state))
 
 
-def resume_audio_settings():
-    pcamilla.set_level      (state["level"])
-    pcamilla.set_loudness   (state["equal_loudness"])
-    pcamilla.set_bass       (state["bass"])
-    pcamilla.set_treble     (state["treble"])
-    pcamilla.set_mute       (state["muted"])
-
-
 def init():
-    global state
-    state = load_state()
-    resume_audio_settings()
+    read_state_from_disk()
+    # this links the 'state' variable inside preamp
+    preamp.state = state
+    preamp.resume_audio_settings()
 
 
 def do(cph):
 
-    cmd, args = read_cmd_phrase(cph)
+    prefix, cmd, args, add = read_cmd_phrase(cph)
     result    = ''
+    dosave    = True
 
-    if cmd == 'state':
-        result = json.dumps(state)
+    match prefix:
 
-    elif cmd == 'level':
-        dB = x2float(args)
-        result = pcamilla.set_level(dB)
-        if result == 'done':
-            state["level"] = dB
+        case 'preamp':
+            # Some commands does not need to save the state
+            if cmd == 'state' or cmd.startswith('get_'):
+                dosave = False
+            result = preamp.do(cmd, args, add)
 
-    elif cmd == 'treble':
-        dB = x2int(args)
-        result = pcamilla.set_treble(dB)
-        if result == 'done':
-            state["treble"] = dB
+        case 'aux':
+            # PENDING
+            if cmd == 'get_web_config':
+                result = json.dumps({})
 
-    elif cmd == 'bass':
-        dB = x2int(args)
-        result = pcamilla.set_bass(dB)
-        if result == 'done':
-            state["bass"] = dB
+        case 'players':
+            # PENDING
+            pass
 
-    elif cmd == 'mute':
-        mode = x2bool(args, state["muted"])
-        result = pcamilla.set_mute(mode)
-        if result == 'done':
-            state["muted"] = mode
+        case _:
+            result = 'unknown'
 
-    elif cmd == 'loudness':
-        mode = x2bool(args, state["equal_loudness"])
-        result = pcamilla.set_loudness(mode)
-        if result == 'done':
-            state["equal_loudness"] = mode
-
-
-    save_state()
+    if dosave:
+        save_state()
 
     return result
 
