@@ -66,6 +66,7 @@ pipeline:
 - channel: 1
   names:
   - eq
+  # - drc.X.XXXX: will be autocompleted when using DRC
   - drc_gain
   - lu_offset
   - vol
