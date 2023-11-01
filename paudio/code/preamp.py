@@ -4,91 +4,164 @@
 
 import  json
 import  pcamilla
-from    miscel import *
+from    miscel  import *
+from    time    import sleep
 
+# A link of paudio.state
 state = {}
+
+# Module propierties
+INPUTS      = []
+XO_SETS     = []
+DRC_SETS    = []
+DRCS_GAIN   = -6.0
+
+def init():
+
+    # Global variables
+    global USER_CFG, INPUTS, DRC_SETS, XO_SETS
+
+
+    # Dumping user config.yml to camillaDSP
+    USER_CFG = read_user_config()
+    pcamilla.set_device(USER_CFG["device"])
+
+    INPUTS      = []
+    DRC_SETS    = pcamilla.get_drc_sets()
+    XO_SETS     = pcamilla.get_xo_sets()
 
 
 def resume_audio_settings():
-    pcamilla.set_level      (state["level"])
-    pcamilla.set_loudness   (state["equal_loudness"])
-    pcamilla.set_bass       (state["bass"])
-    pcamilla.set_treble     (state["treble"])
-    pcamilla.set_mute       (state["muted"])
-    pcamilla.set_drc        (state["drc_set"])
+    set_level      ( state["level"] )
+    set_loudness   ( state["equal_loudness"] )
+    set_bass       ( state["bass"] )
+    set_treble     ( state["treble"] )
+    set_mute       ( state["muted"] )
+    set_drc        ( state["drc_set"] )
+
+
+def set_level(dB):
+    return pcamilla.set_volume(dB)
+
+
+def set_lu_offset():
+    return ''
+
+
+def set_loudness(mode):
+    return pcamilla.set_loudness(mode)
+
+
+def set_mute(mode):
+    return pcamilla.set_mute(mode)
+
+
+def set_drc(name):
+    # camillaDSP has not gain setting for a FIR filter,
+    # so it must be done outside
+
+    if name == 'none':
+        pcamilla.set_drc_gain(DRCS_GAIN)
+
+    res = pcamilla.set_drc(name)
+
+    if res == 'done' and name != 'none':
+        pcamilla.set_drc_gain(0.0)
+
+    return res
+
+
+def set_bass(dB):
+    return pcamilla.set_bass(dB)
+
+
+def set_treble(dB):
+    return pcamilla.set_treble(dB)
 
 
 def do(cmd, args, add):
 
 
+    def validate():
+        return True
+
+
     def do_levels():
+
         dB = x2float(args)
         if add:
             dB += state[cmd]
-        result = {  'level':    pcamilla.set_level,
-                    'bass':     pcamilla.set_bass,
-                    'treble':   pcamilla.set_bass
-                 }[cmd](dB)
+
+        if validate:
+
+            match cmd:
+                case 'level':        result = pcamilla.set_volume(dB)
+                case 'lu_offset':    result = set_lu_offset(dB)
+                case 'bass':         result = set_bass(dB)
+                case 'treble':       result = set_treble(dB)
+
         if result == 'done':
             state[cmd] = dB
-        return result
-
-
-    def do_booleans():
-
-        # map        command        -->  state field
-        field = {   'loudness':         'equal_loudness',
-                    'equal_loudness':   'equal_loudness',
-                    'mute':             'muted'
-                }[cmd]
-
-        # new mode as per the current one
-        new_mode = x2bool(args, state[field])
-
-        result = {  'mute':             pcamilla.set_mute,
-                    'loudness':         pcamilla.set_loudness,
-                    'equal_loudness':   pcamilla.set_loudness
-                 }[cmd](new_mode)
-
-        if result == 'done':
-            state[field] = new_mode
 
         return result
 
 
-    result    = ''
+    result    = 'nothing was done'
+
+    # Some alias are accepted
+    try:
+        cmd = {
+                'loudness':     'equal_loudness',
+                'drc':          'set_drc'
+        }[cmd]
+    except:
+        pass
+
 
     match cmd:
 
         case 'state':
             result = json.dumps(state)
 
+        case 'mute':
+            curr =  state['muted']
+            new = switch(args, curr)
+            if type(new) == bool and new != curr:
+                result = pcamilla.set_mute(new)
+            if result == 'done':
+                state['muted'] = new
+
         case 'get_inputs':
-            result = json.dumps(pcamilla.get_inputs())
+            result = json.dumps(INPUTS)
 
         case 'get_drc_sets':
-            result = json.dumps(pcamilla.get_drc_sets())
+            result = json.dumps(DRC_SETS)
 
         case 'get_xo_sets':
-            result = json.dumps(pcamilla.get_xo_sets())
+            result = json.dumps(XO_SETS)
 
-        case 'level' | 'bass' | 'treble':
+        case 'level' | 'lu_offset' | 'bass' | 'treble':
             result = do_levels()
 
-        case 'mute' | 'loudness' | 'equal_loudness':
-            result = do_booleans()
+        case 'equal_loudness':
+            pass
 
-        case 'drc' | 'set_drc':
+        case 'set_drc':
             new_drc = args
-            if state["drc_set"] != new_drc:
-                result = pcamilla.set_drc(new_drc)
-                if result == 'done':
-                    state["drc_set"] = new_drc
-            else:
-                result = 'nothing done'
+            if new_drc in DRC_SETS + ['none']:
+                if state["drc_set"] != new_drc:
+                    result = set_drc(new_drc)
+                    if result == 'done':
+                        state["drc_set"] = new_drc
 
-        case 'get_pipeline':
-            result = json.dumps( pcamilla.PC.get_config()["pipeline"] )
+        case 'get_cdsp_pipeline':
+            result = pcamilla.get_pipeline()
+
+        case 'get_cdsp_config':
+            result = pcamilla.get_config()
+
+        case 'get_cdsp_drc_gain':
+            result = pcamilla.get_drc_gain()
 
         case _:
             result = 'unknown'
@@ -96,3 +169,5 @@ def do(cmd, args, add):
 
     return result
 
+
+init()
