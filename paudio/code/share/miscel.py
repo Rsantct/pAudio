@@ -2,6 +2,17 @@
 
 # Copyright (c) Rafael Sánchez
 
+import  yaml
+import  os
+UHOME = os.path.expanduser('~')
+MAINFOLDER = f'{UHOME}/paudio'
+
+
+def read_user_config():
+    with open(f'{MAINFOLDER}/config.yml', 'r') as f:
+        c = yaml.safe_load(f.read())
+    return c
+
 
 def read_cmd_phrase(cmd_phrase):
     """
@@ -47,11 +58,25 @@ def x2int(x):
 def x2float(x):
     return round(float(x),1)
 
-def x2bool(x, curr=False):
-    if x.lower() == 'toggle':
-        return {True:False, False:True}[curr]
-    elif x.lower() in ['true', 'on', '1']:
+
+def x2bool(x):
+    if x.lower() in ['true', 'on', '1']:
         return True
-    else:
+    elif x.lower() in ['false', 'off', '0']:
         return False
+    else:
+        return None
+
+
+def switch(new, curr):
+    if new == 'toggle':
+        new = {True:False, False:True}[curr]
+    else:
+        new = x2bool(new)
+    return new
+
+
+def list_remove_by_pattern(l, p):
+    l = [x for x in l if p not in x]
+    return l
 
