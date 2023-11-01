@@ -49,7 +49,9 @@ def set_lu_offset():
 
 
 def set_loudness(mode):
-    return pcamilla.set_loudness(mode)
+    spl = state["level"] + 83.0
+    result = pcamilla.set_loudness(mode, spl)
+    return result
 
 
 def set_mute(mode):
@@ -127,7 +129,7 @@ def do(cmd, args, add):
             curr =  state['muted']
             new = switch(args, curr)
             if type(new) == bool and new != curr:
-                result = pcamilla.set_mute(new)
+                result = set_mute(new)
             if result == 'done':
                 state['muted'] = new
 
@@ -144,7 +146,12 @@ def do(cmd, args, add):
             result = do_levels()
 
         case 'equal_loudness':
-            pass
+            curr =  state['equal_loudness']
+            new = switch(args, curr)
+            if type(new) == bool and new != curr:
+                result = set_loudness(new)
+            if result == 'done':
+                state['equal_loudness'] = new
 
         case 'set_drc':
             new_drc = args
