@@ -7,9 +7,8 @@ from    time import sleep
 import  json
 from    camilladsp import CamillaConnection
 import  make_eq as me
+from    miscel import list_remove_by_pattern
 
-# DRC FIRs LEVEL OFFSET
-DRC_OFFSET_DB = -5
 
 # CamillaDSP needs a new FIR filename in order to
 # reload the convolver coeffs
@@ -24,19 +23,68 @@ sp.Popen(f'cp {eq_flat_path} {eq_B_path}'.split())
 
 # Starting CamillaDSP (muted)
 sp.call("pkill camilladsp".split())
-sp.Popen("camilladsp -m -a 127.0.0.1 -p 1234 paudio.yml".split())
+sp.Popen("camilladsp -m -a 127.0.0.1 -p 1234 camilladsp.yml".split())
 sleep(1)
 PC = CamillaConnection("127.0.0.1", 1234)
+
 PC.connect()
-CFG0 = PC.get_config()
+
+# Initial config snapshot
+CFG_INIT = PC.get_config()
 
 
-def toggle_last_eq():
-    global last_eq
-    last_eq = {'A':'B', 'B':'A'}[last_eq]
+# INTERNAL
+def set_device(devID):
+    cfg = PC.get_config()
+    cfg["devices"]["playback"]["device"] = devID
+    set_config_sync(cfg)
+
+def set_config_sync(cfg):
+    PC.set_config(cfg)
+    sleep(.1)
 
 
+def get_state():
+    """ This is the internal camillaDSP state """
+    return json.dumps( str( PC.get_state() ) )
+
+
+def get_config():
+    return json.dumps( PC.get_config() )
+
+
+def get_pipeline():
+    return json.dumps( PC.get_config()["pipeline"] )
+
+
+# Getting AUDIO
+def get_drc_sets():
+    filters = CFG_INIT["filters"]
+    drc_sets = []
+    for f in filters:
+        if f.startswith('drc'):
+            drc_set = f.split('.')[-1]
+            if not drc_set in drc_sets:
+                drc_sets.append(drc_set)
+    return drc_sets
+
+
+def get_xo_sets():
+    return []
+
+
+def get_drc_gain():
+    return json.dumps( PC.get_config()["filters"]["drc_gain"] )
+
+
+# Setting AUDIO
 def reload_eq():
+
+    def toggle_last_eq():
+        global last_eq
+        last_eq = {'A':'B', 'B':'A'}[last_eq]
+
+
     me.make_eq()
     eq_path     = f'../eq/eq_{last_eq}.pcm'
     me.save_eq_IR(eq_path)
@@ -46,13 +94,8 @@ def reload_eq():
     sp.Popen(f'ln -s {eq_path} {eq_link}'.split())
     cfg = PC.get_config()
     cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
-    PC.set_config(cfg)
+    set_config_sync(cfg)
     toggle_last_eq()
-
-
-def get_state():
-    """ This is the internal camillaDSP state """
-    return json.dumps( str( PC.get_state() ) )
 
 
 def set_mute(mode):
@@ -62,11 +105,11 @@ def set_mute(mode):
     return res
 
 
-def set_level(dB):
-    me.spl = me.LOUDNESS_REF_LEVEL + dB
-    reload_eq()
-    PC.set_volume(dB)
-    return 'done'
+def set_volume(dB):
+    res = str( PC.set_volume(dB) )
+    if res == 'None':
+        res = 'done'
+    return res
 
 
 def set_treble(dB):
@@ -91,25 +134,6 @@ def set_loudness(mode):
     return 'done'
 
 
-def get_inputs():
-    return []
-
-
-def get_xo_sets():
-    return []
-
-
-def get_drc_sets():
-    filters = CFG0["filters"]
-    drc_sets = []
-    for f in filters:
-        if f.startswith('drc'):
-            drc_set = f.split('.')[-1]
-            if not drc_set in drc_sets:
-                drc_sets.append(drc_set)
-    return drc_sets
-
-
 def set_drc(drcID):
 
     result = ''
@@ -117,23 +141,30 @@ def set_drc(drcID):
     cfg = PC.get_config()
 
     if drcID == 'none':
-        cfg["pipeline"][1]['names'] = ['eq', 'vol']
-        cfg["pipeline"][2]['names'] = ['eq', 'vol']
-        PC.set_config(cfg)
-        v = PC.get_volume() + DRC_OFFSET_DB
-        PC.set_volume(v)
-        result = 'done'
+        try:
+            for n in (1,2):
+                old = cfg["pipeline"][n]['names']
+                new = list_remove_by_pattern(old, 'drc.')
+                cfg["pipeline"][n]['names'] = new
+            set_config_sync(cfg)
+            result = 'done'
+        except Exception as e:
+            result = str(e)
 
     else:
         try:
-            cfg["pipeline"][1]['names'] = ['eq', f'drc.L.{drcID}', 'vol']
-            cfg["pipeline"][2]['names'] = ['eq', f'drc.R.{drcID}', 'vol']
-            PC.set_config(cfg)
-            v = PC.get_volume() - DRC_OFFSET_DB
-            PC.set_volume(v)
+            cfg["pipeline"][1]['names'] = CFG_INIT["pipeline"][1]['names']
+            cfg["pipeline"][2]['names'] = CFG_INIT["pipeline"][2]['names']
+            set_config_sync(cfg)
             result = 'done'
         except Exception as e:
             result = str(e)
 
     return result
+
+
+def set_drc_gain(dB):
+    cfg = PC.get_config()
+    cfg["filters"]["drc_gain"]["parameters"]["gain"] = dB
+    set_config_sync(cfg)
 
