@@ -14,10 +14,8 @@ devices:
     playback:
         type: CoreAudio
         channels: 2
-        #device: "Discrete4 Playback"
-        #device: "MacBook Pro (altavoces)"
-        device: "Auriculares externos"
         format: FLOAT32LE
+        device: MacBook Pro (altavoces)
 
 
 mixers:
@@ -50,21 +48,28 @@ filters:
         type: Conv
         parameters:
             type: Raw
-            filename: "/Users/rafael/paudio/eq/eq_flat.pcm"
+            filename: "../eq/eq_flat.pcm"
             format: FLOAT32LE
 
-    drc.L.p1:
+    drc_gain:
+        type: Gain
+        parameters:
+            gain: -5.0
+            inverted: false
+            mute: false
+
+    drc.L.sw1:
         type: Conv
         parameters:
             type: Raw
-            filename: "/Users/rafael/paudio/loudspeakers/DynBM6/drc.L.SW.pcm"
+            filename: "../loudspeakers/DynBM6/drc.L.SW.pcm"
             format: FLOAT32LE
 
-    drc.R.p1:
+    drc.R.sw1:
         type: Conv
         parameters:
             type: Raw
-            filename: "/Users/rafael/paudio/loudspeakers/DynBM6/drc.R.SW.pcm"
+            filename: "../loudspeakers/DynBM6/drc.R.SW.pcm"
             format: FLOAT32LE
 
 
@@ -77,12 +82,14 @@ pipeline:
         channel: 0
         names:
             - eq
-            - drc.L.p1
+            - drc.L.sw1
+            - drc_gain
             - vol
 
       - type: Filter
         channel: 1
         names:
             - eq
-            - drc.R.p1
+            - drc.R.sw1
+            - drc_gain
             - vol
