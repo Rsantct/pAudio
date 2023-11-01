@@ -80,3 +80,14 @@ def list_remove_by_pattern(l, p):
     l = [x for x in l if p not in x]
     return l
 
+
+def get_drc_sets_from_loudspeaker(lspk):
+    """ looks for drc.X.XXXX files inside the loudspeaker folder
+    """
+
+    drc_sets = []
+
+    # ************* PENDING !!!! *********************
+    drc_sets = ['SW1', 'SW2']
+
+    return drc_sets
