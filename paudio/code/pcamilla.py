@@ -34,6 +34,7 @@ CFG_INIT = PC.get_config()
 
 
 # INTERNAL
+
 def set_device(devID):
     cfg = PC.get_config()
     cfg["devices"]["playback"]["device"] = devID
@@ -58,6 +59,7 @@ def get_pipeline():
 
 
 # Getting AUDIO
+
 def get_drc_sets():
     filters = CFG_INIT["filters"]
     drc_sets = []
@@ -78,6 +80,7 @@ def get_drc_gain():
 
 
 # Setting AUDIO
+
 def reload_eq():
 
     def toggle_last_eq():
