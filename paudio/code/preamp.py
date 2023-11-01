@@ -97,7 +97,7 @@ def do(cmd, args, add):
         if validate:
 
             match cmd:
-                case 'level':        result = pcamilla.set_volume(dB)
+                case 'level':        result = set_level(dB)
                 case 'lu_offset':    result = set_lu_offset(dB)
                 case 'bass':         result = set_bass(dB)
                 case 'treble':       result = set_treble(dB)
