@@ -6,7 +6,7 @@ import  subprocess as sp
 from    time import sleep
 import  json
 from    camilladsp import CamillaConnection
-import  make_eq as me
+import  make_eq as mkeq
 from    miscel import list_remove_by_pattern
 
 
@@ -58,6 +58,29 @@ def get_pipeline():
     return json.dumps( PC.get_config()["pipeline"] )
 
 
+def toggle_last_eq():
+    global last_eq
+    last_eq = {'A':'B', 'B':'A'}[last_eq]
+
+
+def reload_eq():
+
+    mkeq.make_eq()
+    eq_path     = f'../eq/eq_{last_eq}.pcm'
+    mkeq.save_eq_IR(eq_path)
+
+    # For convenience, it will be copied to eq.pcm,
+    # so that a viewer could display the current curve
+    sp.call(f'rm {eq_link}'.split())
+    sp.Popen(f'ln -s {eq_path} {eq_link}'.split())
+
+    cfg = PC.get_config()
+    cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
+    set_config_sync(cfg)
+
+    toggle_last_eq()
+
+
 # Getting AUDIO
 
 def get_drc_sets():
@@ -79,29 +102,11 @@ def get_drc_gain():
     return json.dumps( PC.get_config()["filters"]["drc_gain"] )
 
 
-# Setting AUDIO
-
-def reload_eq():
-
-    def toggle_last_eq():
-        global last_eq
-        last_eq = {'A':'B', 'B':'A'}[last_eq]
-
-
-    me.make_eq()
-    eq_path     = f'../eq/eq_{last_eq}.pcm'
-    me.save_eq_IR(eq_path)
-    # For convenience, it will be copied to eq.pcm,
-    # so that a viewer could display the current curve
-    sp.call(f'rm {eq_link}'.split())
-    sp.Popen(f'ln -s {eq_path} {eq_link}'.split())
-    cfg = PC.get_config()
-    cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
-    set_config_sync(cfg)
-    toggle_last_eq()
-
+# Setting AUDIO (must return some string, usually 'done')
 
 def set_mute(mode):
+    if type(mode) != bool:
+        return 'must be True/False'
     res = str( PC.set_mute(mode) )
     if res == 'None':
         res = 'done'
@@ -118,7 +123,7 @@ def set_volume(dB):
 def set_treble(dB):
     if abs(dB) > 12:
         return 'out of range'
-    me.treble  = float(dB)
+    mkeq.treble  = float(dB)
     reload_eq()
     return 'done'
 
@@ -126,13 +131,16 @@ def set_treble(dB):
 def set_bass(dB):
     if abs(dB) > 12:
         return 'out of range'
-    me.bass  = float(dB)
+    mkeq.bass  = float(dB)
     reload_eq()
     return 'done'
 
 
-def set_loudness(mode):
-    me.equal_loudness = mode
+def set_loudness(mode, spl):
+    if type(mode) != bool:
+        return 'must be True/False'
+    mkeq.spl            = spl
+    mkeq.equal_loudness = mode
     reload_eq()
     return 'done'
 
@@ -170,4 +178,5 @@ def set_drc_gain(dB):
     cfg = PC.get_config()
     cfg["filters"]["drc_gain"]["parameters"]["gain"] = dB
     set_config_sync(cfg)
+    return 'done'
 
