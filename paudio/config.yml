@@ -1,5 +1,5 @@
 
-#device: Discrete4 Playback
-device: MacBook Pro (altavoces)
-#device: Auriculares externos
-#device: E30 II
+# Altavoces del MacBook
+#device: MacBook Pro (altavoces)
+# DAC USB Topping E30
+device: E30 II
