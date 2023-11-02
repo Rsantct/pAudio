@@ -1,4 +1,4 @@
-# audiotools
+# eq/curves....
 
 These files have been generated with
 
