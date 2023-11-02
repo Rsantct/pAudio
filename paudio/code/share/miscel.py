@@ -82,12 +82,32 @@ def list_remove_by_pattern(l, p):
 
 
 def get_drc_sets_from_loudspeaker(lspk):
-    """ looks for drc.X.XXXX files inside the loudspeaker folder
+    """ looks for drc.Channel.DrcId.pcm files inside the loudspeaker folder
     """
-
+    drc_files = []
+    drc_sets_candidate  = {}
     drc_sets = []
 
-    # ************* PENDING !!!! *********************
-    drc_sets = ['SW1', 'SW2']
+    try:
+        files = os.listdir(f'{MAINFOLDER}/loudspeakers/{lspk}')
+        files = [x for x in files if os.path.isfile(f'{MAINFOLDER}/loudspeakers/{lspk}/{x}') ]
+        drc_files = [x for x in files if x.startswith('drc.') ]
+    except:
+        pass
 
-    return drc_sets
+    if drc_files:
+        for f in drc_files:
+            chID  = f.split('.')[1]
+            drcID = '.'.join(f.split('.')[2:]).replace('.pcm', '')
+            if not drcID in drc_sets_candidate:
+                drc_sets_candidate[drcID] = [chID]
+            else:
+                if not chID in drc_sets_candidate[drcID]:
+                    drc_sets_candidate[drcID].append(chID)
+
+    for k in drc_sets_candidate:
+        channels = drc_sets_candidate[k]
+        if sorted(channels) == ['L', 'R']:
+            drc_sets.append(k)
+
+    return sorted(drc_sets)
