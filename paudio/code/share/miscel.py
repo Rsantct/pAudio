@@ -5,10 +5,14 @@
 import  yaml
 import  json
 from    fmt import Fmt
+import  sys
 import  os
 UHOME = os.path.expanduser('~')
 MAINFOLDER      = f'{UHOME}/paudio'
+LSPKSFOLDER     = f'{MAINFOLDER}/loudspeakers'
 EQFOLDER        = f'{MAINFOLDER}/eq'
+CODEFOLDER      = f'{MAINFOLDER}/code'
+
 
 def read_json_file(fpath):
     with open(fpath, 'r') as f:
@@ -102,8 +106,8 @@ def get_drc_sets_from_loudspeaker(lspk):
     drc_sets = []
 
     try:
-        files = os.listdir(f'{MAINFOLDER}/loudspeakers/{lspk}')
-        files = [x for x in files if os.path.isfile(f'{MAINFOLDER}/loudspeakers/{lspk}/{x}') ]
+        files = os.listdir(f'{LSPKSFOLDER}/{lspk}')
+        files = [x for x in files if os.path.isfile(f'{LSPKSFOLDER}/{lspk}/{x}') ]
         drc_files = [x for x in files if x.startswith('drc.') ]
     except:
         pass
