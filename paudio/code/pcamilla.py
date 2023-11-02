@@ -88,6 +88,7 @@ def init_camilladsp(user_config, drc_sets=[]):
 
         # Audio Device
         camilla_cfg["devices"]["playback"]["device"] = user_config["device"]
+        camilla_cfg["devices"]["samplerate"]         = user_config["fs"]
 
         # DRCs
         if drc_sets:
@@ -209,6 +210,17 @@ def set_bass(dB):
     return 'done'
 
 
+def set_target(tID):
+    try:
+        if tID == 'none':
+            tID = '+0.0-0.0'
+        mkeq.target = tID
+        reload_eq()
+        return 'done'
+    except Exception as e:
+        return f'target error: {str(e)}'
+
+
 def set_loudness(mode, spl):
     if type(mode) != bool:
         return 'must be True/False'
@@ -216,6 +228,13 @@ def set_loudness(mode, spl):
     mkeq.equal_loudness = mode
     reload_eq()
     return 'done'
+
+
+def set_xo(xoID):
+    result = 'pending'
+    if xoID == 'none':
+        result = 'done'
+    return result
 
 
 def set_drc(drcID):
