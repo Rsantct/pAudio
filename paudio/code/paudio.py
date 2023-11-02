@@ -2,8 +2,8 @@
 
 # Copyright (c) Rafael Sánchez
 
-import  preamp
-from    miscel import *
+from  services import preamp
+from  miscel import *
 
 
 def do(cmd_phrase):
@@ -27,7 +27,7 @@ def do(cmd_phrase):
 
         case _:
             # This should never occur because preamp is the default prefix
-            result = 'unknown subsystem'
+            result = 'unknown service'
 
 
     return result
