@@ -16,12 +16,6 @@ FS                 = 44100
 EQ_PCM_PATH        = '../eq/eq.pcm'
 #
 CURVES_FOLDER = f'{UHOME}/audiotools/convolver_eq/curves_{FS}_N11'
-BASS_PATH     = f'{CURVES_FOLDER}/bass_mag.dat'
-TREB_PATH     = f'{CURVES_FOLDER}/treble_mag.dat'
-LOUD_PATH     = f'{CURVES_FOLDER}/ref_{LOUDNESS_REF_LEVEL}_loudness_mag.dat'
-LOUD_CURVES   = np.loadtxt(LOUD_PATH)
-BASS_CURVES   = np.loadtxt(BASS_PATH)
-TREB_CURVES   = np.loadtxt(TREB_PATH)
 
 # Module global variables (initial values)
 bass            = 0
@@ -29,6 +23,16 @@ treble          = 0
 spl             = 83.0
 target          = '+0.0-0.0'
 equal_loudness  = False
+
+
+def _init():
+    global BASS_PATH, TREB_PATH, LOUD_PATH, BASS_CURVES, TREB_CURVES, LOUD_CURVES
+    BASS_PATH     = f'{CURVES_FOLDER}/bass_mag.dat'
+    TREB_PATH     = f'{CURVES_FOLDER}/treble_mag.dat'
+    LOUD_PATH     = f'{CURVES_FOLDER}/ref_{LOUDNESS_REF_LEVEL}_loudness_mag.dat'
+    LOUD_CURVES   = np.loadtxt(LOUD_PATH)
+    BASS_CURVES   = np.loadtxt(BASS_PATH)
+    TREB_CURVES   = np.loadtxt(TREB_PATH)
 
 
 def save_eq_IR(pcm_path=EQ_PCM_PATH, mag_is_dB=True):
@@ -79,6 +83,9 @@ def make_eq():
     eq =   make_tone_curve() \
          + get_loudness(loudness_curve_index) \
          + get_target(target)
+
+
+_init()
 
 
 if __name__ == "__main__":
