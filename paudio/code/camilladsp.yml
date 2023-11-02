@@ -12,7 +12,8 @@ devices:
     type: CoreAudio
   samplerate: 44100
 filters:
-  # drc.X.XXXX: filters will be autocompleted as per loudspeaker folder pcm FIR files
+  # drc.X.XXXX: filters will be autocompleted 
+  # as per the loudspeaker folder pcm FIR files
   drc_gain:
     parameters:
       gain: 0.0
