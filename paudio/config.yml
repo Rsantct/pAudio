@@ -1,5 +1,13 @@
 
+fs:     44100
+
+# Auriculares en el MacBook
+#device: Auriculares externos
 # Altavoces del MacBook
-#device: MacBook Pro (altavoces)
+device: MacBook Pro (altavoces)
 # DAC USB Topping E30
-device: E30 II
+#device: E30 II
+
+loudspeaker: DynBM6
+
+room_target: +3.0-1.0

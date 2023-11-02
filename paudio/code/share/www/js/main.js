@@ -213,7 +213,7 @@ function fill_in_page_statics(){
 
     ////fill_in_main_selector();
     ////
-    ////fill_in_target_selector();
+    fill_in_target_selector();
     ////
     fill_in_xo_selector();
     ////
