@@ -20,7 +20,7 @@ def do(cmd_phrase):
         case 'aux':
             # PENDING
             if cmd == 'get_web_config':
-                result = json.dumps({})
+                result = json.dumps({'main_selector':'inputs'})
 
         case 'players':
             # PENDING
