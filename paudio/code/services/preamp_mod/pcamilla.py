@@ -48,7 +48,8 @@ def make_pipeline_drc(cfg, drcID):
 
 def init_camilladsp(user_config, drc_sets=[]):
     """ Updates camilladsp.yml with user configs,
-        then runs camilladsp process
+        includes auto making the DRC yaml stuff,
+        then runs the CamillaDSP process.
     """
 
     def update_config():
