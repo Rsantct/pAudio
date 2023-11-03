@@ -21,10 +21,6 @@ sys.path.append(f'{THIS_DIR}/preamp_mod')
 
 import  pcamilla as DSP
 
-
-# Main variable (preamplifier state)
-state = {}
-
 # Constants
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 INPUTS      = []
@@ -34,49 +30,66 @@ DRC_SETS    = []
 DRCS_GAIN   = -6.0  # By now we assume a constant DRC gain for any drc FIR
 
 
+# Main variable (preamplifier state)
+state = read_json_file(STATE_PATH)
+
+
 def init():
 
     global state, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
-
-    state = read_json_file(STATE_PATH)
-
 
     INPUTS      = CONFIG["inputs"]
     TARGET_SETS = get_target_sets(fs=CONFIG["fs"])
     DRC_SETS    = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
     XO_SETS     # PENDING
 
-    # Optional user config having precedence over the saved state:
-    if "room_target" in CONFIG:
-        if not CONFIG["room_target"] in TARGET_SETS + ['none']:
-            CONFIG["room_target"] = 'none'
-            print(f'{Fmt.BOLD}ERROR in config room_target{Fmt.END}')
-    else:
-        CONFIG["room_target"] = state["target"]
-
 
     # State FS is just informative
     state["fs"] = CONFIG["fs"]
 
+    # Optional user configs having precedence over the saved state:
+    for prop in 'bass', 'treble', 'equal_loudness', 'lu_offset', 'target', 'drc_set':
+        if prop in CONFIG:
+            match prop:
+                case 'drc_set':
+                    if CONFIG["drc_set"] in DRC_SETS + ['none']:
+                        state["drc_set"] = CONFIG["drc_set"]
+                    else:
+                        print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+                case 'target':
+                    if CONFIG["target"] in TARGET_SETS + ['none']:
+                        state["target"] = CONFIG["target"]
+                    else:
+                        print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
+                case _:
+                    state[prop] = CONFIG[prop]
+
+    save_json_file(state, STATE_PATH)
+
+
     # Running camillaDSP
     DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
 
+
     # Resuming audio settings
-    do_levels( 'level',         state["level"]     ,    update_state=False)
-    do_levels( 'lu_offset',     state["lu_offset"] ,    update_state=False)
-    do_levels( 'bass',          state["bass"]      ,    update_state=False)
-    do_levels( 'treble',        state["treble"]    ,    update_state=False)
-    do_levels( 'target',        CONFIG["room_target"],  update_state=True)
-    set_mute(                   state["muted"]     )
-    set_drc(                    state["drc_set"]   )
-    set_xo(                     state["xo_set"]    )
+    do_levels( 'level',         dB=state["level"],          update_state=False  )
+    do_levels( 'lu_offset',     dB=state["lu_offset"],      update_state=False  )
+    do_levels( 'bass',          dB=state["bass"],           update_state=False  )
+    do_levels( 'treble',        dB=state["treble"],         update_state=False  )
+    do_levels( 'target',        tID=state["target"],        update_state=True   )
+    set_loudness(               mode=state["equal_loudness"]                    )
+    set_mute(                   state["muted"]   )
+    set_drc(                    state["drc_set"] )
+    set_xo(                     state["xo_set"]  )
+
+    return
 
 
 def set_mute(mode):
     return DSP.set_mute(mode)
 
 
-def set_loudness(mode, level):
+def set_loudness(mode, level=state["level"]):
     spl = level + 83.0
     result = DSP.set_loudness(mode, spl)
     return result
@@ -111,7 +124,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False, updat
 
     def set_level(dB):
         DSP.set_volume(dB)
-        return set_loudness(state["equal_loudness"], dB)
+        return set_loudness(mode=state["equal_loudness"], level=dB)
 
 
     def set_lu_offset(dB):
@@ -148,21 +161,25 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False, updat
         return res
 
 
-    def headroom():
+    def calc_headroom():
 
-        sc = state.copy()
-        sc[cmd] = dB
+        candidate = state.copy()
 
-        hr = - sc["level"] + sc["lu_offset"] + DRCS_GAIN
+        if cmd == 'target':
+            candidate['target'] = tID
+        else:
+            candidate[cmd] = dB
 
-        if sc["bass"]   and not sc["tone_defeat"] > 0:
-            hr -= sc["bass"]
+        hr = - candidate["level"] + candidate["lu_offset"] + DRCS_GAIN
 
-        if sc["treble"] and not sc["tone_defeat"] > 0:
-            hr -= sc["treble"]
+        if candidate["bass"] > 0   and not candidate["tone_defeat"] > 0:
+            hr -= candidate["bass"]
 
-        if sc["target"] != 'none':
-            tgain = x2float( sc["target"][:4] )
+        if candidate["treble"] > 0 and not candidate["tone_defeat"] > 0:
+            hr -= candidate["treble"]
+
+        if candidate["target"] != 'none':
+            tgain = x2float( candidate["target"][:4] )
             if tgain > 0:
                 hr -= tgain
 
@@ -173,7 +190,9 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False, updat
     if add:
         dB += state[cmd]
 
-    if headroom() >= 0:
+    hr = calc_headroom()
+
+    if hr >= 0:
 
         match cmd:
             case 'level':        result = set_level(dB)
@@ -196,6 +215,8 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False, updat
 
         else:
             state[cmd] = dB
+
+        state["gain_headroom"] = hr
 
     return result
 
@@ -254,7 +275,7 @@ def do(cmd, args, add):
             curr_mode =  state['equal_loudness']
             new_mode = switch(args, curr_mode)
             if type(new_mode) == bool and new_mode != curr_mode:
-                result = set_loudness(new_mode, state["level"])
+                result = set_loudness(mode=new_mode)
             if result == 'done':
                 state['equal_loudness'] = new_mode
 
