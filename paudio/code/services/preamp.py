@@ -5,7 +5,9 @@
 
 """
     Preamp subsystem.
+
     Version with CamillaDSP processor (https://github.com/HEnquist/camilladsp)
+
 """
 
 import  subprocess as sp
@@ -19,9 +21,9 @@ sys.path.append(f'{THIS_DIR}/preamp_mod')
 
 import  pcamilla as DSP
 
+
 # Main variable (preamplifier state)
 state = {}
-
 
 # Constants
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
@@ -185,8 +187,13 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False, updat
         result = 'no headroom'
 
     if result == 'done' and update_state:
+
         if cmd == 'target':
             state['target'] = tID
+
+        elif cmd == 'tone_defeat':
+            state["tone_defeat"] = tone_defeat
+
         else:
             state[cmd] = dB
 
@@ -285,16 +292,12 @@ def do(cmd, args, add):
             if newt in TARGET_SETS + ['none']:
                 if state["target"] != newt:
                     result = do_levels('target', tID=newt)
-                    if result == 'done':
-                        state["target"] = newt
 
         case 'tone_defeat':
             curr =  state['tone_defeat']
             new = switch(args, curr)
             if type(new) == bool and new != curr:
                 result = do_levels('tone_defeat', tone_defeat=new)
-            if result == 'done':
-                state['tone_defeat'] = new
 
         # Special commands when using cammillaDSP
         case 'get_cdsp_pipeline':
