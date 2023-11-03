@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
 
 import  numpy as np
 
-from miscel import *
+from common import *
 
 THIS_DIR = os.path.dirname(__file__)
 sys.path.append(f'{THIS_DIR}/audiotools')
@@ -13,14 +14,8 @@ from tools  import semispectrum2impulse, savePCM32
 
 LOUDNESS_REF_LEVEL = 83
 
-try:
-    FS = read_yaml_file(f'{MAINFOLDER}/config.yml')["fs"]
-except:
-    FS = 44100
-    print('(make_eq) default to fs=44100')
-
 EQ_PCM_PATH        = f'{MAINFOLDER}/eq/eq.pcm'
-CURVES_FOLDER      = f'{EQFOLDER}/curves_{FS}_N11'
+CURVES_FOLDER      = f'{EQFOLDER}/curves_{CONFIG["fs"]}_N11'
 
 # Module global variables (initial values)
 bass            = 0
