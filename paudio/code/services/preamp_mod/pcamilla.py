@@ -203,19 +203,23 @@ def set_volume(dB):
 
 
 def set_treble(dB):
+    result = 'done'
     if abs(dB) > 12:
-        return 'out of range'
-    mkeq.treble  = float(dB)
+        dB = max(-12, min(+12, dB))
+        result = f'treble clamped to {dB}'
+    mkeq.treble = float(dB)
     reload_eq()
-    return 'done'
+    return result
 
 
 def set_bass(dB):
+    result = 'done'
     if abs(dB) > 12:
-        return 'out of range'
-    mkeq.bass  = float(dB)
+        dB = max(-12, min(+12, dB))
+        result = f'bass clamped to {dB}'
+    mkeq.bass = float(dB)
     reload_eq()
-    return 'done'
+    return result
 
 
 def set_target(tID):
@@ -239,7 +243,7 @@ def set_loudness(mode, spl):
 
 
 def set_xo(xoID):
-    result = 'pending'
+    result = 'XO pending'
     if xoID == 'none':
         result = 'done'
     return result
