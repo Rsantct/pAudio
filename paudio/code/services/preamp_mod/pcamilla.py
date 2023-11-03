@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
 
 import  subprocess as sp
 from    time import sleep
@@ -8,7 +9,7 @@ import  yaml
 import  json
 from    camilladsp import CamillaConnection
 import  make_eq as mkeq
-from    miscel import *
+from    common import *
 
 
 # CamillaDSP needs a new FIR filename in order to
@@ -47,7 +48,8 @@ def make_pipeline_drc(cfg, drcID):
 
 def init_camilladsp(user_config, drc_sets=[]):
     """ Updates camilladsp.yml with user configs,
-        then runs camilladsp process
+        includes auto making the DRC yaml stuff,
+        then runs the CamillaDSP process.
     """
 
     def update_config():
@@ -202,19 +204,23 @@ def set_volume(dB):
 
 
 def set_treble(dB):
+    result = 'done'
     if abs(dB) > 12:
-        return 'out of range'
-    mkeq.treble  = float(dB)
+        dB = max(-12, min(+12, dB))
+        result = f'treble clamped to {dB}'
+    mkeq.treble = float(dB)
     reload_eq()
-    return 'done'
+    return result
 
 
 def set_bass(dB):
+    result = 'done'
     if abs(dB) > 12:
-        return 'out of range'
-    mkeq.bass  = float(dB)
+        dB = max(-12, min(+12, dB))
+        result = f'bass clamped to {dB}'
+    mkeq.bass = float(dB)
     reload_eq()
-    return 'done'
+    return result
 
 
 def set_target(tID):
@@ -238,7 +244,7 @@ def set_loudness(mode, spl):
 
 
 def set_xo(xoID):
-    result = 'pending'
+    result = 'XO pending'
     if xoID == 'none':
         result = 'done'
     return result

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
 
 from  services import preamp
-from  miscel import *
+from  common import *
 
 
 def do(cmd_phrase):
@@ -19,7 +20,7 @@ def do(cmd_phrase):
         case 'aux':
             # PENDING
             if cmd == 'get_web_config':
-                result = json.dumps({})
+                result = json.dumps({'main_selector':'inputs'})
 
         case 'players':
             # PENDING

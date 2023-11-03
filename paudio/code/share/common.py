@@ -1,17 +1,32 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
 
 import  yaml
 import  json
 from    fmt import Fmt
 import  sys
 import  os
+
 UHOME = os.path.expanduser('~')
 MAINFOLDER      = f'{UHOME}/paudio'
 LSPKSFOLDER     = f'{MAINFOLDER}/loudspeakers'
 EQFOLDER        = f'{MAINFOLDER}/eq'
 CODEFOLDER      = f'{MAINFOLDER}/code'
+CONFIG_PATH     = f'{MAINFOLDER}/config.yml'
+CONFIG          = {}
+
+
+def init():
+
+    global CONFIG
+
+    CONFIG = read_yaml_file(CONFIG_PATH)
+
+    if not "fs" in CONFIG:
+        CONFIG["fs"] = 44100
+        print('(i) Default to fs=44100')
 
 
 def read_json_file(fpath):
@@ -151,4 +166,4 @@ def get_target_sets(fs=44100):
     return sorted(sets)
 
 
-
+init()

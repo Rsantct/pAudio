@@ -1,7 +1,6 @@
 /*
     Copyright (c) Rafael Sánchez
-    This file is part of 'pAudio'
-    'pAudio', a PC based personal audio system.
+    This file is part of 'pAudio', a PC based personal audio system.
 */
 
 /*
@@ -36,8 +35,6 @@ var web_config          = { 'main_selector':      'inputs',
                             'show_graphs':        false,
                             'user_macros':        []
 };
-
-var main_sel_mode       = web_config.main_selector;
 
 var mFnames             = web_config.user_macros; // Macro file names
 
@@ -128,7 +125,7 @@ function fill_in_page_statics(){
 
 
         // standard: main selector as INPUTS manager
-        if ( main_sel_mode == 'inputs' ){
+        if ( web_config.main_selector == 'inputs' ){
             document.getElementById("mainSelector").title = 'Source Selector';
             document.getElementById("macro_buttons").style.display = 'inline-table';
             fill_in_main_as_inputs();
@@ -211,7 +208,7 @@ function fill_in_page_statics(){
     document.getElementById("levelInfo").title = 'Target volume ref@' +
                                                  state.loudspeaker_ref_SPL + 'dBSPL';
 
-    ////fill_in_main_selector();
+    fill_in_main_selector();
     ////
     fill_in_target_selector();
     ////
@@ -271,7 +268,6 @@ function init(){
     function get_web_config(){
         try{
             web_config      = JSON.parse( control_cmd('aux get_web_config') );
-            main_sel_mode   = web_config.main_selector;
             mFnames         = web_config.user_macros;
             if (web_config.show_graphs==false){
                 document.getElementById( "button_toggleEQgraphs").style.display = "none";
@@ -679,7 +675,7 @@ function page_update() {
         }
 
         // Updates current INPUTS, XO, DRC, and TARGET (PEQ is meant to be static)
-        if ( main_sel_mode == 'macros' ){
+        if ( web_config.main_selector == 'macros' ){
             const mName = aux_info.last_macro;
             document.getElementById("mainSelector").value =
                                 mName.slice(mName.indexOf('_') + 1, mName.length);
@@ -816,7 +812,7 @@ function oc_main_select(itemName){
     // setTimeout( () => { control_cmd('input ' + itemName); }, 200 );
     function tmp(itemName){
         // regular behavior managing preamp inputs
-        if ( main_sel_mode == 'inputs' ){
+        if ( web_config.main_selector == 'inputs' ){
             control_cmd('input ' + itemName);
         // alternative behavior managing macros
         }else{
@@ -1064,11 +1060,11 @@ function omd_macro_buttons_display_toggle() {
     var curMode = document.getElementById( "macro_buttons").style.display;
     if (curMode == 'none') {
         document.getElementById( "macro_buttons").style.display = 'inline-table'
-        main_sel_mode = 'inputs';
+        web_config.main_selector = 'inputs';
     }
     else {
         document.getElementById( "macro_buttons").style.display = 'none'
-        main_sel_mode = 'macros';
+        web_config.main_selector = 'macros';
     }
     fill_in_page_statics();
 }
