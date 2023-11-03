@@ -10,7 +10,9 @@ device: MacBook Pro (altavoces)
 
 loudspeaker: DynBM6
 
-target: +3.0-1.0
+# On init preferences:
+target:             +3.0-1.5
+equal_loudness:     true
 
 inputs:
     - system-wide
