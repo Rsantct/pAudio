@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
 
 import  subprocess as sp
 from    time import sleep
@@ -8,7 +9,7 @@ import  yaml
 import  json
 from    camilladsp import CamillaConnection
 import  make_eq as mkeq
-from    miscel import *
+from    common import *
 
 
 # CamillaDSP needs a new FIR filename in order to
