@@ -1,0 +1,21 @@
+{
+    "loudspeaker":      "DynBM6",
+    "fs":               44100,
+    "input":            "system-wide",
+    "level":            -20.0,
+    "gain_headroom":    12.3,
+    "equal_loudness":   true,
+    "lu_offset":        12.0,
+    "target":           "+2.0-0.5",
+    "balance":          0,
+    "bass":             0.0,
+    "treble":           0.0,
+    "tone_defeat":      false,
+    "drc_set":          "none",
+    "xo_set":           "",
+    "stereo_mode":      "stereo",
+    "muted":            false,
+    "polarity":         "++",
+    "subsonic":         "off",
+    "extra_delay":      0.0
+}
