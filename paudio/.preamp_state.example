@@ -6,7 +6,7 @@
     "gain_headroom":    12.3,
     "equal_loudness":   true,
     "lu_offset":        12.0,
-    "target":           "+2.0-0.5",
+    "target":           "+3.0-0.5",
     "balance":          0,
     "bass":             0.0,
     "treble":           0.0,
