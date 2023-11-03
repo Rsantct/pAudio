@@ -13,6 +13,7 @@ loudspeaker: DynBM6
 # On init preferences:
 target:             +3.0-1.5
 equal_loudness:     true
+drc_set:            equilateral
 
 inputs:
     - system-wide
