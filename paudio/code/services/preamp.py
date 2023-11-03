@@ -1,23 +1,30 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
+
+"""
+    Preamp subsystem.
+    Version with CamillaDSP processor (https://github.com/HEnquist/camilladsp)
+"""
 
 import  subprocess as sp
 import  json
 from    time    import sleep
 
-from    miscel  import *
+from    common  import *
+
 THIS_DIR = os.path.dirname(__file__)
 sys.path.append(f'{THIS_DIR}/preamp_mod')
-import  pcamilla
 
+import  pcamilla as DSP
 
+# Main variable (preamplifier state)
 state = {}
 
-# Module constants
+
+# Constants
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
-CONFIG_PATH = f'{MAINFOLDER}/config.yml'
-CONFIG      = {}
 INPUTS      = []
 TARGET_SETS = []
 XO_SETS     = []
@@ -27,15 +34,17 @@ DRCS_GAIN   = -6.0  # By now we assume a constant DRC gain for any drc FIR
 
 def init():
 
-    global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
+    global state, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
     state = read_json_file(STATE_PATH)
 
-    CONFIG      = read_yaml_file(CONFIG_PATH)
+
+    INPUTS      = CONFIG["inputs"]
     TARGET_SETS = get_target_sets(fs=CONFIG["fs"])
     DRC_SETS    = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
     XO_SETS     # PENDING
 
+    # Optional user config having precedence over the saved state:
     if "room_target" in CONFIG:
         if not CONFIG["room_target"] in TARGET_SETS + ['none']:
             CONFIG["room_target"] = 'none'
@@ -44,17 +53,13 @@ def init():
         CONFIG["room_target"] = state["target"]
 
 
-    INPUTS      = []
-
+    # State FS is just informative
+    state["fs"] = CONFIG["fs"]
 
     # Running camillaDSP
-    pcamilla.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
+    DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
 
     # Resuming audio settings
-    resume_audio_settings()
-
-
-def resume_audio_settings():
     do_levels( 'level',         state["level"]     ,    update_state=False)
     do_levels( 'lu_offset',     state["lu_offset"] ,    update_state=False)
     do_levels( 'bass',          state["bass"]      ,    update_state=False)
@@ -66,12 +71,12 @@ def resume_audio_settings():
 
 
 def set_mute(mode):
-    return pcamilla.set_mute(mode)
+    return DSP.set_mute(mode)
 
 
 def set_loudness(mode, level):
     spl = level + 83.0
-    result = pcamilla.set_loudness(mode, spl)
+    result = DSP.set_loudness(mode, spl)
     return result
 
 
@@ -80,42 +85,42 @@ def set_drc(drcID):
     # so it must be done outside
 
     if drcID == 'none':
-        pcamilla.set_drc_gain(DRCS_GAIN)
+        DSP.set_drc_gain(DRCS_GAIN)
 
-    res = pcamilla.set_drc(drcID)
+    res = DSP.set_drc(drcID)
 
     if res == 'done' and drcID != 'none':
-        pcamilla.set_drc_gain(0.0)
+        DSP.set_drc_gain(0.0)
 
     return res
 
 
 def set_xo(xoID):
-    return pcamilla.set_xo(xoID)
+    return DSP.set_xo(xoID)
 
 
 def do_levels(cmd, dB, add=False, update_state=True):
     """ Level related commands """
 
     def set_level(dB):
-        pcamilla.set_volume(dB)
+        DSP.set_volume(dB)
         return set_loudness(state["equal_loudness"], dB)
 
 
     def set_lu_offset(dB):
-        return pcamilla.set_lu_offset(-dB)
+        return DSP.set_lu_offset(-dB)
 
 
     def set_bass(dB):
-        return pcamilla.set_bass(dB)
+        return DSP.set_bass(dB)
 
 
     def set_treble(dB):
-        return pcamilla.set_treble(dB)
+        return DSP.set_treble(dB)
 
 
     def set_target(tID):
-        return pcamilla.set_target(tID)
+        return DSP.set_target(tID)
 
 
     def headroom():
@@ -149,6 +154,7 @@ def do_levels(cmd, dB, add=False, update_state=True):
         dB += state[cmd]
 
     if headroom() >= 0:
+
         match cmd:
             case 'level':        result = set_level(dB)
             case 'lu_offset':    result = set_lu_offset(dB)
@@ -255,13 +261,13 @@ def do(cmd, args, add):
 
         # Special commands when using cammillaDSP
         case 'get_cdsp_pipeline':
-            result = pcamilla.get_pipeline()
+            result = DSP.get_pipeline()
 
         case 'get_cdsp_config':
-            result = pcamilla.get_config()
+            result = DSP.get_config()
 
         case 'get_cdsp_drc_gain':
-            result = pcamilla.get_drc_gain()
+            result = DSP.get_drc_gain()
 
         case _:
             result = 'unknown command'
