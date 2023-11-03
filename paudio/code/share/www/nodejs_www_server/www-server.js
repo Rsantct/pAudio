@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 /*
-# Copyright (c) Rafael Sánchez
-# This file is part of 'paudio'
-# 'paudio', a PC based personal audio system.
+    Copyright (c) Rafael Sánchez
+    This file is part of 'pAudio', a PC based personal audio system.
 */
 
 // The DEFAULT listening HTTP PORT unless passed via command line
