@@ -99,8 +99,13 @@ def set_xo(xoID):
     return DSP.set_xo(xoID)
 
 
-def do_levels(cmd, dB, add=False, update_state=True):
-    """ Level related commands """
+def set_input(inputID):
+    return "done"
+
+
+def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False, update_state=True):
+    """ Level related commands
+    """
 
     def set_level(dB):
         DSP.set_volume(dB)
@@ -112,15 +117,33 @@ def do_levels(cmd, dB, add=False, update_state=True):
 
 
     def set_bass(dB):
-        return DSP.set_bass(dB)
+        if not state["tone_defeat"]:
+            return DSP.set_bass(dB)
+        else:
+            return "done"
 
 
     def set_treble(dB):
-        return DSP.set_treble(dB)
+        if not state["tone_defeat"]:
+            return DSP.set_treble(dB)
+        else:
+            return "done"
 
 
     def set_target(tID):
         return DSP.set_target(tID)
+
+
+    def set_tone_defeat(mode):
+        res = []
+        if mode == True:
+            res.append( DSP.set_bass(   0.0 ) )
+            res.append( DSP.set_treble( 0.0 ) )
+        else:
+            res.append( DSP.set_bass(   state["bass"]   ) )
+            res.append( DSP.set_treble( state["treble"] ) )
+        res = ' '.join( set(res) )
+        return res
 
 
     def headroom():
@@ -144,11 +167,6 @@ def do_levels(cmd, dB, add=False, update_state=True):
         return hr
 
 
-    try:
-        dB = x2float(dB)
-    except:
-        tID = dB
-
     # getting absolute values from relative command
     if add:
         dB += state[cmd]
@@ -160,6 +178,7 @@ def do_levels(cmd, dB, add=False, update_state=True):
             case 'lu_offset':    result = set_lu_offset(dB)
             case 'bass':         result = set_bass(dB)
             case 'treble':       result = set_treble(dB)
+            case 'tone_defeat':  result = set_tone_defeat(tone_defeat)
             case 'target':       result = set_target(tID)
 
     else:
@@ -167,7 +186,7 @@ def do_levels(cmd, dB, add=False, update_state=True):
 
     if result == 'done' and update_state:
         if cmd == 'target':
-            state[cmd] = tID
+            state['target'] = tID
         else:
             state[cmd] = dB
 
@@ -181,7 +200,8 @@ def normalize_cmd(cmd):
                 'loudness':     'equal_loudness',
                 'set_target':   'target',
                 'drc':          'set_drc',
-                'xo':           'set_xo'
+                'xo':           'set_xo',
+                'input':        'set_input',
         }[cmd]
     except:
         pass
@@ -247,17 +267,34 @@ def do(cmd, args, add):
                     if result == 'done':
                         state["xo_set"] = new_xo
 
+        case 'set_input':
+            new = args
+            if new in INPUTS:
+                if state["input"] != new:
+                    result = set_input(new)
+                    if result == 'done':
+                        state["input"] = new
+
         # Level related commands
         case 'level' | 'lu_offset' | 'bass' | 'treble':
-            result = do_levels(cmd, args, add)
+            dB = x2float(args)
+            result = do_levels(cmd, dB=dB, add=add)
 
         case 'target':
             newt = args
             if newt in TARGET_SETS + ['none']:
                 if state["target"] != newt:
-                    result = do_levels('target', newt)
+                    result = do_levels('target', tID=newt)
                     if result == 'done':
                         state["target"] = newt
+
+        case 'tone_defeat':
+            curr =  state['tone_defeat']
+            new = switch(args, curr)
+            if type(new) == bool and new != curr:
+                result = do_levels('tone_defeat', tone_defeat=new)
+            if result == 'done':
+                state['tone_defeat'] = new
 
         # Special commands when using cammillaDSP
         case 'get_cdsp_pipeline':
