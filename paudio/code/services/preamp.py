@@ -119,6 +119,8 @@ def set_drc(drcID):
     # camillaDSP has not gain setting for a FIR filter,
     # so it must be done outside
 
+    # Because DRCs are assumed to have negative gain, we first
+    # put down volume when drc='none'
     if drcID == 'none':
         DSP.set_drc_gain(DRCS_GAIN)
 
