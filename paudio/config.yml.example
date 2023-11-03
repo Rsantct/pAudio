@@ -11,3 +11,6 @@ device: MacBook Pro (altavoces)
 loudspeaker: DynBM6
 
 room_target: +3.0-1.0
+
+inputs:
+    - system-wide
