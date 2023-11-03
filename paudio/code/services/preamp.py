@@ -72,12 +72,12 @@ def init():
 
 
     # Resuming audio settings
-    do_levels( 'level',         dB=state["level"],          update_state=False  )
-    do_levels( 'lu_offset',     dB=state["lu_offset"],      update_state=False  )
-    do_levels( 'bass',          dB=state["bass"],           update_state=False  )
-    do_levels( 'treble',        dB=state["treble"],         update_state=False  )
-    do_levels( 'target',        tID=state["target"],        update_state=True   )
-    set_loudness(               mode=state["equal_loudness"]                    )
+    do_levels( 'level',         dB=state["level"],           )
+    do_levels( 'lu_offset',     dB=state["lu_offset"],       )
+    do_levels( 'bass',          dB=state["bass"],            )
+    do_levels( 'treble',        dB=state["treble"],          )
+    do_levels( 'target',        tID=state["target"],         )
+    set_loudness(               mode=state["equal_loudness"] )
     set_mute(                   state["muted"]   )
     set_drc(                    state["drc_set"] )
     set_xo(                     state["xo_set"]  )
@@ -118,7 +118,7 @@ def set_input(inputID):
     return "done"
 
 
-def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False, update_state=True):
+def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
     """ Level related commands
     """
 
@@ -205,7 +205,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False, updat
     else:
         result = 'no headroom'
 
-    if result == 'done' and update_state:
+    if result == 'done':
 
         if cmd == 'target':
             state['target'] = tID
