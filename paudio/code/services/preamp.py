@@ -192,7 +192,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         else:
             candidate[cmd] = dB
 
-        hr = - candidate["level"] + candidate["lu_offset"] + DRCS_GAIN
+        hr = - candidate["level"] + candidate["lu_offset"] - DRCS_GAIN
 
         if candidate["bass"] > 0   and not candidate["tone_defeat"]:
             hr -= candidate["bass"]
