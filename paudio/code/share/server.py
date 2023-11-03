@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
-# This file is part of 'pe.audio.sys'
-# 'pe.audio.sys', a PC based personal audio system.
+# This file is part of 'pAudio', a PC based personal audio system.
 
 """
     A general purpose TCP server to run a processing module
@@ -26,6 +25,11 @@ import  socket
 import  os
 import  sys
 from    fmt import Fmt
+UHOME = os.path.expanduser("~")
+
+
+# CONFIGURE here the path were the processing_module is located
+MODULEPATH = f'{UHOME}/paudio/code'
 
 # You can use these properties when importing this module:
 SERVICE = ''
@@ -87,8 +91,7 @@ if __name__ == "__main__":
 
     # Importing the service module to be used later when processing commands
     # https://python-reference.readthedocs.io/en/latest/docs/functions/__import__.html
-    UHOME = os.path.expanduser("~")
-    sys.path.append( f'{UHOME}/paudio/code' )
+    sys.path.append( MODULEPATH )
     PROCESSOR_MOD = __import__(SERVICE)
 
     print( f'{Fmt.BOLD}{Fmt.BLUE}(server.py) will use \'{SERVICE}.py\' module, '
