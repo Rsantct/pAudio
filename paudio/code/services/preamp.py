@@ -27,7 +27,8 @@ INPUTS      = []
 TARGET_SETS = []
 XO_SETS     = []
 DRC_SETS    = []
-DRCS_GAIN   = -6.0  # By now we assume a constant DRC gain for any drc FIR
+# By now we assume a constant DRC gain for any provided drc.X.XXX FIR file
+DRCS_GAIN   = -6.0
 
 
 # Main variable (preamplifier state)
@@ -65,7 +66,7 @@ def init():
                     state[prop] = CONFIG[prop]
 
 
-    # Running camillaDSP
+    # Preparing and running camillaDSP
     DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
 
 
