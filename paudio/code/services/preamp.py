@@ -48,7 +48,7 @@ def init():
     state["fs"] = CONFIG["fs"]
 
     # Optional user configs having precedence over the saved state:
-    for prop in 'bass', 'treble', 'equal_loudness', 'lu_offset', 'target', 'drc_set':
+    for prop in 'bass', 'treble', 'lu_offset', 'target', 'equal_loudness', 'drc_set':
         if prop in CONFIG:
             match prop:
                 case 'drc_set':
@@ -64,23 +64,42 @@ def init():
                 case _:
                     state[prop] = CONFIG[prop]
 
-    save_json_file(state, STATE_PATH)
-
 
     # Running camillaDSP
     DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
 
 
     # Resuming audio settings
-    do_levels( 'level',         dB=state["level"],           )
-    do_levels( 'lu_offset',     dB=state["lu_offset"],       )
-    do_levels( 'bass',          dB=state["bass"],            )
-    do_levels( 'treble',        dB=state["treble"],          )
-    do_levels( 'target',        tID=state["target"],         )
-    set_loudness(               mode=state["equal_loudness"] )
-    set_mute(                   state["muted"]   )
-    set_drc(                    state["drc_set"] )
-    set_xo(                     state["xo_set"]  )
+
+    do_levels( 'level', dB=state["level"] )
+    set_mute( state["muted"] )
+
+    # Resuming audio settings can be user configured ones
+
+    # tones can be clamped when ordered out of range
+    result = do_levels( 'bass', dB=state["bass"] )
+    if result != 'done':
+        print(f'{Fmt.BOLD}{result}{Fmt.END}')
+        state["bass"] = x2float(result.split()[-1])
+
+    result = do_levels( 'treble', dB=state["treble"] )
+    if result != 'done':
+        print(f'{Fmt.BOLD}{result}{Fmt.END}')
+        state["treble"] = x2float(result.split()[-1])
+
+    do_levels( 'lu_offset', dB=state["lu_offset"] )
+
+    do_levels( 'target', tID=state["target"] )
+
+    set_loudness( mode=state["equal_loudness"] )
+
+    set_drc( state["drc_set"] )
+
+    # XO is pending
+    #set_xo( state["xo_set"] )
+
+    # Saving state with user settings
+    save_json_file(state, STATE_PATH)
 
     return
 
@@ -172,10 +191,10 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
         hr = - candidate["level"] + candidate["lu_offset"] + DRCS_GAIN
 
-        if candidate["bass"] > 0   and not candidate["tone_defeat"] > 0:
+        if candidate["bass"] > 0   and not candidate["tone_defeat"]:
             hr -= candidate["bass"]
 
-        if candidate["treble"] > 0 and not candidate["tone_defeat"] > 0:
+        if candidate["treble"] > 0 and not candidate["tone_defeat"]:
             hr -= candidate["treble"]
 
         if candidate["target"] != 'none':
@@ -209,13 +228,16 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
         if cmd == 'target':
             state['target'] = tID
-
         elif cmd == 'tone_defeat':
             state["tone_defeat"] = tone_defeat
-
         else:
             state[cmd] = dB
+        state["gain_headroom"] = hr
 
+    # tones can be clamped when ordered out of range
+    elif 'clamped' in result:
+
+        state[cmd] = x2float(result.split()[-1])
         state["gain_headroom"] = hr
 
     return result
