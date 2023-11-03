@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
 
 from  services import preamp
-from  miscel import *
+from  common import *
 
 
 def do(cmd_phrase):
