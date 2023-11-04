@@ -36,23 +36,32 @@ filters:
       ramp_time: 200
     type: Volume
 mixers:
-  my_mix:
+  # preamp_mixer will be autoupdated in runtime
+  preamp_mixer:
     channels:
       in: 2
       out: 2
     mapping:
     - dest: 0
-      mute: false
       sources:
       - channel: 0
-        gain: 0
+        gain: 0.0
         inverted: false
-    - dest: 1
-      mute: false
-      sources:
+        mute: false
       - channel: 1
-        gain: 0
+        gain: 0.0
         inverted: false
+        mute: true
+    - dest: 1
+      sources:
+      - channel: 0
+        gain: 0.0
+        inverted: false
+        mute: true
+      - channel: 1
+        gain: 0.0
+        inverted: false
+        mute: false
 pipeline:
 # drc pipeline names will be autocompleted in runtime
 - name: my_mix
