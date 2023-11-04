@@ -14,6 +14,8 @@ import  subprocess as sp
 import  json
 from    time    import sleep
 
+# This import works because the main program server.py
+# is located under the code/share folder
 from    common  import *
 
 THIS_DIR = os.path.dirname(__file__)
@@ -34,7 +36,7 @@ DRCS_GAIN   = -6.0
 # Main variable (preamplifier state)
 state = read_json_file(STATE_PATH)
 
-
+# INIT
 def init():
 
     global state, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
@@ -105,8 +107,14 @@ def init():
     return
 
 
+# Interface functions with the underlying modules
+
 def set_mute(mode):
     return DSP.set_mute(mode)
+
+
+def set_midside(mode):
+    return DSP.set_midside(mode)
 
 
 def set_loudness(mode, level=state["level"]):
@@ -116,28 +124,51 @@ def set_loudness(mode, level=state["level"]):
 
 
 def set_drc(drcID):
-    # camillaDSP has not gain setting for a FIR filter,
-    # so it must be done outside
 
-    # Because DRCs are assumed to have negative gain, we first
-    # put down volume when drc='none'
-    if drcID == 'none':
-        DSP.set_drc_gain(DRCS_GAIN)
+    if not DRC_SETS:
+        res = 'not available'
 
-    res = DSP.set_drc(drcID)
+    elif not drcID in DRC_SETS + ['none']:
+        res = f'must be in: {DRC_SETS}'
 
-    if res == 'done' and drcID != 'none':
-        DSP.set_drc_gain(0.0)
+    else:
+        # camillaDSP has not gain setting for a FIR filter,
+        # so it must be done outside
+
+        # Because DRCs are assumed to have negative gain, we first
+        # put down volume when drc='none'
+        if drcID == 'none':
+            DSP.set_drc_gain(DRCS_GAIN)
+
+        res = DSP.set_drc(drcID)
+
+        if res == 'done' and drcID != 'none':
+            DSP.set_drc_gain(0.0)
 
     return res
 
 
 def set_xo(xoID):
-    return DSP.set_xo(xoID)
+
+    if not XO_SETS:
+        res = 'not available'
+
+    elif not xoID in XO_SETS:
+        res = f'must be in: {XO_SETS}'
+
+    else:
+        res = DSP.set_xo(xoID)
+
+    return res
 
 
 def set_input(inputID):
-    return "done"
+    """ fake selector """
+    if inputID in INPUTS:
+        res = 'done'
+    else:
+        res = f'must be in: {INPUTS}'
+    return res
 
 
 def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
@@ -246,22 +277,23 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
     return result
 
 
-def normalize_cmd(cmd):
-    """ Some alias are accepted for some commands """
-    try:
-        cmd = {
-                'loudness':     'equal_loudness',
-                'set_target':   'target',
-                'drc':          'set_drc',
-                'xo':           'set_xo',
-                'input':        'set_input',
-        }[cmd]
-    except:
-        pass
-    return cmd
-
-
+# Entry function
 def do(cmd, args, add):
+
+    def normalize_cmd(cmd):
+        """ Some alias are accepted for some commands """
+        try:
+            cmd = {
+                    'loudness':     'equal_loudness',
+                    'set_target':   'target',
+                    'drc':          'set_drc',
+                    'xo':           'set_xo',
+                    'input':        'set_input',
+            }[cmd]
+        except:
+            pass
+        return cmd
+
 
     cmd     = normalize_cmd(cmd)
     result  = 'nothing was done'
@@ -288,6 +320,20 @@ def do(cmd, args, add):
         case 'get_xo_sets':
             result = json.dumps(XO_SETS)
 
+        case 'set_input':
+            new = args
+            if state["input"] != new:
+                result = set_input(new)
+                if result == 'done':
+                    state["input"] = new
+
+        case 'midside':
+            new = args
+            if state["midside"] != new:
+                result = set_midside(new)
+                if result == 'done':
+                    state["midside"] = new
+
         case 'mute':
             curr =  state['muted']
             new = switch(args, curr)
@@ -305,28 +351,18 @@ def do(cmd, args, add):
                 state['equal_loudness'] = new_mode
 
         case 'set_drc':
-            new_drc = args
-            if new_drc in DRC_SETS + ['none']:
-                if state["drc_set"] != new_drc:
-                    result = set_drc(new_drc)
-                    if result == 'done':
-                        state["drc_set"] = new_drc
+            new = args
+            if state["drc_set"] != new:
+                result = set_drc(new)
+                if result == 'done':
+                    state["drc_set"] = new
 
         case 'set_xo':
-            new_xo = args
-            if new_xo in XO_SETS + ['none']:
-                if state["xo_set"] != new_xo:
-                    result = set_xo(new_xo)
-                    if result == 'done':
-                        state["xo_set"] = new_xo
-
-        case 'set_input':
             new = args
-            if new in INPUTS:
-                if state["input"] != new:
-                    result = set_input(new)
-                    if result == 'done':
-                        state["input"] = new
+            if state["xo_set"] != new:
+                result = set_xo(new)
+                if result == 'done':
+                    state["xo_set"] = new
 
         # Level related commands
         case 'level' | 'lu_offset' | 'bass' | 'treble':
@@ -346,11 +382,14 @@ def do(cmd, args, add):
                 result = do_levels('tone_defeat', tone_defeat=new)
 
         # Special commands when using cammillaDSP
-        case 'get_cdsp_pipeline':
-            result = DSP.get_pipeline()
-
         case 'get_cdsp_config':
             result = DSP.get_config()
+
+        case 'get_cdsp_preamp_mixer':
+            result = DSP.get_config()["mixers"]["preamp_mixer"]
+
+        case 'get_cdsp_pipeline':
+            result = DSP.get_config()["pipeline"]
 
         case 'get_cdsp_drc_gain':
             result = DSP.get_drc_gain()
@@ -360,6 +399,12 @@ def do(cmd, args, add):
 
     if dosave:
         save_json_file(state, STATE_PATH)
+
+    if type(result) != str:
+        try:
+            result = json.dumps(result)
+        except Exception as e:
+            result = f'Internal error: {e}'
 
     return result
 
