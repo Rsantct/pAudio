@@ -14,7 +14,7 @@ from    common import *
 
 THIS_DIR = os.path.dirname(__file__)
 CFG_PATH = f'{THIS_DIR}/camilladsp.yml'
-CFG_INIT = None
+CFG_INIT = {}
 
 # The CamillaDSP connection
 PC = None
