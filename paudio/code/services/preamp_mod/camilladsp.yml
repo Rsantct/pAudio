@@ -12,6 +12,18 @@ devices:
     type: CoreAudio
   samplerate: 44100
 filters:
+  bal_pol_L:
+    parameters:
+      gain: 0.0
+      inverted: false
+      mute: false
+    type: Gain
+  bal_pol_R:
+    parameters:
+      gain: 0.0
+      inverted: false
+      mute: false
+    type: Gain
   # drc.X.XXX filters will be autocompleted from the loudspeaker folder .pcm files
   drc_gain:
     parameters:
@@ -71,6 +83,7 @@ pipeline:
   - eq
   - drc_gain
   - lu_offset
+  - bal_pol_L
   - vol
   type: Filter
 - channel: 1
@@ -78,5 +91,6 @@ pipeline:
   - eq
   - drc_gain
   - lu_offset
+  - bal_pol_R
   - vol
   type: Filter
