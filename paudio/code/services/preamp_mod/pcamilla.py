@@ -316,6 +316,16 @@ def set_volume(dB):
     return res
 
 
+def set_balance(dB):
+    """ negative dBs means towards Left, positive to Right
+    """
+    c = PC.get_config()
+    c["filters"]["bal_pol_L"]["parameters"]["gain"] = -dB / 2.0
+    c["filters"]["bal_pol_R"]["parameters"]["gain"] = +dB / 2.0
+    set_config_sync(c)
+    return "done"
+
+
 def set_treble(dB):
     result = 'done'
     if abs(dB) > 12:
