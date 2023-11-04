@@ -9,8 +9,14 @@ import  yaml
 import  json
 from    camilladsp import CamillaConnection
 import  make_eq as mkeq
+
+# This import works because the main program server.py
+# is located under the code/share folder
 from    common import *
 
+#
+# (i) use set_config_sync(some_config) to upload a new one
+#
 
 THIS_DIR = os.path.dirname(__file__)
 CFG_PATH = f'{THIS_DIR}/camilladsp.yml'
@@ -103,6 +109,9 @@ def init_camilladsp(user_config, drc_sets=[]):
         camilla_cfg["devices"]["playback"]["device"] = user_config["device"]
         camilla_cfg["devices"]["samplerate"]         = user_config["fs"]
 
+        # The preamp_mixer
+        camilla_cfg["mixers"]["preamp_mixer"] = make_mixer(midside_mode='normal')
+
         # DRCs
         if drc_sets:
             camilla_cfg = update_drc_stuff(camilla_cfg)
@@ -128,21 +137,20 @@ def init_camilladsp(user_config, drc_sets=[]):
 
 
 def set_config_sync(cfg):
+    """ (i) When ordering set_config some time is needed to be running
+        This is a fake sync, but it works
+    """
     PC.set_config(cfg)
     sleep(.1)
 
 
 def get_state():
     """ This is the internal camillaDSP state """
-    return json.dumps( str( PC.get_state() ) )
+    return PC.get_state()
 
 
 def get_config():
-    return json.dumps( PC.get_config() )
-
-
-def get_pipeline():
-    return json.dumps( PC.get_config()["pipeline"] )
+    return PC.get_config()
 
 
 def reload_eq():
@@ -169,6 +177,88 @@ def reload_eq():
     set_config_sync(cfg)
 
     toggle_last_eq()
+
+
+def make_mixer(midside_mode='normal'):
+    """
+        modes:
+
+            normal
+            mid     (mono)
+            side    (L-R)
+            solo_L
+            solo_R
+            ++
+            +-
+            -+
+            --
+
+        A mixer layout:
+
+                        dest 0
+            in 0  --------  00
+                   \  ____  10
+                    \/
+                    /\____
+                   /        01      "01" means source 0  dest 1
+            in 1  --------  11
+                        dest 1
+
+        Gain, Inverted and Mute settings in 'normal' mode
+
+        in 0            in 1
+           |               |
+           |               |
+
+        G inv mut       G inv mut
+
+        0   F   F       0   F   T   --> dest 0
+
+        0   F   T       0   F   F   --> dest 1
+    """
+
+    match midside_mode:
+
+        case 'normal':
+            g00 =  0.0; i00 = False; m00 = False;    g10 =  0.0; i10 = False; m10 = True
+            g01 =  0.0; i01 = False; m01 = True;     g11 =  0.0; i11 = False; m11 = False
+
+        case 'mid':
+            g00 = -6.0; i00 = False; m00 = False;    g10 = -6.0; i10 = False; m10 = False
+            g01 = -6.0; i01 = False; m01 = False;    g11 = -6.0; i11 = False; m11 = False
+
+        case 'side':
+            g00 =  0.0; i00 = False; m00 = False;    g10 =  0.0; i10 = False; m10 = True
+            g01 =  0.0; i01 = False; m01 = True;     g11 =  0.0; i11 = True; m11 = False
+
+        case 'solo_L':
+            g00 =  0.0; i00 = False; m00 = False;    g10 =  0.0; i10 = False; m10 = True
+            g01 =  0.0; i01 = False; m01 = True;     g11 =  0.0; i11 = False; m11 = True
+
+        case 'solo_R':
+            g00 =  0.0; i00 = False; m00 = True;     g10 =  0.0; i10 = False; m10 = True
+            g01 =  0.0; i01 = False; m01 = True;     g11 =  0.0; i11 = False; m11 = False
+
+
+    m = {
+        'channels': { 'in': 2, 'out': 2 },
+        'mapping': [
+            {   'dest': 0,
+                'sources': [
+                    {'channel': 0, 'gain': g00, 'inverted': i00, 'mute': m00},
+                    {'channel': 1, 'gain': g10, 'inverted': i10, 'mute': m10},
+                ]
+            },
+            {   'dest': 1,
+                'sources': [
+                    {'channel': 0, 'gain': g01, 'inverted': i01, 'mute': m01},
+                    {'channel': 1, 'gain': g11, 'inverted': i11, 'mute': m11},
+                ]
+            }
+        ]
+    }
+
+    return m
 
 
 # Getting AUDIO
@@ -201,6 +291,22 @@ def set_mute(mode):
     if res == 'None':
         res = 'done'
     return res
+
+
+def set_midside(mode):
+
+    modes = ('off', 'mid', 'side', 'solo_L', 'solo_R')
+
+    if mode in modes:
+        c = PC.get_config()
+        if mode == 'off':
+            mode = 'normal'
+        c["mixers"]["preamp_mixer"] = make_mixer(midside_mode = mode)
+        set_config_sync(c)
+        return 'done'
+
+    else:
+        return f'mode error must be in: {modes}'
 
 
 def set_volume(dB):
