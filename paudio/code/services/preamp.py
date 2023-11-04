@@ -180,6 +180,10 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         return set_loudness(mode=state["equal_loudness"], level=dB)
 
 
+    def set_balance(dB):
+        return DSP.set_balance(dB)
+
+
     def set_lu_offset(dB):
         return DSP.set_lu_offset(-dB)
 
@@ -223,13 +227,17 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         else:
             candidate[cmd] = dB
 
-        hr = - candidate["level"] + candidate["lu_offset"] - DRCS_GAIN
+        hr = - candidate["level"] + candidate["lu_offset"] \
+             - abs(candidate["balance"])/2.0 \
+             - DRCS_GAIN
 
-        if candidate["bass"] > 0   and not candidate["tone_defeat"]:
-            hr -= candidate["bass"]
+        if not candidate["tone_defeat"]:
 
-        if candidate["treble"] > 0 and not candidate["tone_defeat"]:
-            hr -= candidate["treble"]
+            if candidate["bass"] > 0:
+                hr -= candidate["bass"]
+
+            if candidate["treble"] > 0:
+                hr -= candidate["treble"]
 
         if candidate["target"] != 'none':
             tgain = x2float( candidate["target"][:4] )
@@ -249,6 +257,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
         match cmd:
             case 'level':        result = set_level(dB)
+            case 'balance':      result = set_balance(dB)
             case 'lu_offset':    result = set_lu_offset(dB)
             case 'bass':         result = set_bass(dB)
             case 'treble':       result = set_treble(dB)
@@ -365,7 +374,7 @@ def do(cmd, args, add):
                     state["xo_set"] = new
 
         # Level related commands
-        case 'level' | 'lu_offset' | 'bass' | 'treble':
+        case 'level' | 'lu_offset' | 'bass' | 'treble' | 'balance':
             dB = x2float(args)
             result = do_levels(cmd, dB=dB, add=add)
 
