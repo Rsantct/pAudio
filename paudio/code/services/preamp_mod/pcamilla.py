@@ -12,6 +12,14 @@ import  make_eq as mkeq
 from    common import *
 
 
+THIS_DIR = os.path.dirname(__file__)
+CFG_PATH = f'{THIS_DIR}/camilladsp.yml'
+CFG_INIT = None
+
+# The CamillaDSP connection
+PC = None
+
+
 # CamillaDSP needs a new FIR filename in order to
 # reload the convolver coeffs
 last_eq = 'A'
@@ -19,12 +27,9 @@ eq_flat_path = f'{EQFOLDER}/eq_flat.pcm'
 eq_A_path    = f'{EQFOLDER}/eq_A.pcm'
 eq_B_path    = f'{EQFOLDER}/eq_B.pcm'
 eq_link      = f'{EQFOLDER}/eq.pcm'
-sp.Popen(f'cp {eq_flat_path} {eq_A_path}'.split())
-sp.Popen(f'cp {eq_flat_path} {eq_B_path}'.split())
+sp.Popen(f'cp {eq_flat_path} {eq_A_path}', shell=True)
+sp.Popen(f'cp {eq_flat_path} {eq_B_path}', shell=True)
 
-THIS_DIR = os.path.dirname(__file__)
-PC       = None
-CFG_INIT = None
 
 
 # INTERNAL
@@ -91,7 +96,7 @@ def init_camilladsp(user_config, drc_sets=[]):
             return cfg
 
 
-        with open(f'{THIS_DIR}/camilladsp.yml', 'r') as f:
+        with open(CFG_PATH, 'r') as f:
             camilla_cfg = yaml.safe_load(f)
 
         # Audio Device
@@ -102,7 +107,7 @@ def init_camilladsp(user_config, drc_sets=[]):
         if drc_sets:
             camilla_cfg = update_drc_stuff(camilla_cfg)
 
-        with open(f'{THIS_DIR}/camilladsp.yml', 'w') as f:
+        with open(CFG_PATH, 'w') as f:
             yaml.safe_dump(camilla_cfg, f)
 
 
@@ -113,8 +118,7 @@ def init_camilladsp(user_config, drc_sets=[]):
 
     # Starting CamillaDSP with <camilladsp.yml> <muted>
     sp.call('pkill camilladsp'.split())
-    sp.Popen( f'camilladsp -m -a 127.0.0.1 -p 1234 '.split() + \
-             [f'{THIS_DIR}/camilladsp.yml'] )
+    sp.Popen( f'camilladsp -m -a 127.0.0.1 -p 1234 '.split() + [CFG_PATH] )
     sleep(1)
     PC = CamillaConnection("127.0.0.1", 1234)
     PC.connect()
@@ -149,13 +153,16 @@ def reload_eq():
 
 
     mkeq.make_eq()
-    eq_path     = f'../eq/eq_{last_eq}.pcm'
+    eq_path  = f'../eq/eq_{last_eq}.pcm'
     mkeq.save_eq_IR(eq_path)
 
     # For convenience, it will be copied to eq.pcm,
     # so that a viewer could display the current curve
-    sp.call(f'rm {eq_link}'.split())
-    sp.Popen(f'ln -s {eq_path} {eq_link}'.split())
+    try:
+        sp.call(f'rm {eq_link}'.split())
+        sp.Popen(f'ln -s {eq_path} {eq_link}'.split())
+    except Exception as e:
+        print(f'Problems making the symlink eq/eq.pcm: {str(e)}')
 
     cfg = PC.get_config()
     cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
@@ -185,7 +192,7 @@ def get_drc_gain():
     return json.dumps( PC.get_config()["filters"]["drc_gain"] )
 
 
-# Setting AUDIO (must return some string, usually 'done')
+# Setting AUDIO, allways **MUST** return some string, usually 'done'
 
 def set_mute(mode):
     if type(mode) != bool:
@@ -244,9 +251,10 @@ def set_loudness(mode, spl):
 
 
 def set_xo(xoID):
+    """ PENDING
+        xoID cannot be 'none'
+    """
     result = 'XO pending'
-    if xoID == 'none':
-        result = 'done'
     return result
 
 
