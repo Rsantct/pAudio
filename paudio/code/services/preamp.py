@@ -23,7 +23,7 @@ sys.path.append(f'{THIS_DIR}/preamp_mod')
 
 import  pcamilla as DSP
 
-# Constants
+
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 
 # Main variable (preamplifier state)
