@@ -1,24 +1,26 @@
 
-fs:     44100
+# Loudspeaker in use
+fs:             44100
+loudspeaker:    DynBM6
 
-# Auriculares en el MacBook
-#device: Auriculares externos
-# Altavoces del MacBook
-device: MacBook Pro (altavoces)
-# DAC USB Topping E30
-#device: E30 II
+# Audio device backend
+device: Auriculares externos       # Auriculares en el MacBook
+#device: MacBook Pro (altavoces)    # Altavoces del MacBook
+#device: E30 II                     # DAC USB Topping E30
 
-loudspeaker: DynBM6
-
+# On init preferences (low level settings)
+polarity:           ++
+solo:               off
 tones_span_dB:      6.0
 
-# On init preferences:
-solo:               off
+# On init preferences (audio settings)
 balance:            0.0
 target:             +3.0-1.0
 equal_loudness:     true
 lu_offset:          6.0
 drc_set:            equilateral
 
+
+# Inputs. By now only system-wide
 inputs:
     - system-wide
