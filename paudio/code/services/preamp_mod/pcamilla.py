@@ -131,9 +131,14 @@ def init_camilladsp(user_config):
     sp.call('pkill camilladsp'.split())
     sp.Popen( f'camilladsp -m -a 127.0.0.1 -p 1234 '.split() + [CFG_PATH] )
     sleep(1)
-    PC = CamillaConnection("127.0.0.1", 1234)
-    PC.connect()
 
+    try:
+        PC = CamillaConnection("127.0.0.1", 1234)
+        PC.connect()
+        return 'done'
+
+    except Exception as e:
+        return str(e)
 
 def set_config_sync(cfg):
     """ (i) When ordering set_config some time is needed to be running
