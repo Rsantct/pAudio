@@ -120,7 +120,7 @@ def init():
     # Preparing and running camillaDSP
     DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
 
-    # Resuming audio settings
+    # Resuming audio settings on the DSP
     resume_audio()
 
     # Saving state with user settings mods
