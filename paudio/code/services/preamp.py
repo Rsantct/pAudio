@@ -53,7 +53,7 @@ def init():
 
     # Optional user configs having precedence over the saved state:
     for prop in 'level', 'balance', 'bass', 'treble', 'lu_offset', \
-                'equal_loudness', 'target', 'drc_set':
+                'equal_loudness', 'target', 'drc_set', 'polarity':
 
         if prop in CONFIG:
 
@@ -87,6 +87,11 @@ def init():
 
     # Resuming audio settings
 
+    # XO is pending
+    #set_xo( state["xo_set"] )
+
+    set_polarity(state["polarity"])
+
     do_levels( 'level', dB=state["level"] )
 
     do_levels( 'balance', dB=state["balance"] )
@@ -114,10 +119,8 @@ def init():
 
     set_drc( state["drc_set"] )
 
-    # XO is pending
-    #set_xo( state["xo_set"] )
 
-    # Saving state with user settings
+    # Saving state with user settings mods
     save_json_file(state, STATE_PATH)
 
     return
@@ -138,6 +141,10 @@ def set_solo(mode):
     match mode:
         case 'L'|'R'|'off':     result = DSP.set_solo(mode)
     return result
+
+
+def set_polarity(mode):
+    return DSP.set_polarity(mode)
 
 
 def set_loudness(mode, level=state["level"]):
@@ -417,6 +424,13 @@ def do(cmd, args, add):
                 result = set_solo(new)
                 if result == 'done':
                     state["solo"] = new
+
+        case 'polarity':
+            new = args
+            if state["polarity"] != new:
+                result = set_polarity(new)
+                if result == 'done':
+                    state["polarity"] = new
 
         case 'mute':
             curr =  state['muted']
