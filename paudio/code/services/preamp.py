@@ -40,15 +40,13 @@ def init():
 
         do_levels( 'level', dB=state["level"] )
 
-        set_polarity(state["polarity"])
+        set_polarity( state["polarity"] )
 
-        set_solo(state["solo"])
+        set_solo( state["solo"] )
 
         do_levels( 'balance', dB=state["balance"] )
 
         set_mute( state["muted"] )
-
-        set_solo( state["solo"] )
 
         # tones can be clamped when ordered out of range
         res = do_levels( 'bass', dB=state["bass"] )
@@ -77,8 +75,9 @@ def init():
     DRC_SETS            = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
     CONFIG["drc_sets"]  = DRC_SETS
     # PENDING
-    #XO_SETS     = []
-    #CONFIG["xo_sets"] = XO_SETS
+    XO_SETS             = []
+    CONFIG["xo_sets"]   = XO_SETS
+
 
     # Default CONFIG values
     if not "tones_span_dB" in CONFIG:
@@ -87,9 +86,10 @@ def init():
     if not "drcs_offset" in CONFIG:
         CONFIG["drcs_offset"] = 0.0
 
+
     # Optional user configs having precedence over the saved state:
     for prop in 'level', 'balance', 'bass', 'treble', 'lu_offset', \
-                'equal_loudness', 'target', 'drc_set', 'polarity', 'solo':
+                'equal_loudness', 'target', 'drc_set':
 
         if prop in CONFIG:
 
@@ -112,8 +112,9 @@ def init():
                     state[prop] = CONFIG[prop]
 
 
-    # state FS is just informative
-    state["fs"] = CONFIG["fs"]
+    # Forced init settings
+    state["fs"]         = CONFIG["fs"]
+    state["polarity"]   = '++'
 
     # Preparing and running camillaDSP
     run_cdsp = DSP.init_camilladsp(user_config=CONFIG)
@@ -130,6 +131,7 @@ def init():
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check your config.{Fmt.END}')
         sys.exit()
 
+
 # Interface functions with the underlying modules
 
 def set_mute(mode):
@@ -141,9 +143,10 @@ def set_midside(mode):
 
 
 def set_solo(mode):
+    mode = mode.lower()
     result = 'needs L|R|off'
     match mode:
-        case 'L'|'R'|'off':     result = DSP.set_solo(mode)
+        case 'l'|'r'|'off':     result = DSP.set_solo(mode)
     return result
 
 
@@ -422,7 +425,7 @@ def do(cmd, args, add):
                     state["midside"] = new
 
         case 'solo':
-            new = args
+            new = args.lower()
             if state["solo"] != new:
                 result = set_solo(new)
                 if result == 'done':
