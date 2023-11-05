@@ -27,7 +27,7 @@ def do(cmd_phrase):
             pass
 
         case _:
-            # This should never occur because preamp is the default prefix
+            # This should never occur because preamp is the defaulted as prefix
             result = 'unknown service'
 
 
