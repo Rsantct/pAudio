@@ -32,14 +32,13 @@ DRC_SETS    = []
 # By now we assume a constant DRC gain for any provided drc.X.XXX FIR file
 DRCS_GAIN   = -6.0
 
-
 # Main variable (preamplifier state)
 state = read_json_file(STATE_PATH)
 
 # INIT
 def init():
 
-    global state, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
+    global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
     INPUTS      = CONFIG["inputs"]
     TARGET_SETS = get_target_sets(fs=CONFIG["fs"])
@@ -47,48 +46,65 @@ def init():
     XO_SETS     # PENDING
 
 
-    # State FS is just informative
-    state["fs"] = CONFIG["fs"]
+    # Default CONFIG values
+    if not "tones_span_dB" in CONFIG:
+        CONFIG["tones_span_dB"] = 6.0
+
 
     # Optional user configs having precedence over the saved state:
-    for prop in 'bass', 'treble', 'lu_offset', 'target', 'equal_loudness', 'drc_set':
+    for prop in 'level', 'balance', 'bass', 'treble', 'lu_offset', \
+                'equal_loudness', 'target', 'drc_set':
+
         if prop in CONFIG:
+
+            # Some validation
             match prop:
-                case 'drc_set':
-                    if CONFIG["drc_set"] in DRC_SETS + ['none']:
-                        state["drc_set"] = CONFIG["drc_set"]
-                    else:
-                        print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+
                 case 'target':
                     if CONFIG["target"] in TARGET_SETS + ['none']:
                         state["target"] = CONFIG["target"]
                     else:
                         print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
+
+                case 'drc_set':
+                    if CONFIG["drc_set"] in DRC_SETS + ['none']:
+                        state["drc_set"] = CONFIG["drc_set"]
+                    else:
+                        print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+
                 case _:
                     state[prop] = CONFIG[prop]
 
 
+    # state FS is just informative
+    state["fs"] = CONFIG["fs"]
+
+
     # Preparing and running camillaDSP
+
     DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
 
 
     # Resuming audio settings
 
     do_levels( 'level', dB=state["level"] )
+
+    do_levels( 'balance', dB=state["balance"] )
+
     set_mute( state["muted"] )
 
-    # Resuming audio settings can be user configured ones
+    set_solo( state["solo"] )
 
     # tones can be clamped when ordered out of range
-    result = do_levels( 'bass', dB=state["bass"] )
-    if result != 'done':
-        print(f'{Fmt.BOLD}{result}{Fmt.END}')
-        state["bass"] = x2float(result.split()[-1])
+    res = do_levels( 'bass', dB=state["bass"] )
+    if res != 'done':
+        print(f'{Fmt.BOLD}{res}{Fmt.END}')
+        state["bass"] = x2int(res.split()[-1])
 
-    result = do_levels( 'treble', dB=state["treble"] )
-    if result != 'done':
-        print(f'{Fmt.BOLD}{result}{Fmt.END}')
-        state["treble"] = x2float(result.split()[-1])
+    res = do_levels( 'treble', dB=state["treble"] )
+    if res != 'done':
+        print(f'{Fmt.BOLD}{res}{Fmt.END}')
+        state["treble"] = x2int(res.split()[-1])
 
     do_levels( 'lu_offset', dB=state["lu_offset"] )
 
@@ -115,6 +131,13 @@ def set_mute(mode):
 
 def set_midside(mode):
     return DSP.set_midside(mode)
+
+
+def set_solo(mode):
+    result = 'needs L|R|off'
+    match mode:
+        case 'L'|'R'|'off':     result = DSP.set_solo(mode)
+    return result
 
 
 def set_loudness(mode, level=state["level"]):
@@ -244,25 +267,54 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
             if tgain > 0:
                 hr -= tgain
 
-        return hr
+        return round(hr, 1)
 
 
     # getting absolute values from relative command
     if add:
         dB += state[cmd]
 
+    clamped = ''
+    tmax = CONFIG["tones_span_dB"]
+    if cmd in ('bass', 'treble'):
+        if abs(dB) > tmax:
+            dB = max(-tmax, min(+tmax, dB))
+            clamped = str(dB)
+
     hr = calc_headroom()
 
     if hr >= 0:
 
         match cmd:
-            case 'level':        result = set_level(dB)
-            case 'balance':      result = set_balance(dB)
-            case 'lu_offset':    result = set_lu_offset(dB)
-            case 'bass':         result = set_bass(dB)
-            case 'treble':       result = set_treble(dB)
-            case 'tone_defeat':  result = set_tone_defeat(tone_defeat)
-            case 'target':       result = set_target(tID)
+
+            case 'level':
+                result = set_level(dB)
+
+            case 'balance':
+                result = set_balance(dB)
+
+            case 'lu_offset':
+                result = set_lu_offset(dB)
+
+            case 'bass':
+                result = set_bass(dB)
+                if result != 'done':
+                    dB = x2int( result.split()[-1])
+                    clamped = str(dB)
+                    result = 'done'
+
+            case 'treble':
+                result = set_treble(dB)
+                if result != 'done':
+                    dB = x2int( result.split()[-1])
+                    clamped = str(dB)
+                    result = 'done'
+
+            case 'tone_defeat':
+                result = set_tone_defeat(tone_defeat)
+
+            case 'target':
+                result = set_target(tID)
 
     else:
         result = 'no headroom'
@@ -271,17 +323,17 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
         if cmd == 'target':
             state['target'] = tID
+
         elif cmd == 'tone_defeat':
             state["tone_defeat"] = tone_defeat
+
         else:
             state[cmd] = dB
+
         state["gain_headroom"] = hr
 
-    # tones can be clamped when ordered out of range
-    elif 'clamped' in result:
-
-        state[cmd] = x2float(result.split()[-1])
-        state["gain_headroom"] = hr
+    if clamped:
+        result =  f'clamped to {dB}'
 
     return result
 
@@ -336,12 +388,35 @@ def do(cmd, args, add):
                 if result == 'done':
                     state["input"] = new
 
+        case 'mono':
+            result = 'needs: on|off|toggle'
+            match args:
+                case 'on':
+                    new = 'mid'
+                    result = set_midside(new)
+                case 'off':
+                    new = 'off'
+                    result = set_midside(new)
+                case 'toggle':
+                    curr = state["midside"]
+                    new = {'off':'mid', 'mid':'off', 'side':'off'}[curr]
+                    result = set_midside(new)
+            if result == 'done':
+                state["midside"] = new
+
         case 'midside':
             new = args
             if state["midside"] != new:
                 result = set_midside(new)
                 if result == 'done':
                     state["midside"] = new
+
+        case 'solo':
+            new = args
+            if state["solo"] != new:
+                result = set_solo(new)
+                if result == 'done':
+                    state["solo"] = new
 
         case 'mute':
             curr =  state['muted']
@@ -375,8 +450,11 @@ def do(cmd, args, add):
 
         # Level related commands
         case 'level' | 'lu_offset' | 'bass' | 'treble' | 'balance':
-            dB = x2float(args)
-            result = do_levels(cmd, dB=dB, add=add)
+            try:
+                dB = x2float(args)
+                result = do_levels(cmd, dB=dB, add=add)
+            except:
+                result = 'needs a float value'
 
         case 'target':
             newt = args
