@@ -315,8 +315,8 @@ def set_midside(mode):
 def set_solo(mode):
     c = PC.get_config()
     match mode:
-        case 'L':       m = make_mixer(midside_mode='solo_L')
-        case 'R':       m = make_mixer(midside_mode='solo_R')
+        case 'l':       m = make_mixer(midside_mode='solo_L')
+        case 'r':       m = make_mixer(midside_mode='solo_R')
         case 'off':     m = make_mixer(midside_mode='normal')
         case _:         return 'solo mode must be L|R|off'
     c["mixers"]["preamp_mixer"] = m
