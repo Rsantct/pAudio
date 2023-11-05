@@ -309,6 +309,18 @@ def set_midside(mode):
         return f'mode error must be in: {modes}'
 
 
+def set_solo(mode):
+    c = PC.get_config()
+    match mode:
+        case 'L':       m = make_mixer(midside_mode='solo_L')
+        case 'R':       m = make_mixer(midside_mode='solo_R')
+        case 'off':     m = make_mixer(midside_mode='normal')
+        case _:         return 'solo mode must be L|R|off'
+    c["mixers"]["preamp_mixer"] = m
+    set_config_sync(c)
+    return "done"
+
+
 def set_volume(dB):
     res = str( PC.set_volume(dB) )
     if res == 'None':
@@ -328,9 +340,13 @@ def set_balance(dB):
 
 def set_treble(dB):
     result = 'done'
+    # curves are from -12...+12 in 1 dB step
     if abs(dB) > 12:
         dB = max(-12, min(+12, dB))
         result = f'treble clamped to {dB}'
+    if int(dB) != float(dB):
+        dB = int(round(float(dB)))
+        result = f'treble rounded to {dB}'
     mkeq.treble = float(dB)
     reload_eq()
     return result
@@ -338,9 +354,13 @@ def set_treble(dB):
 
 def set_bass(dB):
     result = 'done'
+    # curves are from -12...+12 in 1 dB step
     if abs(dB) > 12:
         dB = max(-12, min(+12, dB))
         result = f'bass clamped to {dB}'
+    if int(dB) != float(dB):
+        dB = int(round(float(dB)))
+        result = f'bass rounded to {dB}'
     mkeq.bass = float(dB)
     reload_eq()
     return result
