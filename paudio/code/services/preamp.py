@@ -117,16 +117,19 @@ def init():
     state["fs"] = CONFIG["fs"]
 
     # Preparing and running camillaDSP
-    DSP.init_camilladsp(user_config=CONFIG)
+    run_cdsp = DSP.init_camilladsp(user_config=CONFIG)
 
-    # Resuming audio settings on the DSP
-    resume_audio()
+    if run_cdsp == 'done':
 
-    # Saving state with user settings mods
-    save_json_file(state, STATE_PATH)
+        # Resuming audio settings on the DSP
+        resume_audio()
 
-    return
+        # Saving state with user settings mods
+        save_json_file(state, STATE_PATH)
 
+    else:
+        print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check your config.{Fmt.END}')
+        sys.exit()
 
 # Interface functions with the underlying modules
 
