@@ -25,10 +25,7 @@ import  pcamilla as DSP
 
 # Constants
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
-INPUTS      = []
-TARGET_SETS = []
-XO_SETS     = []
-DRC_SETS    = []
+
 # By now we assume a constant DRC gain for any provided drc.X.XXX FIR file
 DRCS_GAIN   = -6.0
 
@@ -78,11 +75,13 @@ def init():
 
     global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
-    INPUTS      = CONFIG["inputs"]
-    TARGET_SETS = get_target_sets(fs=CONFIG["fs"])
-    DRC_SETS    = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
-    XO_SETS     # PENDING
-
+    INPUTS              = CONFIG["inputs"]
+    TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
+    DRC_SETS            = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
+    CONFIG["drc_sets"]  = DRC_SETS
+    # PENDING
+    #XO_SETS     = []
+    #CONFIG["xo_sets"] = XO_SETS
 
     # Default CONFIG values
     if not "tones_span_dB" in CONFIG:
@@ -118,7 +117,7 @@ def init():
     state["fs"] = CONFIG["fs"]
 
     # Preparing and running camillaDSP
-    DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
+    DSP.init_camilladsp(user_config=CONFIG)
 
     # Resuming audio settings on the DSP
     resume_audio()
