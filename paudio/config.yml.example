@@ -3,7 +3,7 @@
 fs:             44100
 loudspeaker:    DynBM6
 
-# Audio device backend
+# Audio device
 device: Auriculares externos       # Auriculares en el MacBook
 #device: MacBook Pro (altavoces)    # Altavoces del MacBook
 #device: E30 II                     # DAC USB Topping E30
