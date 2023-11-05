@@ -3,8 +3,8 @@
 fs:             44100
 loudspeaker:    DynBM6
 
-# All provided loudspeaker/drc.X.XXX FIR files  must have a known
-# mid band unity gain offset, it is a design decision.
+# Any provided loudspeaker/drc.X.XXX FIR files must have a
+# known mid band unity gain offset, it is a design decision.
 drcs_offset:      -6.0
 
 
