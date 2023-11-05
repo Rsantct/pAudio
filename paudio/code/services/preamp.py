@@ -26,9 +26,6 @@ import  pcamilla as DSP
 # Constants
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 
-# By now we assume a constant DRC gain for any provided drc.X.XXX FIR file
-DRCS_GAIN   = -6.0
-
 # Main variable (preamplifier state)
 state = read_json_file(STATE_PATH)
 
@@ -87,6 +84,8 @@ def init():
     if not "tones_span_dB" in CONFIG:
         CONFIG["tones_span_dB"] = 6.0
 
+    if not "drcs_offset" in CONFIG:
+        CONFIG["drcs_offset"] = 0.0
 
     # Optional user configs having precedence over the saved state:
     for prop in 'level', 'balance', 'bass', 'treble', 'lu_offset', \
@@ -153,8 +152,7 @@ def set_polarity(mode):
 
 
 def set_loudness(mode, level=state["level"]):
-    spl = level + 83.0
-    result = DSP.set_loudness(mode, spl)
+    result = DSP.set_loudness(mode, level)
     return result
 
 
@@ -170,10 +168,10 @@ def set_drc(drcID):
         # camillaDSP has not gain setting for a FIR filter,
         # so it must be done outside
 
-        # Because DRCs are assumed to have negative gain, we first
-        # put down volume when drc='none'
+        # Because DRCs are supposed to have a non positive unity gain offset,
+        # we first put down volume when drc='none'
         if drcID == 'none':
-            DSP.set_drc_gain(DRCS_GAIN)
+            DSP.set_drc_gain(CONFIG["drcs_offset"])
 
         res = DSP.set_drc(drcID)
 
@@ -264,7 +262,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
         hr = - candidate["level"] + candidate["lu_offset"] \
              - abs(candidate["balance"])/2.0 \
-             - DRCS_GAIN
+             - CONFIG["drcs_offset"]
 
         if not candidate["tone_defeat"]:
 
