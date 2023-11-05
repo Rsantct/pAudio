@@ -10,10 +10,14 @@ device: MacBook Pro (altavoces)
 
 loudspeaker: DynBM6
 
+tones_span_dB:      6.0
+
 # On init preferences:
+solo:               off
 balance:            0.0
-target:             +3.0-1.5
+target:             +3.0-1.0
 equal_loudness:     true
+lu_offset:          6.0
 drc_set:            equilateral
 
 inputs:
