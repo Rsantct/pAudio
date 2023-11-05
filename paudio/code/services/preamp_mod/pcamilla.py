@@ -188,10 +188,6 @@ def make_mixer(midside_mode='normal'):
             side    (L-R)
             solo_L
             solo_R
-            ++
-            +-
-            -+
-            --
 
         A mixer layout:
 
@@ -318,6 +314,32 @@ def set_solo(mode):
         case _:         return 'solo mode must be L|R|off'
     c["mixers"]["preamp_mixer"] = m
     set_config_sync(c)
+    return "done"
+
+
+def set_polarity(mode):
+    """ Polarity applied to channels
+    """
+    if mode in ('normal','off'):    mode = '++'
+
+    modes = ('++', '--', '+-', '-+')
+
+    result = f'Polarity must be in: {modes}'
+
+    c = PC.get_config()
+
+    match mode:
+
+        case '++':      inv_L = False;   inv_R = False
+        case '--':      inv_L = True;    inv_R = True
+        case '+-':      inv_L = False;   inv_R = True
+        case '-+':      inv_L = True;    inv_R = False
+
+    c["filters"]["bal_pol_L"]["parameters"]["inverted"] = inv_L
+    c["filters"]["bal_pol_R"]["parameters"]["inverted"] = inv_R
+
+    set_config_sync(c)
+
     return "done"
 
 
