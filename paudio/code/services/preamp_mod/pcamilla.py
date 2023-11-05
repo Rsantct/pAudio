@@ -406,9 +406,10 @@ def set_target(tID):
         return f'target error: {str(e)}'
 
 
-def set_loudness(mode, spl):
+def set_loudness(mode, level):
     if type(mode) != bool:
         return 'must be True/False'
+    spl = level + mkeq.LOUDNESS_REF_LEVEL
     mkeq.spl            = spl
     mkeq.equal_loudness = mode
     reload_eq()
