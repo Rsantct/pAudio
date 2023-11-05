@@ -140,6 +140,7 @@ def init_camilladsp(user_config):
     except Exception as e:
         return str(e)
 
+
 def set_config_sync(cfg):
     """ (i) When ordering set_config some time is needed to be running
         This is a fake sync, but it works
