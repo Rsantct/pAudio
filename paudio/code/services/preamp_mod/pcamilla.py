@@ -20,11 +20,10 @@ from    common import *
 
 THIS_DIR = os.path.dirname(__file__)
 CFG_PATH = f'{THIS_DIR}/camilladsp.yml'
-CFG_INIT = {}
+
 
 # The CamillaDSP connection
 PC = None
-
 
 # CamillaDSP needs a new FIR filename in order to
 # reload the convolver coeffs
@@ -57,13 +56,13 @@ def make_pipeline_drc(cfg, drcID):
     return cfg
 
 
-def init_camilladsp(user_config, drc_sets=[]):
+def init_camilladsp(user_config):
     """ Updates camilladsp.yml with user configs,
         includes auto making the DRC yaml stuff,
         then runs the CamillaDSP process.
     """
 
-    def update_config():
+    def update_config_yml():
         """ Updates camilladsp.yml with user configs
         """
 
@@ -80,7 +79,7 @@ def init_camilladsp(user_config, drc_sets=[]):
 
             def make_drc_filters(cfg):
                 lspk = user_config["loudspeaker"]
-                for ID in drc_sets:
+                for ID in user_config["drc_sets"]:
                     for Ch in 'L', 'R':
                         # We prefer relative paths from where the main program is launched,
                         # i.e. the ~/paudio folder, so that the yaml file does not have private paths.
@@ -94,10 +93,13 @@ def init_camilladsp(user_config, drc_sets=[]):
                         f["parameters"]["type"] = 'Raw'
                 return cfg
 
+            # drc filters
             clear_drc_filters(cfg)
             make_drc_filters(cfg)
+
+            # The initial pipeline points to the FIRST drc_set
             clear_pipeline_drc(cfg)
-            make_pipeline_drc(cfg, drc_sets[0])
+            make_pipeline_drc(cfg, user_config["drc_sets"][0])
 
             return cfg
 
@@ -113,17 +115,17 @@ def init_camilladsp(user_config, drc_sets=[]):
         camilla_cfg["mixers"]["preamp_mixer"] = make_mixer(midside_mode='normal')
 
         # DRCs
-        if drc_sets:
+        if user_config["drc_sets"]:
             camilla_cfg = update_drc_stuff(camilla_cfg)
 
         with open(CFG_PATH, 'w') as f:
             yaml.safe_dump(camilla_cfg, f)
 
 
-    global PC, CFG_INIT
+    global PC
 
     # Updating user configs ---> camilladsp.yml
-    update_config()
+    update_config_yml()
 
     # Starting CamillaDSP with <camilladsp.yml> <muted>
     sp.call('pkill camilladsp'.split())
@@ -131,9 +133,6 @@ def init_camilladsp(user_config, drc_sets=[]):
     sleep(1)
     PC = CamillaConnection("127.0.0.1", 1234)
     PC.connect()
-
-    # Initial config snapshot
-    CFG_INIT = PC.get_config()
 
 
 def set_config_sync(cfg):
@@ -260,7 +259,9 @@ def make_mixer(midside_mode='normal'):
 # Getting AUDIO
 
 def get_drc_sets():
-    filters = CFG_INIT["filters"]
+    """ Retrieves thr drc.X.XXX filters in camillaDSP configuration
+    """
+    filters = PC.get_config()["filters"]
     drc_sets = []
     for f in filters:
         if f.startswith('drc.'):
