@@ -35,8 +35,46 @@ DRCS_GAIN   = -6.0
 # Main variable (preamplifier state)
 state = read_json_file(STATE_PATH)
 
+
 # INIT
 def init():
+
+    def resume_audio():
+
+        # XO is pending
+        #set_xo( state["xo_set"] )
+
+        do_levels( 'level', dB=state["level"] )
+
+        set_polarity(state["polarity"])
+
+        set_solo(state["solo"])
+
+        do_levels( 'balance', dB=state["balance"] )
+
+        set_mute( state["muted"] )
+
+        set_solo( state["solo"] )
+
+        # tones can be clamped when ordered out of range
+        res = do_levels( 'bass', dB=state["bass"] )
+        if res != 'done':
+            print(f'{Fmt.BOLD}{res}{Fmt.END}')
+            state["bass"] = x2int(res.split()[-1])
+
+        res = do_levels( 'treble', dB=state["treble"] )
+        if res != 'done':
+            print(f'{Fmt.BOLD}{res}{Fmt.END}')
+            state["treble"] = x2int(res.split()[-1])
+
+        do_levels( 'lu_offset', dB=state["lu_offset"] )
+
+        do_levels( 'target', tID=state["target"] )
+
+        set_loudness( mode=state["equal_loudness"] )
+
+        set_drc( state["drc_set"] )
+
 
     global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
@@ -53,7 +91,7 @@ def init():
 
     # Optional user configs having precedence over the saved state:
     for prop in 'level', 'balance', 'bass', 'treble', 'lu_offset', \
-                'equal_loudness', 'target', 'drc_set', 'polarity':
+                'equal_loudness', 'target', 'drc_set', 'polarity', 'solo':
 
         if prop in CONFIG:
 
@@ -79,46 +117,11 @@ def init():
     # state FS is just informative
     state["fs"] = CONFIG["fs"]
 
-
     # Preparing and running camillaDSP
-
     DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
 
-
     # Resuming audio settings
-
-    # XO is pending
-    #set_xo( state["xo_set"] )
-
-    set_polarity(state["polarity"])
-
-    do_levels( 'level', dB=state["level"] )
-
-    do_levels( 'balance', dB=state["balance"] )
-
-    set_mute( state["muted"] )
-
-    set_solo( state["solo"] )
-
-    # tones can be clamped when ordered out of range
-    res = do_levels( 'bass', dB=state["bass"] )
-    if res != 'done':
-        print(f'{Fmt.BOLD}{res}{Fmt.END}')
-        state["bass"] = x2int(res.split()[-1])
-
-    res = do_levels( 'treble', dB=state["treble"] )
-    if res != 'done':
-        print(f'{Fmt.BOLD}{res}{Fmt.END}')
-        state["treble"] = x2int(res.split()[-1])
-
-    do_levels( 'lu_offset', dB=state["lu_offset"] )
-
-    do_levels( 'target', tID=state["target"] )
-
-    set_loudness( mode=state["equal_loudness"] )
-
-    set_drc( state["drc_set"] )
-
+    resume_audio()
 
     # Saving state with user settings mods
     save_json_file(state, STATE_PATH)
