@@ -3,10 +3,16 @@
 fs:             44100
 loudspeaker:    DynBM6
 
+# All provided loudspeaker/drc.X.XXX FIR files  must have a known
+# mid band unity gain offset, it is a design decision.
+drcs_offset:      -6.0
+
+
 # Audio device
 device: Auriculares externos       # Auriculares en el MacBook
 #device: MacBook Pro (altavoces)    # Altavoces del MacBook
 #device: E30 II                     # DAC USB Topping E30
+
 
 # On init preferences (low level settings)
 polarity:           ++
