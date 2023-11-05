@@ -77,13 +77,14 @@ def init_camilladsp(user_config):
                     del cfg["filters"][k]
                 return cfg
 
+
             def make_drc_filters(cfg):
                 lspk = user_config["loudspeaker"]
                 for ID in user_config["drc_sets"]:
                     for Ch in 'L', 'R':
                         # We prefer relative paths from where the main program is launched,
                         # i.e. the ~/paudio folder, so that the yaml file does not have private paths.
-                        fir_path = f'../loudspeakers/{lspk}/drc.{Ch}.{ID}.pcm'
+                        fir_path = f'{LSPKSFOLDER}/{lspk}/drc.{Ch}.{ID}.pcm'
                         cfg["filters"][f'drc.{Ch}.{ID}'] = {}
                         f = cfg["filters"][f'drc.{Ch}.{ID}']
                         f["type"] = 'Conv'
@@ -92,6 +93,14 @@ def init_camilladsp(user_config):
                         f["parameters"]["format"] = 'FLOAT32LE'
                         f["parameters"]["type"] = 'Raw'
                 return cfg
+
+
+            def update_eq_filter(cfg):
+                """ with proper path """
+                cfg["filters"]["eq"]["parameters"]["filename"] = f'{EQFOLDER}/eq_flat.pcm'
+
+            # eq filter
+            update_eq_filter(cfg)
 
             # drc filters
             clear_drc_filters(cfg)
@@ -129,7 +138,9 @@ def init_camilladsp(user_config):
 
     # Starting CamillaDSP with <camilladsp.yml> <muted>
     sp.call('pkill camilladsp'.split())
-    sp.Popen( f'camilladsp -m -a 127.0.0.1 -p 1234 '.split() + [CFG_PATH] )
+    cdsp_cmd = f'camilladsp -m -a 127.0.0.1 -p 1234'
+    cdsp_cmd += f' "{CFG_PATH}"'
+    sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
     try:
@@ -166,7 +177,7 @@ def reload_eq():
 
 
     mkeq.make_eq()
-    eq_path  = f'../eq/eq_{last_eq}.pcm'
+    eq_path  = f'{EQFOLDER}/eq_{last_eq}.pcm'
     mkeq.save_eq_IR(eq_path)
 
     # For convenience, it will be copied to eq.pcm,
