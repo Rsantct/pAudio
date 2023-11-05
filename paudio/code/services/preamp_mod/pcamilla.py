@@ -95,13 +95,6 @@ def init_camilladsp(user_config):
                 return cfg
 
 
-            def update_eq_filter(cfg):
-                """ with proper path """
-                cfg["filters"]["eq"]["parameters"]["filename"] = f'{EQFOLDER}/eq_flat.pcm'
-
-            # eq filter
-            update_eq_filter(cfg)
-
             # drc filters
             clear_drc_filters(cfg)
             make_drc_filters(cfg)
@@ -113,6 +106,55 @@ def init_camilladsp(user_config):
             return cfg
 
 
+        def update_eq_filter(cfg):
+            """ with proper path """
+            cfg["filters"]["eq"]["parameters"]["filename"] = f'{EQFOLDER}/eq_flat.pcm'
+
+
+        def update_dither(cfg):
+
+            def check_bit_depth():
+                if not( type(bits) == int and bits in range(2, 33)):
+                    print(f'{Fmt.BOLD}BAD pbk_device_bit_depth: {bits}{Fmt.END}')
+                    result = False
+                elif bits not in (16, 24):
+                    print(f'{Fmt.BOLD}Using rare dither bit depth: {bits}{Fmt.END}')
+                    result = True
+                else:
+                    print(f'{Fmt.BOLD}{Fmt.BLUE}Using dither bit depth: {bits}{Fmt.END}')
+                    result = True
+                return result
+
+            def make_dither_filter(d_type, bits):
+                cfg["filters"]["dither"] = {
+                    'type': 'Dither',
+                    'parameters': {
+                        'type': d_type, 'bits': bits
+                    }
+                }
+
+
+            def add_dither_to_pipeline():
+                cfg["pipeline"][1]["names"].append('dither')
+                cfg["pipeline"][2]["names"].append('dither')
+
+
+            bits = 0
+            fs   = user_config["fs"]
+
+            if "pbk_device_bit_depth" in user_config and user_config["pbk_device_bit_depth"]:
+                bits = user_config["pbk_device_bit_depth"]
+
+            if check_bit_depth():
+                match fs:
+                    case 44100:     d_type = 'Shibata441'
+                    case 48000:     d_type = 'Shibata48'
+                    case _:         d_type = 'Simple'
+                make_dither_filter(d_type, bits)
+                add_dither_to_pipeline()
+
+
+
         with open(CFG_PATH, 'r') as f:
             camilla_cfg = yaml.safe_load(f)
 
@@ -120,8 +162,14 @@ def init_camilladsp(user_config):
         camilla_cfg["devices"]["playback"]["device"] = user_config["device"]
         camilla_cfg["devices"]["samplerate"]         = user_config["fs"]
 
+        # Dither
+        update_dither(camilla_cfg)
+
         # The preamp_mixer
         camilla_cfg["mixers"]["preamp_mixer"] = make_mixer(midside_mode='normal')
+
+        # eq filter
+        update_eq_filter(camilla_cfg)
 
         # DRCs
         if user_config["drc_sets"]:
@@ -272,6 +320,9 @@ def make_mixer(midside_mode='normal'):
 
     return m
 
+
+def add_dither():
+    pass
 
 # Getting AUDIO
 
