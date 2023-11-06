@@ -1,16 +1,18 @@
 devices:
+  samplerate: 44100
+  chunksize: 1024
+  silence_threshold: -80
+  silence_timeout: 30
   capture:
     channels: 2
     device: BlackHole 2ch
     format: FLOAT32LE
     type: CoreAudio
-  chunksize: 1024
   playback:
     channels: 2
     device: MacBook Pro (altavoces)
     format: FLOAT32LE
     type: CoreAudio
-  samplerate: 44100
 filters:
   bal_pol_L:
     parameters:
