@@ -1,32 +1,39 @@
 
+# Audio device
+fs:     44100
+format: FLOAT32LE
+device: Auriculares externos        # Auriculares en el MacBook
+#device: MacBook Pro (altavoces)     # Altavoces del MacBook
+#device: E30 II                      # DAC USB Topping E30
+
+
 # Loudspeaker in use
-fs:             44100
 loudspeaker:    DynBM6
+
 
 # Any provided loudspeaker/drc.X.XXX FIR files must have a
 # known mid band unity gain offset, it is a design decision.
 drcs_offset:      -6.0
 
 
-# Audio device
-device: Auriculares externos       # Auriculares en el MacBook
-#device: MacBook Pro (altavoces)    # Altavoces del MacBook
-#device: E30 II                     # DAC USB Topping E30
-
+# https://github.com/HEnquist/camilladsp#dither
+# (use void or 0 to disable output dithering)
+dither_bits:        16
 
 # On init preferences (low level settings)
-polarity:           ++
-solo:               off
 tones_span_dB:      6.0
 
 # On init preferences (audio settings)
+level:              -20.0
 balance:            0.0
 target:             +3.0-1.0
 equal_loudness:     true
-lu_offset:          6.0
-drc_set:            equilateral
+lu_offset:          3.0
+drc_set:            SW
 
 
 # Inputs. By now only system-wide
 inputs:
     - system-wide
+
+
