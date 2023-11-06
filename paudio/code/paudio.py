@@ -20,19 +20,26 @@ def do(cmd_phrase):
         case 'preamp':
             result = preamp.do(cmd, args, add)
 
+        # PENDING
         case 'aux':
-            # PENDING
-            if cmd == 'get_web_config':
-                result = json.dumps({'main_selector':'inputs'})
 
+            match cmd:
+
+                case 'get_web_config':
+                    result = json.dumps({   'main_selector':        'inputs',
+                                            'LU_monitor_enabled':   True
+                                        })
+
+                case 'get_lu_monitor':
+                    result = json.dumps(read_json_file(LDMON_PATH))
+
+        # PENDING
         case 'players':
-            # PENDING
             pass
 
         case _:
             # This should never occur because preamp is the defaulted as prefix
             result = 'unknown service'
-
 
     return result
 
