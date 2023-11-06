@@ -129,14 +129,14 @@ def init_camilladsp(user_config):
             if  pbk_dev["type"] == "CoreAudio":
 
                 if "exclusive" in pbk_dev and pbk_dev["exclusive"]:
-                    print(f'{Fmt.BOLD}COREAUDIO using {pbk_dev["device"]} in HOG mode (exclusive access){Fmt.END}')
+                    print(f'{Fmt.BOLD}COREAUDIO using "{pbk_dev["device"]}" in HOG mode (EXCLUSIVE ACCESS){Fmt.END}')
 
                 # Default SYSTEM_Playback --> CamillaDS_capture
-                print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Devide: "{cap_dev["device"]}"{Fmt.END}')
+                print(f'{Fmt.BOLD}Setting MacOS Playback Devide: "{cap_dev["device"]}"{Fmt.END}')
                 # (i) NEEDS brew install switchaudiosource-osx
                 sp.call(f'SwitchAudioSource -s \"{cap_dev["device"]}\"', shell=True)
 
-                print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to MAX on "{cap_dev["device"]}"{Fmt.END}')
+                print(f'{Fmt.BOLD}Setting VOLUME to MAX on "{cap_dev["device"]}"{Fmt.END}')
                 sleep(0.5)
                 sp.call(f'osascript -e "set volume output volume 100"', shell=True)
 
