@@ -17,6 +17,9 @@ CODEFOLDER      = f'{MAINFOLDER}/code'
 CONFIG_PATH     = f'{MAINFOLDER}/config.yml'
 DSP_LOGFOLDER   = f'{MAINFOLDER}/log'
 
+LDCTRL_PATH     = f'{MAINFOLDER}/.loudness_control'
+LDMON_PATH      = f'{MAINFOLDER}/.loudness_monitor'
+
 try:
     os.mkdir(DSP_LOGFOLDER)
 except:
