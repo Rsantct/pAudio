@@ -196,7 +196,7 @@ if __name__ == '__main__':
     # M_threshold = 10.0   To avoid stress saving values to disk, because this
     #                      measure only serves as a rough signal detector.
     # I_threshold = 1.0    LU-[I]ntegrated values are relatively stable.
-    meter = LU_meter( device='pre_in_loop', display=False,
+    meter = LU_meter( device='BlackHole 2ch', display=False,
                       M_threshold=10.0,
                       I_threshold=1.0 )
     meter.start()
