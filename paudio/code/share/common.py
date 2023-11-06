@@ -15,7 +15,14 @@ LSPKSFOLDER     = f'{MAINFOLDER}/loudspeakers'
 EQFOLDER        = f'{MAINFOLDER}/eq'
 CODEFOLDER      = f'{MAINFOLDER}/code'
 CONFIG_PATH     = f'{MAINFOLDER}/config.yml'
-CONFIG          = {}
+DSP_LOGFOLDER   = f'{MAINFOLDER}/log'
+
+try:
+    os.mkdir(DSP_LOGFOLDER)
+except:
+    pass
+
+CONFIG = {}
 
 
 def init():
