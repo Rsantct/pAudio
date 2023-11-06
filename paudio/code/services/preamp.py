@@ -23,6 +23,7 @@ sys.path.append(f'{THIS_DIR}/preamp_mod')
 
 import  pcamilla as DSP
 
+DSP.LOG_TO_FILE = True
 
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 
@@ -128,7 +129,7 @@ def init():
         save_json_file(state, STATE_PATH)
 
     else:
-        print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check your config.{Fmt.END}')
+        print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check \'config.yml\' and the log/ folder.{Fmt.END}')
         sys.exit()
 
 
