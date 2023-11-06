@@ -29,6 +29,15 @@ def init():
         print('(i) Default to fs=44100')
 
 
+def get_bit_depth(fmt):
+    """ retrieves the bit depth from a given audio sample format,
+        e.g. FLOAT32LE, S24LE, ...
+    """
+    digits = [x for x in fmt if x.isdigit()]
+    bd = ''.join(digits)
+    return bd
+
+
 def read_json_file(fpath):
     with open(fpath, 'r') as f:
         d = json.loads(f.read())
