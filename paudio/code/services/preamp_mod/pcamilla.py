@@ -21,6 +21,9 @@ from    common import *
 THIS_DIR = os.path.dirname(__file__)
 CFG_PATH = f'{THIS_DIR}/camilladsp.yml'
 
+# Can be disabled for terminal debug
+LOG_TO_FILE = True
+LOG_PATH    = f'{DSP_LOGFOLDER}/camilladsp.log'
 
 # The CamillaDSP connection
 PC = None
@@ -192,6 +195,8 @@ def init_camilladsp(user_config):
     sp.call('pkill camilladsp'.split())
     cdsp_cmd = f'camilladsp -m -a 127.0.0.1 -p 1234'
     cdsp_cmd += f' "{CFG_PATH}"'
+    if LOG_TO_FILE:
+        cdsp_cmd += f' 1>"{LOG_PATH}" 2>&1'
     sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
