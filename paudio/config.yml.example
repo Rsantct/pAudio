@@ -1,24 +1,19 @@
 
 # Audio device
-fs:     44100
-format: FLOAT32LE
+fs:             44100
+format:         FLOAT32LE
+dither_bits:    16                  # void or 0 to disable output dithering
 device: Auriculares externos        # Auriculares en el MacBook
 #device: MacBook Pro (altavoces)     # Altavoces del MacBook
 #device: E30 II                      # DAC USB Topping E30
 
-
 # Loudspeaker in use
 loudspeaker:    DynBM6
-
 
 # Any provided loudspeaker/drc.X.XXX FIR files must have a
 # known mid band unity gain offset, it is a design decision.
 drcs_offset:      -6.0
 
-
-# https://github.com/HEnquist/camilladsp#dither
-# (use void or 0 to disable output dithering)
-dither_bits:        16
 
 # On init preferences (low level settings)
 tones_span_dB:      6.0
