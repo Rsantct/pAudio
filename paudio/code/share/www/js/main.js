@@ -372,7 +372,7 @@ function init(){
 
     //fill_in_playlists_selector();
 
-    //show_hide_LU_frame();
+    show_hide_LU_frame();
 
     // SCHEDULES THE PAGE_UPDATE (only runtime variable items):
     // Notice: the function call inside setInterval uses NO brackets)
