@@ -122,12 +122,14 @@ def init_camilladsp(user_config):
                 append_item_to_pipeline(cfg, item='dither')
 
 
-        def check_pbk_dev(pd):
+        def check_pbk_dev():
+            """ Currently only check things for CoreAudio
+            """
 
-            if  pd["type"] == "CoreAudio":
+            if  pbk_dev["type"] == "CoreAudio":
 
-                if "exclusive" in pd and pd["exclusive"]:
-                    print(f'{Fmt.BOLD}COREAUDIO using {pd["device"]} in HOG mode (exclusive access){Fmt.END}')
+                if "exclusive" in pbk_dev and pbk_dev["exclusive"]:
+                    print(f'{Fmt.BOLD}COREAUDIO using {pbk_dev["device"]} in HOG mode (exclusive access){Fmt.END}')
 
                 # Default SYSTEM_Playback --> CamillaDS_capture
                 print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Devide: "{cap_dev["device"]}"{Fmt.END}')
@@ -143,7 +145,13 @@ def init_camilladsp(user_config):
             camilla_cfg = yaml.safe_load(f)
 
         # Audio Device
+        # Updating with pAudio config
         camilla_cfg["devices"]["samplerate"] = user_config["fs"]
+
+        if camilla_cfg["devices"]["samplerate"] <= 48000:
+            camilla_cfg["devices"]["chunksize"] = 1024
+        else:
+            camilla_cfg["devices"]["chunksize"] = 2048
 
         cap_dev = camilla_cfg["devices"]["capture"]
         pbk_dev = camilla_cfg["devices"]["playback"]
@@ -151,7 +159,7 @@ def init_camilladsp(user_config):
         pbk_dev["device"] = user_config["device"]
         pbk_dev["format"] = user_config["format"]
 
-        check_pbk_dev(camilla_cfg["devices"]["playback"])
+        check_pbk_dev()
 
 
         # Dither
