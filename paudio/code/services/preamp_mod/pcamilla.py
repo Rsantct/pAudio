@@ -122,27 +122,55 @@ def init_camilladsp(user_config):
                 append_item_to_pipeline(cfg, item='dither')
 
 
+        def check_pbk_dev(pd):
+
+            if  pd["type"] == "CoreAudio":
+
+                if "exclusive" in pd and pd["exclusive"]:
+                    print(f'{Fmt.BOLD}COREAUDIO using {pd["device"]} in HOG mode (exclusive access){Fmt.END}')
+
+                # Default SYSTEM_Playback --> CamillaDS_capture
+                print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Devide: "{cap_dev["device"]}"{Fmt.END}')
+                # (i) NEEDS brew install switchaudiosource-osx
+                sp.call(f'SwitchAudioSource -s \"{cap_dev["device"]}\"', shell=True)
+
+                print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to MAX on "{cap_dev["device"]}"{Fmt.END}')
+                sleep(0.5)
+                sp.call(f'osascript -e "set volume output volume 100"', shell=True)
+
+
         with open(CFG_PATH, 'r') as f:
             camilla_cfg = yaml.safe_load(f)
 
         # Audio Device
-        camilla_cfg["devices"]["playback"]["device"] = user_config["device"]
-        camilla_cfg["devices"]["playback"]["format"] = user_config["format"]
-        camilla_cfg["devices"]["samplerate"]         = user_config["fs"]
+        camilla_cfg["devices"]["samplerate"] = user_config["fs"]
+
+        cap_dev = camilla_cfg["devices"]["capture"]
+        pbk_dev = camilla_cfg["devices"]["playback"]
+
+        pbk_dev["device"] = user_config["device"]
+        pbk_dev["format"] = user_config["format"]
+
+        check_pbk_dev(camilla_cfg["devices"]["playback"])
+
 
         # Dither
         update_dither(camilla_cfg)
 
+
         # The preamp_mixer
         camilla_cfg["mixers"]["preamp_mixer"] = make_mixer(midside_mode='normal')
 
+
         # The eq filter
         update_eq_filter(camilla_cfg)
+
 
         # The DRCs
         if user_config["drc_sets"]:
             update_drc_stuff(camilla_cfg)
 
+        # Saving to YAML file to run CamillaDSP
         with open(CFG_PATH, 'w') as f:
             yaml.safe_dump(camilla_cfg, f)
 
