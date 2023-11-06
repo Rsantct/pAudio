@@ -15,7 +15,7 @@ import  json
 from    time    import sleep
 
 # This import works because the main program server.py
-# is located under the code/share folder
+# is located under the same folder then the commom module
 from    common  import *
 
 THIS_DIR = os.path.dirname(__file__)
