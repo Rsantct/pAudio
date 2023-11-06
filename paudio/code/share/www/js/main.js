@@ -777,7 +777,7 @@ function page_update() {
     //
     //graphs_update();
     //
-    //manage_main_cside();
+    manage_main_cside();
     //
     //show_peq_info();
 

@@ -4,6 +4,9 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 from  services import preamp
+
+# This import works because the main program server.py
+# is located under the same folder then the commom module
 from  common import *
 
 
@@ -27,7 +30,7 @@ def do(cmd_phrase):
             pass
 
         case _:
-            # This should never occur because preamp is the default prefix
+            # This should never occur because preamp is the defaulted as prefix
             result = 'unknown service'
 
 

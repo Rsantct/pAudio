@@ -2,6 +2,15 @@
 
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
+"""
+    Composes an EQ curve by combining bass, treble,
+    loudness_compensation and target curves.
+
+    usage:  Simply adjust variables below, then call make_eq() to
+            have the 'eq' variable
+
+            To save the composed eq to a FIR file, use save_eq_IR()
+"""
 
 import  numpy as np
 
@@ -69,7 +78,7 @@ def get_loudness(curve_index):
 
 
 def make_eq():
-    """ Composing EQ
+    """ Composing the EQ
     """
 
     global eq

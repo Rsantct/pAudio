@@ -17,6 +17,10 @@ PC = CamillaConnection("127.0.0.1", 1234)
 def print_things():
 
     vol         = PC.get_volume()
+    gainL       = PC.get_config()["filters"]["bal_pol_L"]["parameters"]["gain"]
+    gainR       = PC.get_config()["filters"]["bal_pol_R"]["parameters"]["gain"]
+    balance     = - gainL + gainR
+
     drc_gain    = PC.get_config()["filters"]["drc_gain"]["parameters"]["gain"]
     lu_offset   = PC.get_config()["filters"]["lu_offset"]["parameters"]["gain"]
     muted       = PC.get_mute()
@@ -25,11 +29,12 @@ def print_things():
     ppl_L = ppl[1]["names"]
     ppl_R = ppl[2]["names"]
 
-    print('vol:', vol, '(muted)' if muted else '')
+    print('vol:', vol, 'bal:', balance, '(muted)' if muted else '')
     print('drc gain:', drc_gain)
     print('lu_offset:', lu_offset)
-    print(ppl_L)
-    print(ppl_R)
+    print('pipeline:')
+    print('L:', ppl_L)
+    print('R:', ppl_R)
 
 
 def clear():

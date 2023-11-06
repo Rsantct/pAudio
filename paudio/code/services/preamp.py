@@ -14,6 +14,8 @@ import  subprocess as sp
 import  json
 from    time    import sleep
 
+# This import works because the main program server.py
+# is located under the same folder then the commom module
 from    common  import *
 
 THIS_DIR = os.path.dirname(__file__)
@@ -21,123 +23,188 @@ sys.path.append(f'{THIS_DIR}/preamp_mod')
 
 import  pcamilla as DSP
 
-# Constants
-STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
-INPUTS      = []
-TARGET_SETS = []
-XO_SETS     = []
-DRC_SETS    = []
-# By now we assume a constant DRC gain for any provided drc.X.XXX FIR file
-DRCS_GAIN   = -6.0
 
+STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 
 # Main variable (preamplifier state)
 state = read_json_file(STATE_PATH)
 
 
+# INIT
 def init():
 
-    global state, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
+    def resume_audio():
 
-    INPUTS      = CONFIG["inputs"]
-    TARGET_SETS = get_target_sets(fs=CONFIG["fs"])
-    DRC_SETS    = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
-    XO_SETS     # PENDING
+        # XO is pending
+        #set_xo( state["xo_set"] )
+
+        do_levels( 'level', dB=state["level"] )
+
+        set_polarity( state["polarity"] )
+
+        set_solo( state["solo"] )
+
+        do_levels( 'balance', dB=state["balance"] )
+
+        set_mute( state["muted"] )
+
+        # tones can be clamped when ordered out of range
+        res = do_levels( 'bass', dB=state["bass"] )
+        if res != 'done':
+            print(f'{Fmt.BOLD}{res}{Fmt.END}')
+            state["bass"] = x2int(res.split()[-1])
+
+        res = do_levels( 'treble', dB=state["treble"] )
+        if res != 'done':
+            print(f'{Fmt.BOLD}{res}{Fmt.END}')
+            state["treble"] = x2int(res.split()[-1])
+
+        do_levels( 'lu_offset', dB=state["lu_offset"] )
+
+        do_levels( 'target', tID=state["target"] )
+
+        set_loudness( mode=state["equal_loudness"] )
+
+        set_drc( state["drc_set"] )
 
 
-    # State FS is just informative
-    state["fs"] = CONFIG["fs"]
+    global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
+
+    INPUTS              = CONFIG["inputs"]
+    TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
+    DRC_SETS            = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
+    CONFIG["drc_sets"]  = DRC_SETS
+    # PENDING
+    XO_SETS             = []
+    CONFIG["xo_sets"]   = XO_SETS
+
+
+    # Default CONFIG values
+    if not "tones_span_dB" in CONFIG:
+        CONFIG["tones_span_dB"] = 6.0
+
+    if not "drcs_offset" in CONFIG:
+        CONFIG["drcs_offset"] = 0.0
+
 
     # Optional user configs having precedence over the saved state:
-    for prop in 'bass', 'treble', 'lu_offset', 'target', 'equal_loudness', 'drc_set':
+    for prop in 'level', 'balance', 'bass', 'treble', 'lu_offset', \
+                'equal_loudness', 'target', 'drc_set':
+
         if prop in CONFIG:
+
+            # Some validation
             match prop:
-                case 'drc_set':
-                    if CONFIG["drc_set"] in DRC_SETS + ['none']:
-                        state["drc_set"] = CONFIG["drc_set"]
-                    else:
-                        print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+
                 case 'target':
                     if CONFIG["target"] in TARGET_SETS + ['none']:
                         state["target"] = CONFIG["target"]
                     else:
                         print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
+
+                case 'drc_set':
+                    if CONFIG["drc_set"] in DRC_SETS + ['none']:
+                        state["drc_set"] = CONFIG["drc_set"]
+                    else:
+                        print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+
                 case _:
                     state[prop] = CONFIG[prop]
 
 
+    # Forced init settings
+    state["fs"]         = CONFIG["fs"]
+    state["polarity"]   = '++'
+
     # Preparing and running camillaDSP
-    DSP.init_camilladsp(user_config=CONFIG, drc_sets=DRC_SETS)
+    run_cdsp = DSP.init_camilladsp(user_config=CONFIG)
+
+    if run_cdsp == 'done':
+
+        # Resuming audio settings on the DSP
+        resume_audio()
+
+        # Saving state with user settings mods
+        save_json_file(state, STATE_PATH)
+
+    else:
+        print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check your config.{Fmt.END}')
+        sys.exit()
 
 
-    # Resuming audio settings
-
-    do_levels( 'level', dB=state["level"] )
-    set_mute( state["muted"] )
-
-    # Resuming audio settings can be user configured ones
-
-    # tones can be clamped when ordered out of range
-    result = do_levels( 'bass', dB=state["bass"] )
-    if result != 'done':
-        print(f'{Fmt.BOLD}{result}{Fmt.END}')
-        state["bass"] = x2float(result.split()[-1])
-
-    result = do_levels( 'treble', dB=state["treble"] )
-    if result != 'done':
-        print(f'{Fmt.BOLD}{result}{Fmt.END}')
-        state["treble"] = x2float(result.split()[-1])
-
-    do_levels( 'lu_offset', dB=state["lu_offset"] )
-
-    do_levels( 'target', tID=state["target"] )
-
-    set_loudness( mode=state["equal_loudness"] )
-
-    set_drc( state["drc_set"] )
-
-    # XO is pending
-    #set_xo( state["xo_set"] )
-
-    # Saving state with user settings
-    save_json_file(state, STATE_PATH)
-
-    return
-
+# Interface functions with the underlying modules
 
 def set_mute(mode):
     return DSP.set_mute(mode)
 
 
+def set_midside(mode):
+    return DSP.set_midside(mode)
+
+
+def set_solo(mode):
+    mode = mode.lower()
+    result = 'needs L|R|off'
+    match mode:
+        case 'l'|'r'|'off':     result = DSP.set_solo(mode)
+    return result
+
+
+def set_polarity(mode):
+    return DSP.set_polarity(mode)
+
+
 def set_loudness(mode, level=state["level"]):
-    spl = level + 83.0
-    result = DSP.set_loudness(mode, spl)
+    result = DSP.set_loudness(mode, level)
     return result
 
 
 def set_drc(drcID):
-    # camillaDSP has not gain setting for a FIR filter,
-    # so it must be done outside
 
-    # Because DRCs are assumed to have negative gain, we first
-    # put down volume when drc='none'
-    if drcID == 'none':
-        DSP.set_drc_gain(DRCS_GAIN)
+    if not DRC_SETS:
+        res = 'not available'
 
-    res = DSP.set_drc(drcID)
+    elif not drcID in DRC_SETS + ['none']:
+        res = f'must be in: {DRC_SETS}'
 
-    if res == 'done' and drcID != 'none':
-        DSP.set_drc_gain(0.0)
+    else:
+        # camillaDSP has not gain setting for a FIR filter,
+        # so it must be done outside
+
+        # Because DRCs are supposed to have a non positive unity gain offset,
+        # we first put down volume when drc='none'
+        if drcID == 'none':
+            DSP.set_drc_gain(CONFIG["drcs_offset"])
+
+        res = DSP.set_drc(drcID)
+
+        if res == 'done' and drcID != 'none':
+            DSP.set_drc_gain(0.0)
 
     return res
 
 
 def set_xo(xoID):
-    return DSP.set_xo(xoID)
+
+    if not XO_SETS:
+        res = 'not available'
+
+    elif not xoID in XO_SETS:
+        res = f'must be in: {XO_SETS}'
+
+    else:
+        res = DSP.set_xo(xoID)
+
+    return res
 
 
 def set_input(inputID):
-    return "done"
+    """ fake selector """
+    if inputID in INPUTS:
+        res = 'done'
+    else:
+        res = f'must be in: {INPUTS}'
+    return res
 
 
 def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
@@ -147,6 +214,10 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
     def set_level(dB):
         DSP.set_volume(dB)
         return set_loudness(mode=state["equal_loudness"], level=dB)
+
+
+    def set_balance(dB):
+        return DSP.set_balance(dB)
 
 
     def set_lu_offset(dB):
@@ -192,37 +263,71 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         else:
             candidate[cmd] = dB
 
-        hr = - candidate["level"] + candidate["lu_offset"] - DRCS_GAIN
+        hr = - candidate["level"] + candidate["lu_offset"] \
+             - abs(candidate["balance"])/2.0 \
+             - CONFIG["drcs_offset"]
 
-        if candidate["bass"] > 0   and not candidate["tone_defeat"]:
-            hr -= candidate["bass"]
+        if not candidate["tone_defeat"]:
 
-        if candidate["treble"] > 0 and not candidate["tone_defeat"]:
-            hr -= candidate["treble"]
+            if candidate["bass"] > 0:
+                hr -= candidate["bass"]
+
+            if candidate["treble"] > 0:
+                hr -= candidate["treble"]
 
         if candidate["target"] != 'none':
             tgain = x2float( candidate["target"][:4] )
             if tgain > 0:
                 hr -= tgain
 
-        return hr
+        return round(hr, 1)
 
 
     # getting absolute values from relative command
     if add:
         dB += state[cmd]
 
+    clamped = ''
+    tmax = CONFIG["tones_span_dB"]
+    if cmd in ('bass', 'treble'):
+        if abs(dB) > tmax:
+            dB = max(-tmax, min(+tmax, dB))
+            clamped = str(dB)
+
     hr = calc_headroom()
 
     if hr >= 0:
 
         match cmd:
-            case 'level':        result = set_level(dB)
-            case 'lu_offset':    result = set_lu_offset(dB)
-            case 'bass':         result = set_bass(dB)
-            case 'treble':       result = set_treble(dB)
-            case 'tone_defeat':  result = set_tone_defeat(tone_defeat)
-            case 'target':       result = set_target(tID)
+
+            case 'level':
+                result = set_level(dB)
+
+            case 'balance':
+                result = set_balance(dB)
+
+            case 'lu_offset':
+                result = set_lu_offset(dB)
+
+            case 'bass':
+                result = set_bass(dB)
+                if result != 'done':
+                    dB = x2int( result.split()[-1])
+                    clamped = str(dB)
+                    result = 'done'
+
+            case 'treble':
+                result = set_treble(dB)
+                if result != 'done':
+                    dB = x2int( result.split()[-1])
+                    clamped = str(dB)
+                    result = 'done'
+
+            case 'tone_defeat':
+                result = set_tone_defeat(tone_defeat)
+
+            case 'target':
+                result = set_target(tID)
 
     else:
         result = 'no headroom'
@@ -231,37 +336,38 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
         if cmd == 'target':
             state['target'] = tID
+
         elif cmd == 'tone_defeat':
             state["tone_defeat"] = tone_defeat
+
         else:
             state[cmd] = dB
+
         state["gain_headroom"] = hr
 
-    # tones can be clamped when ordered out of range
-    elif 'clamped' in result:
-
-        state[cmd] = x2float(result.split()[-1])
-        state["gain_headroom"] = hr
+    if clamped:
+        result =  f'clamped to {dB}'
 
     return result
 
 
-def normalize_cmd(cmd):
-    """ Some alias are accepted for some commands """
-    try:
-        cmd = {
-                'loudness':     'equal_loudness',
-                'set_target':   'target',
-                'drc':          'set_drc',
-                'xo':           'set_xo',
-                'input':        'set_input',
-        }[cmd]
-    except:
-        pass
-    return cmd
-
-
+# Entry function
 def do(cmd, args, add):
+
+    def normalize_cmd(cmd):
+        """ Some alias are accepted for some commands """
+        try:
+            cmd = {
+                    'loudness':     'equal_loudness',
+                    'set_target':   'target',
+                    'drc':          'set_drc',
+                    'xo':           'set_xo',
+                    'input':        'set_input',
+            }[cmd]
+        except:
+            pass
+        return cmd
+
 
     cmd     = normalize_cmd(cmd)
     result  = 'nothing was done'
@@ -288,6 +394,50 @@ def do(cmd, args, add):
         case 'get_xo_sets':
             result = json.dumps(XO_SETS)
 
+        case 'set_input':
+            new = args
+            if state["input"] != new:
+                result = set_input(new)
+                if result == 'done':
+                    state["input"] = new
+
+        case 'mono':
+            result = 'needs: on|off|toggle'
+            match args:
+                case 'on':
+                    new = 'mid'
+                    result = set_midside(new)
+                case 'off':
+                    new = 'off'
+                    result = set_midside(new)
+                case 'toggle':
+                    curr = state["midside"]
+                    new = {'off':'mid', 'mid':'off', 'side':'off'}[curr]
+                    result = set_midside(new)
+            if result == 'done':
+                state["midside"] = new
+
+        case 'midside':
+            new = args
+            if state["midside"] != new:
+                result = set_midside(new)
+                if result == 'done':
+                    state["midside"] = new
+
+        case 'solo':
+            new = args.lower()
+            if state["solo"] != new:
+                result = set_solo(new)
+                if result == 'done':
+                    state["solo"] = new
+
+        case 'polarity':
+            new = args
+            if state["polarity"] != new:
+                result = set_polarity(new)
+                if result == 'done':
+                    state["polarity"] = new
+
         case 'mute':
             curr =  state['muted']
             new = switch(args, curr)
@@ -305,33 +455,26 @@ def do(cmd, args, add):
                 state['equal_loudness'] = new_mode
 
         case 'set_drc':
-            new_drc = args
-            if new_drc in DRC_SETS + ['none']:
-                if state["drc_set"] != new_drc:
-                    result = set_drc(new_drc)
-                    if result == 'done':
-                        state["drc_set"] = new_drc
+            new = args
+            if state["drc_set"] != new:
+                result = set_drc(new)
+                if result == 'done':
+                    state["drc_set"] = new
 
         case 'set_xo':
-            new_xo = args
-            if new_xo in XO_SETS + ['none']:
-                if state["xo_set"] != new_xo:
-                    result = set_xo(new_xo)
-                    if result == 'done':
-                        state["xo_set"] = new_xo
-
-        case 'set_input':
             new = args
-            if new in INPUTS:
-                if state["input"] != new:
-                    result = set_input(new)
-                    if result == 'done':
-                        state["input"] = new
+            if state["xo_set"] != new:
+                result = set_xo(new)
+                if result == 'done':
+                    state["xo_set"] = new
 
         # Level related commands
-        case 'level' | 'lu_offset' | 'bass' | 'treble':
-            dB = x2float(args)
-            result = do_levels(cmd, dB=dB, add=add)
+        case 'level' | 'lu_offset' | 'bass' | 'treble' | 'balance':
+            try:
+                dB = x2float(args)
+                result = do_levels(cmd, dB=dB, add=add)
+            except:
+                result = 'needs a float value'
 
         case 'target':
             newt = args
@@ -346,11 +489,14 @@ def do(cmd, args, add):
                 result = do_levels('tone_defeat', tone_defeat=new)
 
         # Special commands when using cammillaDSP
-        case 'get_cdsp_pipeline':
-            result = DSP.get_pipeline()
-
         case 'get_cdsp_config':
             result = DSP.get_config()
+
+        case 'get_cdsp_preamp_mixer':
+            result = DSP.get_config()["mixers"]["preamp_mixer"]
+
+        case 'get_cdsp_pipeline':
+            result = DSP.get_config()["pipeline"]
 
         case 'get_cdsp_drc_gain':
             result = DSP.get_drc_gain()
@@ -360,6 +506,12 @@ def do(cmd, args, add):
 
     if dosave:
         save_json_file(state, STATE_PATH)
+
+    if type(result) != str:
+        try:
+            result = json.dumps(result)
+        except Exception as e:
+            result = f'Internal error: {e}'
 
     return result
 

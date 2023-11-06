@@ -1,19 +1,34 @@
 
-fs:     44100
+# Audio device
+fs:             44100
+format:         FLOAT32LE
+dither_bits:    16                  # void or 0 to disable output dithering
+device: Auriculares externos        # Auriculares en el MacBook
+#device: MacBook Pro (altavoces)     # Altavoces del MacBook
+#device: E30 II                      # DAC USB Topping E30
 
-# Auriculares en el MacBook
-#device: Auriculares externos
-# Altavoces del MacBook
-device: MacBook Pro (altavoces)
-# DAC USB Topping E30
-#device: E30 II
+# Loudspeaker in use
+loudspeaker:    DynBM6
 
-loudspeaker: DynBM6
+# Any provided loudspeaker/drc.X.XXX FIR files must have a
+# known mid band unity gain offset, it is a design decision.
+drcs_offset:      -6.0
 
-# On init preferences:
-target:             +3.0-1.5
+
+# On init preferences (low level settings)
+tones_span_dB:      6.0
+
+# On init preferences (audio settings)
+level:              -20.0
+balance:            0.0
+target:             +3.0-1.0
 equal_loudness:     true
-drc_set:            equilateral
+lu_offset:          3.0
+drc_set:            SW
 
+
+# Inputs. By now only system-wide
 inputs:
     - system-wide
+
+
