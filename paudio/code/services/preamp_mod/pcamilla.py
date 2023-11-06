@@ -39,23 +39,6 @@ sp.Popen(f'cp {eq_flat_path} {eq_B_path}', shell=True)
 
 # INTERNAL
 
-def clear_pipeline_drc(cfg):
-    for n in (1,2):
-        names_old = cfg["pipeline"][n]['names']
-        names_new = list_remove_by_pattern(names_old, 'drc.')
-        cfg["pipeline"][n]['names'] = names_new
-    return cfg
-
-
-def make_pipeline_drc(cfg, drcID):
-    for n in (1,2):
-        names_old = cfg["pipeline"][n]['names']
-        names_new = list_remove_by_pattern(names_old, 'drc.')
-        names_new.insert(1, f'drc.L.{drcID}')
-        cfg["pipeline"][n]['names'] = names_new
-    return cfg
-
-
 def init_camilladsp(user_config):
     """ Updates camilladsp.yml with user configs,
         includes auto making the DRC yaml stuff,
@@ -68,40 +51,16 @@ def init_camilladsp(user_config):
 
         def update_drc_stuff(cfg):
 
-            def clear_drc_filters(cfg):
-                keys = []
-                for f in cfg["filters"]:
-                    if f.startswith('drc.'):
-                        keys.append(f)
-                for k in keys:
-                    del cfg["filters"][k]
-                return cfg
-
-
-            def make_drc_filters(cfg):
-                lspk = user_config["loudspeaker"]
-                for ID in user_config["drc_sets"]:
-                    for Ch in 'L', 'R':
-                        # We prefer relative paths from where the main program is launched,
-                        # i.e. the ~/paudio folder, so that the yaml file does not have private paths.
-                        fir_path = f'{LSPKSFOLDER}/{lspk}/drc.{Ch}.{ID}.pcm'
-                        cfg["filters"][f'drc.{Ch}.{ID}'] = {}
-                        f = cfg["filters"][f'drc.{Ch}.{ID}']
-                        f["type"] = 'Conv'
-                        f["parameters"] = {}
-                        f["parameters"]["filename"] = fir_path
-                        f["parameters"]["format"] = 'FLOAT32LE'
-                        f["parameters"]["type"] = 'Raw'
-                return cfg
-
-
             # drc filters
-            clear_drc_filters(cfg)
-            make_drc_filters(cfg)
+            lspk = user_config["loudspeaker"]
+            clear_filters(cfg, pattern='drc.')
+            for drcset in user_config["drc_sets"]:
+                for ch in 'L', 'R':
+                    cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset, lspk)
 
             # The initial pipeline points to the FIRST drc_set
-            clear_pipeline_drc(cfg)
-            make_pipeline_drc(cfg, user_config["drc_sets"][0])
+            clear_pipeline(cfg, pattern='drc.')
+            insert_drc_to_pipeline(cfg, drcID=user_config["drc_sets"][0])
 
             return cfg
 
@@ -113,46 +72,54 @@ def init_camilladsp(user_config):
 
         def update_dither(cfg):
 
-            def check_bit_depth():
+            def check_bits():
+
                 if not( type(bits) == int and bits in range(2, 33)):
-                    print(f'{Fmt.BOLD}BAD pbk_device_bit_depth: {bits}{Fmt.END}')
+                    print(f'{Fmt.BOLD}BAD dither_bits: {bits}{Fmt.END}')
                     result = False
+
                 elif bits not in (16, 24):
-                    print(f'{Fmt.BOLD}Using rare dither bit depth: {bits}{Fmt.END}')
+                    print(f'{Fmt.BOLD}Using rare {bits} dither_bits' \
+                          f' over the output {pbk_bit_depth} bits depth{Fmt.END}')
                     result = True
+
                 else:
-                    print(f'{Fmt.BOLD}{Fmt.BLUE}Using dither bit depth: {bits}{Fmt.END}')
+                    print(f'{Fmt.BOLD}{Fmt.BLUE}Using {bits} dither_bits' \
+                          f' over the output {pbk_bit_depth} bits depth{Fmt.END}')
                     result = True
+
                 return result
 
-            def make_dither_filter(d_type, bits):
-                cfg["filters"]["dither"] = {
-                    'type': 'Dither',
-                    'parameters': {
-                        'type': d_type, 'bits': bits
-                    }
-                }
+
+            fs              = cfg["devices"]["samplerate"]
+            cap_fmt         = cfg["devices"]["capture"]["format"]
+            pbk_fmt         = cfg["devices"]["playback"]["format"]
+            cap_bit_depth   = get_bit_depth(cap_fmt)
+            pbk_bit_depth   = get_bit_depth(pbk_fmt)
+            bits            = 0
 
 
-            def add_dither_to_pipeline():
-                cfg["pipeline"][1]["names"].append('dither')
-                cfg["pipeline"][2]["names"].append('dither')
+            # clearing
+            clear_filters(cfg, pattern='dither')
+            clear_pipeline(cfg, pattern='dither')
 
+            if "dither_bits" in user_config and user_config["dither_bits"]:
+                bits = user_config["dither_bits"]
 
-            bits = 0
-            fs   = user_config["fs"]
+            if not bits:
+                print(f'{Fmt.BLUE}- No dithering -{Fmt.END}')
+                return
 
-            if "pbk_device_bit_depth" in user_config and user_config["pbk_device_bit_depth"]:
-                bits = user_config["pbk_device_bit_depth"]
+            if check_bits():
 
-            if check_bit_depth():
+                # https://github.com/HEnquist/camilladsp#dither
                 match fs:
                     case 44100:     d_type = 'Shibata441'
                     case 48000:     d_type = 'Shibata48'
                     case _:         d_type = 'Simple'
-                make_dither_filter(d_type, bits)
-                add_dither_to_pipeline()
 
+                cfg["filters"]["dither"] = make_dither_filter(d_type, bits)
+                append_item_to_pipeline(cfg, item='dither')
 
 
         with open(CFG_PATH, 'r') as f:
@@ -160,6 +127,7 @@ def init_camilladsp(user_config):
 
         # Audio Device
         camilla_cfg["devices"]["playback"]["device"] = user_config["device"]
+        camilla_cfg["devices"]["playback"]["format"] = user_config["format"]
         camilla_cfg["devices"]["samplerate"]         = user_config["fs"]
 
         # Dither
@@ -168,12 +136,12 @@ def init_camilladsp(user_config):
         # The preamp_mixer
         camilla_cfg["mixers"]["preamp_mixer"] = make_mixer(midside_mode='normal')
 
-        # eq filter
+        # The eq filter
         update_eq_filter(camilla_cfg)
 
-        # DRCs
+        # The DRCs
         if user_config["drc_sets"]:
-            camilla_cfg = update_drc_stuff(camilla_cfg)
+            update_drc_stuff(camilla_cfg)
 
         with open(CFG_PATH, 'w') as f:
             yaml.safe_dump(camilla_cfg, f)
@@ -198,6 +166,44 @@ def init_camilladsp(user_config):
 
     except Exception as e:
         return str(e)
+
+
+def clear_filters(cfg, pattern=''):
+    if pattern:
+        keys = []
+        for f in cfg["filters"]:
+            if f.startswith(pattern):
+                keys.append(f)
+        for k in keys:
+            del cfg["filters"][k]
+    return cfg
+
+
+def clear_pipeline(cfg, pattern=''):
+    if pattern:
+        for n in (1,2):
+            names_old = cfg["pipeline"][n]['names']
+            names_new = list_remove_by_pattern(names_old, pattern)
+            cfg["pipeline"][n]['names'] = names_new
+    return cfg
+
+
+def insert_drc_to_pipeline(cfg, drcID = ''):
+    for n in (1,2):
+        names_old = cfg["pipeline"][n]['names']
+        names_new = list_remove_by_pattern(names_old, 'drc.')
+        names_new.insert(1, f'drc.L.{drcID}')
+        cfg["pipeline"][n]['names'] = names_new
+    return cfg
+
+
+def append_item_to_pipeline(cfg, item = ''):
+    for n in (1,2):
+        names_old = cfg["pipeline"][n]['names']
+        names_new = list_remove_by_pattern(names_old, item)
+        names_new.append(item)
+        cfg["pipeline"][n]['names'] = names_new
+    return cfg
 
 
 def set_config_sync(cfg):
@@ -241,6 +247,30 @@ def reload_eq():
     set_config_sync(cfg)
 
     toggle_last_eq()
+
+
+def make_dither_filter(d_type, bits):
+    f= {
+        'type': 'Dither',
+        'parameters': {
+            'type': d_type,
+            'bits': bits
+        }
+    }
+    return f
+
+
+def make_drc_filter(channel, drc_set, lspk):
+    fir_path = f'{LSPKSFOLDER}/{lspk}/drc.{channel}.{drc_set}.pcm'
+    f = {
+            "type": 'Conv',
+            "parameters": {
+                "filename": fir_path,
+                "format":   'FLOAT32LE',
+                "type":     'Raw'
+            }
+        }
+    return f
 
 
 def make_mixer(midside_mode='normal'):
@@ -320,9 +350,6 @@ def make_mixer(midside_mode='normal'):
 
     return m
 
-
-def add_dither():
-    pass
 
 # Getting AUDIO
 
@@ -494,7 +521,7 @@ def set_drc(drcID):
 
     if drcID == 'none':
         try:
-            cfg = clear_pipeline_drc(cfg)
+            cfg = clear_pipeline(cfg, pattern='drc.')
             set_config_sync(cfg)
             result = 'done'
         except Exception as e:
@@ -502,7 +529,7 @@ def set_drc(drcID):
 
     else:
         try:
-            cfg = make_pipeline_drc(cfg, drcID)
+            insert_drc_to_pipeline(cfg, drcID)
             set_config_sync(cfg)
             result = 'done'
         except Exception as e:
