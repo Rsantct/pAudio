@@ -196,7 +196,7 @@ def init_camilladsp(user_config):
     cdsp_cmd = f'camilladsp -m -a 127.0.0.1 -p 1234'
     cdsp_cmd += f' "{CFG_PATH}"'
     if LOG_TO_FILE:
-        cdsp_cmd += f' 1>"{LOG_PATH}" 2>&1'
+        cdsp_cmd += f' --logfile "{LOG_PATH}"'
     sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
