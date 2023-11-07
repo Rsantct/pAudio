@@ -118,7 +118,7 @@ def init():
     state["polarity"]   = '++'
 
     # Preparing and running camillaDSP
-    run_cdsp = DSP.init_camilladsp(user_config=CONFIG)
+    run_cdsp = DSP.init_camilladsp(pAudio_config=CONFIG)
 
     if run_cdsp == 'done':
 
