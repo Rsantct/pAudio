@@ -1,11 +1,15 @@
+# Audio devices
+fs: 44100
+input:
+    device:      BlackHole 2ch
+    format:      FLOAT32LE
+output:
+    #device:      Auriculares externos        # Auriculares en el MacBook
+    device:      MacBook Pro (altavoces)     # Altavoces del MacBook
+    #device:      E30 II                      # DAC USB Topping E30
+    format:      FLOAT32LE
+    dither_bits: 16                           # void or 0 to disable
 
-# Audio device
-fs:             44100
-format:         FLOAT32LE
-dither_bits:    16                  # void or 0 to disable output dithering
-device: Auriculares externos        # Auriculares en el MacBook
-#device: MacBook Pro (altavoces)     # Altavoces del MacBook
-#device: E30 II                      # DAC USB Topping E30
 
 # Loudspeaker in use
 loudspeaker:    DynBM6
