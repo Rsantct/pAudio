@@ -364,7 +364,7 @@ function init(){
 
     state_get();
 
-    //download_drc_graphs();
+    download_drc_graphs();
 
     manage_main_cside();
 
@@ -775,7 +775,7 @@ function page_update() {
     //
     LU_refresh();
     //
-    //graphs_update();
+    graphs_update();
     //
     manage_main_cside();
     //
