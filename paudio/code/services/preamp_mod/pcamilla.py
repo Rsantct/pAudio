@@ -42,7 +42,7 @@ sp.Popen(f'cp {eq_flat_path} {eq_B_path}', shell=True)
 
 # INTERNAL
 
-def init_camilladsp(user_config):
+def init_camilladsp(pAudio_config):
     """ Updates camilladsp.yml with user configs,
         includes auto making the DRC yaml stuff,
         then runs the CamillaDSP process.
@@ -55,15 +55,15 @@ def init_camilladsp(user_config):
         def update_drc_stuff(cfg):
 
             # drc filters
-            lspk = user_config["loudspeaker"]
+            lspk = pAudio_config["loudspeaker"]
             clear_filters(cfg, pattern='drc.')
-            for drcset in user_config["drc_sets"]:
+            for drcset in pAudio_config["drc_sets"]:
                 for ch in 'L', 'R':
                     cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset, lspk)
 
             # The initial pipeline points to the FIRST drc_set
             clear_pipeline(cfg, pattern='drc.')
-            insert_drc_to_pipeline(cfg, drcID=user_config["drc_sets"][0])
+            insert_drc_to_pipeline(cfg, drcID=pAudio_config["drc_sets"][0])
 
             return cfg
 
@@ -106,8 +106,9 @@ def init_camilladsp(user_config):
             clear_filters(cfg, pattern='dither')
             clear_pipeline(cfg, pattern='dither')
 
-            if "dither_bits" in user_config and user_config["dither_bits"]:
-                bits = user_config["dither_bits"]
+            if "dither_bits" in pAudio_config["output"] and \
+               pAudio_config["output"]["dither_bits"]:
+                bits = pAudio_config["output"]["dither_bits"]
 
             if not bits:
                 print(f'{Fmt.BLUE}- No dithering -{Fmt.END}')
@@ -149,7 +150,7 @@ def init_camilladsp(user_config):
 
         # Audio Device
         # Updating with pAudio config
-        camilla_cfg["devices"]["samplerate"] = user_config["fs"]
+        camilla_cfg["devices"]["samplerate"] = pAudio_config["fs"]
 
         if camilla_cfg["devices"]["samplerate"] <= 48000:
             camilla_cfg["devices"]["chunksize"] = 1024
@@ -159,8 +160,10 @@ def init_camilladsp(user_config):
         cap_dev = camilla_cfg["devices"]["capture"]
         pbk_dev = camilla_cfg["devices"]["playback"]
 
-        pbk_dev["device"] = user_config["device"]
-        pbk_dev["format"] = user_config["format"]
+        cap_dev["device"] = pAudio_config["input"]["device"]
+        cap_dev["format"] = pAudio_config["input"]["format"]
+        pbk_dev["device"] = pAudio_config["output"]["device"]
+        pbk_dev["format"] = pAudio_config["output"]["format"]
 
         check_pbk_dev()
 
@@ -178,7 +181,7 @@ def init_camilladsp(user_config):
 
 
         # The DRCs
-        if user_config["drc_sets"]:
+        if pAudio_config["drc_sets"]:
             update_drc_stuff(camilla_cfg)
 
         # Saving to YAML file to run CamillaDSP
