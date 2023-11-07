@@ -26,6 +26,7 @@ PREAMP_STATE_PATH = f'{MAINFOLDER}/.preamp_state'
 from common import  CONFIG, LDMON_PATH, LDCTRL_PATH
 from common import  read_json_file
 
+AUDIO_SOURCE = CONFIG["input"]["device"]
 
 def prepare_control_fifo(fname):
     try:
@@ -196,11 +197,11 @@ if __name__ == '__main__':
     # M_threshold = 10.0   To avoid stress saving values to disk, because this
     #                      measure only serves as a rough signal detector.
     # I_threshold = 1.0    LU-[I]ntegrated values are relatively stable.
-    meter = LU_meter( device='BlackHole 2ch', display=False,
+    meter = LU_meter( device=AUDIO_SOURCE, display=False,
                       M_threshold=10.0,
                       I_threshold=1.0 )
     meter.start()
-    print(f'(loudness_monitor) spawn PortAudio ports in JACK')
+    print(f'(loudness_monitor) getting audio from: "{AUDIO_SOURCE}"')
 
     # Threading the fifo listening loop for controlling this module
     prepare_control_fifo(LDCTRL_PATH)
