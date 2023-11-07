@@ -26,12 +26,24 @@ def do(cmd_phrase):
             match cmd:
 
                 case 'get_web_config':
-                    result = json.dumps({   'main_selector':        'inputs',
-                                            'LU_monitor_enabled':   True
-                                        })
+                    result = {  'main_selector':        'inputs',
+                                'LU_monitor_enabled':   True
+                    }
 
                 case 'get_lu_monitor':
-                    result = json.dumps(read_json_file(LDMON_PATH))
+                    result = read_json_file(LDMON_PATH)
+
+                case 'info':
+                    # PENDING TO DEBUG
+                    lu_mon = read_json_file(LDMON_PATH)
+                    result = {
+                        "amp": "on",
+                        "loudness_monitor": lu_mon,
+                        "last_macro": "", "warning": "",
+                        "peq_set": "none",
+                        "peq_bypassed": [False, False],
+                        "new_eq_graph": False
+                    }
 
         # PENDING
         case 'players':
@@ -40,6 +52,13 @@ def do(cmd_phrase):
         case _:
             # This should never occur because preamp is the defaulted as prefix
             result = 'unknown service'
+
+
+    if type(result) != str:
+        try:
+            result = json.dumps(result)
+        except Exception as e:
+            result = f'Internal error: {e}'
 
     return result
 
