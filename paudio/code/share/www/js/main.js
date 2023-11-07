@@ -745,8 +745,8 @@ function page_update() {
     }
 
     //// AUX STUFF
-    //aux_info_get();
-    //aux_info_refresh();
+    aux_info_get();
+    aux_info_refresh();
 
     // PREAMP STUFF
     state_get();
