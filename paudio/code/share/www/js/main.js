@@ -563,7 +563,11 @@ function page_update() {
         }catch(e){
             console.log('response error to \'aux info\'', e.message);
             // Backup method to retrieve the amplifier state:
-            aux_info.amp = control_cmd('amp_switch state');
+            try{
+                aux_info.amp = control_cmd('amp_switch state');
+            }catch(e){
+                server_available = false;
+            }
         }
     }
 
@@ -1156,11 +1160,17 @@ function control_cmd( cmd ) {
 
     // open(method, url, async_mode)
     myREQ.open("GET", url, false);
+
     // (i) send() is blocking because async=false, so no handlers
     //     on myREQ status changes are needed because of this.
-    myREQ.send();
-    let ans = myREQ.responseText;
+    try{
+        myREQ.send();
+    }catch(e){
+        server_available = false;
+        return '';
+    }
 
+    let ans = myREQ.responseText;
     //console.log('httpTX: ' + cmd);
     //console.log('httpRX: ' + ans);
 
