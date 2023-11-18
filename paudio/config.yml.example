@@ -36,3 +36,8 @@ inputs:
     - system-wide
 
 
+# plugins (stand-alone processes)
+plugins:
+    - loudness_monitor.py
+
+
