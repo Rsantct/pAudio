@@ -16,6 +16,7 @@ EQFOLDER        = f'{MAINFOLDER}/eq'
 CODEFOLDER      = f'{MAINFOLDER}/code'
 CONFIG_PATH     = f'{MAINFOLDER}/config.yml'
 DSP_LOGFOLDER   = f'{MAINFOLDER}/log'
+PLUGINSFOLDER   = f'{MAINFOLDER}/code/share/plugins'
 
 LDCTRL_PATH     = f'{MAINFOLDER}/.loudness_control'
 LDMON_PATH      = f'{MAINFOLDER}/.loudness_monitor'
