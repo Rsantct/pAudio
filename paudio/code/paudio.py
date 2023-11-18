@@ -3,11 +3,32 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+"""
+    The Main pAudio module.
+
+    - Loads the preamp module
+    - Processing commands entry point: do()
+    - Run plugins (stand-alone processes)
+
+"""
+
+from  subprocess import Popen
 from  services import preamp
 
 # This import works because the main program server.py
 # is located under the same folder then the commom module
 from  common import *
+
+
+def run_plugins():
+    """ Run plugins (stand-alone processes)
+    """
+
+    if not 'plugins' in CONFIG or not CONFIG["plugins"]:
+        return
+
+    for p in CONFIG["plugins"]:
+        Popen(f'python3 {PLUGINSFOLDER}/{p} start', shell=True)
 
 
 def do(cmd_phrase):
@@ -62,3 +83,6 @@ def do(cmd_phrase):
 
     return result
 
+
+# Run plugins (stand-alone processes)
+run_plugins()
