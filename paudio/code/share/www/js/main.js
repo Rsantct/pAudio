@@ -651,7 +651,7 @@ function page_update() {
             if (eq_changed() == true || aux_info.new_eq_graph == true) {
                 // Artifice to avoid using cached image by adding an offset timestamp
                 // inside the  http.GET image source request
-                document.getElementById("bfeq_img").src = 'images/brutefir_eq.png?'
+                document.getElementById("eq_img").src = 'images/eq.png?'
                                                           + Math.floor(Date.now());
             }
             if (drc_changed() == true) {
@@ -1130,10 +1130,10 @@ function omd_graphs_toggle() {
 
     if ( hide_graphs == false ){
         document.getElementById("drc_graph").style.display = 'block';
-        document.getElementById("bfeq_graph").style.display = 'block';
+        document.getElementById("eq_graph").style.display = 'block';
     }else{
         document.getElementById("drc_graph").style.display = 'none';
-        document.getElementById("bfeq_graph").style.display = 'none';
+        document.getElementById("eq_graph").style.display = 'none';
     }
 }
 
