@@ -31,6 +31,13 @@ def run_plugins():
         Popen(f'python3 {PLUGINSFOLDER}/{p} start', shell=True)
 
 
+def run_drc2png():
+    """ Prepare DRC graphs
+    """
+    cmd = f'python3 {CODEFOLDER}/share/www/scripts/drc2png.py'
+    Popen(cmd, shell=True)
+
+
 def do(cmd_phrase):
 
     prefix, cmd, args, add = read_cmd_phrase(cmd_phrase)
@@ -84,5 +91,6 @@ def do(cmd_phrase):
     return result
 
 
-# Run plugins (stand-alone processes)
+run_drc2png()
+
 run_plugins()
