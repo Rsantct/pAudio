@@ -3,6 +3,7 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+import  subprocess as sp
 import  yaml
 import  json
 from    fmt import Fmt
@@ -20,6 +21,9 @@ PLUGINSFOLDER   = f'{MAINFOLDER}/code/share/plugins'
 
 LDCTRL_PATH     = f'{MAINFOLDER}/.loudness_control'
 LDMON_PATH      = f'{MAINFOLDER}/.loudness_monitor'
+
+PLAYER_META_PATH = f'{MAINFOLDER}/.player_metadata'
+
 
 try:
     os.mkdir(DSP_LOGFOLDER)
@@ -201,6 +205,21 @@ def get_target_sets(fs=44100):
             sets.append(tID)
 
     return sorted(sets)
+
+
+def process_is_running(pattern):
+    """ check for a system process to be running by a given pattern
+        (bool)
+    """
+    try:
+        # do NOT use shell=True because pgrep ...  will appear it self.
+        plist = sp.check_output(['pgrep', '-fla', pattern]).decode().split('\n')
+    except:
+        return False
+    for p in plist:
+        if pattern in p:
+            return True
+    return False
 
 
 init()
