@@ -117,7 +117,8 @@ def get_configured_scope():
                 scope = 'input'
     else:
         # Defaults to album if not configured
-        scope = 'album'
+        scope = 'input'
+
     # We accept 'track' to mean 'title'
     if scope == 'track':
         scope = 'title'
