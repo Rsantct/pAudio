@@ -14,9 +14,10 @@ import  subprocess as sp
 import  json
 from    time    import sleep
 
-# This import works because the main program server.py
-# is located under the same folder then the commom module
-from    common  import *
+# These imports works because the main program server.py
+# is located under the same folder than the commom module
+from    common      import *
+from    eqfir2png   import fir2png as eq2png
 
 THIS_DIR = os.path.dirname(__file__)
 sys.path.append(f'{THIS_DIR}/preamp_mod')
@@ -346,6 +347,9 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
         state["gain_headroom"] = hr
 
+        # dumps eq to png
+        eq2png()
+
     if clamped:
         result =  f'clamped to {dB}'
 
@@ -454,6 +458,8 @@ def do(cmd, args, add):
                 result = set_loudness(mode=new_mode)
             if result == 'done':
                 state['equal_loudness'] = new_mode
+                # dumps eq to png
+                eq2png()
 
         case 'set_drc':
             new = args
