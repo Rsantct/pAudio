@@ -12,8 +12,8 @@
 
 """
 
-from  subprocess import Popen
-from  services import preamp
+from  subprocess    import Popen
+from  services      import preamp, aux, players
 
 # This import works because the main program server.py
 # is located under the same folder then the commom module
@@ -48,30 +48,8 @@ def do(cmd_phrase):
         case 'preamp':
             result = preamp.do(cmd, args, add)
 
-        # PENDING
         case 'aux':
-
-            match cmd:
-
-                case 'get_web_config':
-                    result = {  'main_selector':        'inputs',
-                                'LU_monitor_enabled':   True
-                    }
-
-                case 'get_lu_monitor':
-                    result = read_json_file(LDMON_PATH)
-
-                case 'info':
-                    # PENDING TO DEBUG
-                    lu_mon = read_json_file(LDMON_PATH)
-                    result = {
-                        "amp": "on",
-                        "loudness_monitor": lu_mon,
-                        "last_macro": "", "warning": "",
-                        "peq_set": "none",
-                        "peq_bypassed": [False, False],
-                        "new_eq_graph": False
-                    }
+            result = aux.do(cmd, args, add)
 
         # PENDING
         case 'players':
