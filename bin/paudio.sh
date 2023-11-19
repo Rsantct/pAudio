@@ -1,13 +1,20 @@
 #!/bin/bash
 
+function stop {
+    pkill -f "paudio\/code\/"
+    echo "stopped."
+}
+
+
 if [[ $1 = *"stop"* ]]; then
 
-    pkill -f "paudio/code/"
-    echo "stopped."
+    stop
     exit 0
 
 
 elif [[ $1 = *"start"* ]]; then
+
+    stop
 
     # Control web page
     node ~/paudio/code/share/www/nodejs_www_server/www-server.js >/dev/null 2>&1 &
