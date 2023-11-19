@@ -9,9 +9,16 @@
 
 import  numpy as np
 from    scipy       import signal, fft
-from    matplotlib  import pyplot as plt
+from    matplotlib  import pyplot as plt, use as matplotlib_use
 import  sys
 import  os
+
+# https://matplotlib.org/faq/howto_faq.html#working-with-threads
+# We need to call matplotlib.use('Agg') to replace the regular display backend
+# (e.g. 'Mac OSX') by the dummy one 'Agg' in order to avoid incompatibility
+# when threading the matplotlib when importing this stuff.
+# Notice below that we dont order plt.show() but plt.close('all').
+matplotlib_use('Agg')
 
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/paudio/code/share')
@@ -104,6 +111,7 @@ def fir2png(firpath=EQFIR_PATH):
 
     plt.savefig( EQPNG_PATH, facecolor=WEBCOLOR )
     #plt.show()
+    plt.close('all')
 
 
 init()
