@@ -4,6 +4,8 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 import  subprocess as sp
+import  threading
+from    time import sleep
 import  yaml
 import  json
 from    fmt import Fmt
@@ -11,18 +13,19 @@ import  sys
 import  os
 
 UHOME = os.path.expanduser('~')
-MAINFOLDER      = f'{UHOME}/paudio'
-LSPKSFOLDER     = f'{MAINFOLDER}/loudspeakers'
-EQFOLDER        = f'{MAINFOLDER}/eq'
-CODEFOLDER      = f'{MAINFOLDER}/code'
-CONFIG_PATH     = f'{MAINFOLDER}/config.yml'
-DSP_LOGFOLDER   = f'{MAINFOLDER}/log'
-PLUGINSFOLDER   = f'{MAINFOLDER}/code/share/plugins'
 
-LDCTRL_PATH     = f'{MAINFOLDER}/.loudness_control'
-LDMON_PATH      = f'{MAINFOLDER}/.loudness_monitor'
+MAINFOLDER          = f'{UHOME}/paudio'
+LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
+EQFOLDER            = f'{MAINFOLDER}/eq'
+CODEFOLDER          = f'{MAINFOLDER}/code'
+CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
+DSP_LOGFOLDER       = f'{MAINFOLDER}/log'
+PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
 
-PLAYER_META_PATH = f'{MAINFOLDER}/.player_metadata'
+LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
+LDMON_PATH          = f'{MAINFOLDER}/.loudness_monitor'
+AUXINFO_PATH        = f'{MAINFOLDER}/.aux_info'
+PLAYER_META_PATH    = f'{MAINFOLDER}/.player_metadata'
 
 
 try:
