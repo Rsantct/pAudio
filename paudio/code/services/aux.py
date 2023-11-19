@@ -7,9 +7,25 @@
     Aux subsystem.
 """
 
-# This imports works because the main program server.py
+# This import works because the main program server.py
 # is located under the same folder than the commom module
 from    common      import *
+
+
+def init():
+    global AUXINFO, LU_MON_ENABLED
+
+    LU_MON_ENABLED  = True if 'loudness_monitor.py' in CONFIG["plugins"] \
+                           else False
+
+    AUXINFO = {
+        "amp":              "on",
+        "loudness_monitor": read_json_file(LDMON_PATH),
+        "last_macro":       "",
+        "warning":          "",
+        "new_eq_graph":     False
+    }
+    save_json_file(AUXINFO, AUXINFO_PATH)
 
 
 def manage_lu_monitor(commandphrase):
@@ -39,23 +55,14 @@ def do(cmd, args, add):
 
         case 'get_web_config':
             result = {  'main_selector':        'inputs',
-                        'LU_monitor_enabled':   True
+                        'LU_monitor_enabled':   LU_MON_ENABLED
             }
 
         case 'get_lu_monitor':
             result = read_json_file(LDMON_PATH)
 
         case 'info':
-            # PENDING TO DEBUG
-            lu_mon = read_json_file(LDMON_PATH)
-            result = {
-                "amp": "on",
-                "loudness_monitor": lu_mon,
-                "last_macro": "", "warning": "",
-                "peq_set": "none",
-                "peq_bypassed": [False, False],
-                "new_eq_graph": False
-            }
+            result = read_json_file( AUXINFO_PATH )
 
         case 'reset_loudness_monitor' | 'reset_lu_monitor':
             result = manage_lu_monitor('reset')
@@ -68,3 +75,4 @@ def do(cmd, args, add):
     return result
 
 
+init()
