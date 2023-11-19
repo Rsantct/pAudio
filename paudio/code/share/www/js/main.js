@@ -216,7 +216,7 @@ function fill_in_page_statics(){
     ////
     fill_in_drc_selector();
     ////
-    ////fill_in_LUscope_selector();
+    fill_in_LUscope_selector();
 
 }
 
