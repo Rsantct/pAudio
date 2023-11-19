@@ -18,9 +18,9 @@ sys.path.append(f'{UHOME}/paudio/code/share')
 
 from common import *
 
+EQFIR_PATH  = f'{EQFOLDER}/eq.pcm'
 IMGFOLDER   = f'{MAINFOLDER}/code/share/www/images'
 EQPNG_PATH  = f'{IMGFOLDER}/eq.png'
-EQFIR_PATH  = f'{EQFOLDER}/eq.pcm'
 
 # ----------------------    Plot config      -----------------------------------
 # Same color as index.html background-color: rgb(38, 38, 38)
@@ -79,7 +79,7 @@ def init():
 
 
 def fir2png(firpath=EQFIR_PATH):
-    """ Do plot png from eq.pcm
+    """ Do plot a png from a pcm FIR file
     """
     fig, ax = plt.subplots()
     fig.set_figwidth( 5 )   # 5 inches at 100dpi => 500px wide
@@ -103,7 +103,6 @@ def fir2png(firpath=EQFIR_PATH):
     ax.plot(freqs, magdB, color='grey', linewidth=3)
 
     plt.savefig( EQPNG_PATH, facecolor=WEBCOLOR )
-    print( f'(eqfir2png) saved: \'{EQPNG_PATH}\' ' )
     #plt.show()
 
 
@@ -114,4 +113,5 @@ init()
 if __name__ == '__main__':
 
     fir2png(EQFIR_PATH)
+    print( f'(eqfir2png) saved: \'{EQPNG_PATH}\' ' )
 
