@@ -619,7 +619,7 @@ function page_update() {
             let result = false;
             const eq_params = { 'level':    state.level,    'eq_loud':  state.equal_loudness,
                                 'bass':     state.bass,     'treb':     state.treble,
-                                'target':   state.target
+                                'target':   state.target,   'tone_defeat': state.tone_defeat
                             };
             if ( JSON.stringify(eq_params) !== JSON.stringify(last_eq_params) ) {
                 //console.log('eq changed');
