@@ -48,6 +48,9 @@ def init():
         CONFIG["fs"] = 44100
         print(f'{Fmt.BOLD}\n!!! fs NOT configured, default to fs=44100\n{Fmt.END}')
 
+    if not "plugins" in CONFIG or not CONFIG["plugins"]:
+        CONFIG["plugins"] = []
+
 
 def get_DSP_in_use():
     """ The DSP in use is set inside preamp.py
