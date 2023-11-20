@@ -2,7 +2,7 @@
 
 A PC based advanced preamplifier.
 
-This is a system-wide audio control for a MacOS or Linux PC, so that you can EQ and control all the audio sent to your DAC, Audio Interface, or Phones.
+This is a system-wide audio control for a MacOS or Linux PC, so that you can EQ and control all the audio sent to your DAC, Audio Interface, or Headphones.
 
 Some features:
 
