@@ -61,7 +61,7 @@ def get_spectrum(imp, fs):
     try:
         N = fft.next_fast_len(N)
     except:
-        print(f'(drc2png) fft.next_fast_len not availble on this scipy version')
+        print(f'(eqfir2png) fft.next_fast_len not availble on this scipy version')
 
     # Semispectrum (whole=False -->  w to Nyquist)
     w, h = signal.freqz(imp, worN=N, whole=False)
@@ -82,7 +82,7 @@ def init():
     except FileExistsError:
         pass
     except:
-        print(f'drc2png unexpected error when mkdir "{IMGFOLDER}"')
+        print(f'(eqfir2png) unexpected error whith mkdir "{IMGFOLDER}"')
 
 
 def fir2png(firpath=EQFIR_PATH):
