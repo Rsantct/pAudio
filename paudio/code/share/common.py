@@ -16,7 +16,8 @@ UHOME = os.path.expanduser('~')
 
 MAINFOLDER          = f'{UHOME}/paudio'
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
-LSPKFOLDER          = f''   # to be found when loading CONFIG
+LSPKFOLDER          = f''
+LOUDSPEAKER         = f''   # to be found when loading CONFIG
 EQFOLDER            = f'{MAINFOLDER}/eq'
 CODEFOLDER          = f'{MAINFOLDER}/code'
 CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
@@ -39,7 +40,7 @@ CONFIG = {}
 
 def init():
 
-    global CONFIG, LSPKFOLDER
+    global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = read_yaml_file(CONFIG_PATH)
 
@@ -51,6 +52,8 @@ def init():
     except Exception as e:
         print(f'ERROR with LOUDSPEAKER configuration')
         sys.exit()
+
+    LOUDSPEAKER = CONFIG["loudspeaker"]
 
     CONFIG["DSP"] = get_DSP_in_use()
 
