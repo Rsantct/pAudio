@@ -63,5 +63,5 @@ Set the device name in `~/paudio/config.yml`
 
     http://localhost:8088
 
-<img src="./img/pAudio%20web.png" width="500">
+<img src="./img/pAudio%20web%20-20dB.png" width="500"><img src="./img/pAudio%20web%200dB.png" width="500">
 
