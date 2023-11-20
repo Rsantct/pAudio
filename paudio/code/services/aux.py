@@ -12,9 +12,17 @@
 from    common      import *
 
 
+def save_aux_info():
+    """ this must be threaded """
+    def dosave():
+        save_json_file(AUXINFO, AUXINFO_PATH)
+    job = threading.Thread(target=dosave,)
+    job.start()
+
+
 def init():
-    """ AUXINFO_PATH can be used from others, for example preamp.py
-        will alert there for eq_graph changes
+    """ The .aux_info file can be used by others, for example
+        preamp.py will alert there for eq_graph changes
     """
 
     global AUXINFO, LU_MON_ENABLED
@@ -29,7 +37,7 @@ def init():
         "warning":          "",
         "new_eq_graph":     False
     }
-    save_json_file(AUXINFO, AUXINFO_PATH)
+    save_aux_info()
 
 
 def manage_lu_monitor(commandphrase):
@@ -67,6 +75,7 @@ def do(cmd, args, add):
 
         case 'info':
             AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
+            save_aux_info()
             result = AUXINFO
 
         case 'reset_loudness_monitor' | 'reset_lu_monitor':
