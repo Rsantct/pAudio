@@ -55,11 +55,10 @@ def init_camilladsp(pAudio_config):
         def update_drc_stuff(cfg):
 
             # drc filters
-            lspk = pAudio_config["loudspeaker"]
             clear_filters(cfg, pattern='drc.')
             for drcset in pAudio_config["drc_sets"]:
                 for ch in 'L', 'R':
-                    cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset, lspk)
+                    cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset)
 
             # The initial pipeline points to the FIRST drc_set
             clear_pipeline(cfg, pattern='drc.')
@@ -305,7 +304,7 @@ def make_dither_filter(d_type, bits):
     return f
 
 
-def make_drc_filter(channel, drc_set, lspk):
+def make_drc_filter(channel, drc_set):
     fir_path = f'{LSPKFOLDER}/drc.{channel}.{drc_set}.pcm'
     f = {
             "type": 'Conv',
