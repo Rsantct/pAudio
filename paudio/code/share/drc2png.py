@@ -25,7 +25,6 @@ sys.path.append(f'{UHOME}/paudio/code/share')
 
 from common import *
 
-LOUDSPEAKER = CONFIG["loudspeaker"]
 IMGFOLDER   = f'{MAINFOLDER}/code/share/www/images/{LOUDSPEAKER}'
 
 
