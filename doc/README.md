@@ -8,7 +8,11 @@ You also need [Node.js](https://nodejs.org/en) to serve the control web page.
 
 ## CamillaDSP
 
-Go to https://github.com/HEnquist/camilladsp/releases, download current, unzip and leave the binary under your **`~/bin`** folder.
+Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`.
+
+Go to https://github.com/HEnquist/camilladsp/releases, download **Latest**. Use _amd64_ for Intel CPU or _aarch64_ for Apple CPU.
+
+Uncompress and move the binary to your **`~/bin`** folder.
 
 ## Python modules
 
@@ -16,9 +20,11 @@ Go to https://github.com/HEnquist/camilladsp/releases, download current, unzip a
 
 ## pAudio
 
-Download or clone this repo, unzip, then copy the **`paudio`** folder to your **`~/bin`** folder.
+Download or clone this repo, unzip, then copy the **`paudio`** folder to your home directory.
 
-Also copy the provided `bin/` scripts to your **`~/bin`** folder.
+Also copy the provided `bin/paudio.....` scripts to your **`~/bin`** folder.
+
+Make them executable: `chmod +x ~/bin/paudio*`
 
 # Settings
 
