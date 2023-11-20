@@ -36,6 +36,8 @@ var web_config          = { 'main_selector':      'inputs',
                             'user_macros':        []
 };
 
+var drc_sets            = JSON.parse( control_cmd( 'get_drc_sets' ) );
+
 var mFnames             = web_config.user_macros; // Macro file names
 
 var macro_button_list   = [];
@@ -155,12 +157,6 @@ function fill_in_page_statics(){
     }
 
     function fill_in_drc_selector() {
-        try{
-            var drc_sets = JSON.parse( control_cmd( 'get_drc_sets' ) );
-        }catch(e){
-             console.log( e.name, e.message );
-           return;
-        }
         select_clear_options("drcSelector");
         const mySel = document.getElementById("drcSelector");
         for ( const i in drc_sets ) {
@@ -250,7 +246,6 @@ function init(){
             return;
         }
         // geat all drc_xxxx.png at once at start, so them will remain in cache.
-        const drc_sets = JSON.parse( control_cmd('preamp get_drc_sets') );
         for (const i in drc_sets){
             document.getElementById("drc_img").src =  'images/'
                                                     + state.loudspeaker
@@ -1027,7 +1022,10 @@ function ck_peaudiosys_restart() {
 
 
 function omd_ampli_switch(mode) {
-    const ans = control_cmd( 'amp_switch ' + mode );
+    const ays = window.confirm('Are you sure to stop pAudio?');
+    if (ays){
+        const ans = control_cmd( 'aux amp_switch ' + mode );
+    }
 }
 
 
@@ -1129,7 +1127,9 @@ function omd_graphs_toggle() {
     }
 
     if ( hide_graphs == false ){
-        document.getElementById("drc_graph").style.display = 'block';
+        if (drc_sets.length > 0){
+            document.getElementById("drc_graph").style.display = 'block';
+        }
         document.getElementById("eq_graph").style.display = 'block';
     }else{
         document.getElementById("drc_graph").style.display = 'none';

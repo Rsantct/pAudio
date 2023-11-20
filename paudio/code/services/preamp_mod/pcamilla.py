@@ -182,6 +182,9 @@ def init_camilladsp(pAudio_config):
         # The DRCs
         if pAudio_config["drc_sets"]:
             update_drc_stuff(camilla_cfg)
+        else:
+            clear_filters(camilla_cfg, pattern='drc.')
+            clear_pipeline(camilla_cfg, pattern='drc.')
 
         # Saving to YAML file to run CamillaDSP
         with open(CFG_PATH, 'w') as f:
@@ -193,7 +196,7 @@ def init_camilladsp(pAudio_config):
     # Updating user configs ---> camilladsp.yml
     update_config_yml()
 
-    # Starting CamillaDSP with <camilladsp.yml> <muted>
+    # Starting CamillaDSP with <camilladsp.yml> and <muted>
     sp.call('pkill camilladsp'.split())
     cdsp_cmd = f'camilladsp -m -a 127.0.0.1 -p 1234'
     cdsp_cmd += f' "{CFG_PATH}"'

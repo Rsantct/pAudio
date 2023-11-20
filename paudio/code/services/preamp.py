@@ -66,6 +66,8 @@ def init():
 
         set_loudness( mode=state["equal_loudness"] )
 
+        if not state["drc_set"] in DRC_SETS:
+            state["drc_set"] = 'none'
         set_drc( state["drc_set"] )
 
 

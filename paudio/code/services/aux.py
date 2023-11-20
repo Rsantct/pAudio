@@ -12,14 +12,6 @@
 from    common      import *
 
 
-def save_aux_info():
-    """ this must be threaded """
-    def dosave():
-        save_json_file(AUXINFO, AUXINFO_PATH)
-    job = threading.Thread(target=dosave,)
-    job.start()
-
-
 def init():
     """ The .aux_info file can be used by others, for example
         preamp.py will alert there for eq_graph changes
@@ -40,6 +32,14 @@ def init():
     save_aux_info()
 
 
+def save_aux_info():
+    """ this must be threaded """
+    def dosave():
+        save_json_file(AUXINFO, AUXINFO_PATH)
+    job = threading.Thread(target=dosave,)
+    job.start()
+
+
 def manage_lu_monitor(commandphrase):
     """ Manages the loudness_monitor.py daemon through by its fifo
     """
@@ -56,6 +56,14 @@ def manage_lu_monitor(commandphrase):
         return 'ordered'
     except Exception as e:
         return f'ERROR writing FIFO \`{LDCTRL_PATH}\`: {str(e)}'
+
+
+def manage_onoff(mode):
+    """ currently only force to stop all stuff
+    """
+    print(f'{Fmt.BOLD}BYE !{Fmt.END}')
+    sp.Popen('pkill -KILL -f "\/paudio"', shell=True)
+    sys.exit()
 
 
 # Entry function
@@ -84,6 +92,9 @@ def do(cmd, args, add):
         case 'set_loudness_monitor_scope' | 'set_lu_monitor_scope':
             args = 'input' # FORCED to input
             result = manage_lu_monitor(f'scope={args}')
+
+        case 'amp_switch':
+            result = manage_onoff(args)
 
 
     return result
