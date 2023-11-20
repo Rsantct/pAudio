@@ -25,6 +25,9 @@ tones_span_dB:      6.0
 # On init preferences (audio settings)
 level:              -20.0
 balance:            0.0
+bass:               0
+treble:             0
+tone_defeat:        false
 target:             +3.0-1.0
 equal_loudness:     true
 lu_offset:          3.0
