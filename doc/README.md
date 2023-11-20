@@ -6,11 +6,15 @@ You need [BlackHole](https://github.com/ExistentialAudio/BlackHole#installation-
 
 You also need [Node.js](https://nodejs.org/en) to serve the control web page.
 
-And the [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools.
+And the [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools, which provides the [git](https://git-scm.com) tool.
+
+## Linux
+TO BE DONE
+
 
 ## CamillaDSP
 
-Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`, or make the new folder by using Finder.
+Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`, or make the new folder by using the File Manager.
 
 Go to https://github.com/HEnquist/camilladsp/releases, download the **`Latest`** version. Use _amd64_ for Intel CPU or _aarch64_ for Apple CPU.
 
