@@ -10,7 +10,7 @@ Some features:
 - **Target EQ** and **DRC (digital room correction)**
 - Easy **control from any web browser** (phone, tablet, PC, ...)
 
-<img src="doc/img/pAudio%20web%20-20dB.png" width="500"><img src="doc/img/pAudio%20web%200dB.png" width="500">
+<img src="doc/img/pAudio%20web%20-20dB.png" width="350"><img src="doc/img/pAudio%20web%200dB.png" width="350">
 
 
 
