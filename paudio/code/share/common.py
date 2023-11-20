@@ -3,6 +3,9 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+import  subprocess as sp
+import  threading
+from    time import sleep
 import  yaml
 import  json
 from    fmt import Fmt
@@ -10,12 +13,22 @@ import  sys
 import  os
 
 UHOME = os.path.expanduser('~')
-MAINFOLDER      = f'{UHOME}/paudio'
-LSPKSFOLDER     = f'{MAINFOLDER}/loudspeakers'
-EQFOLDER        = f'{MAINFOLDER}/eq'
-CODEFOLDER      = f'{MAINFOLDER}/code'
-CONFIG_PATH     = f'{MAINFOLDER}/config.yml'
-DSP_LOGFOLDER   = f'{MAINFOLDER}/log'
+
+MAINFOLDER          = f'{UHOME}/paudio'
+LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
+LSPKFOLDER          = f''
+LOUDSPEAKER         = f''   # to be found when loading CONFIG
+EQFOLDER            = f'{MAINFOLDER}/eq'
+CODEFOLDER          = f'{MAINFOLDER}/code'
+CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
+DSP_LOGFOLDER       = f'{MAINFOLDER}/log'
+PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
+
+LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
+LDMON_PATH          = f'{MAINFOLDER}/.loudness_monitor'
+AUXINFO_PATH        = f'{MAINFOLDER}/.aux_info'
+PLAYER_META_PATH    = f'{MAINFOLDER}/.player_metadata'
+
 
 try:
     os.mkdir(DSP_LOGFOLDER)
@@ -27,13 +40,44 @@ CONFIG = {}
 
 def init():
 
-    global CONFIG
+    global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = read_yaml_file(CONFIG_PATH)
 
+    try:
+        LSPKFOLDER = f'{LSPKSFOLDER}/{CONFIG["loudspeaker"]}'
+        if not os.path.isdir(LSPKFOLDER):
+            print(f'ERROR with LOUDSPEAKER FOLDER configuration')
+            sys.exit()
+    except Exception as e:
+        print(f'ERROR with LOUDSPEAKER configuration')
+        sys.exit()
+
+    LOUDSPEAKER = CONFIG["loudspeaker"]
+
+    CONFIG["DSP"] = get_DSP_in_use()
+
     if not "fs" in CONFIG:
         CONFIG["fs"] = 44100
-        print('(i) Default to fs=44100')
+        print(f'{Fmt.BOLD}\n!!! fs NOT configured, default to fs=44100\n{Fmt.END}')
+
+    if not "plugins" in CONFIG or not CONFIG["plugins"]:
+        CONFIG["plugins"] = []
+
+
+def get_DSP_in_use():
+    """ The DSP in use is set inside preamp.py
+    """
+    with open(f'{CODEFOLDER}/services/preamp.py', 'r') as f:
+        tmp = f.readlines()
+    import_lines = [line for line in tmp if 'import ' in line]
+    import_DSP_line = str([line for line in import_lines if 'DSP' in line])
+    res = 'unknown'
+    if 'camilla' in import_DSP_line:
+        res = 'camilladsp'
+    elif 'brutefir' in import_DSP_line:
+        res = 'brutefir'
+    return res
 
 
 def get_bit_depth(fmt):
@@ -52,8 +96,19 @@ def read_json_file(fpath):
 
 
 def save_json_file(d, fpath):
-    with open(fpath, 'w') as f:
-        f.write(json.dumps(d))
+    c=10
+    while c:
+        try:
+            with open(fpath, 'w') as f:
+                f.write(json.dumps(d))
+            break
+        except:
+            sleep (.1)
+            c -= 1
+    if c:
+        return True
+    else:
+        return False
 
 
 def read_yaml_file(fpath):
@@ -137,8 +192,8 @@ def get_drc_sets_from_loudspeaker(lspk):
     drc_sets = []
 
     try:
-        files = os.listdir(f'{LSPKSFOLDER}/{lspk}')
-        files = [x for x in files if os.path.isfile(f'{LSPKSFOLDER}/{lspk}/{x}') ]
+        files = os.listdir(f'{LSPKFOLDER}')
+        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
         drc_files = [x for x in files if x.startswith('drc.') ]
     except:
         pass
@@ -180,6 +235,21 @@ def get_target_sets(fs=44100):
             sets.append(tID)
 
     return sorted(sets)
+
+
+def process_is_running(pattern):
+    """ check for a system process to be running by a given pattern
+        (bool)
+    """
+    try:
+        # do NOT use shell=True because pgrep ...  will appear it self.
+        plist = sp.check_output(['pgrep', '-fla', pattern]).decode().split('\n')
+    except:
+        return False
+    for p in plist:
+        if pattern in p:
+            return True
+    return False
 
 
 init()

@@ -12,11 +12,11 @@
 
 import  subprocess as sp
 import  json
-from    time    import sleep
 
-# This import works because the main program server.py
-# is located under the same folder then the commom module
-from    common  import *
+# These imports works because the main program server.py
+# is located under the same folder than the commom module
+from    common      import *
+from    eqfir2png   import fir2png
 
 THIS_DIR = os.path.dirname(__file__)
 sys.path.append(f'{THIS_DIR}/preamp_mod')
@@ -73,7 +73,7 @@ def init():
 
     INPUTS              = CONFIG["inputs"]
     TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
-    DRC_SETS            = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
+    DRC_SETS            = get_drc_sets_from_loudspeaker(LOUDSPEAKER)
     CONFIG["drc_sets"]  = DRC_SETS
     # PENDING
     XO_SETS             = []
@@ -89,8 +89,8 @@ def init():
 
 
     # Optional user configs having precedence over the saved state:
-    for prop in 'level', 'balance', 'bass', 'treble', 'lu_offset', \
-                'equal_loudness', 'target', 'drc_set':
+    for prop in 'level', 'balance', 'bass', 'treble', 'tone_defeat',  \
+                'lu_offset', 'equal_loudness', 'target', 'drc_set':
 
         if prop in CONFIG:
 
@@ -118,7 +118,7 @@ def init():
     state["polarity"]   = '++'
 
     # Preparing and running camillaDSP
-    run_cdsp = DSP.init_camilladsp(user_config=CONFIG)
+    run_cdsp = DSP.init_camilladsp(pAudio_config=CONFIG)
 
     if run_cdsp == 'done':
 
@@ -131,6 +131,49 @@ def init():
     else:
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check \'config.yml\' and the log/ folder.{Fmt.END}')
         sys.exit()
+
+
+# Dumping EQ to .png file and alerting clients to let them know
+def eq2png():
+
+    def alert_new_eq_graph(timeout=1):
+        """ This sets the 'new_eq_graph' field to True for a while
+            so that the web page can realize when the graph is dumped.
+            This helps on slow machines because the PNG graph takes a while
+            after the 'done' is received when issuing some audio command.
+        """
+
+        def new_eq_graph(mode):
+            aux_info = read_json_file(AUXINFO_PATH)
+            aux_info['new_eq_graph'] = mode
+            save_json_file(aux_info, AUXINFO_PATH)
+
+        def mytimer(timeout):
+            sleep(timeout)
+            new_eq_graph(False)
+
+        new_eq_graph(True)
+
+        job = threading.Thread(target=mytimer, args=(timeout,))
+        job.start()
+
+
+    def do_graph(e):
+        fir2png()
+        e.set()
+
+
+    def flag_to_aux_info(e):
+        e.wait()    # waits until set flag is true
+        alert_new_eq_graph()
+
+
+    # Threading because saving the PNG file can take too long
+    e  = threading.Event()
+    j1 = threading.Thread(target=do_graph,         args=(e,))
+    j2 = threading.Thread(target=flag_to_aux_info, args=(e,))
+    j1.start()
+    j2.start()
 
 
 # Interface functions with the underlying modules
@@ -346,6 +389,9 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
         state["gain_headroom"] = hr
 
+        # dumps eq to png
+        eq2png()
+
     if clamped:
         result =  f'clamped to {dB}'
 
@@ -454,6 +500,8 @@ def do(cmd, args, add):
                 result = set_loudness(mode=new_mode)
             if result == 'done':
                 state['equal_loudness'] = new_mode
+                # dumps eq to png
+                eq2png()
 
         case 'set_drc':
             new = args
@@ -469,7 +517,7 @@ def do(cmd, args, add):
                 if result == 'done':
                     state["xo_set"] = new
 
-        # Level related commands
+        # Level related commands (state updated by do_levels)
         case 'level' | 'lu_offset' | 'bass' | 'treble' | 'balance':
             try:
                 dB = x2float(args)

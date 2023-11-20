@@ -216,7 +216,7 @@ function fill_in_page_statics(){
     ////
     fill_in_drc_selector();
     ////
-    ////fill_in_LUscope_selector();
+    fill_in_LUscope_selector();
 
 }
 
@@ -364,7 +364,7 @@ function init(){
 
     state_get();
 
-    //download_drc_graphs();
+    download_drc_graphs();
 
     manage_main_cside();
 
@@ -372,7 +372,7 @@ function init(){
 
     //fill_in_playlists_selector();
 
-    //show_hide_LU_frame();
+    show_hide_LU_frame();
 
     // SCHEDULES THE PAGE_UPDATE (only runtime variable items):
     // Notice: the function call inside setInterval uses NO brackets)
@@ -563,7 +563,11 @@ function page_update() {
         }catch(e){
             console.log('response error to \'aux info\'', e.message);
             // Backup method to retrieve the amplifier state:
-            aux_info.amp = control_cmd('amp_switch state');
+            try{
+                aux_info.amp = control_cmd('amp_switch state');
+            }catch(e){
+                server_available = false;
+            }
         }
     }
 
@@ -615,7 +619,7 @@ function page_update() {
             let result = false;
             const eq_params = { 'level':    state.level,    'eq_loud':  state.equal_loudness,
                                 'bass':     state.bass,     'treb':     state.treble,
-                                'target':   state.target
+                                'target':   state.target,   'tone_defeat': state.tone_defeat
                             };
             if ( JSON.stringify(eq_params) !== JSON.stringify(last_eq_params) ) {
                 //console.log('eq changed');
@@ -647,7 +651,7 @@ function page_update() {
             if (eq_changed() == true || aux_info.new_eq_graph == true) {
                 // Artifice to avoid using cached image by adding an offset timestamp
                 // inside the  http.GET image source request
-                document.getElementById("bfeq_img").src = 'images/brutefir_eq.png?'
+                document.getElementById("eq_img").src = 'images/eq.png?'
                                                           + Math.floor(Date.now());
             }
             if (drc_changed() == true) {
@@ -745,8 +749,8 @@ function page_update() {
     }
 
     //// AUX STUFF
-    //aux_info_get();
-    //aux_info_refresh();
+    aux_info_get();
+    aux_info_refresh();
 
     // PREAMP STUFF
     state_get();
@@ -775,7 +779,7 @@ function page_update() {
     //
     LU_refresh();
     //
-    //graphs_update();
+    graphs_update();
     //
     manage_main_cside();
     //
@@ -1126,10 +1130,10 @@ function omd_graphs_toggle() {
 
     if ( hide_graphs == false ){
         document.getElementById("drc_graph").style.display = 'block';
-        document.getElementById("bfeq_graph").style.display = 'block';
+        document.getElementById("eq_graph").style.display = 'block';
     }else{
         document.getElementById("drc_graph").style.display = 'none';
-        document.getElementById("bfeq_graph").style.display = 'none';
+        document.getElementById("eq_graph").style.display = 'none';
     }
 }
 
@@ -1156,11 +1160,17 @@ function control_cmd( cmd ) {
 
     // open(method, url, async_mode)
     myREQ.open("GET", url, false);
+
     // (i) send() is blocking because async=false, so no handlers
     //     on myREQ status changes are needed because of this.
-    myREQ.send();
-    let ans = myREQ.responseText;
+    try{
+        myREQ.send();
+    }catch(e){
+        server_available = false;
+        return '';
+    }
 
+    let ans = myREQ.responseText;
     //console.log('httpTX: ' + cmd);
     //console.log('httpRX: ' + ans);
 

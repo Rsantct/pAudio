@@ -16,8 +16,7 @@ import  numpy as np
 
 from common import *
 
-THIS_DIR = os.path.dirname(__file__)
-sys.path.append(f'{THIS_DIR}/audiotools')
+sys.path.append(f'{MAINFOLDER}/code/share/audiotools')
 from tools  import semispectrum2impulse, savePCM32
 
 
