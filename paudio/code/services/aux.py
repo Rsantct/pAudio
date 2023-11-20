@@ -13,6 +13,10 @@ from    common      import *
 
 
 def init():
+    """ AUXINFO_PATH can be used from others, for example preamp.py
+        will alert there for eq_graph changes
+    """
+
     global AUXINFO, LU_MON_ENABLED
 
     LU_MON_ENABLED  = True if 'loudness_monitor.py' in CONFIG["plugins"] \
@@ -62,7 +66,8 @@ def do(cmd, args, add):
             result = read_json_file(LDMON_PATH)
 
         case 'info':
-            result = read_json_file( AUXINFO_PATH )
+            AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
+            result = AUXINFO
 
         case 'reset_loudness_monitor' | 'reset_lu_monitor':
             result = manage_lu_monitor('reset')
