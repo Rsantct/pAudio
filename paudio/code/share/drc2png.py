@@ -26,8 +26,6 @@ sys.path.append(f'{UHOME}/paudio/code/share')
 from common import *
 
 LOUDSPEAKER = CONFIG["loudspeaker"]
-LSPKFOLDER  = f'{LSPKSFOLDER}/{LOUDSPEAKER}'
-
 IMGFOLDER   = f'{MAINFOLDER}/code/share/www/images/{LOUDSPEAKER}'
 
 
