@@ -239,7 +239,7 @@ if __name__ == '__main__':
         ax.set_yticks( DB_TICKS )
         ax.set_yticklabels( DB_LABELS )
 
-        ax.set_title( 'DRC' )
+        ax.set_title( 'DRC-FIR' )
 
         if drc_set != 'none':
             IRs = read_pcms( drc_set )
