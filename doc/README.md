@@ -45,21 +45,35 @@ Make the launcher to be executable: `chmod +x ~/paudio/paudio.sh`
 
 # Settings
 
-## DRC-FIR
-
-Prepare a loudspeaker folder with your DRC files:
-
-        paudio/loudspeakeres/lspkName/
-            drc.L.setName.pcm
-            drc.R.setName.pcm
-
-Set the `lspkName` in `~/paudio/config.yml`
-
 ## Sound Device
 
 Find the proper device name in **Midi and Audio Setup**
 
-Set the device name in `~/paudio/config.yml`
+Set the device name in **`~/paudio/config.yml`**, for example:
+
+    output:
+        device:      E30 II      # DAC USB Topping E30
+
+
+## Loudspeaker
+
+Prepare a loudspeaker folder, no matter if an empty one.
+
+    mkdir ~/paudio/loudspeakeres/MyLspkName/
+
+Then set **`~/paudio/config.yml`**
+
+    # Loudspeaker in use
+    loudspeaker:    MyLspkName
+
+## DRC-FIR (optional)
+
+Simply drop your DRC FIR files under the loudspeaker folder.
+
+        paudio/loudspeakeres/MyLspkName/
+            drc.L.setName.pcm
+            drc.R.setName.pcm
+
 
 # Running
 
