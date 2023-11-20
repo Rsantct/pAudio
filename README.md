@@ -2,6 +2,8 @@
 
 A PC based advanced preamplifier.
 
+This is a system-wide audio control for a MacOS or Linux PC, so that you can EQ and control all the audio sent to your DAC, Audio Interface, or Phones.
+
 Some features:
 
 - Calibrated volume listening level supported by an **EBU R128 Loudness monitor to check the loudness of any recording**.
