@@ -83,8 +83,19 @@ def read_json_file(fpath):
 
 
 def save_json_file(d, fpath):
-    with open(fpath, 'w') as f:
-        f.write(json.dumps(d))
+    c=10
+    while c:
+        try:
+            with open(fpath, 'w') as f:
+                f.write(json.dumps(d))
+            break
+        except:
+            sleep (.1)
+            c -= 1
+    if c:
+        return True
+    else:
+        return False
 
 
 def read_yaml_file(fpath):
