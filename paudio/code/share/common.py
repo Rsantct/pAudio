@@ -16,6 +16,7 @@ UHOME = os.path.expanduser('~')
 
 MAINFOLDER          = f'{UHOME}/paudio'
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
+LSPKFOLDER          = f''   # to be found when loading CONFIG
 EQFOLDER            = f'{MAINFOLDER}/eq'
 CODEFOLDER          = f'{MAINFOLDER}/code'
 CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
@@ -38,9 +39,18 @@ CONFIG = {}
 
 def init():
 
-    global CONFIG
+    global CONFIG, LSPKFOLDER
 
     CONFIG = read_yaml_file(CONFIG_PATH)
+
+    try:
+        LSPKFOLDER = f'{LSPKSFOLDER}/{CONFIG["loudspeaker"]}'
+        if not os.path.isdir(LSPKFOLDER):
+            print(f'ERROR with LOUDSPEAKER FOLDER configuration')
+            sys.exit()
+    except Exception as e:
+        print(f'ERROR with LOUDSPEAKER configuration')
+        sys.exit()
 
     CONFIG["DSP"] = get_DSP_in_use()
 
@@ -179,8 +189,8 @@ def get_drc_sets_from_loudspeaker(lspk):
     drc_sets = []
 
     try:
-        files = os.listdir(f'{LSPKSFOLDER}/{lspk}')
-        files = [x for x in files if os.path.isfile(f'{LSPKSFOLDER}/{lspk}/{x}') ]
+        files = os.listdir(f'{LSPKFOLDER}')
+        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
         drc_files = [x for x in files if x.startswith('drc.') ]
     except:
         pass
