@@ -30,7 +30,7 @@ Prepare a loudspeaker folder with your DRC files:
             drc.L.setName.pcm
             drc.R.setName.pcm
 
-Set the sound device and `lspkName` in `~/paudio/config.yml`
+Set the `lspkName` in `~/paudio/config.yml`
 
 ## Sound Device
 
