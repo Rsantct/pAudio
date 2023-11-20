@@ -16,7 +16,7 @@ Uncompress and move the binary to your **`~/bin`** folder.
 
 ## Python modules
 
-    pip3 install numpy scipy matplotlib yaml watchdog sounddevice
+    pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice
 
 ## pAudio
 
