@@ -16,7 +16,7 @@ Go to https://github.com/HEnquist/camilladsp/releases, download current, unzip a
 
 ## pAudio
 
-Download this repo, then copy the `paudio/` folder to your **`~/bin`** folder.
+Download or clone this repo, unzip, then copy the **`paudio`** folder to your **`~/bin`** folder.
 
 Also copy the provided `bin/` scripts to your **`~/bin`** folder.
 
@@ -31,6 +31,12 @@ Prepare a loudspeaker folder with your DRC files:
             drc.R.setName.pcm
 
 Set the sound device and `lspkName` in `~/paudio/config.yml`
+
+## Sound Device
+
+Find the proper device name in **Midi and Audio Setup**
+
+Set the device name in `~/paudio/config.yml`
 
 # Running
 
