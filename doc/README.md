@@ -8,23 +8,34 @@ You also need [Node.js](https://nodejs.org/en) to serve the control web page.
 
 ## CamillaDSP
 
-Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`.
+Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`, or use Finder.
 
 Go to https://github.com/HEnquist/camilladsp/releases, download **Latest**. Use _amd64_ for Intel CPU or _aarch64_ for Apple CPU.
 
-Uncompress and move the binary to your **`~/bin`** folder.
+Doubleclick to the `.tar` file to uncompress it. Then move the extracted binary to your **`~/bin`** folder.
 
 ## Python modules
 
-    pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice
+Standard modules
 
-## pAudio
+    python3 -m pip install --upgrade pip
+    pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
+
+The CamillaDSP module
+
+    cd ~/Downloads
+    git clone https://github.com/HEnquist/pycamilladsp.git
+    cd pycamilladsp
+    pip3 install .
+
+
+## The pAudio application
+
+**pAudio** is given in a folder to be located under your HOME directory.
 
 Download or clone this repo, unzip, then copy the **`paudio`** folder to your home directory.
 
-Also copy the provided `bin/paudio.....` scripts to your **`~/bin`** folder.
-
-Make them executable: `chmod +x ~/bin/paudio*`
+Make the launcher to be executable: `chmod +x ~/paudio/paudio.sh`
 
 # Settings
 
@@ -46,7 +57,7 @@ Set the device name in `~/paudio/config.yml`
 
 # Running
 
-    ~/bin/paudio.sh start
+    ~/paudio/paudio.sh start
 
 # Control
 
