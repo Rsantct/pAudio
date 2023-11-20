@@ -34,7 +34,7 @@ def run_plugins():
 def run_drc2png():
     """ Prepare DRC graphs
     """
-    cmd = f'python3 {CODEFOLDER}/share/www/scripts/drc2png.py'
+    cmd = f'python3 {CODEFOLDER}/share/drc2png.py'
     Popen(cmd, shell=True)
 
 
