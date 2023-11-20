@@ -18,4 +18,5 @@
     "polarity":         "++",
     "subsonic":         "off",
     "extra_delay":      0.0
+    "convolver_runs":   false
 }
