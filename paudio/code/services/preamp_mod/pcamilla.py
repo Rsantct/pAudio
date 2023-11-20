@@ -281,8 +281,9 @@ def reload_eq():
     # For convenience, it will be copied to eq.pcm,
     # so that a viewer could display the current curve
     try:
-        sp.call(f'rm {eq_link}'.split())
-        sp.Popen(f'ln -s {eq_path} {eq_link}'.split())
+        with open('/dev/null', 'r') as fnull:
+            sp.call(f'rm {eq_link}'.split(), stdout=fnull, stderr=fnull)
+            sp.call(f'ln -s {eq_path} {eq_link}'.split(), stdout=fnull, stderr=fnull)
     except Exception as e:
         print(f'Problems making the symlink eq/eq.pcm: {str(e)}')
 
@@ -305,7 +306,7 @@ def make_dither_filter(d_type, bits):
 
 
 def make_drc_filter(channel, drc_set, lspk):
-    fir_path = f'{LSPKSFOLDER}/{lspk}/drc.{channel}.{drc_set}.pcm'
+    fir_path = f'{LSPKFOLDER}/drc.{channel}.{drc_set}.pcm'
     f = {
             "type": 'Conv',
             "parameters": {
