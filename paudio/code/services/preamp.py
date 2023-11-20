@@ -73,7 +73,7 @@ def init():
 
     INPUTS              = CONFIG["inputs"]
     TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
-    DRC_SETS            = get_drc_sets_from_loudspeaker(CONFIG["loudspeaker"])
+    DRC_SETS            = get_drc_sets_from_loudspeaker(LOUDSPEAKER)
     CONFIG["drc_sets"]  = DRC_SETS
     # PENDING
     XO_SETS             = []
