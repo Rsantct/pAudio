@@ -1,5 +1,13 @@
 #!/bin/bash
 
+function help {
+    echo
+    echo "  Usage:  paudio.sh   stop | start [ -v ]"
+    echo "          -v:  verbose mode not detached from terminal"
+    echo
+}
+
+
 function stop {
     pkill -f "paudio\/code\/"
     echo "stopped."
@@ -34,10 +42,9 @@ elif [[ $1 = *"start"* ]]; then
 
 
 else
-    echo
-    echo "  Usage:  paudio.sh [ start | stop ]  [ -v ]"
-    echo "          -v:  verbose mode not detached from terminal"
-    echo
+
+    help
+
 
 fi
 
