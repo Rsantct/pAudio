@@ -1,4 +1,5 @@
 # pAudio
+
 A PC based advanced preamplifier.
 
 Some features:
@@ -8,6 +9,8 @@ Some features:
 - Hi-Fi like preamp controls: volume, tone, balance, subsonic, stereo/mono/midside/polarity, mute, loudness
 - **Target EQ** and **DRC (digital room correction)**
 - Easy **control from any web browser** (phone, tablet, PC, ...)
+
+<img src="doc/img/pAudio%20web%20-20dB.png" width="500"><img src="doc/img/pAudio%20web%200dB.png" width="500">
 
 
 
