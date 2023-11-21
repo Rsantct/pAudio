@@ -305,7 +305,7 @@ def save_default_sound_device():
         f.write(cur_dd)
 
 
-def change_default_sound_device(new_dd):
+def change_default_sound_device(new_dev):
     """
         - Change default system-wide sound device
         - Set max volume to device
@@ -317,16 +317,16 @@ def change_default_sound_device(new_dd):
         return
 
     # Default SYSTEM_Playback --> CamillaDSP_capture
-    tmp = sp.call(f'SwitchAudioSource -s \"{new_dd}\"', shell=True)
+    tmp = sp.call(f'SwitchAudioSource -s \"{new_dev}\"', shell=True)
     if tmp == 0:
-        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Default Device: "{new_dd}"{Fmt.END}')
+        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Default Device: "{new_dev}"{Fmt.END}')
     else:
         print(f'(paudio) Problems setting default MacOS playback default device')
 
     # Set volume to max
     tmp = sp.call(f'osascript -e "set volume output volume 100"', shell=True)
     if tmp == 0:
-        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to MAX on "{new_dd}"{Fmt.END}')
+        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to MAX on "{new_dev}"{Fmt.END}')
     else:
         print(f'(paudio) Problems setting system volume to MAX')
 
