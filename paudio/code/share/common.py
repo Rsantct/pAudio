@@ -252,4 +252,80 @@ def process_is_running(pattern):
     return False
 
 
+def manage_default_sound_device():
+    """
+        - Save the current system-wide sound device
+        - Change default system-wide sound device
+        - Set max volume to device
+        - Warning if exclusive-mode is used
+
+        Currently only works with CoreAudio
+    """
+
+    def get_curr_default_device_PENDING():
+        # PENDING:
+        #   system_profiler does not reflects the real one ¿!?
+
+        def find_dd(audio_profile):
+            dd = ''
+            for item in audio_profile["SPAudioDataType"][0]["_items"]:
+                if 'coreaudio_default_audio_system_device' in item and \
+                   item["coreaudio_default_audio_system_device"] == 'spaudio_yes' and \
+                   'coreaudio_output_source' in item and \
+                   item["coreaudio_output_source"] == 'spaudio_default':
+                       dd = item["_name"]
+            return dd
+
+
+        dd = ''
+
+        cmd = 'system_profiler -json $( system_profiler -listDataTypes | grep Audio)'
+        try:
+            tmp = sp.check_output(cmd, shell=True).decode().strip()
+            audio_profile = json.loads(tmp)
+            dd = find_dd(audio_profile)
+        except:
+            pass
+
+        return dd
+
+
+    def get_curr_default_device():
+        dd = ''
+        try:
+            dd = sp.check_output('SwitchAudioSource -c'.split()).decode().strip()
+        except Exception as e:
+            print(f'(pAudio) warning: {str(e)}')
+        return dd
+
+
+    if  CONFIG["sound_server"].lower() != "coreaudio":
+        return
+
+    cur_dd = get_curr_default_device()
+    new_dd = CONFIG["output"]["device"]
+
+    # Saving current system-wide device:
+    with open(f'{MAINFOLDER}/.previous_default_device', 'w') as f:
+        f.write(cur_dd)
+
+    # Default SYSTEM_Playback --> CamillaDSP_capture
+    tmp = sp.call(f'SwitchAudioSource -s \"{new_dd}\"', shell=True)
+    if tmp == 0:
+        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Default Device: "{new_dd}"{Fmt.END}')
+    else:
+        print(f'(paudio) Problems setting default MacOS playback default device')
+
+    # Set volume to max
+    tmp = sp.call(f'osascript -e "set volume output volume 100"', shell=True)
+    if tmp == 0:
+        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to MAX on "{new_dd}"{Fmt.END}')
+    else:
+        print(f'(paudio) Problems setting system volume to MAX')
+
+    # Exclusive mode warning
+    if 'exclusive_mode' in CONFIG["output"] and CONFIG["output"]["exclusive_mode"] == True:
+        print(f'{Fmt.BOLD}COREAUDIO using "{new_dd}" in HOG mode (EXCLUSIVE ACCESS){Fmt.END}')
+
+
 init()
