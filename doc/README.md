@@ -14,6 +14,8 @@ TO BE DONE
 
 ## CamillaDSP
 
+[CamillaDSP](https://github.com/HEnquist/camilladsp#readme) is a powerful audio processing tool.
+
 Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`, or make the new folder by using the File Manager.
 
 Go to https://github.com/HEnquist/camilladsp/releases, download the **`Latest`** version. Use _amd64_ for Intel CPU or _aarch64_ for Apple CPU.
