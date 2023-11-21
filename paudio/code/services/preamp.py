@@ -120,10 +120,12 @@ def init():
     state["polarity"]   = '++'
 
     # Preparing and running camillaDSP
-    manage_default_sound_device()
     run_cdsp = DSP.init_camilladsp(pAudio_config=CONFIG)
 
     if run_cdsp == 'done':
+
+        # MacOS default playback device
+        change_default_sound_device( CONFIG["output"]["device"] )
 
         # Resuming audio settings on the DSP
         resume_audio()
