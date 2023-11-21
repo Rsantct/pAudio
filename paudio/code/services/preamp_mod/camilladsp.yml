@@ -78,7 +78,7 @@ mixers:
         mute: false
 pipeline:
 # drc pipeline names will be autocompleted in runtime
-- name: my_mix
+- name: preamp_mixer
   type: Mixer
 - channel: 0
   names:
