@@ -56,14 +56,21 @@ Make the launcher to be executable: `chmod +x ~/paudio/paudio.sh`
 
 ## Sound Device
 
-Find the proper device name in **Midi and Audio Setup**, the one your loudspeakers are connected.
-
-You can also check device names by running `system_profiler $( system_profiler -listDataTypes | grep Audio)`.
-
 Set the output device name to use in **`~/paudio/config.yml`**, for example:
 
     output:
         device:      E30 II      # DAC USB Topping E30
+
+#### MacOS
+
+Find the proper device name in **Midi and Audio Setup**, the one your loudspeakers are connected.
+
+You can also check device names by running:
+
+    system_profiler $( system_profiler -listDataTypes | grep Audio)
+
+#### Linux
+TO BE DONE
 
 
 ## Loudspeaker
