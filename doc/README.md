@@ -24,12 +24,19 @@ Doubleclick to the downloaded `.tar` file to uncompress it. Then move the extrac
 
 ## Python modules
 
-Standard modules
+[pip](https://pip.pypa.io/en/stable/) is the standard Python package manager. If the following commands fails, you'll need to [install pip](https://pip.pypa.io/en/stable/installation/#supported-methods).
 
-    python3 -m pip install --upgrade pip
+Upgrade `pip`
+
+    python3 -m pip install --upgrade pip setuptools wheel
+
+
+Install standard modules
+
     pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
 
-The CamillaDSP module
+
+Install the CamillaDSP module
 
     cd ~/Downloads
     git clone https://github.com/HEnquist/pycamilladsp.git
@@ -77,9 +84,16 @@ Simply drop your DRC FIR files under the loudspeaker folder.
             drc.R.setName.pcm
 
 
-# Running
+# Running / Stopping
 
-    ~/paudio/paudio.sh start
+To run the system-wide processor:
+
+    ~/paudio/paudio.sh   start
+
+To stop: 
+
+    ~/paudio/paudio.sh   stop
+
 
 # Control
 
