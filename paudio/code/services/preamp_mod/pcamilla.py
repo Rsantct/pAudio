@@ -125,30 +125,12 @@ def init_camilladsp(pAudio_config):
                 append_item_to_pipeline(cfg, item='dither')
 
 
-        def check_pbk_dev():
-            """ Currently only check things for CoreAudio
-            """
-
-            if  pbk_dev["type"] == "CoreAudio":
-
-                if "exclusive" in pbk_dev and pbk_dev["exclusive"]:
-                    print(f'{Fmt.BOLD}COREAUDIO using "{pbk_dev["device"]}" in HOG mode (EXCLUSIVE ACCESS){Fmt.END}')
-
-                # Default SYSTEM_Playback --> CamillaDS_capture
-                print(f'{Fmt.BOLD}Setting MacOS Playback Devide: "{cap_dev["device"]}"{Fmt.END}')
-                # (i) NEEDS brew install switchaudiosource-osx
-                sp.call(f'SwitchAudioSource -s \"{cap_dev["device"]}\"', shell=True)
-
-                print(f'{Fmt.BOLD}Setting VOLUME to MAX on "{cap_dev["device"]}"{Fmt.END}')
-                sleep(0.5)
-                sp.call(f'osascript -e "set volume output volume 100"', shell=True)
-
-
         with open(CFG_PATH, 'r') as f:
             camilla_cfg = yaml.safe_load(f)
 
         # Audio Device
         # Updating with pAudio config
+
         camilla_cfg["devices"]["samplerate"] = pAudio_config["fs"]
 
         if camilla_cfg["devices"]["samplerate"] <= 48000:
@@ -159,25 +141,36 @@ def init_camilladsp(pAudio_config):
         cap_dev = camilla_cfg["devices"]["capture"]
         pbk_dev = camilla_cfg["devices"]["playback"]
 
+        if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
+            cap_dev["type"] = pAudio_config["sound_server"]
+            pbk_dev["type"] = pAudio_config["sound_server"]
+            if cap_dev["type"].lower() == 'coreaudio':
+                cap_dev["type"] = 'CoreAudio'
+            if pbk_dev["type"].lower() == 'coreaudio':
+                pbk_dev["type"] = 'CoreAudio'
+        else:
+            cap_dev["type"] = 'CoreAudio'
+            pbk_dev["type"] = 'CoreAudio'
+
         cap_dev["device"] = pAudio_config["input"]["device"]
         cap_dev["format"] = pAudio_config["input"]["format"]
         pbk_dev["device"] = pAudio_config["output"]["device"]
         pbk_dev["format"] = pAudio_config["output"]["format"]
 
-        check_pbk_dev()
-
+        # MacOS Coreaudio exclusive mode
+        if 'exclusive_mode' in pAudio_config["output"] and pAudio_config["output"]["exclusive_mode"] == True:
+            pbk_dev["exclusive"] = True
+        else:
+            pbk_dev["exclusive"] = False
 
         # Dither
         update_dither(camilla_cfg)
 
-
         # The preamp_mixer
         camilla_cfg["mixers"]["preamp_mixer"] = make_mixer(midside_mode='normal')
 
-
         # The eq filter
         update_eq_filter(camilla_cfg)
-
 
         # The DRCs
         if pAudio_config["drc_sets"]:
