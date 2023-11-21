@@ -252,12 +252,9 @@ def process_is_running(pattern):
     return False
 
 
-def manage_default_sound_device():
+def save_default_sound_device():
     """
-        - Save the current system-wide sound device
-        - Change default system-wide sound device
-        - Set max volume to device
-        - Warning if exclusive-mode is used
+        Save the current system-wide sound device
 
         Currently only works with CoreAudio
     """
@@ -303,11 +300,21 @@ def manage_default_sound_device():
         return
 
     cur_dd = get_curr_default_device()
-    new_dd = CONFIG["output"]["device"]
 
-    # Saving current system-wide device:
     with open(f'{MAINFOLDER}/.previous_default_device', 'w') as f:
         f.write(cur_dd)
+
+
+def change_default_sound_device(new_dd):
+    """
+        - Change default system-wide sound device
+        - Set max volume to device
+
+        Currently only works with CoreAudio
+    """
+
+    if  CONFIG["sound_server"].lower() != "coreaudio":
+        return
 
     # Default SYSTEM_Playback --> CamillaDSP_capture
     tmp = sp.call(f'SwitchAudioSource -s \"{new_dd}\"', shell=True)
@@ -322,10 +329,6 @@ def manage_default_sound_device():
         print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to MAX on "{new_dd}"{Fmt.END}')
     else:
         print(f'(paudio) Problems setting system volume to MAX')
-
-    # Exclusive mode warning
-    if 'exclusive_mode' in CONFIG["output"] and CONFIG["output"]["exclusive_mode"] == True:
-        print(f'{Fmt.BOLD}COREAUDIO using "{new_dd}" in HOG mode (EXCLUSIVE ACCESS){Fmt.END}')
 
 
 init()
