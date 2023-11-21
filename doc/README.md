@@ -49,9 +49,9 @@ Make the launcher to be executable: `chmod +x ~/paudio/paudio.sh`
 
 ## Sound Device
 
-Find the proper device name in **Midi and Audio Setup**
+Find the proper device name in **Midi and Audio Setup**, the one your loudspeakers are connected.
 
-Set the device name in **`~/paudio/config.yml`**, for example:
+Set the output device name to use in **`~/paudio/config.yml`**, for example:
 
     output:
         device:      E30 II      # DAC USB Topping E30
