@@ -10,19 +10,24 @@ function help {
 
 function stop {
     pkill -f "paudio\/code\/"
-    echo "stopped."
+    echo "pAudio has been stopped."
 }
 
 
 if [[ $1 = *"stop"* ]]; then
 
     stop
+
+    echo "Restoring previous Default Playback Device"
+    dev=$(cat ~/paudio/.previous_default_device)
+    SwitchAudioSource -s "$dev"
+
     exit 0
 
 
 elif [[ $1 = *"start"* ]]; then
 
-    stop
+    stop 1>/dev/null 2>&1
 
     # Control web page
     node ~/paudio/code/share/www/nodejs_www_server/www-server.js >/dev/null 2>&1 &
