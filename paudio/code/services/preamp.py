@@ -124,9 +124,10 @@ def init():
 
     if run_cdsp == 'done':
 
-        # MacOS default playback device
+        # Changing MacOS default playback device
         save_default_sound_device()
-        change_default_sound_device( CONFIG["output"]["device"] )
+        change_default_sound_device( CONFIG["input"]["device"] )
+        # It will be restored when ordering `paudio.sh stop`
 
         # Resuming audio settings on the DSP
         resume_audio()
