@@ -252,4 +252,181 @@ def process_is_running(pattern):
     return False
 
 
+def get_default_device_PENDING():
+    #
+    #  PENDING:
+    #    system_profiler does not reflects the real one ¿!?
+    #
+
+    def find_dd(audio_profile):
+        dd = ''
+        for item in audio_profile["SPAudioDataType"][0]["_items"]:
+            if 'coreaudio_default_audio_system_device' in item and \
+               item["coreaudio_default_audio_system_device"] == 'spaudio_yes' and \
+               'coreaudio_output_source' in item and \
+               item["coreaudio_output_source"] == 'spaudio_default':
+                   dd = item["_name"]
+        return dd
+
+
+    if  CONFIG["sound_server"].lower() != "coreaudio":
+        return ''
+
+    dd = ''
+
+    cmd = 'system_profiler -json $( system_profiler -listDataTypes | grep Audio)'
+    try:
+        tmp = sp.check_output(cmd, shell=True).decode().strip()
+        audio_profile = json.loads(tmp)
+        dd = find_dd(audio_profile)
+    except:
+        pass
+
+    return dd
+
+
+def get_default_device():
+    """ Currently only works with CoreAudio
+        AND NEEDS SwitchAudioSource
+    """
+    if  CONFIG["sound_server"].lower() != "coreaudio":
+        return ''
+
+    dd = ''
+    try:
+        dd = sp.check_output('SwitchAudioSource -c'.split()).decode().strip()
+    except Exception as e:
+        print(f'(pAudio) warning: {str(e)}')
+    return dd
+
+
+def get_default_device_vol():
+    """ Currently only works with CoreAudio
+    """
+    if  CONFIG["sound_server"].lower() != "coreaudio":
+        return ''
+
+    cmd = "osascript -e 'output volume of (get volume settings)'"
+    try:
+        vol = sp.check_output(cmd, shell=True).decode().strip()
+    except Exception as e:
+        print(f'(pAudio) warning: {str(e)}')
+        vol = ''
+    return vol
+
+
+def set_default_device_vol(vol):
+    """ Currently only works with CoreAudio
+    """
+    if  CONFIG["sound_server"].lower() != "coreaudio":
+        return 'not available'
+
+    dev = get_default_device()
+
+    cmd = f'osascript -e "set volume output volume {vol}"'
+
+    tmp = sp.call(cmd, shell=True)
+
+    if tmp == 0:
+        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to MAX on "{dev}"{Fmt.END}')
+        return 'done'
+
+    else:
+        print(f'(pAudio) Problems setting system volume to MAX on "{dev}"')
+        return 'error'
+
+
+def set_device_vol(dev, vol):
+    """ Based on `AdjustVolume` from
+        https://github.com/jonomuller/device-volume-adjuster
+    """
+
+    try:
+        vol_unit = round( int(vol) / 100, 3)
+        cmd = f'AdjustVolume -s {vol_unit} -n "{dev}"'
+        sp.call(cmd, shell=True)
+        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to {vol} on "{dev}"{Fmt.END}')
+        return 'done'
+
+    except Exception as e:
+        print(f'(pAudio) ERROR with AdjustVolume: {str(e)}')
+        return 'error'
+
+
+def set_default_device_mute(mode='false'):
+    """ Currently only works with CoreAudio
+    """
+    if  CONFIG["sound_server"].lower() != "coreaudio":
+        return 'not available'
+
+    dev = get_default_device()
+
+    cmd = f'osascript -e "set volume output muted {mode}"'
+
+    tmp = sp.call(cmd, shell=True)
+
+    if tmp == 0:
+        if mode == 'true':
+            print(f'{Fmt.BOLD}{Fmt.BLUE}Mutting "{dev}"{Fmt.END}')
+        else:
+            print(f'{Fmt.BOLD}{Fmt.BLUE}Un-mutting"{dev}"{Fmt.END}')
+        return 'done'
+
+    else:
+        print(f'(pAudio) Problems muting on "{dev}"')
+        return 'error'
+
+
+
+def save_default_sound_device():
+    """ Save the current system-wide sound device
+    """
+
+    cur_dd = get_default_device()
+    if cur_dd:
+        print(f'{Fmt.BLUE}Saving current Playback Device: "{cur_dd}"{Fmt.END}')
+        with open(f'{MAINFOLDER}/.previous_default_device', 'w') as f:
+            f.write(cur_dd)
+    else:
+        print(f'{Fmt.RED} ERROR getting the current Playback Device.{Fmt.END}')
+
+
+    cur_dd_vol = get_default_device_vol()
+    if cur_dd_vol:
+        print(f'{Fmt.BLUE}Saving current Playback Volume: "{cur_dd_vol}"{Fmt.END}')
+        with open(f'{MAINFOLDER}/.previous_default_device_volume', 'w') as f:
+            f.write(cur_dd_vol)
+    else:
+        print(f'{Fmt.RED} ERROR getting the current Playback Volume.{Fmt.END}')
+
+
+def change_default_sound_device(new_dev):
+    """
+        - Change default system-wide sound device
+        - Set max volume to device
+
+        Currently only works with CoreAudio
+    """
+
+    if  CONFIG["sound_server"].lower() != "coreaudio":
+        return
+
+    # Getting PREVIOUS PLAYBACK DEV
+    old_dev = get_default_device()
+
+    # SWITCHING PLAYBACK DEV ---> CamillaDSP_capture
+    cmd_source = f'SwitchAudioSource -s \"{new_dev}\"'
+    tmp = sp.call(cmd_source, shell=True)
+    if tmp == 0:
+        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Default Device: "{new_dev}"{Fmt.END}')
+    else:
+        print(f'(pAudio) Problems setting default MacOS playback default device')
+
+    # Set volume to max on the NEW PLAYBACK DEV
+    set_default_device_vol('100')
+
+    # Set volume to max on the PREVIOUS PLAYBACK DEV
+    set_device_vol(old_dev, '100')
+
+
 init()

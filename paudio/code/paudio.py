@@ -12,12 +12,11 @@
 
 """
 
-from  subprocess    import Popen
-from  services      import preamp, aux, players
-
 # This import works because the main program server.py
 # is located under the same folder then the commom module
 from  common import *
+
+from  services      import preamp, aux, players
 
 
 def run_plugins():
@@ -28,14 +27,14 @@ def run_plugins():
         return
 
     for p in CONFIG["plugins"]:
-        Popen(f'python3 {PLUGINSFOLDER}/{p} start', shell=True)
+        sp.Popen(f'python3 {PLUGINSFOLDER}/{p} start', shell=True)
 
 
 def run_drc2png():
     """ Prepare DRC graphs
     """
     cmd = f'python3 {CODEFOLDER}/share/drc2png.py'
-    Popen(cmd, shell=True)
+    sp.Popen(cmd, shell=True)
 
 
 def do(cmd_phrase):

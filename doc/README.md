@@ -24,12 +24,19 @@ Doubleclick to the downloaded `.tar` file to uncompress it. Then move the extrac
 
 ## Python modules
 
-Standard modules
+[pip](https://pip.pypa.io/en/stable/) is the standard Python package manager. If the following commands fails, you'll need to [install pip](https://pip.pypa.io/en/stable/installation/#supported-methods).
 
-    python3 -m pip install --upgrade pip
+Upgrade `pip`
+
+    python3 -m pip install --upgrade pip setuptools wheel
+
+
+Install standard modules
+
     pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
 
-The CamillaDSP module
+
+Install the CamillaDSP module
 
     cd ~/Downloads
     git clone https://github.com/HEnquist/pycamilladsp.git
@@ -49,12 +56,21 @@ Make the launcher to be executable: `chmod +x ~/paudio/paudio.sh`
 
 ## Sound Device
 
-Find the proper device name in **Midi and Audio Setup**
-
-Set the device name in **`~/paudio/config.yml`**, for example:
+Set the output device name to use in **`~/paudio/config.yml`**, for example:
 
     output:
         device:      E30 II      # DAC USB Topping E30
+
+#### MacOS
+
+Find the proper device name in **Midi and Audio Setup**, the one your loudspeakers are connected.
+
+You can also check device names by running:
+
+    system_profiler $( system_profiler -listDataTypes | grep Audio)
+
+#### Linux
+TO BE DONE
 
 
 ## Loudspeaker
@@ -77,9 +93,16 @@ Simply drop your DRC FIR files under the loudspeaker folder.
             drc.R.setName.pcm
 
 
-# Running
+# Running / Stopping
 
-    ~/paudio/paudio.sh start
+To run the system-wide processor:
+
+    ~/paudio/paudio.sh   start
+
+To stop: 
+
+    ~/paudio/paudio.sh   stop
+
 
 # Control
 
