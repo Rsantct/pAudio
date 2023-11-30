@@ -1,14 +1,22 @@
+# Sound server
+sound_server:       coreaudio
+fs:                 44100
+
 # Audio devices
-fs: 44100
 input:
-    device:      BlackHole 2ch
-    format:      FLOAT32LE
+
+    format:         FLOAT32LE
+
+    device:         BlackHole 2ch
+
 output:
+
+    format:         FLOAT32LE
+    dither_bits:    16                      # void or 0 to disable
+
     #device:      Auriculares externos        # Auriculares en el MacBook
     device:      MacBook Pro (altavoces)     # Altavoces del MacBook
     #device:      E30 II                      # DAC USB Topping E30
-    format:      FLOAT32LE
-    dither_bits: 16                           # void or 0 to disable
 
 
 # Loudspeaker in use
@@ -26,7 +34,7 @@ tones_span_dB:      6.0
 target:             +3.0-1.0
 equal_loudness:     true
 lu_offset:          6.0
-level:              -20.0
+#level:              -20.0
 balance:            0.0
 bass:               0
 treble:             0
