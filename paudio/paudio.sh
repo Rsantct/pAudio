@@ -2,7 +2,7 @@
 
 function help {
     echo
-    echo "  Usage:  paudio.sh   stop | start [ -v ]"
+    echo "  Usage:  paudio.sh   stop | start [ -v ] | toggle"
     echo "          -v:  verbose mode not detached from terminal"
     echo
 }
