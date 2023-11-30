@@ -8,7 +8,7 @@ function help {
 }
 
 
-function stop {
+function stop_all {
     pkill -f "paudio\/code\/"
     echo "pAudio has been stopped."
 }
@@ -16,18 +16,24 @@ function stop {
 
 if [[ $1 = *"stop"* ]]; then
 
-    stop
+    # Stop all (audio and web page)
+    stop_all
 
     echo "Restoring previous Default Playback Device"
     dev=$(cat ~/paudio/.previous_default_device)
     SwitchAudioSource -s "$dev"
+
+    echo "Restoring previous Playback Device Volume"
+    vol=$(cat ~/paudio/.previous_default_device_volume)
+    osascript -e 'set volume output volume '$vol
 
     exit 0
 
 
 elif [[ $1 = *"start"* ]]; then
 
-    stop 1>/dev/null 2>&1
+    # Stop all (audio and web page)
+    stop_all
 
     # Control web page
     node ~/paudio/code/share/www/nodejs_www_server/www-server.js >/dev/null 2>&1 &
