@@ -62,7 +62,13 @@ def manage_onoff(mode):
     """ currently only force to stop all stuff
     """
     print(f'{Fmt.BOLD}BYE !{Fmt.END}')
-    sp.Popen('pkill -KILL -f "\/paudio"', shell=True)
+
+    # Forced stop
+    #sp.Popen('pkill -KILL -f "\/paudio"', shell=True)
+
+    # A clean stop, restoring audio playback device and volume
+    sp.Popen(f'{MAINFOLDER}/paudio.sh stop', shell=True)
+
     sys.exit()
 
 
