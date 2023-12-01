@@ -2,11 +2,18 @@
 
 ## MacOS
 
-You need [BlackHole](https://github.com/ExistentialAudio/BlackHole#installation-instructions) to route your audio.
+- [BlackHole](https://github.com/ExistentialAudio/BlackHole#installation-instructions) to route your audio.
 
-You also need [Node.js](https://nodejs.org/en) to serve the control web page.
+- [Node.js](https://nodejs.org/en) to serve the control web page.
 
-And the [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools, which provides the [git](https://git-scm.com) tool.
+- [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools, which provides the [git](https://git-scm.com) tool.
+
+### Optional
+
+In order to automatically switch the Mac Audio Playback to pAudio BlackHole and restore later, you may want to install a couple of additional tools:
+
+- [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster)
+- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx)
 
 ## Linux
 TO BE DONE
