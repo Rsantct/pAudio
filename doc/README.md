@@ -6,7 +6,7 @@
 
 - [Node.js](https://nodejs.org/en) to serve the control web page.
 
-- [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools, which provides the [git](https://git-scm.com) tool.
+- [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools (this includes the [git](https://git-scm.com) tool).
 
 ### Optional
 
@@ -25,9 +25,13 @@ TO BE DONE
 
 Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`, or make the new folder by using the File Manager.
 
-Go to https://github.com/HEnquist/camilladsp/releases, download the **`Latest`** version. Use _amd64_ for Intel CPU or _aarch64_ for Apple CPU.
+Go to https://github.com/HEnquist/camilladsp/releases.
 
-Doubleclick to the downloaded `.tar` file to uncompress it. Then move the extracted binary **`camilladsp`** to your **`~/bin`** folder.
+Choose **`amd64`** for Intel CPU or **`aarch64`** for Apple CPU, download the **`Latest`** version.
+
+Doubleclick to the downloaded `.tar` file to uncompress it. 
+
+Then move the extracted binary **`camilladsp`** to your **`~/bin`** folder.
 
 ## Python modules
 
