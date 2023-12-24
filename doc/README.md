@@ -4,13 +4,13 @@
 
 - [BlackHole](https://github.com/ExistentialAudio/BlackHole#installation-instructions) to route your audio.
 
-- [Node.js](https://nodejs.org/en) to serve the control web page.
+- [Node.js](https://nodejs.org/en) to serve the control web page (Choose the recommended `LTS` version).
 
 - [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools (this includes the [git](https://git-scm.com) tool).
 
-### Optional
+### recommended
 
-In order to automatically switch the Mac Audio Playback to pAudio BlackHole and restore later, you may want to install a couple of additional tools:
+In order to automatically switch the Mac system-wide audio playback to the pAudio BlackHole input, and restore later, you may want to install a couple of additional tools:
 
 - [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster)
 - [SwitchAudioSource](https://github.com/deweller/switchaudio-osx)
@@ -23,31 +23,34 @@ TO BE DONE
 
 [CamillaDSP](https://github.com/HEnquist/camilladsp#readme) is a powerful audio processing tool.
 
-Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`, or make the new folder by using the File Manager.
+CamillaDSP is provided as a single executable binary. Proceed as follow:
 
-Go to https://github.com/HEnquist/camilladsp/releases.
+- Prepare a `~/bin` folder under your home directory: `makedir -p ~/bin`, or make the new folder by using the File Manager.
 
-Choose **`amd64`** for Intel CPU or **`aarch64`** for Apple CPU, download the **`Latest`** version.
+- Go to https://github.com/HEnquist/camilladsp/releases.
 
-Doubleclick to the downloaded `.tar` file to uncompress it. 
+- Choose **`amd64`** for Intel CPU or **`aarch64`** for Apple CPU, download the **`Latest`** version.
 
-Then move the extracted binary **`camilladsp`** to your **`~/bin`** folder.
+- Doubleclick to the downloaded `.tar` file to uncompress it. 
+
+- Move the extracted binary **`camilladsp`** to your **`~/bin`** folder.
 
 ## Python modules
 
-[pip](https://pip.pypa.io/en/stable/) is the standard Python package manager. If the following commands fails, you'll need to [install pip](https://pip.pypa.io/en/stable/installation/#supported-methods).
+[pip](https://pip.pypa.io/en/stable/) is the standard Python package manager.
 
-Upgrade `pip`
+Upgrade `pip`:
 
     python3 -m pip install --upgrade pip setuptools wheel
 
+If the above command fails, you'll need to [install pip](https://pip.pypa.io/en/stable/installation/#supported-methods), then retry in order to upgrade `setuptools`.
 
-Install standard modules
+Install standard Python modules:
 
     pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
 
 
-Install the CamillaDSP module
+Install the CamillaDSP module:
 
     cd ~/Downloads
     git clone https://github.com/HEnquist/pycamilladsp.git
@@ -104,7 +107,7 @@ Simply drop your DRC FIR files under the loudspeaker folder.
             drc.R.setName.pcm
 
 
-# Running / Stopping
+# Run / Stop pAudio
 
 To run the system-wide processor:
 
@@ -115,7 +118,7 @@ To stop:
     ~/paudio/paudio.sh   stop
 
 
-# Control
+# Controlling pAudio
 
     http://localhost:8088
 
