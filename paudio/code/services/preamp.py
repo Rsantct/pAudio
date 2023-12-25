@@ -116,13 +116,18 @@ def init():
 
 
     # Forced init settings
-    state["fs"]         = CONFIG["fs"]
-    state["polarity"]   = '++'
+    state["fs"]             = CONFIG["fs"]
+    state["polarity"]       = '++'
+    state["input_dev"]      = CONFIG["input"]["device"]
+    state["output_dev"]     = CONFIG["output"]["device"]
+    state["buffer_size"]    = 0
 
     # Preparing and running camillaDSP
     run_cdsp = DSP.init_camilladsp(pAudio_config=CONFIG)
 
     if run_cdsp == 'done':
+
+        state["buffer_size"] = DSP.PC.config.active()["devices"]["chunksize"]
 
         # Changing MacOS default playback device
         save_default_sound_device()
