@@ -45,10 +45,6 @@ filters:
       inverted: false
       mute: false
     type: Gain
-  vol:
-    parameters:
-      ramp_time: 200
-    type: Volume
 mixers:
   # preamp_mixer will be autoupdated in runtime
   preamp_mixer:
@@ -86,7 +82,6 @@ pipeline:
   - drc_gain
   - lu_offset
   - bal_pol_L
-  - vol
   type: Filter
 - channel: 1
   names:
@@ -94,5 +89,4 @@ pipeline:
   - drc_gain
   - lu_offset
   - bal_pol_R
-  - vol
   type: Filter
