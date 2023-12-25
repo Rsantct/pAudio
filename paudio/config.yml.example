@@ -11,12 +11,14 @@ input:
 
 output:
 
-    format:         FLOAT32LE
     dither_bits:    16                      # void or 0 to disable
 
-    #device:      Auriculares externos        # Auriculares en el MacBook
-    device:      MacBook Pro (altavoces)     # Altavoces del MacBook
-    #device:      E30 II                      # DAC USB Topping E30
+    #device:        Auriculares externos     # Auriculares en el MacBook
+    #device:         MacBook Pro (altavoces) # Altavoces del MacBook
+    #format:         FLOAT32LE
+
+    device:         E30 II                  # DAC USB Topping E30
+    format:         S32LE
 
 
 # Loudspeaker in use
