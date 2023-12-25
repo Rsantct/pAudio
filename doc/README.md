@@ -52,10 +52,7 @@ Install standard Python modules:
 
 Install the CamillaDSP module:
 
-    cd ~/Downloads
-    git clone https://github.com/HEnquist/pycamilladsp.git
-    cd pycamilladsp
-    pip3 install .
+    pip3 install git+https://github.com/HEnquist/pycamilladsp.git
 
 
 ## The pAudio application

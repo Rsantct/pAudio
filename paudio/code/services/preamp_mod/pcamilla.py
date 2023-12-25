@@ -7,7 +7,7 @@ import  subprocess as sp
 from    time import sleep
 import  yaml
 import  json
-from    camilladsp import CamillaConnection
+from    camilladsp import CamillaClient
 import  make_eq as mkeq
 
 # This import works because the main program server.py
@@ -199,7 +199,7 @@ def init_camilladsp(pAudio_config):
     sleep(1)
 
     try:
-        PC = CamillaConnection("127.0.0.1", 1234)
+        PC = CamillaClient("127.0.0.1", 1234)
         PC.connect()
         return 'done'
 
@@ -246,20 +246,20 @@ def append_item_to_pipeline(cfg, item = ''):
 
 
 def set_config_sync(cfg):
-    """ (i) When ordering set_config some time is needed to be running
+    """ (i) When ordering set config some time is needed to be running
         This is a fake sync, but it works
     """
-    PC.set_config(cfg)
+    PC.config.set_active(cfg)
     sleep(.1)
 
 
 def get_state():
     """ This is the internal camillaDSP state """
-    return PC.get_state()
+    return PC.general.state()
 
 
 def get_config():
-    return PC.get_config()
+    return PC.config.active()
 
 
 def reload_eq():
@@ -282,7 +282,7 @@ def reload_eq():
     except Exception as e:
         print(f'Problems making the symlink eq/eq.pcm: {str(e)}')
 
-    cfg = PC.get_config()
+    cfg = PC.config.active()
     cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
     set_config_sync(cfg)
 
@@ -396,7 +396,7 @@ def make_mixer(midside_mode='normal'):
 def get_drc_sets():
     """ Retrieves thr drc.X.XXX filters in camillaDSP configuration
     """
-    filters = PC.get_config()["filters"]
+    filters = PC.config.active()["filters"]
     drc_sets = []
     for f in filters:
         if f.startswith('drc.'):
@@ -411,7 +411,7 @@ def get_xo_sets():
 
 
 def get_drc_gain():
-    return json.dumps( PC.get_config()["filters"]["drc_gain"] )
+    return json.dumps( PC.config.active()["filters"]["drc_gain"] )
 
 
 # Setting AUDIO, allways **MUST** return some string, usually 'done'
@@ -419,7 +419,7 @@ def get_drc_gain():
 def set_mute(mode):
     if type(mode) != bool:
         return 'must be True/False'
-    res = str( PC.set_mute(mode) )
+    res = str( PC.mute.set_main(mode) )
     if res == 'None':
         res = 'done'
     return res
@@ -430,7 +430,7 @@ def set_midside(mode):
     modes = ('off', 'mid', 'side', 'solo_L', 'solo_R')
 
     if mode in modes:
-        c = PC.get_config()
+        c = PC.config.active()
         if mode == 'off':
             mode = 'normal'
         c["mixers"]["preamp_mixer"] = make_mixer(midside_mode = mode)
@@ -442,7 +442,7 @@ def set_midside(mode):
 
 
 def set_solo(mode):
-    c = PC.get_config()
+    c = PC.config.active()
     match mode:
         case 'l':       m = make_mixer(midside_mode='solo_L')
         case 'r':       m = make_mixer(midside_mode='solo_R')
@@ -462,7 +462,7 @@ def set_polarity(mode):
 
     result = f'Polarity must be in: {modes}'
 
-    c = PC.get_config()
+    c = PC.config.active()
 
     match mode:
 
@@ -480,7 +480,7 @@ def set_polarity(mode):
 
 
 def set_volume(dB):
-    res = str( PC.set_volume(dB) )
+    res = str( PC.volume.set_main(dB) )
     if res == 'None':
         res = 'done'
     return res
@@ -489,7 +489,7 @@ def set_volume(dB):
 def set_balance(dB):
     """ negative dBs means towards Left, positive to Right
     """
-    c = PC.get_config()
+    c = PC.config.active()
     c["filters"]["bal_pol_L"]["parameters"]["gain"] = -dB / 2.0
     c["filters"]["bal_pol_R"]["parameters"]["gain"] = +dB / 2.0
     set_config_sync(c)
@@ -557,7 +557,7 @@ def set_drc(drcID):
 
     result = ''
 
-    cfg = PC.get_config()
+    cfg = PC.config.active()
 
     if drcID == 'none':
         try:
@@ -579,14 +579,14 @@ def set_drc(drcID):
 
 
 def set_drc_gain(dB):
-    cfg = PC.get_config()
+    cfg = PC.config.active()
     cfg["filters"]["drc_gain"]["parameters"]["gain"] = dB
     set_config_sync(cfg)
     return 'done'
 
 
 def set_lu_offset(dB):
-    cfg = PC.get_config()
+    cfg = PC.config.active()
     cfg["filters"]["lu_offset"]["parameters"]["gain"] = dB
     set_config_sync(cfg)
     return 'done'
