@@ -52,6 +52,19 @@ def init_camilladsp(pAudio_config):
         """ Updates camilladsp.yml with user configs
         """
 
+
+        def update_xo_stuff(cfg):
+
+            # xo filters
+            clear_filters(cfg, pattern='xo.')
+            for xoset in ('lo.mp', 'hi.mp'):
+                cfg["filters"][f'xo.{xoset}'] = make_xo_filter(xoset)
+
+            # pipeline PENDING
+
+            return cfg
+
+
         def update_drc_stuff(cfg):
 
             # drc filters
@@ -179,6 +192,11 @@ def init_camilladsp(pAudio_config):
             clear_filters(camilla_cfg, pattern='drc.')
             clear_pipeline(camilla_cfg, pattern='drc.')
 
+
+        # The XO
+        update_xo_stuff(camilla_cfg)
+
+
         # Saving to YAML file to run CamillaDSP
         with open(CFG_PATH, 'w') as f:
             yaml.safe_dump(camilla_cfg, f)
@@ -302,6 +320,19 @@ def make_dither_filter(d_type, bits):
 
 def make_drc_filter(channel, drc_set):
     fir_path = f'{LSPKFOLDER}/drc.{channel}.{drc_set}.pcm'
+    f = {
+            "type": 'Conv',
+            "parameters": {
+                "filename": fir_path,
+                "format":   'FLOAT32LE',
+                "type":     'Raw'
+            }
+        }
+    return f
+
+
+def make_xo_filter(xo_set):
+    fir_path = f'{LSPKFOLDER}/xo.{xo_set}.pcm'
     f = {
             "type": 'Conv',
             "parameters": {
