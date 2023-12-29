@@ -40,6 +40,76 @@ CONFIG = {}
 
 def init():
 
+
+    def reformat_outputs():
+        """
+            Outputs are given in NON standard YML, having 4 fields.
+
+            An output can be void, or at least must have a valid name:
+
+                Out:    Name   Gain    Polarity  Delay(ms)
+
+            Will convert the Human Readable fields into a dictionary.
+        """
+
+        def check_output_params(out, params):
+
+            out_name, gain, pol, delay = params
+
+            if not out_name or not out_name.replace('.', '').replace('_', '').isalpha():
+                raise Exception( f'Output {out} bad name: {out_name}' )
+
+            if not out_name[:2] == 'sw' and not out_name[-2:] in ('.L', '.R'):
+                raise Exception( f'Output {out} bad name: {out_name}' )
+
+            if gain:
+                gain = round(float(gain), 1)
+            else:
+                gain = 0.0
+
+            if pol:
+                valid_pol = ('+', '-', '1', '-1', 1, -1)
+                if not pol in valid_pol:
+                    raise Exception( f'Polarity must be in {valid_pol}' )
+            else:
+                pol = 1
+
+            if delay:
+                delay = round(float(delay), 3)
+            else:
+                delay = 0.0
+
+            return out, (out_name, gain, pol, delay)
+
+
+        # Outputs
+        ways = []
+        void_count = 0
+        for out, params in CONFIG["outputs"].items():
+
+            # It is expected 4 fields
+            params = params.split() if params else []
+            params += [''] * (4 - len(params))
+
+            # Redo in dictionary form
+            if not any(params):
+                void_count += 1
+                params = {'bflabel': f'void_{void_count}', 'gain': 0.0,
+                          'polarity': '', 'delay': 0.0}
+
+            else:
+                _, p = check_output_params(out, params)
+                bflabel, gain, pol, delay = p
+                params = {'bflabel': bflabel, 'gain': gain, 'polarity': pol, 'delay': delay}
+                ways.append( bflabel.split('.')[0] )
+
+            CONFIG["outputs"][out] = params
+
+
+        # Number of outputs must match the sound card
+        # TO BE DONE
+
+
     global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = read_yaml_file(CONFIG_PATH)
@@ -63,6 +133,9 @@ def init():
 
     if not "plugins" in CONFIG or not CONFIG["plugins"]:
         CONFIG["plugins"] = []
+
+    # Converting the Human Readable outputs section to a dictionary
+    reformat_outputs()
 
 
 def get_DSP_in_use():
@@ -375,7 +448,6 @@ def set_default_device_mute(mode='false'):
     else:
         print(f'(pAudio) Problems muting on "{dev}"')
         return 'error'
-
 
 
 def save_default_sound_device():
