@@ -9,9 +9,9 @@ devices:
     format: FLOAT32LE
     type: CoreAudio
   playback:
-    channels: 2
-    device: MacBook Pro (altavoces)
-    format: FLOAT32LE
+    channels: 4
+    device: UMC204HD 192k
+    format: S24LE
     type: CoreAudio
 filters:
   bal_pol_L:
@@ -26,7 +26,6 @@ filters:
       inverted: false
       mute: false
     type: Gain
-  # drc.X.XXX filters will be autocompleted from the loudspeaker folder .pcm files
   drc_gain:
     parameters:
       gain: 0.0
@@ -45,6 +44,7 @@ filters:
       inverted: false
       mute: false
     type: Gain
+  # drc and XO filters will be autocompleted at init
 mixers:
   # preamp_mixer will be autoupdated in runtime
   preamp_mixer:
@@ -72,6 +72,7 @@ mixers:
         gain: 0.0
         inverted: false
         mute: false
+  # A N way expander filter will be autocompleted at init
 pipeline:
 # drc pipeline names will be autocompleted in runtime
 - name: preamp_mixer
@@ -90,3 +91,4 @@ pipeline:
   - lu_offset
   - bal_pol_R
   type: Filter
+# multiway channel expansion and xover will be autocompleted at init
