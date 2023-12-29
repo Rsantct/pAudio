@@ -74,13 +74,15 @@ def init():
     global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
     INPUTS              = CONFIG["inputs"]
+
     TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
+
     DRC_SETS            = get_drc_sets_from_loudspeaker(LOUDSPEAKER)
     CONFIG["drc_sets"]  = DRC_SETS
+
     # PENDING
     XO_SETS             = []
     CONFIG["xo_sets"]   = XO_SETS
-
 
     # Default CONFIG values
     if not "tones_span_dB" in CONFIG:
