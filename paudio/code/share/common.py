@@ -83,7 +83,6 @@ def init():
 
 
         # Outputs
-        ways = []
         void_count = 0
         for out, params in CONFIG["outputs"].items():
 
@@ -94,14 +93,13 @@ def init():
             # Redo in dictionary form
             if not any(params):
                 void_count += 1
-                params = {'bflabel': f'void_{void_count}', 'gain': 0.0,
+                params = {'name': f'void_{void_count}', 'gain': 0.0,
                           'polarity': '', 'delay': 0.0}
 
             else:
                 _, p = check_output_params(out, params)
-                bflabel, gain, pol, delay = p
-                params = {'bflabel': bflabel, 'gain': gain, 'polarity': pol, 'delay': delay}
-                ways.append( bflabel.split('.')[0] )
+                name, gain, pol, delay = p
+                params = {'name': name, 'gain': gain, 'polarity': pol, 'delay': delay}
 
             CONFIG["outputs"][out] = params
 
