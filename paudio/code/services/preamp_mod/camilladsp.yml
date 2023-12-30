@@ -46,6 +46,7 @@ filters:
     type: Gain
   # drc and XO filters will be autocompleted at init
 mixers:
+
   # preamp_mixer will be autoupdated in runtime
   preamp_mixer:
     channels:
@@ -72,11 +73,15 @@ mixers:
         gain: 0.0
         inverted: false
         mute: false
-  # A N way expander filter will be autocompleted at init
+
+  # A N way expander mixer will be autocompleted at init
+
 pipeline:
-# drc pipeline names will be autocompleted in runtime
+
 - name: preamp_mixer
   type: Mixer
+
+# Filter names for DRC will be inserted in runtime
 - channel: 0
   names:
   - eq
@@ -91,4 +96,5 @@ pipeline:
   - lu_offset
   - bal_pol_R
   type: Filter
-# multiway channel expansion and xover will be autocompleted at init
+
+# multiway channel expansion Mixer and xover Filters will be added at init
