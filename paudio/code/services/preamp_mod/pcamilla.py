@@ -62,8 +62,6 @@ def init_camilladsp(pAudio_config):
 
             # pipeline PENDING
 
-            return cfg
-
 
         def update_drc_stuff(cfg):
 
@@ -74,10 +72,8 @@ def init_camilladsp(pAudio_config):
                     cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset)
 
             # The initial pipeline points to the FIRST drc_set
-            clear_pipeline(cfg, pattern='drc.')
+            clear_pipeline_input_filters(cfg, pattern='drc.')
             insert_drc_to_pipeline(cfg, drcID=pAudio_config["drc_sets"][0])
-
-            return cfg
 
 
         def update_eq_filter(cfg):
@@ -116,7 +112,7 @@ def init_camilladsp(pAudio_config):
 
             # clearing
             clear_filters(cfg, pattern='dither')
-            clear_pipeline(cfg, pattern='dither')
+            clear_pipeline_input_filters(cfg, pattern='dither')
 
             if "dither_bits" in pAudio_config["output"] and \
                pAudio_config["output"]["dither_bits"]:
@@ -170,6 +166,10 @@ def init_camilladsp(pAudio_config):
         pbk_dev["device"] = pAudio_config["output"]["device"]
         pbk_dev["format"] = pAudio_config["output"]["format"]
 
+        # Number of channels to use
+        N = get_number_of_ways()
+        pbk_dev["channels"] = N * 2
+
         # MacOS Coreaudio exclusive mode
         if 'exclusive_mode' in pAudio_config["output"] and pAudio_config["output"]["exclusive_mode"] == True:
             pbk_dev["exclusive"] = True
@@ -180,7 +180,7 @@ def init_camilladsp(pAudio_config):
         update_dither(camilla_cfg)
 
         # The preamp_mixer
-        camilla_cfg["mixers"]["preamp_mixer"] = make_mixer(midside_mode='normal')
+        camilla_cfg["mixers"]["preamp_mixer"] = make_preamp_mixer(midside_mode='normal')
 
         # The eq filter
         update_eq_filter(camilla_cfg)
@@ -190,7 +190,14 @@ def init_camilladsp(pAudio_config):
             update_drc_stuff(camilla_cfg)
         else:
             clear_filters(camilla_cfg, pattern='drc.')
-            clear_pipeline(camilla_cfg, pattern='drc.')
+            clear_pipeline_input_filters(camilla_cfg, pattern='drc.')
+
+
+        # The N ways expander Mixer
+        make_N_way_mixer(camilla_cfg, N)
+        tmp = {'type': 'Mixer', 'name': f'from2to{N*2}channels'}
+        clear_pipeline_mixer(camilla_cfg, pattern='from2to')
+        camilla_cfg["pipeline"].append(tmp)
 
 
         # The XO
@@ -236,13 +243,32 @@ def clear_filters(cfg, pattern=''):
     return cfg
 
 
-def clear_pipeline(cfg, pattern=''):
+def clear_pipeline_input_filters(cfg, pattern=''):
+    """ Clears elements inside the 2 first filters of the pipeline.
+        That is, the pipeline steps 1 and 2
+    """
     if pattern:
-        for n in (1,2):
+        for n in (1, 2):
             names_old = cfg["pipeline"][n]['names']
             names_new = list_remove_by_pattern(names_old, pattern)
             cfg["pipeline"][n]['names'] = names_new
-    return cfg
+
+
+def clear_pipeline_mixer(cfg, pattern=''):
+    """ Clears mixer steps from the pipeline
+    """
+    def remove_mixer(l, p):
+        l = [ x for x in l
+                if (x["type"]=='Mixer' and p not in x["name"])
+                   or
+                   x["type"]!='Mixer'
+            ]
+        return l
+
+    if pattern:
+        steps_old = cfg["pipeline"]
+        steps_new = remove_mixer(steps_old, pattern)
+        cfg["pipeline"] = steps_new
 
 
 def insert_drc_to_pipeline(cfg, drcID = ''):
@@ -344,7 +370,7 @@ def make_xo_filter(xo_set):
     return f
 
 
-def make_mixer(midside_mode='normal'):
+def make_preamp_mixer(midside_mode='normal'):
     """
         modes:
 
@@ -422,6 +448,53 @@ def make_mixer(midside_mode='normal'):
     return m
 
 
+def make_N_way_mixer(cfg, N):
+    """
+    Example:
+
+      from2to4channels:
+        channels:
+          in: 2
+          out: 4
+        mapping:
+        - dest: 0
+          sources:
+          - channel: 0
+        - dest: 1
+          sources:
+          - channel: 1
+        - dest: 2
+          sources:
+          - channel: 0
+        - dest: 3
+          sources:
+          - channel: 1
+    """
+
+    mixer_name = f'from2to{N * 2}channels'
+    cfg["mixers"][mixer_name] = {'channels': {'in': 2, 'out': N * 2},
+                                 'mapping': []}
+
+    for d in range(N):
+        for s in (0,1):
+            tmp = {'dest': d, 'sources': [{'channel': s}]}
+            cfg["mixers"][mixer_name]["mapping"].append(tmp)
+
+
+def get_number_of_ways():
+
+    outputs = CONFIG["outputs"]
+
+    L_outs  = [ o for o, ps in outputs.items() if ps["name"][-1]=='L' ]
+    R_outs  = [ o for o, ps in outputs.items() if ps["name"][-1]=='R' ]
+    SW_outs = [ o for o, ps in outputs.items() if 'sw' in ps["name"]  ]
+
+    if len(L_outs) != len(R_outs):
+        raise Exception('Number of outputs for L and R does not match')
+
+    return len(L_outs)
+
+
 # Getting AUDIO
 
 def get_drc_sets():
@@ -475,9 +548,9 @@ def set_midside(mode):
 def set_solo(mode):
     c = PC.config.active()
     match mode:
-        case 'l':       m = make_mixer(midside_mode='solo_L')
-        case 'r':       m = make_mixer(midside_mode='solo_R')
-        case 'off':     m = make_mixer(midside_mode='normal')
+        case 'l':       m = make_preamp_mixer(midside_mode='solo_L')
+        case 'r':       m = make_preamp_mixer(midside_mode='solo_R')
+        case 'off':     m = make_preamp_mixer(midside_mode='normal')
         case _:         return 'solo mode must be L|R|off'
     c["mixers"]["preamp_mixer"] = m
     set_config_sync(c)
@@ -592,7 +665,7 @@ def set_drc(drcID):
 
     if drcID == 'none':
         try:
-            cfg = clear_pipeline(cfg, pattern='drc.')
+            cfg = clear_pipeline_input_filters(cfg, pattern='drc.')
             set_config_sync(cfg)
             result = 'done'
         except Exception as e:
