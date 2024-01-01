@@ -9,10 +9,11 @@ devices:
     format: FLOAT32LE
     type: CoreAudio
   playback:
-    channels: 4
-    device: UMC204HD 192k
-    format: S24LE
+    channels: 2
+    device: BlackHole 2ch
+    format: FLOAT32LE
     type: CoreAudio
+
 filters:
   bal_pol_L:
     parameters:
@@ -45,6 +46,7 @@ filters:
       mute: false
     type: Gain
   # drc and XO filters will be autocompleted at init
+
 mixers:
 
   # preamp_mixer will be autoupdated in runtime
@@ -74,14 +76,14 @@ mixers:
         inverted: false
         mute: false
 
-  # A N way expander mixer will be autocompleted at init
+  # A multiway N channels expander mixer will be autocompleted at init
 
 pipeline:
 
 - name: preamp_mixer
   type: Mixer
 
-# Filter names for DRC will be inserted in runtime
+# Filter names for DRC will be inserted in runtime in each stereo channel filter step
 - channel: 0
   names:
   - eq
@@ -97,4 +99,4 @@ pipeline:
   - bal_pol_R
   type: Filter
 
-# multiway channel expansion Mixer and xover Filters will be added at init
+# The multiway channel expansion Mixer step and xover Filters steps will be added at init
