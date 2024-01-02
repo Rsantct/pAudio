@@ -149,7 +149,7 @@ def get_lspk_ways():
     return list(set(lws))
 
 
-def get_xo_sets_from_loudspeaker():
+def get_xo_sets_from_loudspeaker_folder():
     """ looks for xo.xxxx.pcm files inside the loudspeaker folder
     """
     xo_files = []
