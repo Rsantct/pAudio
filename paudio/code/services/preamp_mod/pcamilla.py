@@ -70,13 +70,12 @@ def _update_config_yml(pAudio_config):
         return N
 
 
-    def update_xo_stuff(cfg):
+    def update_xo_stuff(cfg, xo_sets):
         """
         """
 
         # xo filters
         clear_filters(cfg, pattern='xo.')
-        xo_sets = get_xo_sets_from_loudspeaker()
         for xo_set in (xo_sets):
             cfg["filters"][f'xo.{xo_set}'] = make_xo_filter(xo_set)
 
@@ -84,9 +83,6 @@ def _update_config_yml(pAudio_config):
         clear_pipeline_output_filtering(cfg)
         if xo_sets:
             make_xover_steps(cfg)
-            print(f'Loudspeaker outputs: {get_output_names()}')
-        else:
-            print(f'Loudspeaker outputs w/o filter: {get_output_names()}')
 
 
     def update_drc_stuff(cfg):
@@ -221,12 +217,18 @@ def _update_config_yml(pAudio_config):
         clear_pipeline_input_filters(camilla_cfg, pattern='drc.')
 
     # The XO
-    update_xo_stuff(camilla_cfg)
+    xo_sets = get_xo_sets_from_loudspeaker_folder()
+    update_xo_stuff(camilla_cfg, xo_sets)
+
+    # Some info
+    if xo_sets:
+        print(f'Loudspeaker outputs: {get_output_names()}')
+    else:
+        print(f'Loudspeaker outputs w/o filter: {get_output_names()}')
 
     # Saving to YAML file to run CamillaDSP
     with open(CFG_PATH, 'w') as f:
         yaml.safe_dump(camilla_cfg, f)
-
 
 
 def init_camilladsp(pAudio_config):
