@@ -136,6 +136,41 @@ def init():
     reformat_outputs()
 
 
+def get_lspk_ways():
+    """ Read loudspeaker ways as per the outputs configuration
+    """
+    lws = []
+    for o, pms in CONFIG["outputs"].items():
+        if not 'sw' in pms["name"]:
+            w = pms["name"].replace('.L', '').replace('.R', '')
+            lws.append(w)
+        else:
+            lws.append('sw')
+    return list(set(lws))
+
+
+def get_xo_sets_from_loudspeaker():
+    """ looks for xo.xxxx.pcm files inside the loudspeaker folder
+    """
+    xo_files = []
+    xo_sets  = []
+
+    try:
+        files = os.listdir(f'{LSPKFOLDER}')
+        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
+        xo_files = [x for x in files if x.startswith('xo.')
+                                        and
+                                        x.endswith('.pcm')]
+    except:
+        pass
+
+    for f in xo_files:
+        xo_id = f.replace('xo.', '').replace('.pcm', '')
+        xo_sets.append(xo_id)
+
+    return xo_sets
+
+
 def get_DSP_in_use():
     """ The DSP in use is set inside preamp.py
     """
