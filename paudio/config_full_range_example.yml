@@ -1,0 +1,60 @@
+# Sound server
+sound_server:       coreaudio
+fs:                 44100
+
+# Audio devices
+input:
+
+    format:         FLOAT32LE
+
+    device:         BlackHole 2ch
+
+output:
+
+    dither_bits:    16                      # void or 0 to disable
+
+    device:         E30 II                  # DAC USB Topping E30
+    format:         S32LE
+
+
+# Loudspeaker in use
+loudspeaker:    FullRange_example
+
+
+# Mapping of physical soundcard ports
+#
+outputs:
+
+    # Out       Name   Gain    Polarity  Delay (ms)
+    1:          fr.L
+    2:          fr.R
+
+
+# Any provided loudspeaker/drc.X.XXX.pcm FIR files must have a
+# known mid band unity gain offset, it is a design decision.
+drcs_offset:      -6.0
+
+
+# On init preferences (low level settings)
+tones_span_dB:      6.0
+
+# On init preferences (audio settings)
+target:             +3.0-1.0
+equal_loudness:     true
+lu_offset:          6.0
+#level:              -20.0
+balance:            0.0
+bass:               0
+treble:             0
+tone_defeat:        false
+drc_set:            sofa
+
+
+# Inputs. By now only system-wide
+inputs:
+    - system-wide
+
+
+# plugins (stand-alone processes)
+plugins:
+    - loudness_monitor.py
