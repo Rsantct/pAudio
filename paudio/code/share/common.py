@@ -149,28 +149,6 @@ def get_lspk_ways():
     return list(set(lws))
 
 
-def get_xo_sets_from_loudspeaker_folder():
-    """ looks for xo.xxxx.pcm files inside the loudspeaker folder
-    """
-    xo_files = []
-    xo_sets  = []
-
-    try:
-        files = os.listdir(f'{LSPKFOLDER}')
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
-        xo_files = [x for x in files if x.startswith('xo.')
-                                        and
-                                        x.endswith('.pcm')]
-    except:
-        pass
-
-    for f in xo_files:
-        xo_id = f.replace('xo.', '').replace('.pcm', '')
-        xo_sets.append(xo_id)
-
-    return xo_sets
-
-
 def get_DSP_in_use():
     """ The DSP in use is set inside preamp.py
     """
@@ -290,7 +268,29 @@ def list_remove_by_pattern(l, p):
     return l
 
 
-def get_drc_sets_from_loudspeaker(lspk):
+def get_xo_sets_from_loudspeaker_folder():
+    """ looks for xo.xxxx.pcm files inside the loudspeaker folder
+    """
+    xo_files = []
+    xo_sets  = []
+
+    try:
+        files = os.listdir(f'{LSPKFOLDER}')
+        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
+        xo_files = [x for x in files if x.startswith('xo.')
+                                        and
+                                        x.endswith('.pcm')]
+    except:
+        pass
+
+    for f in xo_files:
+        xo_id = f.replace('xo.', '').replace('.pcm', '')
+        xo_sets.append(xo_id)
+
+    return xo_sets
+
+
+def get_drc_sets_from_loudspeaker_folder():
     """ looks for drc.Channel.DrcId.pcm files inside the loudspeaker folder
     """
     drc_files = []
