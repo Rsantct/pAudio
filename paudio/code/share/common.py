@@ -96,8 +96,15 @@ def init():
             return out, (out_name, gain, pol, delay)
 
 
+        # A simple stereo I/O configuration if not defined
+        if not 'outputs' in CONFIG:
+            CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
+
+        if not 'inputs' in CONFIG:
+            CONFIG["inputs"] = ['system-wide']
+
+
         # Outputs
-        void_count = 0
         for out, params in CONFIG["outputs"].items():
 
             # It is expected 4 fields
@@ -106,39 +113,39 @@ def init():
 
             # Redo in dictionary form
             if not any(params):
-                void_count += 1
-                #params = {'name': f'void_{void_count}', 'gain': 0.0,
-                params = {'name': '', 'gain': 0.0,
-                          'polarity': '', 'delay': 0.0}
+                params = {  'name':     '',
+                            'gain':     0.0,
+                            'polarity': '+',
+                            'delay':    0.0     }
 
             else:
                 _, p = check_output_params(out, params)
                 name, gain, pol, delay = p
-                params = {'name': name, 'gain': gain, 'polarity': pol, 'delay': delay}
+                params = {  'name':     name,
+                            'gain':     gain,
+                            'polarity': pol,
+                            'delay':    delay   }
 
             CONFIG["outputs"][out] = params
-
-
-        # Number of outputs must match the sound card
-        # TO BE DONE
 
 
     global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = read_yaml_file(CONFIG_PATH)
 
-    try:
-        LSPKFOLDER = f'{LSPKSFOLDER}/{CONFIG["loudspeaker"]}'
-        if not os.path.isdir(LSPKFOLDER):
-            print(f'ERROR with LOUDSPEAKER FOLDER configuration')
-            sys.exit()
-    except Exception as e:
-        print(f'ERROR with LOUDSPEAKER configuration')
-        sys.exit()
+    if 'loudspeaker' in CONFIG:
+        LOUDSPEAKER = CONFIG["loudspeaker"]
+    else:
+        LOUDSPEAKER = 'generic_loudspk'
+        CONFIG["loudspeaker"] = LOUDSPEAKER
 
-    LOUDSPEAKER = CONFIG["loudspeaker"]
+    LSPKFOLDER = f'{LSPKSFOLDER}/{LOUDSPEAKER}'
+    if not os.path.isdir(LSPKFOLDER):
+        os.mkdir(LSPKFOLDER)
+
 
     CONFIG["DSP"] = get_DSP_in_use()
+
 
     if not "fs" in CONFIG:
         CONFIG["fs"] = 44100
@@ -146,6 +153,7 @@ def init():
 
     if not "plugins" in CONFIG or not CONFIG["plugins"]:
         CONFIG["plugins"] = []
+
 
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
@@ -270,11 +278,11 @@ def list_remove_by_pattern(l, p):
     return l
 
 
-def get_xo_sets_from_loudspeaker_folder():
+def get_xo_filters_from_loudspeaker_folder():
     """ looks for xo.xxxx.pcm files inside the loudspeaker folder
     """
-    xo_files = []
-    xo_sets  = []
+    xo_files    = []
+    xo_filters  = []
 
     try:
         files = os.listdir(f'{LSPKFOLDER}')
@@ -287,9 +295,25 @@ def get_xo_sets_from_loudspeaker_folder():
 
     for f in xo_files:
         xo_id = f.replace('xo.', '').replace('.pcm', '')
-        xo_sets.append(xo_id)
+        xo_filters.append(xo_id)
 
-    return xo_sets
+    return xo_filters
+
+
+def get_xo_sets_from_loudspeaker_folder():
+    """ xo.WW.FF.pcm files can exist on two flavours:
+
+            FF = mp: minimum phase filter
+            FF = lp: linear phase filter
+    """
+    xo_filters = get_xo_filters_from_loudspeaker_folder()
+
+    xo_sets = [ x.replace('lo.', '')
+                 .replace('mi.', '')
+                 .replace('hi.', '')
+                 .replace('sw.', '') for x in xo_filters ]
+
+    return list(set(xo_sets))
 
 
 def get_loudspeaker_ways():
