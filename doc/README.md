@@ -88,24 +88,21 @@ You can also check device names by running:
 TO BE DONE
 
 
-## Loudspeaker
-
-Prepare a loudspeaker folder, no matter if an empty one.
-
-    mkdir ~/paudio/loudspeakeres/MyLspkName/
-
-Then set **`~/paudio/config.yml`**
-
-    # Loudspeaker in use
-    loudspeaker:    MyLspkName
-
-## DRC-FIR (optional)
+## Optional: Digital Room Correction DRC-FIR 
 
 Simply drop your DRC FIR files under the loudspeaker folder.
 
         paudio/loudspeakeres/MyLspkName/
             drc.L.setName.pcm
             drc.R.setName.pcm
+
+## Optional: Active loudspeaker FIR filtering: EQ and XOVER
+
+You may want to apply FIR filtering to your loudspeaker.
+
+To do so, prepare your FIR files and drop them under the loudspeaker folder.
+
+See the provided `/loudspeakers/examples` for more details.
 
 
 # Run / Stop pAudio
