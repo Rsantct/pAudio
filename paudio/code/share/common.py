@@ -45,11 +45,25 @@ def init():
         """
             Outputs are given in NON standard YML, having 4 fields.
 
-            An output can be void, or at least must have a valid name:
+            An output can be void, or at least must have a valid <Name>.
 
-                Out:    Name   Gain    Polarity  Delay(ms)
+            Out# starts from 1 until the max number of available channels
+            of the used sound card.
 
-            Will convert the Human Readable fields into a dictionary.
+            Valid names are '[lo|mi|hi].[L|R]' or 'sw', e.g.: 'lo.L', 'hi.L'
+
+            Example:
+
+                # Out       Name         Gain    Polarity  Delay (ms)
+                1:          lo.L          0.0       +       0.0
+                2:          lo.R          0.0       +       0.0
+                3:          hi.L          0.0       -       0.15
+                4:          hi.R          0.0       -       0.15
+                5:
+                6:          sw            0.0       +       0.0
+
+
+            Here will convert the Human Readable fields into a dictionary.
         """
 
         def check_output_params(out, params):
@@ -93,7 +107,8 @@ def init():
             # Redo in dictionary form
             if not any(params):
                 void_count += 1
-                params = {'name': f'void_{void_count}', 'gain': 0.0,
+                #params = {'name': f'void_{void_count}', 'gain': 0.0,
+                params = {'name': '', 'gain': 0.0,
                           'polarity': '', 'delay': 0.0}
 
             else:
@@ -134,19 +149,6 @@ def init():
 
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
-
-
-def get_lspk_ways():
-    """ Read loudspeaker ways as per the outputs configuration
-    """
-    lws = []
-    for o, pms in CONFIG["outputs"].items():
-        if not 'sw' in pms["name"]:
-            w = pms["name"].replace('.L', '').replace('.R', '')
-            lws.append(w)
-        else:
-            lws.append('sw')
-    return list(set(lws))
 
 
 def get_DSP_in_use():
@@ -288,6 +290,19 @@ def get_xo_sets_from_loudspeaker_folder():
         xo_sets.append(xo_id)
 
     return xo_sets
+
+
+def get_loudspeaker_ways():
+    """ Read loudspeaker ways as per the outputs configuration
+    """
+    lws = []
+    for o, pms in CONFIG["outputs"].items():
+        if not 'sw' in pms["name"]:
+            w = pms["name"].replace('.L', '').replace('.R', '')
+            lws.append(w)
+        else:
+            lws.append('sw')
+    return list(set(lws))
 
 
 def get_drc_sets_from_loudspeaker_folder():
