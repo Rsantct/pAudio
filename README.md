@@ -29,7 +29,7 @@ pAudio is based on [CamillaDSP](https://github.com/HEnquist/camilladsp#readme) a
 
 Loudness compensation curves follow ISO 226:2003, from my other project [audiotools](https://github.com/Rsantct/audiotools/tree/master/convolver_eq). Here these freq domain curves are converted to FIR to be used in CamillaDSP convolution filtering.
 
-I have also worked on [pe.audio.sys](https://github.com/Rsantct/pe.audio.sys), a similar **Linux** project based on [Brutefir](https://torger.se/anders/brutefir.html), the most powerful convolution engine for Linux.
+I have also developed [pe.audio.sys](https://github.com/Rsantct/pe.audio.sys), a similar **Linux** project based on [Brutefir](https://torger.se/anders/brutefir.html), the most powerful convolution engine for Linux.
 
 pAudio and pe.audio.sys are inspired on the [pre.di.c](https://github.com/rripio/pre.di.c) and the former [FIRtro](https://github.com/AudioHumLab/FIRtro) projects, PC based digital preamplifier and crossover projects, designed by the pioneer **@rripio** and later alongside others contributors.
 
