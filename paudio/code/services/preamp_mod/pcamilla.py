@@ -24,7 +24,7 @@ from    common import *
 
 THIS_DIR          = os.path.dirname(__file__)
 CFG_TEMPLATE_PATH = f'{THIS_DIR}/camilladsp_template.yml'
-CFG_PATH          = f'{THIS_DIR}/camilladsp.yml'
+CFG_INIT_PATH     = f'{THIS_DIR}/camilladsp_init.yml'
 
 # Can be disabled for terminal debug
 LOG_TO_FILE = True
@@ -75,18 +75,18 @@ def _update_config_yml(pAudio_config):
         """
         """
 
-        xo_sets = get_xo_sets_from_loudspeaker_folder()
+        xo_filters = get_xo_filters_from_loudspeaker_folder()
 
         # xo filters
-        for xo_set in (xo_sets):
-            cfg["filters"][f'xo.{xo_set}'] = make_xo_filter(xo_set)
+        for xo_filter in (xo_filters):
+            cfg["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter)
 
         # Auxiliary delay filters
         for _, pms in CONFIG["outputs"].items():
             cfg["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
         # pipeline
-        if xo_sets:
+        if xo_filters:
             make_xover_steps(cfg)
 
 
@@ -140,7 +140,7 @@ def _update_config_yml(pAudio_config):
             bits = pAudio_config["output"]["dither_bits"]
 
         if not bits:
-            print(f'{Fmt.BLUE}- No dithering -{Fmt.END}')
+            print(f'{Fmt.BLUE}- Dithering is disabled-{Fmt.END}')
             return
 
         if check_bits():
@@ -159,7 +159,7 @@ def _update_config_yml(pAudio_config):
         cfg = yaml.safe_load(f)
 
     # Audio Device
-    # Updating with pAudio config
+    # Updating as per pAudio config
 
     cfg["devices"]["samplerate"] = pAudio_config["fs"]
 
@@ -171,6 +171,7 @@ def _update_config_yml(pAudio_config):
     cap_dev = cfg["devices"]["capture"]
     pbk_dev = cfg["devices"]["playback"]
 
+    # Default sound server is CoreAudio
     if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
         cap_dev["type"] = pAudio_config["sound_server"]
         pbk_dev["type"] = pAudio_config["sound_server"]
@@ -187,7 +188,7 @@ def _update_config_yml(pAudio_config):
     pbk_dev["device"] = pAudio_config["output"]["device"]
     pbk_dev["format"] = pAudio_config["output"]["format"]
 
-    # Making the multiway structure and getting the total channels to use at output
+    # Making the multiway structure if necessary
     update_multiway_structure()
 
     # Channels to use from the playback device
@@ -216,7 +217,7 @@ def _update_config_yml(pAudio_config):
     update_xo_stuff()
 
     # Saving to YAML file to run CamillaDSP
-    with open(CFG_PATH, 'w') as f:
+    with open(CFG_INIT_PATH, 'w') as f:
         yaml.safe_dump(cfg, f)
 
 
@@ -234,7 +235,7 @@ def init_camilladsp(pAudio_config):
     # Starting CamillaDSP with <camilladsp.yml> and <muted>
     sp.call('pkill camilladsp'.split())
     cdsp_cmd = f'camilladsp -m -a 127.0.0.1 -p 1234'
-    cdsp_cmd += f' "{CFG_PATH}"'
+    cdsp_cmd += f' "{CFG_INIT_PATH}"'
     if LOG_TO_FILE:
         cdsp_cmd += f' --logfile "{LOG_PATH}"'
     sp.Popen( cdsp_cmd, shell=True )
@@ -398,8 +399,8 @@ def make_drc_filter(channel, drc_set):
     return f
 
 
-def make_xo_filter(xo_set):
-    fir_path = f'{LSPKFOLDER}/xo.{xo_set}.pcm'
+def make_xo_filter(xo_filter):
+    fir_path = f'{LSPKFOLDER}/xo.{xo_filter}.pcm'
     f = {
             "type": 'Conv',
             "parameters": {
@@ -516,34 +517,75 @@ def make_multi_way_mixer(cfg):
             - dest: 0
               sources:
               - channel: 0
+                gain: 0.0
+                inverted: false
             - dest: 1
               sources:
               - channel: 1
+                gain: 0.0
+                inverted: false
             - dest: 2
               sources:
               - channel: 0
+                gain: 0.0
+                inverted: false
             - dest: 3
               sources:
               - channel: 1
+                gain: 0.0
+                inverted: false
             - dest: 5
               sources:
               - channel: 0
+                gain: -3.0
+                inverted: false
               - channel: 1
+                gain: -3.0
+                inverted: false
     """
+
     def ch2num(ch):
         return {'L': 0, 'R': 1}[ch]
 
+
+    def pol2inv(pol):
+        return { '+':  False,
+                 '-':  True,
+                 '1':  False,
+                '-1':  True,
+                   1:  False,
+                  -1:  True
+              }[pol]
+
+
     tmp = []
-    description = f'Sound card map: {Fmt.BOLD}'
+    description = f'Sound card map: '
+
     for dest, pms in CONFIG["outputs"].items():
+
             way = pms["name"]
+
             if way.endswith('.L') or way.endswith('.R'):
                 tmp.append( {'dest': dest - 1,
-                             'sources': [{'channel': ch2num(way[-1])}]} )
+                             'sources': [ {'channel':   ch2num(way[-1]),
+                                           'gain':      pms["gain"],
+                                           'inverted':  pol2inv(pms["polarity"])
+                                          } ]
+                            } )
+
             elif 'sw' in way.lower():
                 tmp.append( {'dest': dest - 1,
-                             'sources': [{'channel': 0}, {'channel': 1}]} )
-            description += f'{dest}:{way}, '
+                             'sources': [ {'channel':   0,
+                                           'gain':      pms["gain"] / 2.0 - 3.0,
+                                           'inverted':  pol2inv(pms["polarity"])
+                                          },
+                                          {'channel':   1,
+                                           'gain':      pms["gain"] / 2.0 - 3.0,
+                                           'inverted':  pol2inv(pms["polarity"])
+                                          } ]
+                            } )
+
+            description += f'{dest}/{way}, '
 
     description = description.strip()[:-1]
 
@@ -641,33 +683,6 @@ def get_output_names():
 
 
 # Getting AUDIO
-
-def get_drc_sets():
-    """ Retrieves the drc.X.XXX filters in camillaDSP configuration
-    """
-    filters = PC.config.active()["filters"]
-    drc_sets = []
-    for f in filters:
-        if f.startswith('drc.'):
-            drc_set = f.split('.')[-1]
-            if not drc_set in drc_sets:
-                drc_sets.append(drc_set)
-    return drc_sets
-
-
-def get_xo_sets():
-    """ Retrieves the xo.xxx filters in camillaDSP configuration
-    """
-    filters = PC.config.active()["filters"]
-    xo_sets = []
-    for f in filters:
-        print(1111, f)
-        if f.startswith('xo.'):
-            xo_set = f.replace('xo.', '')
-            if not xo_set in xo_sets:
-                xo_sets.append(xo_set)
-    return xo_sets
-
 
 def get_drc_gain():
     return json.dumps( PC.config.active()["filters"]["drc_gain"] )
@@ -804,11 +819,31 @@ def set_loudness(mode, level):
     return 'done'
 
 
-def set_xo(xoID):
-    """ PENDING
-        xoID cannot be 'none'
+def set_xo(xo_set):
+    """ xo_set:     mp | lp
     """
-    result = 'XO pending'
+
+    cfg = PC.config.active()
+
+    # Pipeline outputs
+    ppln = cfg["pipeline"]
+
+    # Update xo Filter steps
+    for step in ppln:
+        if step["type"] == 'Filter':
+            names = [n for n in step["names"]]
+            # The xo filter is located in the 1st position
+            if 'xo.' in names[0]:
+                if step["names"][0][-3:] in ('.mp', '.lp'):
+                    step["names"][0] = step["names"][0].replace('.lp', f'.{xo_set}') \
+                                                       .replace('.mp', f'.{xo_set}')
+
+    try:
+        set_config_sync(cfg)
+        result = 'done'
+    except Exception as e:
+        result = str(e)
+
     return result
 
 
