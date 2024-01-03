@@ -65,6 +65,10 @@ Make the launcher to be executable: `chmod +x ~/paudio/paudio.sh`
 
 # Settings
 
+You don't have to worry about preparing CamillaDSP configuration files.
+
+All settings are done inside **`paudio/config.yml`**
+
 ## Sound Device
 
 Set the output device name to use in **`~/paudio/config.yml`**, for example:
