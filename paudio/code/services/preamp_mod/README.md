@@ -1,3 +1,5 @@
+You don't have to worry about preparing CamillaDSP configuration files.
+
 ### `camilladsp_template.py`
 
 This is just a template with fixed items to prepare a full configuration with.
