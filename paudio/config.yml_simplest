@@ -15,4 +15,4 @@ output:
 
 
 # This simple config does not need loudspeaker settings, but you can name it below:
-# loudspeaker: MyLoudspeaker
+#loudspeaker: MyLoudspeaker
