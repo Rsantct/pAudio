@@ -18,11 +18,12 @@ import  json
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/paudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
+sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
 from    common      import *
 from    eqfir2png   import fir2png
 
-import  preamp_mod.pcamilla as DSP
+import  pcamilla as DSP
 
 DSP.LOG_TO_FILE = True
 
