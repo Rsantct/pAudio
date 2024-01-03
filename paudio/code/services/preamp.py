@@ -119,6 +119,7 @@ def init():
 
 
     # Forced init settings
+    state["loudspeaker"]    = CONFIG["loudspeaker"]
     state["fs"]             = CONFIG["fs"]
     state["polarity"]       = '++'
     state["input_dev"]      = CONFIG["input"]["device"]
@@ -144,7 +145,10 @@ def init():
         save_json_file(state, STATE_PATH)
 
     else:
-        print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check \'config.yml\' and the log/ folder.{Fmt.END}')
+        print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
+        print(f'    - The sound card is attached')
+        print(f'    - The `config.yml` file')
+        print(f'    - Logs under ~/paudio/log/{Fmt.END}\n')
         sys.exit()
 
 
