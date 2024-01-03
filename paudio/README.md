@@ -2,7 +2,7 @@
 
 ### `config.yml`
 
-Use some of the provided examples as start point to test your system.
+Use some of the provided examples as a start point to test your system.
 
 ### `paudio.sh`
 
