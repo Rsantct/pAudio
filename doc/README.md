@@ -71,7 +71,7 @@ All settings are done inside **`paudio/config.yml`**
 
 ## Sound Device
 
-Set the output device name to use in **`~/paudio/config.yml`**, for example:
+Set the output device name to be used in **`~/paudio/config.yml`**, for example:
 
     output:
         device:      E30 II      # DAC USB Topping E30
@@ -88,7 +88,7 @@ You can also check device names by running:
 TO BE DONE
 
 
-## Optional: Digital Room Correction DRC-FIR 
+## optional: Digital Room Correction DRC-FIR 
 
 Simply drop your DRC FIR files under the loudspeaker folder.
 
@@ -96,7 +96,14 @@ Simply drop your DRC FIR files under the loudspeaker folder.
             drc.L.setName.pcm
             drc.R.setName.pcm
 
-## Optional: Active loudspeaker FIR filtering: EQ and XOVER
+DRC tools:
+
+ - [Rsantct/DRC](https://github.com/Rsantct/DRC)
+ - [rripio/DSC](https://github.com/rripio/DSC)
+ - Room EQ Wizard
+
+
+## optional: Active loudspeaker FIR filtering: EQ and XOVER
 
 You may want to apply FIR filtering to your loudspeaker.
 
@@ -104,6 +111,12 @@ To do so, prepare your FIR files and drop them under the loudspeaker folder.
 
 See the provided `/loudspeakers/examples` for more details.
 
+Some XOVER FIR design tools:
+
+ - [rePhase](https://rephase.org) very good, but only for Windows :-/
+ - [rripio/DSD](https://github.com/rripio/DSD)
+
+More resources [here](https://www.minidsp.com/applications/advanced-tools/fir-filter-tools)
 
 # Run / Stop pAudio
 
