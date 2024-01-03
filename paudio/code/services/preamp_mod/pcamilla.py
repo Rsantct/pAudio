@@ -3,6 +3,8 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+import  os
+import  sys
 import  subprocess as sp
 from    time import sleep
 import  yaml
@@ -10,8 +12,10 @@ import  json
 from    camilladsp import CamillaClient
 import  make_eq as mkeq
 
-# This import works because the main program server.py
-# is located under the same folder then the commom module
+UHOME       = os.path.expanduser('~')
+MAINFOLDER  = f'{UHOME}/paudio'
+sys.path.append(f'{MAINFOLDER}/code/share')
+
 from    common import *
 
 #
