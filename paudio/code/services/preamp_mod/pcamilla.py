@@ -22,8 +22,9 @@ from    common import *
 # (i) use set_config_sync(some_config) to upload a new one
 #
 
-THIS_DIR = os.path.dirname(__file__)
-CFG_PATH = f'{THIS_DIR}/camilladsp.yml'
+THIS_DIR          = os.path.dirname(__file__)
+CFG_TEMPLATE_PATH = f'{THIS_DIR}/camilladsp_template.yml'
+CFG_PATH          = f'{THIS_DIR}/camilladsp.yml'
 
 # Can be disabled for terminal debug
 LOG_TO_FILE = True
@@ -57,57 +58,55 @@ def _update_config_yml(pAudio_config):
     """ Updates camilladsp.yml as per user pAudio configuration
     """
 
-    def update_multiway_structure(cfg):
+    def update_multiway_structure():
         """ The multiway N channel expander Mixer
-            Returns the total number of xover outputs
         """
         # Prepare the needed expander mixer
-        clear_mixers(camilla_cfg, pattern='from2to')
-        N = make_multi_way_mixer(camilla_cfg, get_output_names())
+        num_outputs_used = make_multi_way_mixer(cfg)
 
         # and adding it to the pipeline
-        clear_pipeline_mixer(camilla_cfg, pattern='from2to')
-        if N > 2:
-            mwm = {'type': 'Mixer', 'name': f'from2to{N}channels'}
-            camilla_cfg["pipeline"].append(mwm)
 
-        return N
+        if num_outputs_used > 2:
+            mwm = {'type': 'Mixer', 'name': f'from2to{num_outputs_used}channels'}
+            cfg["pipeline"].append(mwm)
 
 
-    def update_xo_stuff(cfg, xo_sets):
+    def update_xo_stuff():
         """
         """
+
+        xo_sets = get_xo_sets_from_loudspeaker_folder()
 
         # xo filters
-        clear_filters(cfg, pattern='xo.')
         for xo_set in (xo_sets):
             cfg["filters"][f'xo.{xo_set}'] = make_xo_filter(xo_set)
 
+        # Auxiliary delay filters
+        for _, pms in CONFIG["outputs"].items():
+            cfg["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
+
         # pipeline
-        clear_pipeline_output_filtering(cfg)
         if xo_sets:
             make_xover_steps(cfg)
 
 
-    def update_drc_stuff(cfg):
+    def update_drc_stuff():
 
         # drc filters
-        clear_filters(cfg, pattern='drc.')
         for drcset in pAudio_config["drc_sets"]:
             for ch in 'L', 'R':
                 cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset)
 
         # The initial pipeline points to the FIRST drc_set
-        clear_pipeline_input_filters(cfg, pattern='drc.')
         insert_drc_to_pipeline(cfg, drcID=pAudio_config["drc_sets"][0])
 
 
-    def update_eq_filter(cfg):
+    def update_eq_filter():
         """ with proper path """
         cfg["filters"]["eq"]["parameters"]["filename"] = f'{EQFOLDER}/eq_flat.pcm'
 
 
-    def update_dither(cfg):
+    def update_dither():
 
         def check_bits():
 
@@ -136,10 +135,6 @@ def _update_config_yml(pAudio_config):
         bits            = 0
 
 
-        # clearing
-        clear_filters(cfg, pattern='dither')
-        clear_pipeline_input_filters(cfg, pattern='dither')
-
         if "dither_bits" in pAudio_config["output"] and \
            pAudio_config["output"]["dither_bits"]:
             bits = pAudio_config["output"]["dither_bits"]
@@ -160,21 +155,21 @@ def _update_config_yml(pAudio_config):
             append_item_to_pipeline(cfg, item='dither')
 
 
-    with open(CFG_PATH, 'r') as f:
-        camilla_cfg = yaml.safe_load(f)
+    with open(CFG_TEMPLATE_PATH, 'r') as f:
+        cfg = yaml.safe_load(f)
 
     # Audio Device
     # Updating with pAudio config
 
-    camilla_cfg["devices"]["samplerate"] = pAudio_config["fs"]
+    cfg["devices"]["samplerate"] = pAudio_config["fs"]
 
-    if camilla_cfg["devices"]["samplerate"] <= 48000:
-        camilla_cfg["devices"]["chunksize"] = 1024
+    if cfg["devices"]["samplerate"] <= 48000:
+        cfg["devices"]["chunksize"] = 1024
     else:
-        camilla_cfg["devices"]["chunksize"] = 2048
+        cfg["devices"]["chunksize"] = 2048
 
-    cap_dev = camilla_cfg["devices"]["capture"]
-    pbk_dev = camilla_cfg["devices"]["playback"]
+    cap_dev = cfg["devices"]["capture"]
+    pbk_dev = cfg["devices"]["playback"]
 
     if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
         cap_dev["type"] = pAudio_config["sound_server"]
@@ -192,11 +187,11 @@ def _update_config_yml(pAudio_config):
     pbk_dev["device"] = pAudio_config["output"]["device"]
     pbk_dev["format"] = pAudio_config["output"]["format"]
 
-    # The multiway structure and getting the total channels to use at output
-    N = update_multiway_structure(camilla_cfg)
+    # Making the multiway structure and getting the total channels to use at output
+    update_multiway_structure()
 
     # Channels to use from the playback device
-    pbk_dev["channels"] = N
+    pbk_dev["channels"] = len(CONFIG["outputs"].keys())
 
     # MacOS Coreaudio exclusive mode
     if 'exclusive_mode' in pAudio_config["output"] and pAudio_config["output"]["exclusive_mode"] == True:
@@ -205,34 +200,24 @@ def _update_config_yml(pAudio_config):
         pbk_dev["exclusive"] = False
 
     # Dither
-    update_dither(camilla_cfg)
+    update_dither()
 
     # The preamp_mixer
-    camilla_cfg["mixers"]["preamp_mixer"] = make_preamp_mixer(midside_mode='normal')
+    cfg["mixers"]["preamp_mixer"] = make_preamp_mixer(midside_mode='normal')
 
     # The eq filter
-    update_eq_filter(camilla_cfg)
+    update_eq_filter()
 
     # The DRCs
     if pAudio_config["drc_sets"]:
-        update_drc_stuff(camilla_cfg)
-    else:
-        clear_filters(camilla_cfg, pattern='drc.')
-        clear_pipeline_input_filters(camilla_cfg, pattern='drc.')
+        update_drc_stuff()
 
     # The XO
-    xo_sets = get_xo_sets_from_loudspeaker_folder()
-    update_xo_stuff(camilla_cfg, xo_sets)
-
-    # Some info
-    if xo_sets:
-        print(f'Loudspeaker outputs: {get_output_names()}')
-    else:
-        print(f'Loudspeaker outputs w/o filter: {get_output_names()}')
+    update_xo_stuff()
 
     # Saving to YAML file to run CamillaDSP
     with open(CFG_PATH, 'w') as f:
-        yaml.safe_dump(camilla_cfg, f)
+        yaml.safe_dump(cfg, f)
 
 
 def init_camilladsp(pAudio_config):
@@ -426,6 +411,18 @@ def make_xo_filter(xo_set):
     return f
 
 
+def make_delay_filter(delay):
+    f = {
+            "type": 'Delay',
+            "parameters": {
+                "delay":     delay,
+                "unit":      'ms',
+                "subsample": False
+            }
+        }
+    return f
+
+
 def make_preamp_mixer(midside_mode='normal'):
     """
         modes:
@@ -504,11 +501,12 @@ def make_preamp_mixer(midside_mode='normal'):
     return m
 
 
-def make_multi_way_mixer(cfg, outputs):
+def make_multi_way_mixer(cfg):
     """ Makes a mixer to route L/R to multiway outputs
-        Returns the total number of xover outputs
 
-            Example for 2+1 way:
+        --> and returns the number of used outputs
+
+        Example for 2+1 way, with 'sw' way connected to the 6th output
 
           from2to5channels:
             channels:
@@ -527,78 +525,102 @@ def make_multi_way_mixer(cfg, outputs):
             - dest: 3
               sources:
               - channel: 1
-            - dest: 4
+            - dest: 5
               sources:
               - channel: 0
               - channel: 1
     """
-
     def ch2num(ch):
         return {'L': 0, 'R': 1}[ch]
 
     tmp = []
-    for dest, way in enumerate(outputs):
+    description = f'Sound card map: {Fmt.BOLD}'
+    for dest, pms in CONFIG["outputs"].items():
+            way = pms["name"]
             if way.endswith('.L') or way.endswith('.R'):
-                tmp.append( {'dest': dest, 'sources': [{'channel': ch2num(way[-1])}]} )
+                tmp.append( {'dest': dest - 1,
+                             'sources': [{'channel': ch2num(way[-1])}]} )
             elif 'sw' in way.lower():
-                tmp.append( {'dest': dest,
+                tmp.append( {'dest': dest - 1,
                              'sources': [{'channel': 0}, {'channel': 1}]} )
+            description += f'{dest}:{way}, '
+
+    description = description.strip()[:-1]
+
+    n = len(tmp)
+    if n <= 2:
+        return n
+
+    mixer_name = f'from2to{n}channels'
+
+    cfg["mixers"][mixer_name] = {
+        'channels': { 'in': 2, 'out': len(CONFIG["outputs"]) },
+        'mapping': tmp,
+        'description': description
+    }
+
+    # Useful info
+    print(f'{Fmt.GREEN}{description}{Fmt.END}')
+
+    return n
 
 
-    N = dest + 1
-    if N <= 2:
-        return N
-
-    mixer_name = f'from2to{N}channels'
-
-    cfg["mixers"][mixer_name] = {'channels': {'in': 2, 'out': N},
-                                 'mapping': []}
-
-    cfg["mixers"][mixer_name]["mapping"] = tmp
-
-    cfg["mixers"][mixer_name]["description"] = "Feeds L/R pairs to xover outputs"
-
-    return N
-
-
-def make_xover_steps(cfg):
+def make_xover_steps(cfg, default_filter_type = 'mp'):
     """ Makes the Filter steps after the expander mixer of the pipeline
 
-            Example for 2+1 way:
+        Example for 2+1 way, with 'sw' way connected to the 6th output
 
           - type: Filter
             channel: 0
             names:
               - lo.mp
+              - delay.lo.L
 
           - type: Filter
             channel: 1
             names:
               - lo.mp
+              - delay.lo.R
 
           - type: Filter
             channel: 2
             names:
               - hi.mp
+              - delay.hi.L
 
           - type: Filter
             channel: 3
             names:
               - hi.mp
+              - delay.hi.R
 
           - type: Filter
-            channel: 4
+            channel: 5
             names:
               - sw
+              - delay.sw
     """
 
-    for ch, pms in CONFIG["outputs"].items():
-        if pms["name"].endswith('.L') or pms["name"].endswith('.R'):
-            way_id = pms["name"][:-2]
+    for out, pms in CONFIG["outputs"].items():
+
+        o_name = pms["name"]
+
+        if not o_name:
+            continue
+
+        if not 'sw' in o_name:
+            way = o_name.replace('.L', '').replace('.R', '')
         else:
-            way_id = 'sw'
-        step = { 'type':'Filter', 'channel': ch - 1,
-                        'names': [f'xo.{way_id}.mp'] }
+            way = 'sw'
+
+        step = {    'type':'Filter',
+
+                    'channel': out - 1,
+
+                    'names': [ f'xo.{way}.{default_filter_type}',
+                               f'delay.{o_name}'
+                              ]
+                }
 
         cfg["pipeline"].append(step)
 
@@ -607,13 +629,13 @@ def get_output_names():
 
     outputs = CONFIG["outputs"]
 
-    L_outs  = [ ps["name"] for o, ps in outputs.items() if ps["name"][-1]=='L' ]
-    R_outs  = [ ps["name"] for o, ps in outputs.items() if ps["name"][-1]=='R' ]
+    L_outs  = [ ps["name"] for o, ps in outputs.items() if ps["name"] and ps["name"][-1]=='L' ]
+    R_outs  = [ ps["name"] for o, ps in outputs.items() if ps["name"] and ps["name"][-1]=='R' ]
 
     if len(L_outs) != len(R_outs):
         raise Exception('Number of outputs for L and R does not match')
 
-    output_names  = [ ps["name"] for o, ps in outputs.items() if not 'void' in ps["name"] ]
+    output_names  = [ ps["name"] for o, ps in outputs.items() if ps["name"] ]
 
     return output_names
 
@@ -621,7 +643,7 @@ def get_output_names():
 # Getting AUDIO
 
 def get_drc_sets():
-    """ Retrieves thr drc.X.XXX filters in camillaDSP configuration
+    """ Retrieves the drc.X.XXX filters in camillaDSP configuration
     """
     filters = PC.config.active()["filters"]
     drc_sets = []
@@ -634,7 +656,17 @@ def get_drc_sets():
 
 
 def get_xo_sets():
-    return []
+    """ Retrieves the xo.xxx filters in camillaDSP configuration
+    """
+    filters = PC.config.active()["filters"]
+    xo_sets = []
+    for f in filters:
+        print(1111, f)
+        if f.startswith('xo.'):
+            xo_set = f.replace('xo.', '')
+            if not xo_set in xo_sets:
+                xo_sets.append(xo_set)
+    return xo_sets
 
 
 def get_drc_gain():
