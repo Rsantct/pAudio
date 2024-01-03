@@ -1,0 +1,14 @@
+# Sound server
+sound_server:       coreaudio
+
+# Audio devices
+input:
+
+    device:         BlackHole 2ch
+    format:         FLOAT32LE
+
+
+output:
+
+    device:         E30 II
+    format:         S32LE
