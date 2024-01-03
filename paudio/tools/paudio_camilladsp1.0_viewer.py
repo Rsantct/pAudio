@@ -4,6 +4,7 @@
 
 """ A naive tool to check pipeline content and gains applied
     in runtime
+    (for CamillaDSP 1.0)
 """
 
 import  os
