@@ -4,7 +4,7 @@ A PC based advanced preamplifier, with FIR based EQ and active loudspeaker XOVER
 
 This is a system-wide audio control for a MacOS (or Linux PC), so that you can EQ and control all the audio sent to your DAC, Audio Interface, or Headphones.
 
-External sources (vinyl and other analog stuff) can be processed With a high quality inputs sound card.
+External sources (vinyl and other analog stuff) can be processed with a high quality inputs sound card.
 
 Some features:
 
