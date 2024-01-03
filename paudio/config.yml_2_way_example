@@ -26,8 +26,8 @@ outputs:
     # Out       Name          Gain    Polarity  Delay (ms)
     1:          lo.L          0.0       +       0.0
     2:          lo.R          0.0       +       0.0
-    3:          hi.L          0.0       -       0.0
-    4:          hi.R          0.0       -       0.0
+    3:          hi.L          0.0       -       0.15
+    4:          hi.R          0.0       -       0.15
 
 
 # Any provided loudspeaker/drc.X.XXX FIR files must have a
