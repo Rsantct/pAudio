@@ -133,5 +133,7 @@ To stop:
 
     http://localhost:8088
 
+See here the loudness compensation curve for 20 dB below your reference SPL (volume 0 dB). It includes a 3 dB boost due to the target curve.
+
 <img src="./img/pAudio%20web%20-20dB.png" width="500"><img src="./img/pAudio%20web%200dB.png" width="500">
 
