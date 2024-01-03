@@ -10,18 +10,19 @@
 
 """
 
+import  sys
+import  os
 import  subprocess as sp
 import  json
 
-# These imports works because the main program server.py
-# is located under the same folder than the commom module
+UHOME       = os.path.expanduser('~')
+MAINFOLDER  = f'{UHOME}/paudio'
+sys.path.append(f'{MAINFOLDER}/code/share')
+
 from    common      import *
 from    eqfir2png   import fir2png
 
-THIS_DIR = os.path.dirname(__file__)
-sys.path.append(f'{THIS_DIR}/preamp_mod')
-
-import  pcamilla as DSP
+import  preamp_mod.pcamilla as DSP
 
 DSP.LOG_TO_FILE = True
 
