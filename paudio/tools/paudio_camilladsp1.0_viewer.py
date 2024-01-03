@@ -2,7 +2,7 @@
 
 # Copyright (c) Rafael Sánchez
 
-""" A simple tool to check pipeline content and gains applied
+""" A naive tool to check pipeline content and gains applied
     in runtime
 """
 
