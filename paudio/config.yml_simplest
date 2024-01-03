@@ -1,0 +1,18 @@
+# Sound server
+sound_server:       coreaudio
+
+# Audio devices
+input:
+
+    device:         BlackHole 2ch
+    format:         FLOAT32LE
+
+
+output:
+
+    device:         E30 II
+    format:         S32LE
+
+
+# This simple config does not need loudspeaker settings, but you can name it below:
+#loudspeaker: MyLoudspeaker

@@ -1,0 +1,62 @@
+# Sound server
+sound_server:       coreaudio
+fs:                 44100
+
+# Audio devices
+input:
+
+    format:         FLOAT32LE
+
+    device:         BlackHole 2ch
+
+output:
+
+    dither_bits:    16                      # void or 0 to disable
+
+    device:         MOTU UltraLite-mk5
+    format:         S24LE
+
+
+# Loudspeaker in use
+loudspeaker:    2+1_way_example
+
+# Mapping of physical soundcard ports
+outputs:
+
+    # Out       Name          Gain    Polarity  Delay (ms)
+    1:          lo.L          0.0       +       0.0
+    2:          lo.R          0.0       +       0.0
+    3:          hi.L          0.0       -       0.15
+    4:          hi.R          0.0       -       0.15
+    5:          sw            0.0       +       0.0
+
+
+# Any provided loudspeaker/drc.X.XXX FIR files must have a
+# known mid band unity gain offset, it is a design decision.
+drcs_offset:      -6.0
+
+
+# On init preferences (low level settings)
+tones_span_dB:      6.0
+
+# On init preferences (audio settings)
+target:             +3.0-1.0
+equal_loudness:     true
+lu_offset:          6.0
+#level:              -20.0
+balance:            0.0
+bass:               0
+treble:             0
+tone_defeat:        false
+drc_set:            sofa
+
+
+# Inputs. By now only system-wide
+inputs:
+    - system-wide
+
+
+# plugins (stand-alone processes)
+plugins:
+    - loudness_monitor.py
+

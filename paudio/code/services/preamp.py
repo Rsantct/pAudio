@@ -10,16 +10,18 @@
 
 """
 
+import  sys
+import  os
 import  subprocess as sp
 import  json
 
-# These imports works because the main program server.py
-# is located under the same folder than the commom module
+UHOME       = os.path.expanduser('~')
+MAINFOLDER  = f'{UHOME}/paudio'
+sys.path.append(f'{MAINFOLDER}/code/share')
+sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
+
 from    common      import *
 from    eqfir2png   import fir2png
-
-THIS_DIR = os.path.dirname(__file__)
-sys.path.append(f'{THIS_DIR}/preamp_mod')
 
 import  pcamilla as DSP
 
@@ -74,13 +76,14 @@ def init():
     global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
     INPUTS              = CONFIG["inputs"]
-    TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
-    DRC_SETS            = get_drc_sets_from_loudspeaker(LOUDSPEAKER)
-    CONFIG["drc_sets"]  = DRC_SETS
-    # PENDING
-    XO_SETS             = []
-    CONFIG["xo_sets"]   = XO_SETS
 
+    TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
+
+    DRC_SETS            = get_drc_sets_from_loudspeaker_folder()
+    CONFIG["drc_sets"]  = DRC_SETS
+
+    XO_SETS             = get_xo_sets_from_loudspeaker_folder()
+    CONFIG["xo_sets"]   = XO_SETS
 
     # Default CONFIG values
     if not "tones_span_dB" in CONFIG:
@@ -116,6 +119,7 @@ def init():
 
 
     # Forced init settings
+    state["loudspeaker"]    = CONFIG["loudspeaker"]
     state["fs"]             = CONFIG["fs"]
     state["polarity"]       = '++'
     state["input_dev"]      = CONFIG["input"]["device"]
@@ -141,7 +145,10 @@ def init():
         save_json_file(state, STATE_PATH)
 
     else:
-        print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check \'config.yml\' and the log/ folder.{Fmt.END}')
+        print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
+        print(f'    - The sound card is attached')
+        print(f'    - The `config.yml` file')
+        print(f'    - Logs under ~/paudio/log/{Fmt.END}\n')
         sys.exit()
 
 

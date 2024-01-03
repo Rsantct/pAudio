@@ -209,7 +209,7 @@ if __name__ == '__main__':
         print( f'(drc2png) using sample rate: {FS}' )
 
     # Get DRC sets names
-    drc_sets = get_drc_sets_from_loudspeaker(LOUDSPEAKER)
+    drc_sets = get_drc_sets_from_loudspeaker_folder()
 
     # Do plot png files from pcm files
     drc_sets.append('none')

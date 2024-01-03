@@ -9,10 +9,11 @@ devices:
     format: FLOAT32LE
     type: CoreAudio
   playback:
-    channels: 2
-    device: MacBook Pro (altavoces)
+    channels: 
+    device: 
     format: FLOAT32LE
     type: CoreAudio
+
 filters:
   bal_pol_L:
     parameters:
@@ -26,7 +27,6 @@ filters:
       inverted: false
       mute: false
     type: Gain
-  # drc.X.XXX filters will be autocompleted from the loudspeaker folder .pcm files
   drc_gain:
     parameters:
       gain: 0.0
@@ -45,7 +45,10 @@ filters:
       inverted: false
       mute: false
     type: Gain
+  # drc and XO filters will be autocompleted at init
+
 mixers:
+
   # preamp_mixer will be autoupdated in runtime
   preamp_mixer:
     channels:
@@ -72,10 +75,15 @@ mixers:
         gain: 0.0
         inverted: false
         mute: false
+
+  # A multiway N channels expander mixer will be autocompleted at init
+
 pipeline:
-# drc pipeline names will be autocompleted in runtime
+
 - name: preamp_mixer
   type: Mixer
+
+# Filter names for DRC will be inserted in runtime in each stereo channel filter step
 - channel: 0
   names:
   - eq
@@ -90,3 +98,5 @@ pipeline:
   - lu_offset
   - bal_pol_R
   type: Filter
+
+# The multiway channel expansion Mixer step and xover Filters steps will be added at init

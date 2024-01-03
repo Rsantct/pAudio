@@ -40,22 +40,112 @@ CONFIG = {}
 
 def init():
 
+
+    def reformat_outputs():
+        """
+            Outputs are given in NON standard YML, having 4 fields.
+
+            An output can be void, or at least must have a valid <Name>.
+
+            Out# starts from 1 until the max number of available channels
+            of the used sound card.
+
+            Valid names are '[lo|mi|hi].[L|R]' or 'sw', e.g.: 'lo.L', 'hi.L'
+
+            Example:
+
+                # Out       Name         Gain    Polarity  Delay (ms)
+                1:          lo.L          0.0       +       0.0
+                2:          lo.R          0.0       +       0.0
+                3:          hi.L          0.0       -       0.15
+                4:          hi.R          0.0       -       0.15
+                5:
+                6:          sw            0.0       +       0.0
+
+
+            Here will convert the Human Readable fields into a dictionary.
+        """
+
+        def check_output_params(out, params):
+
+            out_name, gain, pol, delay = params
+
+            if not out_name or not out_name.replace('.', '').replace('_', '').isalpha():
+                raise Exception( f'Output {out} bad name: {out_name}' )
+
+            if not out_name[:2] == 'sw' and not out_name[-2:] in ('.L', '.R'):
+                raise Exception( f'Output {out} bad name: {out_name}' )
+
+            if gain:
+                gain = round(float(gain), 1)
+            else:
+                gain = 0.0
+
+            if pol:
+                valid_pol = ('+', '-', '1', '-1', 1, -1)
+                if not pol in valid_pol:
+                    raise Exception( f'Polarity must be in {valid_pol}' )
+            else:
+                pol = 1
+
+            if delay:
+                delay = round(float(delay), 3)
+            else:
+                delay = 0.0
+
+            return out, (out_name, gain, pol, delay)
+
+
+        # A simple stereo I/O configuration if not defined
+        if not 'outputs' in CONFIG:
+            CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
+
+        if not 'inputs' in CONFIG:
+            CONFIG["inputs"] = ['system-wide']
+
+
+        # Outputs
+        for out, params in CONFIG["outputs"].items():
+
+            # It is expected 4 fields
+            params = params.split() if params else []
+            params += [''] * (4 - len(params))
+
+            # Redo in dictionary form
+            if not any(params):
+                params = {  'name':     '',
+                            'gain':     0.0,
+                            'polarity': '+',
+                            'delay':    0.0     }
+
+            else:
+                _, p = check_output_params(out, params)
+                name, gain, pol, delay = p
+                params = {  'name':     name,
+                            'gain':     gain,
+                            'polarity': pol,
+                            'delay':    delay   }
+
+            CONFIG["outputs"][out] = params
+
+
     global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = read_yaml_file(CONFIG_PATH)
 
-    try:
-        LSPKFOLDER = f'{LSPKSFOLDER}/{CONFIG["loudspeaker"]}'
-        if not os.path.isdir(LSPKFOLDER):
-            print(f'ERROR with LOUDSPEAKER FOLDER configuration')
-            sys.exit()
-    except Exception as e:
-        print(f'ERROR with LOUDSPEAKER configuration')
-        sys.exit()
+    if 'loudspeaker' in CONFIG:
+        LOUDSPEAKER = CONFIG["loudspeaker"]
+    else:
+        LOUDSPEAKER = 'generic_loudspk'
+        CONFIG["loudspeaker"] = LOUDSPEAKER
 
-    LOUDSPEAKER = CONFIG["loudspeaker"]
+    LSPKFOLDER = f'{LSPKSFOLDER}/{LOUDSPEAKER}'
+    if not os.path.isdir(LSPKFOLDER):
+        os.mkdir(LSPKFOLDER)
+
 
     CONFIG["DSP"] = get_DSP_in_use()
+
 
     if not "fs" in CONFIG:
         CONFIG["fs"] = 44100
@@ -63,6 +153,10 @@ def init():
 
     if not "plugins" in CONFIG or not CONFIG["plugins"]:
         CONFIG["plugins"] = []
+
+
+    # Converting the Human Readable outputs section to a dictionary
+    reformat_outputs()
 
 
 def get_DSP_in_use():
@@ -184,7 +278,58 @@ def list_remove_by_pattern(l, p):
     return l
 
 
-def get_drc_sets_from_loudspeaker(lspk):
+def get_xo_filters_from_loudspeaker_folder():
+    """ looks for xo.xxxx.pcm files inside the loudspeaker folder
+    """
+    xo_files    = []
+    xo_filters  = []
+
+    try:
+        files = os.listdir(f'{LSPKFOLDER}')
+        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
+        xo_files = [x for x in files if x.startswith('xo.')
+                                        and
+                                        x.endswith('.pcm')]
+    except:
+        pass
+
+    for f in xo_files:
+        xo_id = f.replace('xo.', '').replace('.pcm', '')
+        xo_filters.append(xo_id)
+
+    return xo_filters
+
+
+def get_xo_sets_from_loudspeaker_folder():
+    """ xo.WW.FF.pcm files can exist on two flavours:
+
+            FF = mp: minimum phase filter
+            FF = lp: linear phase filter
+    """
+    xo_filters = get_xo_filters_from_loudspeaker_folder()
+
+    xo_sets = [ x.replace('lo.', '')
+                 .replace('mi.', '')
+                 .replace('hi.', '')
+                 .replace('sw.', '') for x in xo_filters ]
+
+    return list(set(xo_sets))
+
+
+def get_loudspeaker_ways():
+    """ Read loudspeaker ways as per the outputs configuration
+    """
+    lws = []
+    for o, pms in CONFIG["outputs"].items():
+        if not 'sw' in pms["name"]:
+            w = pms["name"].replace('.L', '').replace('.R', '')
+            lws.append(w)
+        else:
+            lws.append('sw')
+    return list(set(lws))
+
+
+def get_drc_sets_from_loudspeaker_folder():
     """ looks for drc.Channel.DrcId.pcm files inside the loudspeaker folder
     """
     drc_files = []
@@ -375,7 +520,6 @@ def set_default_device_mute(mode='false'):
     else:
         print(f'(pAudio) Problems muting on "{dev}"')
         return 'error'
-
 
 
 def save_default_sound_device():

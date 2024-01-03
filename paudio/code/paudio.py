@@ -12,11 +12,16 @@
 
 """
 
-# This import works because the main program server.py
-# is located under the same folder then the commom module
-from  common import *
+import os
+import sys
+UHOME       = os.path.expanduser('~')
+MAINFOLDER  = f'{UHOME}/paudio'
+sys.path.append(f'{MAINFOLDER}/code/share')
 
-from  services      import preamp, aux, players
+
+from common import *
+
+from services import preamp, aux, players
 
 
 def run_plugins():

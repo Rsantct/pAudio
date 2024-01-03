@@ -11,8 +11,13 @@
 
             To save the composed eq to a FIR file, use save_eq_IR()
 """
-
+import  os
+import  sys
 import  numpy as np
+
+UHOME       = os.path.expanduser('~')
+MAINFOLDER  = f'{UHOME}/paudio'
+sys.path.append(f'{MAINFOLDER}/code/share')
 
 from common import *
 
