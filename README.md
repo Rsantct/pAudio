@@ -4,6 +4,8 @@ A PC based advanced preamplifier.
 
 This is a system-wide audio control for a MacOS or Linux PC, so that you can EQ and control all the audio sent to your DAC, Audio Interface, or Headphones.
 
+External sources (vinyl and other analog stuff) can be processed With a high quality inputs sound card.
+
 Some features:
 
 - Calibrated volume listening level supported by an **EBU R128 Loudness monitor** to check the loudness of any recording.
@@ -21,4 +23,14 @@ Some features:
 <img src="doc/img/pAudio%20web%20-20dB.png" width="350"><img src="doc/img/pAudio%20web%200dB.png" width="350">
 
 
+# Credits
 
+pAudio is based on [CamillaDSP](https://github.com/HEnquist/camilladsp#readme) a powerful audio processing tool, for **Mac** and **Linux**.
+
+I have also worked on [pe.audio.sys](https://github.com/Rsantct/pe.audio.sys), a similar **Linux** project based in [Brutefir](https://torger.se/anders/brutefir.html), the most powerful convolution engine for Linux.
+
+pAudio and pe.audio.sys are inspired on the **pre.di.c** and the former **FIRtro** projects, PC based digital preamplifier and crossover projects, designed by the pioneer **@rripio** and later alongside others contributors.
+
+https://github.com/AudioHumLab/FIRtro
+
+https://github.com/rripio/pre.di.c
