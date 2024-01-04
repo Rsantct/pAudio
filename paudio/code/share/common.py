@@ -40,6 +40,57 @@ CONFIG = {}
 
 def init():
 
+    def reformat_PEQ():
+        """ PEQa are given in NON standard YML, having 3 fields. Example:
+
+            PEQ:
+                #   freq    gain    Q
+                1:  123     -2.0    1.0
+                2:  456     -3.0    0.5
+
+            Here will convert the Human Readable fields into a dictionary.
+        """
+
+        def check_peq_params(params):
+
+            freq, gain, q = params
+
+            freq = float(freq)
+            gain = float(gain)
+            q    = float(q)
+
+            if freq < 20.0 or freq > 20e3:
+                raise Exception('Freq must be 20 ~ 20000 (Hz)')
+
+            if gain < -20 or gain > 6:
+                raise Exception('Gain must be in -20.0 ~ +6.0 (dB)')
+
+            if q < 0.1 or q > 10:
+                raise Exception('Q must be in 0.1 ~ 10')
+
+            return freq, gain, q
+
+
+        if not 'PEQ' in CONFIG:
+            CONFIG["PEQ"] = {}
+            return
+
+        # PEQ parameters
+        for peq, params in CONFIG["PEQ"].items():
+
+            # It is expected 3 fields
+            params = params.split()
+            if len(params) != 3:
+                raise Exception(f'Bad PEQ #{peq}')
+
+            # Redo in dictionary form
+            freq, gain, q = check_peq_params(params)
+            params = {  'freq':     freq,
+                        'gain':     gain,
+                        'q':        q       }
+
+            CONFIG["PEQ"][peq] = params
+
 
     def reformat_outputs():
         """
@@ -174,8 +225,10 @@ def init():
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
 
-    if not 'PEQ' in CONFIG:
-        CONFIG["PEQ"] = {}
+    # Converting the Human Readable PEQ section to a dictionary
+    reformat_PEQ()
+    print(CONFIG)
+    sys.exit()
 
 
 def get_DSP_in_use():
