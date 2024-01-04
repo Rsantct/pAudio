@@ -96,13 +96,26 @@ def init():
             return out, (out_name, gain, pol, delay)
 
 
+        def check_output_names():
+            """ Check L/R pairs
+            """
+            outputs = CONFIG["outputs"]
+
+            L_outs  = [ pms["name"] for o, pms in outputs.items()
+                        if pms["name"] and pms["name"][-1]=='L' ]
+            R_outs  = [ pms["name"] for o, pms in outputs.items()
+                        if pms["name"] and pms["name"][-1]=='R' ]
+
+            if len(L_outs) != len(R_outs):
+                raise Exception('Number of outputs for L and R does not match')
+
+
         # A simple stereo I/O configuration if not defined
         if not 'outputs' in CONFIG:
             CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
 
         if not 'inputs' in CONFIG:
             CONFIG["inputs"] = ['system-wide']
-
 
         # Outputs
         for out, params in CONFIG["outputs"].items():
@@ -127,6 +140,9 @@ def init():
                             'delay':    delay   }
 
             CONFIG["outputs"][out] = params
+
+        # Check L/R pairs
+        check_output_names()
 
 
     global CONFIG, LOUDSPEAKER, LSPKFOLDER
