@@ -6,7 +6,7 @@ This is a system-wide audio control for a MacOS (or Linux PC), so that you can E
 
 External sources (vinyl and other analog stuff) can be processed with a high quality inputs sound card.
 
-Some features:
+Features:
 
 - Calibrated volume listening level supported by an **EBU R128 Loudness monitor** to check the loudness of any recording.
 
@@ -14,11 +14,14 @@ Some features:
 
 - Hi-Fi like preamp controls: volume, tone, balance, subsonic, stereo/mono/midside/polarity, mute, loudness
 
+- Easy **control from any web browser** (phone, tablet, PC, ...)
+
 - **Target curves** and **DRC (digital room correction)**
+
+- **PEQ** parametric equalizer 
 
 - Active loudspeaker **FIR based EQ and XOVER** (Full Range or Multiway)
 
-- Easy **control from any web browser** (phone, tablet, PC, ...)
 
 <img src="doc/img/pAudio%20web%20-20dB.png" width="350"><img src="doc/img/pAudio%20web%200dB.png" width="350">
 
