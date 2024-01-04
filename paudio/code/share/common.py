@@ -44,9 +44,12 @@ def init():
         """ PEQa are given in NON standard YML, having 3 fields. Example:
 
             PEQ:
-                #   freq    gain    Q
-                1:  123     -2.0    1.0
-                2:  456     -3.0    0.5
+                L:
+                    #   freq    gain    Q
+                    1:  123     -2.0    1.0
+                    2:  456     -3.0    0.5
+                R:
+                    ...
 
             Here will convert the Human Readable fields into a dictionary.
         """
@@ -72,24 +75,29 @@ def init():
 
 
         if not 'PEQ' in CONFIG:
-            CONFIG["PEQ"] = {}
+            CONFIG["PEQ"] = {'L:', 'R:'}
             return
 
         # PEQ parameters
-        for peq, params in CONFIG["PEQ"].items():
+        for ch in CONFIG["PEQ"]:
 
-            # It is expected 3 fields
-            params = params.split()
-            if len(params) != 3:
-                raise Exception(f'Bad PEQ #{peq}')
+            if not ch in ('L', 'R'):
+                raise Exception('PEQ channel must be `L` or `R`')
 
-            # Redo in dictionary form
-            freq, gain, q = check_peq_params(params)
-            params = {  'freq':     freq,
-                        'gain':     gain,
-                        'q':        q       }
+            for peq, params in CONFIG["PEQ"][ch].items():
 
-            CONFIG["PEQ"][peq] = params
+                # It is expected 3 fields
+                params = params.split()
+                if len(params) != 3:
+                    raise Exception(f'Bad PEQ #{peq}')
+
+                # Redo in dictionary form
+                freq, gain, q = check_peq_params(params)
+                params = {  'freq':     freq,
+                            'gain':     gain,
+                            'q':        q       }
+
+                CONFIG["PEQ"][ch][peq] = params
 
 
     def reformat_outputs():
