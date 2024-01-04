@@ -174,6 +174,9 @@ def init():
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
 
+    if not 'PEQ' in CONFIG:
+        CONFIG["PEQ"] = {}
+
 
 def get_DSP_in_use():
     """ The DSP in use is set inside preamp.py
