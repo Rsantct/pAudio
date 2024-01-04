@@ -13,7 +13,9 @@ output:
     device:         E30 II
     format:         S32LE
 
-
+#
+# This is an example of how to configure a PEQ section in a `config.yml` file
+#
 PEQ:
     L:
         #   freq    gain    Q
