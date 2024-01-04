@@ -75,7 +75,7 @@ def init():
 
 
         if not 'PEQ' in CONFIG:
-            CONFIG["PEQ"] = {'L:', 'R:'}
+            CONFIG["PEQ"] = {'L': {}, 'R': {}}
             return
 
         # PEQ parameters
