@@ -58,6 +58,18 @@ def _update_config_yml(pAudio_config):
     """ Updates camilladsp.yml as per user pAudio configuration
     """
 
+    def update_peq_stuff():
+
+        # Filters section
+        for ch in CONFIG["PEQ"]:
+            for peq, pms in CONFIG["PEQ"][ch].items():
+                cfg["filters"][f'peak_{ch}_{peq}'] = \
+                    make_peq_filter(pms["freq"], pms["gain"], pms["q"])
+
+        # Pipeline
+        # PENDING
+
+
     def update_multiway_structure():
         """ The multiway N channel expander Mixer
         """
@@ -215,6 +227,9 @@ def _update_config_yml(pAudio_config):
 
     # The XO
     update_xo_stuff()
+
+    # The PEQ
+    update_peq_stuff()
 
     # Saving to YAML file to run CamillaDSP
     with open(CFG_INIT_PATH, 'w') as f:
