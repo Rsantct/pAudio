@@ -667,19 +667,32 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
         cfg["pipeline"].append(step)
 
 
-def get_output_names():
+def make_peq_filter(freq=1000, gain=-3.0, qorbw=1.0, mode='q'):
+    """
+    type: Biquad
+    parameters:
+      type: Peaking
+      freq: 100
+      gain: -7.3
+      q: 0.5       /   bandwidth: 0.7
+    """
 
-    outputs = CONFIG["outputs"]
+    f = {   'type':         'Biquad',
+            'parameters': {
+                'type':     'Peaking',
+                'freq':     freq,
+                'gain':     gain
+            }
+        }
 
-    L_outs  = [ ps["name"] for o, ps in outputs.items() if ps["name"] and ps["name"][-1]=='L' ]
-    R_outs  = [ ps["name"] for o, ps in outputs.items() if ps["name"] and ps["name"][-1]=='R' ]
+    if mode == 'q':
+        f["parameters"]["q"] = qorbw
+    elif mode == 'bw':
+        f["parameters"]["bw"] = qorbw
+    else:
+        raise Exception(f'Bad PEQ filter mode `{mode}` must be `q` or `bw`')
 
-    if len(L_outs) != len(R_outs):
-        raise Exception('Number of outputs for L and R does not match')
-
-    output_names  = [ ps["name"] for o, ps in outputs.items() if ps["name"] ]
-
-    return output_names
+    return f
 
 
 # Getting AUDIO
