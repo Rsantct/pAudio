@@ -227,8 +227,6 @@ def init():
 
     # Converting the Human Readable PEQ section to a dictionary
     reformat_PEQ()
-    print(CONFIG)
-    sys.exit()
 
 
 def get_DSP_in_use():
