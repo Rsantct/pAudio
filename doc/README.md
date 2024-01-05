@@ -87,6 +87,9 @@ You can also check device names by running:
 #### Linux
 TO BE DONE
 
+## optional: PEQ parametric equalizer
+
+Just prepare a PEQ section inside `paudio/config.ym`, see the given example file.
 
 ## optional: Digital Room Correction DRC-FIR 
 
