@@ -120,6 +120,8 @@ def _update_config_yml(pAudio_config):
 
 
     def update_dither():
+        """ Prepare dither filter as per sample format
+        """
 
         def check_bits():
 
@@ -165,15 +167,150 @@ def _update_config_yml(pAudio_config):
                 case _:         d_type = 'Simple'
 
             cfg["filters"]["dither"] = make_dither_filter(d_type, bits)
-            append_item_to_pipeline(cfg, item='dither')
 
 
-    with open(f'{THIS_DIR}/camilladsp_template.yml', 'r') as f:
-        cfg = yaml.safe_load(f)
+    def prepare_base_config():
 
-    # Audio Device
-    # Updating as per pAudio config
+        def prepare_devices():
 
+            cfg["devices"] = {
+
+            'samplerate': 44100,
+
+            'capture': {    'channels':     2,
+                            'device':       'BlackHole 2ch',
+                            'format':       'FLOAT32LE',
+                            'type':         'CoreAudio'
+                        },
+
+            'playback': {   'channels':     None,
+                            'device':       None,
+                            'exclusive':    False,
+                            'format':       None,
+                            'type':         'CoreAudio'
+                        },
+
+            'chunksize': 1024,
+            'silence_threshold': -80,
+            'silence_timeout': 30
+            }
+
+
+        def prepare_filters():
+
+            cfg["filters"] =    {
+
+            # Balance and Polarity
+            'bal_pol_L':    {  'type': 'Gain',
+                                'parameters': {
+                                    'gain':     0.0,
+                                    'inverted': False,
+                                    'mute':     False
+                                }
+                            },
+            'bal_pol_R':    {  'type': 'Gain',
+                                'parameters': {
+                                    'gain':     0.0,
+                                    'inverted': False,
+                                    'mute':     False
+                                }
+                            },
+
+            # Dither
+            'dither':   {   'type': 'Dither',
+                            'parameters': {'bits': 16, 'type': 'Shibata441'},
+                        },
+
+            # DRC gain
+            'drc_gain': {   'type': 'Gain',
+                            'parameters': {
+                                    'gain':     0.0,
+                                    'inverted': False,
+                                    'mute':     False
+                            }
+                        },
+
+            # LU OFFSET (compensation for Loudness War)
+            'lu_offset': {  'type': 'Gain',
+                            'parameters': {
+                                    'gain':      0.0,
+                                    'inverted': False,
+                                    'mute':     False
+                            }
+                        },
+
+            # EQ (tones anf loudnes curves)
+            'eq':       {   'type': 'Conv',
+                            'parameters': {
+                                'filename': '/Users/rafaelsanchez/paudio/eq/eq_flat.pcm',
+                                'format': 'FLOAT32LE',
+                                'type': 'Raw'
+                            }
+                        }
+            }
+
+
+        def prepare_mixers():
+            """ Only preamp mixer at init
+            """
+
+            cfg["mixers"] = {}
+
+            cfg["mixers"]["preamp_mixer"] = {
+
+                'channels':     {'in': 2, 'out': 2},
+
+                # This allows to make mono and inverting channels
+                'mapping': [
+                    {'dest': 0,
+                        'sources': [
+                            {'channel': 0, 'gain': 0.0, 'inverted': False, 'mute': False},
+                            {'channel': 1, 'gain': 0.0, 'inverted': False, 'mute': True}
+                        ]
+                    },
+
+                    {'dest': 1,
+                        'sources': [
+                            {'channel': 0, 'gain': 0.0, 'inverted': False, 'mute': True},
+                            {'channel': 1, 'gain': 0.0, 'inverted': False, 'mute': False}
+                        ]
+                    }
+                ]
+            }
+
+
+        def prepare_pipeline():
+
+            cfg["pipeline"] = [
+
+                # Input stereo preamp mixer
+                {   'type': 'Mixer', 'name': 'preamp_mixer'
+                },
+
+                # Stereo filtering at preamp stage
+                {   'channel': 0,
+                    'type': 'Filter',
+                    'names': ['eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                },
+                {   'channel': 1,
+                    'type': 'Filter',
+                    'names': ['eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                }
+            ]
+
+
+        prepare_devices()
+        prepare_filters()
+        prepare_mixers()
+        prepare_pipeline()
+
+
+    # Prepare CamillaDSP base config
+    cfg = {}
+    prepare_base_config()
+
+
+    # Audio Device updating as per pAudio config
     cfg["devices"]["samplerate"] = pAudio_config["fs"]
 
     if cfg["devices"]["samplerate"] <= 48000:
@@ -200,6 +337,7 @@ def _update_config_yml(pAudio_config):
     cap_dev["format"] = pAudio_config["input"]["format"]
     pbk_dev["device"] = pAudio_config["output"]["device"]
     pbk_dev["format"] = pAudio_config["output"]["format"]
+
 
     # Making the multiway structure if necessary
     update_multiway_structure()
