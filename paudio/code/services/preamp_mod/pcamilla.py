@@ -13,7 +13,6 @@ import  json
 from    camilladsp import CamillaClient
 import  make_eq as mkeq
 
-THIS_DIR    = os.path.dirname(__file__)
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/paudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
@@ -24,9 +23,6 @@ from    common import *
 # (!) use set_config_sync(some_config) to upload a new one
 #####
 
-
-# Can be disabled for terminal debug
-LOG_TO_FILE = True
 
 # The CamillaDSP connection
 PC = None
@@ -55,8 +51,8 @@ def print_pipeline(cfg):
     print()
 
 
-def _update_config_yml(pAudio_config):
-    """ Updates camilladsp.yml as per user pAudio configuration
+def _update_config(pAudio_config):
+    """ Updates camilladsp config as per user pAudio configuration
     """
 
     def update_peq_stuff():
@@ -305,51 +301,55 @@ def _update_config_yml(pAudio_config):
         prepare_pipeline()
 
 
+    def update_audio_devices():
+
+        cfg["devices"]["samplerate"] = pAudio_config["fs"]
+
+        if cfg["devices"]["samplerate"] <= 48000:
+            cfg["devices"]["chunksize"] = 1024
+        else:
+            cfg["devices"]["chunksize"] = 2048
+
+        cap_dev = cfg["devices"]["capture"]
+        pbk_dev = cfg["devices"]["playback"]
+
+        # Default sound server is CoreAudio
+        if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
+            cap_dev["type"] = pAudio_config["sound_server"]
+            pbk_dev["type"] = pAudio_config["sound_server"]
+            if cap_dev["type"].lower() == 'coreaudio':
+                cap_dev["type"] = 'CoreAudio'
+            if pbk_dev["type"].lower() == 'coreaudio':
+                pbk_dev["type"] = 'CoreAudio'
+        else:
+            cap_dev["type"] = 'CoreAudio'
+            pbk_dev["type"] = 'CoreAudio'
+
+        cap_dev["device"] = pAudio_config["input"]["device"]
+        cap_dev["format"] = pAudio_config["input"]["format"]
+        pbk_dev["device"] = pAudio_config["output"]["device"]
+        pbk_dev["format"] = pAudio_config["output"]["format"]
+
+        # Channels to use from the playback device
+        pbk_dev["channels"] = len(CONFIG["outputs"].keys())
+
+        # MacOS Coreaudio exclusive mode
+        if 'exclusive_mode' in pAudio_config["output"] and pAudio_config["output"]["exclusive_mode"] == True:
+            pbk_dev["exclusive"] = True
+        else:
+            pbk_dev["exclusive"] = False
+
+
     # Prepare CamillaDSP base config
     cfg = {}
     prepare_base_config()
 
 
     # Audio Device updating as per pAudio config
-    cfg["devices"]["samplerate"] = pAudio_config["fs"]
-
-    if cfg["devices"]["samplerate"] <= 48000:
-        cfg["devices"]["chunksize"] = 1024
-    else:
-        cfg["devices"]["chunksize"] = 2048
-
-    cap_dev = cfg["devices"]["capture"]
-    pbk_dev = cfg["devices"]["playback"]
-
-    # Default sound server is CoreAudio
-    if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
-        cap_dev["type"] = pAudio_config["sound_server"]
-        pbk_dev["type"] = pAudio_config["sound_server"]
-        if cap_dev["type"].lower() == 'coreaudio':
-            cap_dev["type"] = 'CoreAudio'
-        if pbk_dev["type"].lower() == 'coreaudio':
-            pbk_dev["type"] = 'CoreAudio'
-    else:
-        cap_dev["type"] = 'CoreAudio'
-        pbk_dev["type"] = 'CoreAudio'
-
-    cap_dev["device"] = pAudio_config["input"]["device"]
-    cap_dev["format"] = pAudio_config["input"]["format"]
-    pbk_dev["device"] = pAudio_config["output"]["device"]
-    pbk_dev["format"] = pAudio_config["output"]["format"]
-
+    update_audio_devices()
 
     # Making the multiway structure if necessary
     update_multiway_structure()
-
-    # Channels to use from the playback device
-    pbk_dev["channels"] = len(CONFIG["outputs"].keys())
-
-    # MacOS Coreaudio exclusive mode
-    if 'exclusive_mode' in pAudio_config["output"] and pAudio_config["output"]["exclusive_mode"] == True:
-        pbk_dev["exclusive"] = True
-    else:
-        pbk_dev["exclusive"] = False
 
     # Dither
     update_dither()
@@ -370,9 +370,11 @@ def _update_config_yml(pAudio_config):
     # The PEQ
     update_peq_stuff()
 
-    # Saving to YAML file to run CamillaDSP
-    with open(f'{THIS_DIR}/camilladsp_init.yml', 'w') as f:
+    # Dumping config
+    with open(f'{DSP_LOGFOLDER}/camilladsp_init.yml', 'w') as f:
         yaml.safe_dump(cfg, f)
+
+    return cfg
 
 
 def init_camilladsp(pAudio_config):
@@ -384,23 +386,30 @@ def init_camilladsp(pAudio_config):
     global PC
 
     # Updating pAudio user config.yml ---> camilladsp.yml
-    _update_config_yml(pAudio_config)
+    cfg_init = _update_config(pAudio_config)
 
-    # Starting CamillaDSP with <camilladsp.yml> and <muted>
-    sp.call('pkill camilladsp'.split())
-    cdsp_cmd = f'camilladsp -m -a 127.0.0.1 -p 1234'
-    cdsp_cmd += f' "{THIS_DIR}/camilladsp_init.yml"'
-    if LOG_TO_FILE:
-        cdsp_cmd += f' --logfile "{DSP_LOGFOLDER}/camilladsp.log"'
-    sp.Popen( cdsp_cmd, shell=True )
+    # Stop if any process running
+    sp.call('pkill -KILL camilladsp'.split())
+
+    # Starting CamillaDSP (MUTED)
+    print(f'{Fmt.BLUE}Logging CamillaDSP to log/camilladsp.log ...{Fmt.END}')
+    cdsp_cmd = f'camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
+               f'--logfile "{DSP_LOGFOLDER}/camilladsp.log"'
+    p = sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
+    # Checking the websocket connection
+    print('Trying to connect to CamillaDSP websocket...')
     try:
         PC = CamillaClient("127.0.0.1", 1234)
         PC.connect()
+        print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
+        PC.config.set_active(cfg_init)
+        print(f'{Fmt.BLUE}Trying to load configuration and run ...{Fmt.END}')
         return 'done'
 
     except Exception as e:
+        print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
         return str(e)
 
 
