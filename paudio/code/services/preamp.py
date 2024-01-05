@@ -25,8 +25,6 @@ from    eqfir2png   import fir2png
 
 import  pcamilla as DSP
 
-DSP.LOG_TO_FILE = True
-
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 
 # Main variable (preamplifier state)
