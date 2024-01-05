@@ -5,6 +5,7 @@
 
 import  os
 import  sys
+import  shutil
 import  subprocess as sp
 from    time import sleep
 import  yaml
@@ -18,34 +19,30 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common import *
 
-#
-# (i) use set_config_sync(some_config) to upload a new one
-#
+#####
+# (!) use set_config_sync(some_config) to upload a new one
+#####
 
-THIS_DIR          = os.path.dirname(__file__)
-CFG_TEMPLATE_PATH = f'{THIS_DIR}/camilladsp_template.yml'
-CFG_INIT_PATH     = f'{THIS_DIR}/camilladsp_init.yml'
-
-# Can be disabled for terminal debug
-LOG_TO_FILE = True
-LOG_PATH    = f'{DSP_LOGFOLDER}/camilladsp.log'
 
 # The CamillaDSP connection
 PC = None
 
-# CamillaDSP needs a new FIR filename in order to
-# reload the convolver coeffs
-last_eq = 'A'
-eq_flat_path = f'{EQFOLDER}/eq_flat.pcm'
-eq_A_path    = f'{EQFOLDER}/eq_A.pcm'
-eq_B_path    = f'{EQFOLDER}/eq_B.pcm'
-eq_link      = f'{EQFOLDER}/eq.pcm'
-sp.Popen(f'cp {eq_flat_path} {eq_A_path}', shell=True)
-sp.Popen(f'cp {eq_flat_path} {eq_B_path}', shell=True)
-
-
 
 # INTERNAL
+
+def _init():
+    """ CamillaDSP needs a new FIR filename in order to
+        reload the convolver coeffs
+    """
+    global LAST_EQ, EQ_LINK
+
+    EQ_LINK = f'{EQFOLDER}/eq.pcm'
+
+    LAST_EQ = 'A'
+
+    shutil.copy(f'{EQFOLDER}/eq_flat.pcm', f'{EQFOLDER}/eq_A.pcm')
+    shutil.copy(f'{EQFOLDER}/eq_flat.pcm', f'{EQFOLDER}/eq_B.pcm')
+
 
 def print_pipeline(cfg):
     print('-'*80)
@@ -54,9 +51,21 @@ def print_pipeline(cfg):
     print()
 
 
-def _update_config_yml(pAudio_config):
-    """ Updates camilladsp.yml as per user pAudio configuration
+def _update_config(pAudio_config):
+    """ Updates camilladsp config as per user pAudio configuration
     """
+
+    def update_peq_stuff():
+
+        # Filters section
+        for ch in CONFIG["PEQ"]:
+            for peq, pms in CONFIG["PEQ"][ch].items():
+                cfg["filters"][f'peak.{ch}.{peq}'] = \
+                    make_peq_filter(pms["freq"], pms["gain"], pms["q"])
+
+        # Pipeline
+        # PENDING
+
 
     def update_multiway_structure():
         """ The multiway N channel expander Mixer
@@ -107,6 +116,8 @@ def _update_config_yml(pAudio_config):
 
 
     def update_dither():
+        """ Prepare dither filter as per sample format
+        """
 
         def check_bits():
 
@@ -116,12 +127,12 @@ def _update_config_yml(pAudio_config):
 
             elif bits not in (16, 24):
                 print(f'{Fmt.BOLD}Using rare {bits} dither_bits' \
-                      f' over the output {pbk_bit_depth} bits depth{Fmt.END}')
+                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
                 result = True
 
             else:
                 print(f'{Fmt.BOLD}{Fmt.BLUE}Using {bits} dither_bits' \
-                      f' over the output {pbk_bit_depth} bits depth{Fmt.END}')
+                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
                 result = True
 
             return result
@@ -152,53 +163,193 @@ def _update_config_yml(pAudio_config):
                 case _:         d_type = 'Simple'
 
             cfg["filters"]["dither"] = make_dither_filter(d_type, bits)
-            append_item_to_pipeline(cfg, item='dither')
 
 
-    with open(CFG_TEMPLATE_PATH, 'r') as f:
-        cfg = yaml.safe_load(f)
+    def prepare_base_config():
 
-    # Audio Device
-    # Updating as per pAudio config
+        def prepare_devices():
 
-    cfg["devices"]["samplerate"] = pAudio_config["fs"]
+            cfg["devices"] = {
 
-    if cfg["devices"]["samplerate"] <= 48000:
-        cfg["devices"]["chunksize"] = 1024
-    else:
-        cfg["devices"]["chunksize"] = 2048
+            'samplerate': 44100,
 
-    cap_dev = cfg["devices"]["capture"]
-    pbk_dev = cfg["devices"]["playback"]
+            'capture': {    'channels':     2,
+                            'device':       'BlackHole 2ch',
+                            'format':       'FLOAT32LE',
+                            'type':         'CoreAudio'
+                        },
 
-    # Default sound server is CoreAudio
-    if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
-        cap_dev["type"] = pAudio_config["sound_server"]
-        pbk_dev["type"] = pAudio_config["sound_server"]
-        if cap_dev["type"].lower() == 'coreaudio':
+            'playback': {   'channels':     None,
+                            'device':       None,
+                            'exclusive':    False,
+                            'format':       None,
+                            'type':         'CoreAudio'
+                        },
+
+            'chunksize': 1024,
+            'silence_threshold': -80,
+            'silence_timeout': 30
+            }
+
+
+        def prepare_filters():
+
+            cfg["filters"] =    {
+
+            # Balance and Polarity
+            'bal_pol_L':    {  'type': 'Gain',
+                                'parameters': {
+                                    'gain':     0.0,
+                                    'inverted': False,
+                                    'mute':     False
+                                }
+                            },
+            'bal_pol_R':    {  'type': 'Gain',
+                                'parameters': {
+                                    'gain':     0.0,
+                                    'inverted': False,
+                                    'mute':     False
+                                }
+                            },
+
+            # Dither
+            'dither':   {   'type': 'Dither',
+                            'parameters': {'bits': 16, 'type': 'Shibata441'},
+                        },
+
+            # DRC gain
+            'drc_gain': {   'type': 'Gain',
+                            'parameters': {
+                                    'gain':     0.0,
+                                    'inverted': False,
+                                    'mute':     False
+                            }
+                        },
+
+            # LU OFFSET (compensation for Loudness War)
+            'lu_offset': {  'type': 'Gain',
+                            'parameters': {
+                                    'gain':      0.0,
+                                    'inverted': False,
+                                    'mute':     False
+                            }
+                        },
+
+            # EQ (tones anf loudnes curves)
+            'eq':       {   'type': 'Conv',
+                            'parameters': {
+                                'filename': '/Users/rafaelsanchez/paudio/eq/eq_flat.pcm',
+                                'format': 'FLOAT32LE',
+                                'type': 'Raw'
+                            }
+                        }
+            }
+
+
+        def prepare_mixers():
+            """ Only preamp mixer at init
+            """
+
+            cfg["mixers"] = {}
+
+            cfg["mixers"]["preamp_mixer"] = {
+
+                'channels':     {'in': 2, 'out': 2},
+
+                # This allows to make mono and inverting channels
+                'mapping': [
+                    {'dest': 0,
+                        'sources': [
+                            {'channel': 0, 'gain': 0.0, 'inverted': False, 'mute': False},
+                            {'channel': 1, 'gain': 0.0, 'inverted': False, 'mute': True}
+                        ]
+                    },
+
+                    {'dest': 1,
+                        'sources': [
+                            {'channel': 0, 'gain': 0.0, 'inverted': False, 'mute': True},
+                            {'channel': 1, 'gain': 0.0, 'inverted': False, 'mute': False}
+                        ]
+                    }
+                ]
+            }
+
+
+        def prepare_pipeline():
+
+            cfg["pipeline"] = [
+
+                # Input stereo preamp mixer
+                {   'type': 'Mixer', 'name': 'preamp_mixer'
+                },
+
+                # Stereo filtering at preamp stage
+                {   'channel': 0,
+                    'type': 'Filter',
+                    'names': ['eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                },
+                {   'channel': 1,
+                    'type': 'Filter',
+                    'names': ['eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                }
+            ]
+
+
+        prepare_devices()
+        prepare_filters()
+        prepare_mixers()
+        prepare_pipeline()
+
+
+    def update_audio_devices():
+
+        cfg["devices"]["samplerate"] = pAudio_config["fs"]
+
+        if cfg["devices"]["samplerate"] <= 48000:
+            cfg["devices"]["chunksize"] = 1024
+        else:
+            cfg["devices"]["chunksize"] = 2048
+
+        cap_dev = cfg["devices"]["capture"]
+        pbk_dev = cfg["devices"]["playback"]
+
+        # Default sound server is CoreAudio
+        if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
+            cap_dev["type"] = pAudio_config["sound_server"]
+            pbk_dev["type"] = pAudio_config["sound_server"]
+            if cap_dev["type"].lower() == 'coreaudio':
+                cap_dev["type"] = 'CoreAudio'
+            if pbk_dev["type"].lower() == 'coreaudio':
+                pbk_dev["type"] = 'CoreAudio'
+        else:
             cap_dev["type"] = 'CoreAudio'
-        if pbk_dev["type"].lower() == 'coreaudio':
             pbk_dev["type"] = 'CoreAudio'
-    else:
-        cap_dev["type"] = 'CoreAudio'
-        pbk_dev["type"] = 'CoreAudio'
 
-    cap_dev["device"] = pAudio_config["input"]["device"]
-    cap_dev["format"] = pAudio_config["input"]["format"]
-    pbk_dev["device"] = pAudio_config["output"]["device"]
-    pbk_dev["format"] = pAudio_config["output"]["format"]
+        cap_dev["device"] = pAudio_config["input"]["device"]
+        cap_dev["format"] = pAudio_config["input"]["format"]
+        pbk_dev["device"] = pAudio_config["output"]["device"]
+        pbk_dev["format"] = pAudio_config["output"]["format"]
+
+        # Channels to use from the playback device
+        pbk_dev["channels"] = len(CONFIG["outputs"].keys())
+
+        # MacOS Coreaudio exclusive mode
+        if 'exclusive_mode' in pAudio_config["output"] and pAudio_config["output"]["exclusive_mode"] == True:
+            pbk_dev["exclusive"] = True
+        else:
+            pbk_dev["exclusive"] = False
+
+
+    # Prepare CamillaDSP base config
+    cfg = {}
+    prepare_base_config()
+
+
+    # Audio Device updating as per pAudio config
+    update_audio_devices()
 
     # Making the multiway structure if necessary
     update_multiway_structure()
-
-    # Channels to use from the playback device
-    pbk_dev["channels"] = len(CONFIG["outputs"].keys())
-
-    # MacOS Coreaudio exclusive mode
-    if 'exclusive_mode' in pAudio_config["output"] and pAudio_config["output"]["exclusive_mode"] == True:
-        pbk_dev["exclusive"] = True
-    else:
-        pbk_dev["exclusive"] = False
 
     # Dither
     update_dither()
@@ -216,9 +367,14 @@ def _update_config_yml(pAudio_config):
     # The XO
     update_xo_stuff()
 
-    # Saving to YAML file to run CamillaDSP
-    with open(CFG_INIT_PATH, 'w') as f:
+    # The PEQ
+    update_peq_stuff()
+
+    # Dumping config
+    with open(f'{DSP_LOGFOLDER}/camilladsp_init.yml', 'w') as f:
         yaml.safe_dump(cfg, f)
+
+    return cfg
 
 
 def init_camilladsp(pAudio_config):
@@ -230,23 +386,30 @@ def init_camilladsp(pAudio_config):
     global PC
 
     # Updating pAudio user config.yml ---> camilladsp.yml
-    _update_config_yml(pAudio_config)
+    cfg_init = _update_config(pAudio_config)
 
-    # Starting CamillaDSP with <camilladsp.yml> and <muted>
-    sp.call('pkill camilladsp'.split())
-    cdsp_cmd = f'camilladsp -m -a 127.0.0.1 -p 1234'
-    cdsp_cmd += f' "{CFG_INIT_PATH}"'
-    if LOG_TO_FILE:
-        cdsp_cmd += f' --logfile "{LOG_PATH}"'
-    sp.Popen( cdsp_cmd, shell=True )
+    # Stop if any process running
+    sp.call('pkill -KILL camilladsp'.split())
+
+    # Starting CamillaDSP (MUTED)
+    print(f'{Fmt.BLUE}Logging CamillaDSP to log/camilladsp.log ...{Fmt.END}')
+    cdsp_cmd = f'camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
+               f'--logfile "{DSP_LOGFOLDER}/camilladsp.log"'
+    p = sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
+    # Checking the websocket connection
+    print('Trying to connect to CamillaDSP websocket...')
     try:
         PC = CamillaClient("127.0.0.1", 1234)
         PC.connect()
+        print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
+        PC.config.set_active(cfg_init)
+        print(f'{Fmt.BLUE}Trying to load configuration and run ...{Fmt.END}')
         return 'done'
 
     except Exception as e:
+        print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
         return str(e)
 
 
@@ -351,22 +514,20 @@ def get_config():
 def reload_eq():
 
     def toggle_last_eq():
-        global last_eq
-        last_eq = {'A':'B', 'B':'A'}[last_eq]
+        global LAST_EQ
+        LAST_EQ = {'A':'B', 'B':'A'}[LAST_EQ]
 
 
     mkeq.make_eq()
-    eq_path  = f'{EQFOLDER}/eq_{last_eq}.pcm'
+    eq_path  = f'{EQFOLDER}/eq_{LAST_EQ}.pcm'
     mkeq.save_eq_IR(eq_path)
 
-    # For convenience, it will be copied to eq.pcm,
+    # For convenience, it will be symlinked to eq.pcm,
     # so that a viewer could display the current curve
-    try:
-        with open('/dev/null', 'r') as fnull:
-            sp.call(f'rm {eq_link}'.split(), stdout=fnull, stderr=fnull)
-            sp.call(f'ln -s {eq_path} {eq_link}'.split(), stdout=fnull, stderr=fnull)
-    except Exception as e:
-        print(f'Problems making the symlink eq/eq.pcm: {str(e)}')
+    if os.path.isfile(EQ_LINK) or os.path.islink(EQ_LINK):
+        os.unlink(EQ_LINK)
+    os.symlink(eq_path, EQ_LINK)
+
 
     cfg = PC.config.active()
     cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
@@ -667,19 +828,32 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
         cfg["pipeline"].append(step)
 
 
-def get_output_names():
+def make_peq_filter(freq=1000, gain=-3.0, qorbw=1.0, mode='q'):
+    """
+    type: Biquad
+    parameters:
+      type: Peaking
+      freq: 100
+      gain: -7.3
+      q: 0.5       /   bandwidth: 0.7
+    """
 
-    outputs = CONFIG["outputs"]
+    f = {   'type':         'Biquad',
+            'parameters': {
+                'type':     'Peaking',
+                'freq':     freq,
+                'gain':     gain
+            }
+        }
 
-    L_outs  = [ ps["name"] for o, ps in outputs.items() if ps["name"] and ps["name"][-1]=='L' ]
-    R_outs  = [ ps["name"] for o, ps in outputs.items() if ps["name"] and ps["name"][-1]=='R' ]
+    if mode == 'q':
+        f["parameters"]["q"] = qorbw
+    elif mode == 'bw':
+        f["parameters"]["bw"] = qorbw
+    else:
+        raise Exception(f'Bad PEQ filter mode `{mode}` must be `q` or `bw`')
 
-    if len(L_outs) != len(R_outs):
-        raise Exception('Number of outputs for L and R does not match')
-
-    output_names  = [ ps["name"] for o, ps in outputs.items() if ps["name"] ]
-
-    return output_names
+    return f
 
 
 # Getting AUDIO
@@ -885,3 +1059,5 @@ def set_lu_offset(dB):
     set_config_sync(cfg)
     return 'done'
 
+
+_init()

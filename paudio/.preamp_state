@@ -1,5 +1,5 @@
 {
-    "loudspeaker":      "DynBM6",
+    "loudspeaker":      "MyLoudspeaker",
     "fs":               44100,
     "input":            "system-wide",
     "level":            -20.0,

@@ -221,24 +221,29 @@ pipeline:
   names:
   - xo.lo.mp
   - delay.lo.L
+  - dither
   type: Filter
 - channel: 1
   names:
   - xo.lo.mp
   - delay.lo.R
+  - dither
   type: Filter
 - channel: 2
   names:
   - xo.hi.mp
   - delay.hi.L
+  - dither
   type: Filter
 - channel: 3
   names:
   - xo.hi.mp
   - delay.hi.R
+  - dither
   type: Filter
 - channel: 5
   names:
   - xo.sw.mp
   - delay.sw
+  - dither
   type: Filter

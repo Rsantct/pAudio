@@ -1,3 +1,8 @@
+#
+# This is the simplest config :-)
+# Please see paudio/doc and paudio/doc/config_examples for more features
+#
+
 # Sound server
 sound_server:       coreaudio
 
@@ -13,6 +18,4 @@ output:
     device:         E30 II
     format:         S32LE
 
-
-# This simple config does not need loudspeaker settings, but you can name it below:
-#loudspeaker: MyLoudspeaker
+loudspeaker: MyLoudspeaker

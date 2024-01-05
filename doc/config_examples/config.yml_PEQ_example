@@ -1,0 +1,29 @@
+# Sound server
+sound_server:       coreaudio
+
+# Audio devices
+input:
+
+    device:         BlackHole 2ch
+    format:         FLOAT32LE
+
+
+output:
+
+    device:         E30 II
+    format:         S32LE
+
+#
+# This is an example of how to configure a PEQ section in a `config.yml` file
+#
+PEQ:
+    L:
+        #   freq    gain    Q
+        1:  123     -1.2    0.1
+        2:  456     +3.4    1.0
+        3:  789     -5.6    2.0
+    R:
+        #   freq    gain    Q
+        1:  234     -1.2    0.1
+        2:  567     +3.4    1.0
+        3:  890     -5.6    2.0

@@ -7,8 +7,12 @@
     Aux subsystem.
 """
 
-# This import works because the main program server.py
-# is located under the same folder than the commom module
+import os
+import sys
+UHOME       = os.path.expanduser('~')
+MAINFOLDER  = f'{UHOME}/paudio'
+sys.path.append(f'{MAINFOLDER}/code/share')
+
 from    common      import *
 
 
