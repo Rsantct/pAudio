@@ -5,6 +5,7 @@
 
 import  os
 import  sys
+import  shutil
 import  subprocess as sp
 from    time import sleep
 import  yaml
@@ -12,40 +13,40 @@ import  json
 from    camilladsp import CamillaClient
 import  make_eq as mkeq
 
+THIS_DIR    = os.path.dirname(__file__)
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/paudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common import *
 
-#
-# (i) use set_config_sync(some_config) to upload a new one
-#
+#####
+# (!) use set_config_sync(some_config) to upload a new one
+#####
 
 
 # Can be disabled for terminal debug
 LOG_TO_FILE = True
-LOG_PATH    = f'{DSP_LOGFOLDER}/camilladsp.log'
 
 # The CamillaDSP connection
 PC = None
 
-THIS_DIR          = os.path.dirname(__file__)
-CFG_TEMPLATE_PATH = f'{THIS_DIR}/camilladsp_template.yml'
-CFG_INIT_PATH     = f'{THIS_DIR}/camilladsp_init.yml'
-
-# CamillaDSP needs a new FIR filename in order to
-# reload the convolver coeffs
-LAST_EQ = 'A'
-eq_flat_path = f'{EQFOLDER}/eq_flat.pcm'
-eq_A_path    = f'{EQFOLDER}/eq_A.pcm'
-eq_B_path    = f'{EQFOLDER}/eq_B.pcm'
-EQ_LINK      = f'{EQFOLDER}/eq.pcm'
-sp.Popen(f'cp {eq_flat_path} {eq_A_path}', shell=True)
-sp.Popen(f'cp {eq_flat_path} {eq_B_path}', shell=True)
-
 
 # INTERNAL
+
+def _init():
+    """ CamillaDSP needs a new FIR filename in order to
+        reload the convolver coeffs
+    """
+    global LAST_EQ, EQ_LINK
+
+    EQ_LINK = f'{EQFOLDER}/eq.pcm'
+
+    LAST_EQ = 'A'
+
+    shutil.copy(f'{EQFOLDER}/eq_flat.pcm', f'{EQFOLDER}/eq_A.pcm')
+    shutil.copy(f'{EQFOLDER}/eq_flat.pcm', f'{EQFOLDER}/eq_B.pcm')
+
 
 def print_pipeline(cfg):
     print('-'*80)
@@ -128,12 +129,12 @@ def _update_config_yml(pAudio_config):
 
             elif bits not in (16, 24):
                 print(f'{Fmt.BOLD}Using rare {bits} dither_bits' \
-                      f' over the output {pbk_bit_depth} bits depth{Fmt.END}')
+                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
                 result = True
 
             else:
                 print(f'{Fmt.BOLD}{Fmt.BLUE}Using {bits} dither_bits' \
-                      f' over the output {pbk_bit_depth} bits depth{Fmt.END}')
+                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
                 result = True
 
             return result
@@ -167,7 +168,7 @@ def _update_config_yml(pAudio_config):
             append_item_to_pipeline(cfg, item='dither')
 
 
-    with open(CFG_TEMPLATE_PATH, 'r') as f:
+    with open(f'{THIS_DIR}/camilladsp_template.yml', 'r') as f:
         cfg = yaml.safe_load(f)
 
     # Audio Device
@@ -232,7 +233,7 @@ def _update_config_yml(pAudio_config):
     update_peq_stuff()
 
     # Saving to YAML file to run CamillaDSP
-    with open(CFG_INIT_PATH, 'w') as f:
+    with open(f'{THIS_DIR}/camilladsp_init.yml', 'w') as f:
         yaml.safe_dump(cfg, f)
 
 
@@ -250,9 +251,9 @@ def init_camilladsp(pAudio_config):
     # Starting CamillaDSP with <camilladsp.yml> and <muted>
     sp.call('pkill camilladsp'.split())
     cdsp_cmd = f'camilladsp -m -a 127.0.0.1 -p 1234'
-    cdsp_cmd += f' "{CFG_INIT_PATH}"'
+    cdsp_cmd += f' "{THIS_DIR}/camilladsp_init.yml"'
     if LOG_TO_FILE:
-        cdsp_cmd += f' --logfile "{LOG_PATH}"'
+        cdsp_cmd += f' --logfile "{DSP_LOGFOLDER}/camilladsp.log"'
     sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
@@ -374,14 +375,12 @@ def reload_eq():
     eq_path  = f'{EQFOLDER}/eq_{LAST_EQ}.pcm'
     mkeq.save_eq_IR(eq_path)
 
-    # For convenience, it will be copied to eq.pcm,
+    # For convenience, it will be symlinked to eq.pcm,
     # so that a viewer could display the current curve
-    try:
-        with open('/dev/null', 'r') as fnull:
-            sp.call(f'rm {EQ_LINK}'.split(), stdout=fnull, stderr=fnull)
-            sp.call(f'ln -s {eq_path} {EQ_LINK}'.split(), stdout=fnull, stderr=fnull)
-    except Exception as e:
-        print(f'Problems making the symlink eq/eq.pcm: {str(e)}')
+    if os.path.isfile(EQ_LINK) or os.path.islink(EQ_LINK):
+        os.unlink(EQ_LINK)
+    os.symlink(eq_path, EQ_LINK)
+
 
     cfg = PC.config.active()
     cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
@@ -913,3 +912,5 @@ def set_lu_offset(dB):
     set_config_sync(cfg)
     return 'done'
 
+
+_init()
