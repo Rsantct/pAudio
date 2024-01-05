@@ -9,6 +9,9 @@ function help {
 
 
 function stop {
+    # camilladsp
+    pkill camilladsp
+    # node web server
     pkill -f "paudio\/code\/"
     echo "pAudio has been stopped."
 }
@@ -50,7 +53,6 @@ if [[ $1 = *"stop"* ]]; then
     stop
     restore
 
-
 elif [[ $1 = *"start"* ]]; then
 
     stop
@@ -67,11 +69,8 @@ elif [[ $1 = *"toggle"* ]]; then
         start
     fi
 
-
 else
-
     help
-
 
 fi
 
