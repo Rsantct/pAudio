@@ -22,9 +22,6 @@ from    common import *
 # (i) use set_config_sync(some_config) to upload a new one
 #
 
-THIS_DIR          = os.path.dirname(__file__)
-CFG_TEMPLATE_PATH = f'{THIS_DIR}/camilladsp_template.yml'
-CFG_INIT_PATH     = f'{THIS_DIR}/camilladsp_init.yml'
 
 # Can be disabled for terminal debug
 LOG_TO_FILE = True
@@ -33,16 +30,19 @@ LOG_PATH    = f'{DSP_LOGFOLDER}/camilladsp.log'
 # The CamillaDSP connection
 PC = None
 
+THIS_DIR          = os.path.dirname(__file__)
+CFG_TEMPLATE_PATH = f'{THIS_DIR}/camilladsp_template.yml'
+CFG_INIT_PATH     = f'{THIS_DIR}/camilladsp_init.yml'
+
 # CamillaDSP needs a new FIR filename in order to
 # reload the convolver coeffs
-last_eq = 'A'
+LAST_EQ = 'A'
 eq_flat_path = f'{EQFOLDER}/eq_flat.pcm'
 eq_A_path    = f'{EQFOLDER}/eq_A.pcm'
 eq_B_path    = f'{EQFOLDER}/eq_B.pcm'
-eq_link      = f'{EQFOLDER}/eq.pcm'
+EQ_LINK      = f'{EQFOLDER}/eq.pcm'
 sp.Popen(f'cp {eq_flat_path} {eq_A_path}', shell=True)
 sp.Popen(f'cp {eq_flat_path} {eq_B_path}', shell=True)
-
 
 
 # INTERNAL
@@ -63,7 +63,7 @@ def _update_config_yml(pAudio_config):
         # Filters section
         for ch in CONFIG["PEQ"]:
             for peq, pms in CONFIG["PEQ"][ch].items():
-                cfg["filters"][f'peak_{ch}_{peq}'] = \
+                cfg["filters"][f'peak.{ch}.{peq}'] = \
                     make_peq_filter(pms["freq"], pms["gain"], pms["q"])
 
         # Pipeline
@@ -366,20 +366,20 @@ def get_config():
 def reload_eq():
 
     def toggle_last_eq():
-        global last_eq
-        last_eq = {'A':'B', 'B':'A'}[last_eq]
+        global LAST_EQ
+        LAST_EQ = {'A':'B', 'B':'A'}[LAST_EQ]
 
 
     mkeq.make_eq()
-    eq_path  = f'{EQFOLDER}/eq_{last_eq}.pcm'
+    eq_path  = f'{EQFOLDER}/eq_{LAST_EQ}.pcm'
     mkeq.save_eq_IR(eq_path)
 
     # For convenience, it will be copied to eq.pcm,
     # so that a viewer could display the current curve
     try:
         with open('/dev/null', 'r') as fnull:
-            sp.call(f'rm {eq_link}'.split(), stdout=fnull, stderr=fnull)
-            sp.call(f'ln -s {eq_path} {eq_link}'.split(), stdout=fnull, stderr=fnull)
+            sp.call(f'rm {EQ_LINK}'.split(), stdout=fnull, stderr=fnull)
+            sp.call(f'ln -s {eq_path} {EQ_LINK}'.split(), stdout=fnull, stderr=fnull)
     except Exception as e:
         print(f'Problems making the symlink eq/eq.pcm: {str(e)}')
 
