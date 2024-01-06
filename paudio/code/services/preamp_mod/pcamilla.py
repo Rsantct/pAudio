@@ -52,7 +52,7 @@ def print_pipeline(cfg):
 
 
 def _update_config(pAudio_config):
-    """ Updates camilladsp config as per user pAudio configuration
+    """ Updates camilladsp config as per the user pAudio configuration
     """
 
     def update_peq_stuff():
