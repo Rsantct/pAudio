@@ -319,11 +319,26 @@ def _update_config(pAudio_config):
                     make_peq_filter(pms["freq"], pms["gain"], pms["q"])
 
         # Pipeline
+        npL = 0
+        npR = 0
         for p in [x for x in cfg["filters"] if x.startswith('peak.')]:
             if '.L' in p:
                 cfg["pipeline"][1]["names"].append(p)
+                npL += 1
             elif '.R' in p:
                 cfg["pipeline"][2]["names"].append(p)
+                npR += 1
+
+        # Filling with dummies to balance number of peaking in L and R
+        if npL != npR:
+            cfg["filters"][f'peak.dummy'] = \
+                make_peq_filter(freq=20, gain=0.0, qorbw=1.0)
+        if npL < npR:
+            for i in range(npR - npL):
+                cfg["pipeline"][1]["names"].append('peak.dummy')
+        if npR < npL:
+            for i in range(npL - npR):
+                cfg["pipeline"][2]["names"].append('peak.dummy')
 
 
     # Prepare CamillaDSP base config
