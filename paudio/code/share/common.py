@@ -297,9 +297,12 @@ def read_cmd_phrase(cmd_phrase):
             players command  arg1 ...
             aux     command  arg1 ...
 
-        The 'preamp' prefix can be omited
+        The `add` option for relative level, bass, treble, ...
 
-        The 'add' option for relative level, bass, treble, ...
+        The `preamp` prefix can be omited
+
+        If not `command` will response the preamp state
+
     """
 
     pfx, cmd, argstring, add = '', '', '', False
@@ -313,12 +316,15 @@ def read_cmd_phrase(cmd_phrase):
         chunks.remove('add')
 
     # If not prefix, will treat as a preamp command kind of
-    if not chunks[0] in ('preamp', 'player', 'aux'):
+    if not chunks[0:1] in ('preamp', 'player', 'aux'):
         chunks.insert(0, 'preamp')
     pfx = chunks[0]
 
     if chunks[1:]:
         cmd = chunks[1]
+    else:
+        cmd = 'state'
+
     if chunks[2:]:
         # <argstring> can be compound
         argstring = ' '.join( chunks[2:] )
