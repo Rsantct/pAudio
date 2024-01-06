@@ -384,6 +384,7 @@ def init_camilladsp(pAudio_config):
                 logs = f.read().strip().split('\n')
             return [l for l in logs if 'ERROR' in l]
 
+
         period = .5
         tries = int(timeout / period)
 
@@ -432,7 +433,7 @@ def init_camilladsp(pAudio_config):
         if check_cdsp_running(timeout=5):
             return 'done'
         else:
-            return f'{Fmt.RED}Cannot start `camilladsp` process, see `paudio/log`{Fmt.END}'
+            return f'Cannot start `camilladsp` process, see `paudio/log`'
 
     except Exception as e:
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
