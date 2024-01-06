@@ -377,6 +377,35 @@ def init_camilladsp(pAudio_config):
         then runs the CamillaDSP process.
     """
 
+    def check_cdsp_running(timeout=10):
+
+        def grep_log_errors():
+            with open(f'{DSP_LOGFOLDER}/camilladsp.log', 'r') as f:
+                logs = f.read().strip().split('\n')
+            return [l for l in logs if 'ERROR' in l]
+
+        period = .5
+        tries = int(timeout / period)
+
+        while tries:
+
+            s = PC.general.state()
+            if str(s) == 'ProcessingState.RUNNING':
+                break
+            else:
+                print(f'{Fmt.BLUE}{"." * int(tries * period)}{Fmt.END}')
+
+            sleep(.5)
+            tries -= 1
+
+        if tries:
+            return True
+        else:
+            for x in grep_log_errors():
+                print(f'{Fmt.RED}{x}{Fmt.END}')
+            return False
+
+
     global PC
 
     # Updating pAudio user config.yml ---> camilladsp.yml
@@ -399,8 +428,11 @@ def init_camilladsp(pAudio_config):
         PC.connect()
         print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
         PC.config.set_active(cfg_init)
-        print(f'{Fmt.BLUE}Trying to load configuration and run ...{Fmt.END}')
-        return 'done'
+        print(f'{Fmt.BLUE}Trying to load configuration and run.{Fmt.END}')
+        if check_cdsp_running(timeout=5):
+            return 'done'
+        else:
+            return f'{Fmt.RED}Cannot start `camilladsp` process, see `paudio/log`{Fmt.END}'
 
     except Exception as e:
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
