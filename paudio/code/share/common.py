@@ -315,19 +315,28 @@ def read_cmd_phrase(cmd_phrase):
         add = True
         chunks.remove('add')
 
+    if not chunks:
+        chunks = ['preamp', 'state']
+
     # If not prefix, will treat as a preamp command kind of
-    if not chunks[0:1] in ('preamp', 'player', 'aux'):
+    if not chunks[0] in ('preamp', 'player', 'aux'):
         chunks.insert(0, 'preamp')
+
     pfx = chunks[0]
 
     if chunks[1:]:
         cmd = chunks[1]
-    else:
-        cmd = 'state'
 
     if chunks[2:]:
         # <argstring> can be compound
         argstring = ' '.join( chunks[2:] )
+
+    # Debug
+    if False:
+        print('pfx', pfx)
+        print('cmd', cmd)
+        print('arg', argstring)
+        print('add', add)
 
     return pfx, cmd, argstring, add
 
