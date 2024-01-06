@@ -52,118 +52,8 @@ def print_pipeline(cfg):
 
 
 def _update_config(pAudio_config):
-    """ Updates camilladsp config as per user pAudio configuration
+    """ Updates camilladsp config as per the user pAudio configuration
     """
-
-    def update_peq_stuff():
-
-        # Filters section
-        for ch in CONFIG["PEQ"]:
-            for peq, pms in CONFIG["PEQ"][ch].items():
-                cfg["filters"][f'peak.{ch}.{peq}'] = \
-                    make_peq_filter(pms["freq"], pms["gain"], pms["q"])
-
-        # Pipeline
-        # PENDING
-
-
-    def update_multiway_structure():
-        """ The multiway N channel expander Mixer
-        """
-        # Prepare the needed expander mixer
-        num_outputs_used = make_multi_way_mixer(cfg)
-
-        # and adding it to the pipeline
-
-        if num_outputs_used > 2:
-            mwm = {'type': 'Mixer', 'name': f'from2to{num_outputs_used}channels'}
-            cfg["pipeline"].append(mwm)
-
-
-    def update_xo_stuff():
-        """
-        """
-
-        xo_filters = get_xo_filters_from_loudspeaker_folder()
-
-        # xo filters
-        for xo_filter in (xo_filters):
-            cfg["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter)
-
-        # Auxiliary delay filters
-        for _, pms in CONFIG["outputs"].items():
-            cfg["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
-
-        # pipeline
-        if xo_filters:
-            make_xover_steps(cfg)
-
-
-    def update_drc_stuff():
-
-        # drc filters
-        for drcset in pAudio_config["drc_sets"]:
-            for ch in 'L', 'R':
-                cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset)
-
-        # The initial pipeline points to the FIRST drc_set
-        insert_drc_to_pipeline(cfg, drcID=pAudio_config["drc_sets"][0])
-
-
-    def update_eq_filter():
-        """ with proper path """
-        cfg["filters"]["eq"]["parameters"]["filename"] = f'{EQFOLDER}/eq_flat.pcm'
-
-
-    def update_dither():
-        """ Prepare dither filter as per sample format
-        """
-
-        def check_bits():
-
-            if not( type(bits) == int and bits in range(2, 33)):
-                print(f'{Fmt.BOLD}BAD dither_bits: {bits}{Fmt.END}')
-                result = False
-
-            elif bits not in (16, 24):
-                print(f'{Fmt.BOLD}Using rare {bits} dither_bits' \
-                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
-                result = True
-
-            else:
-                print(f'{Fmt.BOLD}{Fmt.BLUE}Using {bits} dither_bits' \
-                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
-                result = True
-
-            return result
-
-
-        fs              = cfg["devices"]["samplerate"]
-        cap_fmt         = cfg["devices"]["capture"]["format"]
-        pbk_fmt         = cfg["devices"]["playback"]["format"]
-        cap_bit_depth   = get_bit_depth(cap_fmt)
-        pbk_bit_depth   = get_bit_depth(pbk_fmt)
-        bits            = 0
-
-
-        if "dither_bits" in pAudio_config["output"] and \
-           pAudio_config["output"]["dither_bits"]:
-            bits = pAudio_config["output"]["dither_bits"]
-
-        if not bits:
-            print(f'{Fmt.BLUE}- Dithering is disabled-{Fmt.END}')
-            return
-
-        if check_bits():
-
-            # https://github.com/HEnquist/camilladsp#dither
-            match fs:
-                case 44100:     d_type = 'Shibata441'
-                case 48000:     d_type = 'Shibata48'
-                case _:         d_type = 'Simple'
-
-            cfg["filters"]["dither"] = make_dither_filter(d_type, bits)
-
 
     def prepare_base_config():
 
@@ -238,7 +128,7 @@ def _update_config(pAudio_config):
             # EQ (tones anf loudnes curves)
             'eq':       {   'type': 'Conv',
                             'parameters': {
-                                'filename': '/Users/rafaelsanchez/paudio/eq/eq_flat.pcm',
+                                'filename': f'{EQFOLDER}/eq_flat.pcm',
                                 'format': 'FLOAT32LE',
                                 'type': 'Raw'
                             }
@@ -252,27 +142,7 @@ def _update_config(pAudio_config):
 
             cfg["mixers"] = {}
 
-            cfg["mixers"]["preamp_mixer"] = {
-
-                'channels':     {'in': 2, 'out': 2},
-
-                # This allows to make mono and inverting channels
-                'mapping': [
-                    {'dest': 0,
-                        'sources': [
-                            {'channel': 0, 'gain': 0.0, 'inverted': False, 'mute': False},
-                            {'channel': 1, 'gain': 0.0, 'inverted': False, 'mute': True}
-                        ]
-                    },
-
-                    {'dest': 1,
-                        'sources': [
-                            {'channel': 0, 'gain': 0.0, 'inverted': False, 'mute': True},
-                            {'channel': 1, 'gain': 0.0, 'inverted': False, 'mute': False}
-                        ]
-                    }
-                ]
-            }
+            cfg["mixers"]["preamp_mixer"] = make_preamp_mixer()
 
 
         def prepare_pipeline():
@@ -299,6 +169,69 @@ def _update_config(pAudio_config):
         prepare_filters()
         prepare_mixers()
         prepare_pipeline()
+
+
+    def prepare_multiway_structure():
+        """ The multiway N channel expander Mixer
+        """
+        # Prepare the needed expander mixer
+        num_outputs_used = make_multi_way_mixer(cfg)
+
+        # and adding it to the pipeline
+
+        if num_outputs_used > 2:
+            mwm = {'type': 'Mixer', 'name': f'from2to{num_outputs_used}channels'}
+            cfg["pipeline"].append(mwm)
+
+
+    def update_dither():
+        """ Adjust the dither filter as per the used sample format
+        """
+
+        def check_bits():
+
+            if not( type(bits) == int and bits in range(2, 33)):
+                print(f'{Fmt.BOLD}BAD dither_bits: {bits}{Fmt.END}')
+                result = False
+
+            elif bits not in (16, 24):
+                print(f'{Fmt.BOLD}Using rare {bits} dither_bits' \
+                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
+                result = True
+
+            else:
+                print(f'{Fmt.BOLD}{Fmt.BLUE}Using {bits} dither_bits' \
+                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
+                result = True
+
+            return result
+
+
+        fs              = cfg["devices"]["samplerate"]
+        cap_fmt         = cfg["devices"]["capture"]["format"]
+        pbk_fmt         = cfg["devices"]["playback"]["format"]
+        cap_bit_depth   = get_bit_depth(cap_fmt)
+        pbk_bit_depth   = get_bit_depth(pbk_fmt)
+        bits            = 0
+
+
+        if "dither_bits" in pAudio_config["output"] and \
+           pAudio_config["output"]["dither_bits"]:
+            bits = pAudio_config["output"]["dither_bits"]
+
+        if not bits:
+            print(f'{Fmt.BLUE}- Dithering is disabled-{Fmt.END}')
+            return
+
+        if check_bits():
+
+            # https://github.com/HEnquist/camilladsp#dither
+            match fs:
+                case 44100:     d_type = 'Shibata441'
+                case 48000:     d_type = 'Shibata48'
+                case _:         d_type = 'Simple'
+
+            cfg["filters"]["dither"] = make_dither_filter(d_type, bits)
 
 
     def update_audio_devices():
@@ -340,25 +273,89 @@ def _update_config(pAudio_config):
             pbk_dev["exclusive"] = False
 
 
+    def update_drc_stuff():
+
+        # drc filters
+        for drcset in pAudio_config["drc_sets"]:
+            for ch in 'L', 'R':
+                cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset)
+
+        # The initial pipeline points to the FIRST drc_set
+        insert_drc_to_pipeline(cfg, drcID=pAudio_config["drc_sets"][0])
+
+
+    def update_xo_stuff():
+        """ This is the LAST step into the PIPELINE.
+            Here we add the dither filters at sound card outputs end.
+        """
+
+        xo_filters = get_xo_filters_from_loudspeaker_folder()
+
+        # xo filters
+        for xo_filter in (xo_filters):
+            cfg["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter)
+
+        # Auxiliary delay filters definition
+        for _, pms in CONFIG["outputs"].items():
+            cfg["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
+
+        # pipeline
+        if xo_filters:
+            # includes adding dither
+            make_xover_steps(cfg)
+        else:
+            # If no multiway mixer, will add dither on preamp stereo channels,
+            # that is, the 2nd and the 3th pipeline steps
+            cfg["pipeline"][1]["names"].append('dither')
+            cfg["pipeline"][2]["names"].append('dither')
+
+
+    def update_peq_stuff():
+
+        # Filters section
+        for ch in CONFIG["PEQ"]:
+            for peq, pms in CONFIG["PEQ"][ch].items():
+                cfg["filters"][f'peak.{ch}.{peq}'] = \
+                    make_peq_filter(pms["freq"], pms["gain"], pms["q"])
+
+        # Pipeline
+        npL = 0
+        npR = 0
+        for p in [x for x in cfg["filters"] if x.startswith('peak.')]:
+            if '.L' in p:
+                cfg["pipeline"][1]["names"].append(p)
+                npL += 1
+            elif '.R' in p:
+                cfg["pipeline"][2]["names"].append(p)
+                npR += 1
+
+        # Filling with dummies to balance number of peaking in L and R
+        if npL != npR:
+            cfg["filters"][f'peak.dummy'] = \
+                make_peq_filter(freq=20, gain=0.0, qorbw=1.0)
+        if npL < npR:
+            for i in range(npR - npL):
+                cfg["pipeline"][1]["names"].append('peak.dummy')
+        if npR < npL:
+            for i in range(npL - npR):
+                cfg["pipeline"][2]["names"].append('peak.dummy')
+
+
     # Prepare CamillaDSP base config
     cfg = {}
     prepare_base_config()
-
 
     # Audio Device updating as per pAudio config
     update_audio_devices()
 
     # Making the multiway structure if necessary
-    update_multiway_structure()
+    prepare_multiway_structure()
 
     # Dither
     update_dither()
 
-    # The preamp_mixer
-    cfg["mixers"]["preamp_mixer"] = make_preamp_mixer(midside_mode='normal')
-
-    # The eq filter
-    update_eq_filter()
+    # The PEQ
+    update_peq_stuff()
 
     # The DRCs
     if pAudio_config["drc_sets"]:
@@ -366,9 +363,6 @@ def _update_config(pAudio_config):
 
     # The XO
     update_xo_stuff()
-
-    # The PEQ
-    update_peq_stuff()
 
     # Dumping config
     with open(f'{DSP_LOGFOLDER}/camilladsp_init.yml', 'w') as f:
@@ -778,30 +772,35 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
             names:
               - lo.mp
               - delay.lo.L
+              - dither
 
           - type: Filter
             channel: 1
             names:
               - lo.mp
               - delay.lo.R
+              - dither
 
           - type: Filter
             channel: 2
             names:
               - hi.mp
               - delay.hi.L
+              - dither
 
           - type: Filter
             channel: 3
             names:
               - hi.mp
               - delay.hi.R
+              - dither
 
           - type: Filter
             channel: 5
             names:
               - sw
               - delay.sw
+              - dither
     """
 
     for out, pms in CONFIG["outputs"].items():
@@ -821,7 +820,8 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
                     'channel': out - 1,
 
                     'names': [ f'xo.{way}.{default_filter_type}',
-                               f'delay.{o_name}'
+                               f'delay.{o_name}',
+                               'dither'
                               ]
                 }
 

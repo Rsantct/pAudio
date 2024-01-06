@@ -74,15 +74,22 @@ def init():
             return freq, gain, q
 
 
-        if not 'PEQ' in CONFIG:
+        # Filling the empty keys
+        if not 'PEQ' in CONFIG or not CONFIG["PEQ"]:
             CONFIG["PEQ"] = {'L': {}, 'R': {}}
-            return
+        if not 'L' in CONFIG["PEQ"]:
+            CONFIG["PEQ"]["L"] = {}
+        if not 'R' in CONFIG["PEQ"]:
+            CONFIG["PEQ"]["R"] = {}
 
         # PEQ parameters
         for ch in CONFIG["PEQ"]:
 
             if not ch in ('L', 'R'):
                 raise Exception('PEQ channel must be `L` or `R`')
+
+            if not CONFIG["PEQ"][ch]:
+                CONFIG["PEQ"][ch] = {}
 
             for peq, params in CONFIG["PEQ"][ch].items():
 
@@ -297,9 +304,12 @@ def read_cmd_phrase(cmd_phrase):
             players command  arg1 ...
             aux     command  arg1 ...
 
-        The 'preamp' prefix can be omited
+        The `add` option for relative level, bass, treble, ...
 
-        The 'add' option for relative level, bass, treble, ...
+        The `preamp` prefix can be omited
+
+        If not `command` will response the preamp state
+
     """
 
     pfx, cmd, argstring, add = '', '', '', False
@@ -312,16 +322,28 @@ def read_cmd_phrase(cmd_phrase):
         add = True
         chunks.remove('add')
 
+    if not chunks:
+        chunks = ['preamp', 'state']
+
     # If not prefix, will treat as a preamp command kind of
     if not chunks[0] in ('preamp', 'player', 'aux'):
         chunks.insert(0, 'preamp')
+
     pfx = chunks[0]
 
     if chunks[1:]:
         cmd = chunks[1]
+
     if chunks[2:]:
         # <argstring> can be compound
         argstring = ' '.join( chunks[2:] )
+
+    # Debug
+    if False:
+        print('pfx', pfx)
+        print('cmd', cmd)
+        print('arg', argstring)
+        print('add', add)
 
     return pfx, cmd, argstring, add
 
