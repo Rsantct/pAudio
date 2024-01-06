@@ -36,9 +36,6 @@ def init():
 
     def resume_audio():
 
-        # XO is pending
-        #set_xo( state["xo_set"] )
-
         do_levels( 'level', dB=state["level"] )
 
         set_polarity( state["polarity"] )
@@ -70,6 +67,10 @@ def init():
             state["drc_set"] = 'none'
         set_drc( state["drc_set"] )
 
+        if not state["xo_set"] in XO_SETS:
+            state["xo_set"] = ''
+        else:
+            set_xo( state["xo_set"] )
 
     global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
