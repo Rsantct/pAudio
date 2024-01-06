@@ -74,15 +74,22 @@ def init():
             return freq, gain, q
 
 
-        if not 'PEQ' in CONFIG:
+        # Filling the empty keys
+        if not 'PEQ' in CONFIG or not CONFIG["PEQ"]:
             CONFIG["PEQ"] = {'L': {}, 'R': {}}
-            return
+        if not 'L' in CONFIG["PEQ"]:
+            CONFIG["PEQ"]["L"] = {}
+        if not 'R' in CONFIG["PEQ"]:
+            CONFIG["PEQ"]["R"] = {}
 
         # PEQ parameters
         for ch in CONFIG["PEQ"]:
 
             if not ch in ('L', 'R'):
                 raise Exception('PEQ channel must be `L` or `R`')
+
+            if not CONFIG["PEQ"][ch]:
+                CONFIG["PEQ"][ch] = {}
 
             for peq, params in CONFIG["PEQ"][ch].items():
 
