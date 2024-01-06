@@ -64,7 +64,11 @@ def _update_config(pAudio_config):
                     make_peq_filter(pms["freq"], pms["gain"], pms["q"])
 
         # Pipeline
-        # PENDING
+        for p in [x for x in cfg["filters"] if x.startswith('peak.')]:
+            if '.L' in p:
+                cfg["pipeline"][1]["names"].append(p)
+            elif '.R' in p:
+                cfg["pipeline"][2]["names"].append(p)
 
 
     def update_multiway_structure():
@@ -81,7 +85,8 @@ def _update_config(pAudio_config):
 
 
     def update_xo_stuff():
-        """
+        """ This is the LAST step into the PIPELINE.
+            Here we add the dither filters at sound card outputs end.
         """
 
         xo_filters = get_xo_filters_from_loudspeaker_folder()
@@ -90,13 +95,19 @@ def _update_config(pAudio_config):
         for xo_filter in (xo_filters):
             cfg["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter)
 
-        # Auxiliary delay filters
+        # Auxiliary delay filters definition
         for _, pms in CONFIG["outputs"].items():
             cfg["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
         # pipeline
         if xo_filters:
+            # includes adding dither
             make_xover_steps(cfg)
+        else:
+            # If no multiway mixer, will add dither on preamp stereo channels,
+            # that is, the 2nd and the 3th pipeline steps
+            cfg["pipeline"][1]["names"].append('dither')
+            cfg["pipeline"][2]["names"].append('dither')
 
 
     def update_drc_stuff():
@@ -778,30 +789,35 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
             names:
               - lo.mp
               - delay.lo.L
+              - dither
 
           - type: Filter
             channel: 1
             names:
               - lo.mp
               - delay.lo.R
+              - dither
 
           - type: Filter
             channel: 2
             names:
               - hi.mp
               - delay.hi.L
+              - dither
 
           - type: Filter
             channel: 3
             names:
               - hi.mp
               - delay.hi.R
+              - dither
 
           - type: Filter
             channel: 5
             names:
               - sw
               - delay.sw
+              - dither
     """
 
     for out, pms in CONFIG["outputs"].items():
@@ -821,7 +837,8 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
                     'channel': out - 1,
 
                     'names': [ f'xo.{way}.{default_filter_type}',
-                               f'delay.{o_name}'
+                               f'delay.{o_name}',
+                               'dither'
                               ]
                 }
 
