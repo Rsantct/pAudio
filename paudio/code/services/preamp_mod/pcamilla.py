@@ -71,7 +71,6 @@ def _update_config(pAudio_config):
 
             'playback': {   'channels':     None,
                             'device':       None,
-                            'exclusive':    False,
                             'format':       None,
                             'type':         'CoreAudio'
                         },
@@ -208,8 +207,17 @@ def _update_config(pAudio_config):
 
 
         fs              = cfg["devices"]["samplerate"]
-        cap_fmt         = cfg["devices"]["capture"]["format"]
-        pbk_fmt         = cfg["devices"]["playback"]["format"]
+
+        # Jack device has not `format` field
+        if 'format' in cfg["devices"]["capture"]:
+            cap_fmt = cfg["devices"]["capture"]["format"]
+        else:
+            cap_fmt = 'FLOAT32LE'
+        if 'format' in cfg["devices"]["capture"]:
+            pbk_fmt = cfg["devices"]["playback"]["format"]
+        else:
+            pbk_fmt = 'FLOAT32LE'
+
         cap_bit_depth   = get_bit_depth(cap_fmt)
         pbk_bit_depth   = get_bit_depth(pbk_fmt)
         bits            = 0
@@ -248,29 +256,50 @@ def _update_config(pAudio_config):
 
         # Default sound server is CoreAudio
         if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
+
             cap_dev["type"] = pAudio_config["sound_server"]
             pbk_dev["type"] = pAudio_config["sound_server"]
+
             if cap_dev["type"].lower() == 'coreaudio':
                 cap_dev["type"] = 'CoreAudio'
+            elif cap_dev["type"].lower() == 'alsa':
+                cap_dev["type"] = 'Alsa'
+            elif cap_dev["type"].lower() == 'jack':
+                cap_dev["type"] = 'Jack'
+
             if pbk_dev["type"].lower() == 'coreaudio':
                 pbk_dev["type"] = 'CoreAudio'
+            elif pbk_dev["type"].lower() == 'alsa':
+                pbk_dev["type"] = 'Alsa'
+            elif pbk_dev["type"].lower() == 'jack':
+                pbk_dev["type"] = 'Jack'
+
         else:
+
             cap_dev["type"] = 'CoreAudio'
             pbk_dev["type"] = 'CoreAudio'
 
         cap_dev["device"] = pAudio_config["input"]["device"]
-        cap_dev["format"] = pAudio_config["input"]["format"]
         pbk_dev["device"] = pAudio_config["output"]["device"]
+        cap_dev["format"] = pAudio_config["input"]["format"]
         pbk_dev["format"] = pAudio_config["output"]["format"]
+
+        # Jack does not need `format` field
+        if cap_dev["type"] == 'Jack':
+            del cap_dev["format"]
+        if pbk_dev["type"] == 'Jack':
+            del pbk_dev["format"]
 
         # Channels to use from the playback device
         pbk_dev["channels"] = len(CONFIG["outputs"].keys())
 
         # MacOS Coreaudio exclusive mode
-        if 'exclusive_mode' in pAudio_config["output"] and pAudio_config["output"]["exclusive_mode"] == True:
-            pbk_dev["exclusive"] = True
-        else:
-            pbk_dev["exclusive"] = False
+        if pbk_dev["type"] == 'CoreAudio':
+            if 'exclusive_mode' in pAudio_config["output"] \
+               and pAudio_config["output"]["exclusive_mode"] == True:
+                pbk_dev["exclusive"] = True
+            else:
+                pbk_dev["exclusive"] = False
 
 
     def update_drc_stuff():
@@ -382,7 +411,7 @@ def init_camilladsp(pAudio_config):
         def grep_log_errors():
             with open(f'{DSP_LOGFOLDER}/camilladsp.log', 'r') as f:
                 logs = f.read().strip().split('\n')
-            return [l for l in logs if 'ERROR' in l]
+            return [l.strip() for l in logs if 'ERROR' in l]
 
 
         period = .5
