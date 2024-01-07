@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
+
+# Reading TCP address and port from the pe.audio.sy config file
+ADDR=$( grep paudio_addr ~/paudio/config.yml | grep -v \# | awk '{print $NF}' )
+ADDR=${ADDR//\"/}; CTL_ADDR=${ADDR//\'/}
+PORT=$( grep paudio_port ~/paudio/config.yml | grep -v \# | awk '{print $NF}' )
+if [[ ! $ADDR || ! $PORT ]]; then
+    echo ERROR reading config.yml
+    exit -1
+fi
+
+
 function help {
     echo
     echo "  Usage:  paudio.sh   stop | start [ -v ] | toggle"
@@ -18,13 +31,17 @@ function stop {
 
 
 function restore {
-    echo "Restoring previous Default Playback Device"
-    dev=$(cat ~/paudio/.previous_default_device)
-    SwitchAudioSource -s "$dev"
+    # Only for MacOS CoreAudio
 
-    echo "Restoring previous Playback Device Volume"
-    vol=$(cat ~/paudio/.previous_default_device_volume)
-    osascript -e 'set volume output volume '$vol
+    if [[ $(uname) == *'Darwin'* ]]; then
+        echo "Restoring previous Default Playback Device"
+        dev=$(cat ~/paudio/.previous_default_device)
+        SwitchAudioSource -s "$dev"
+
+        echo "Restoring previous Playback Device Volume"
+        vol=$(cat ~/paudio/.previous_default_device_volume)
+        osascript -e 'set volume output volume '$vol
+    fi
 }
 
 
@@ -36,12 +53,12 @@ function start {
 
     # Audio in verbose mode
     if [[ $1 = *"-v"* ]]; then
-        python3 ~/paudio/code/share/server.py paudio 0.0.0.0 9990 -v
+        python3 ~/paudio/code/share/server.py paudio $ADDR $PORT -v
         pkill -f "paudio/code/share/www/nodejs"
 
     # Audio in silent mode
     else
-        python3 ~/paudio/code/share/server.py paudio 0.0.0.0 9990 1>/dev/null 2>&1 &
+        python3 ~/paudio/code/share/server.py paudio $ADDR $PORT 1>/dev/null 2>&1 &
         echo "pAudio running in background ..."
 
     fi
