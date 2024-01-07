@@ -133,9 +133,10 @@ def init():
         state["buffer_size"] = DSP.PC.config.active()["devices"]["chunksize"]
 
         # Changing MacOS default playback device
-        save_default_sound_device()
-        change_default_sound_device( CONFIG["input"]["device"] )
-        # It will be restored when ordering `paudio.sh stop`
+        # (It will be restored when ordering `paudio.sh stop`)
+        if 'coreaudio' in CONFIG["sound_server"].lower():
+            save_default_sound_device()
+            change_default_sound_device( CONFIG["input"]["device"] )
 
         # Resuming audio settings on the DSP
         resume_audio()
