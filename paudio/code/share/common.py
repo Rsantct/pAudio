@@ -624,6 +624,7 @@ def set_default_device_mute(mode='false'):
 
 def save_default_sound_device():
     """ Save the current system-wide sound device
+        ONLY for CoreAudio
     """
 
     cur_dd = get_default_device()
@@ -632,7 +633,7 @@ def save_default_sound_device():
         with open(f'{MAINFOLDER}/.previous_default_device', 'w') as f:
             f.write(cur_dd)
     else:
-        print(f'{Fmt.RED} ERROR getting the current Playback Device.{Fmt.END}')
+        print(f'{Fmt.RED}ERROR getting the current Playback Device.{Fmt.END}')
 
 
     cur_dd_vol = get_default_device_vol()
@@ -641,7 +642,7 @@ def save_default_sound_device():
         with open(f'{MAINFOLDER}/.previous_default_device_volume', 'w') as f:
             f.write(cur_dd_vol)
     else:
-        print(f'{Fmt.RED} ERROR getting the current Playback Volume.{Fmt.END}')
+        print(f'{Fmt.RED}ERROR getting the current Playback Volume.{Fmt.END}')
 
 
 def change_default_sound_device(new_dev):
