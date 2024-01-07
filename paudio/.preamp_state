@@ -13,7 +13,7 @@
     "tone_defeat":      false,
     "drc_set":          "none",
     "xo_set":           "",
-    "stereo_mode":      "stereo",
+    "solo":              "off",
     "muted":            false,
     "polarity":         "++",
     "subsonic":         "off",
