@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
+
+# A command line tool to control the system
+
+# Reading TCP address and port from the pe.audio.sy config file
+ADDR=$( grep paudio_addr ~/paudio/config.yml | grep -v \# | awk '{print $NF}' )
+ADDR=${ADDR//\"/}; CTL_ADDR=${ADDR//\'/}
+PORT=$( grep paudio_port ~/paudio/config.yml | grep -v \# | awk '{print $NF}' )
+if [[ ! $ADDR || ! $PORT ]]; then
+    echo ERROR reading config.yml
+    exit -1
+fi
+
+if [[ $(uname) == *'Linux'* ]]; then
+    # 'nc' on Linux: -N shutdown the network socket after EOF on the input.
+    if [[ $1 ]]; then
+        echo "$@" | nc -N $ADDR $PORT
+    else
+        echo "state" | nc -N $ADDR $PORT
+    fi
+
+elif [[ $(uname) == *'Darwin'* ]]; then
+    # 'nc' on Mac OS:
+    if [[ $1 ]]; then
+        echo "$@" | nc $ADDR $PORT
+    else
+        echo "state" | nc $ADDR $PORT
+    fi
+fi
+
+echo ''
