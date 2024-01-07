@@ -18,7 +18,8 @@ const http  = require('http');
 const url   = require('url');
 const fs    = require('fs');
 const net   = require('net');
-const yaml  = require('js-yaml')
+const yaml  = require('js-yaml');
+const os    = require('os');
 
 
 // Command line option '-v' VERBOSE -vv VERY VERBOSE
@@ -34,10 +35,18 @@ if ( opcs.indexOf('-vv') != -1 ){
 }
 
 
-// Address & port to communicate to PAudio
-const UHOME = require('os').homedir();
-const PA_ADDR = 'localhost';
-const PA_PORT = 9990;
+// Getting address & port to communicate to pe.audio.sys
+try {
+    var PA_ADDR =   os.hostname() + '.local';
+
+    const UHOME = os.homedir();
+    let fileContents = fs.readFileSync(UHOME + '/paudio/config.yml', 'utf8');
+    let CFG = yaml.load(fileContents);
+    var PA_PORT =   CFG.paudio_port;
+
+} catch (e) {
+    console.log(e);
+}
 
 
 // Helpers to printout http TX and RX chunks w/o repeating them
@@ -207,6 +216,7 @@ function onHttpReq( httpReq, httpRes ){
             client.on('error', function(err){
                 httpRes.end();
                 client.destroy();
+                //console.log(err);
                 console.log( FgRed, '(node) cannot connect to paudio at '
                              + PA_ADDR + ':' + PA_PORT, Reset );
             });
