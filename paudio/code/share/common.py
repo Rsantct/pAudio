@@ -21,7 +21,7 @@ LOUDSPEAKER         = f''   # to be found when loading CONFIG
 EQFOLDER            = f'{MAINFOLDER}/eq'
 CODEFOLDER          = f'{MAINFOLDER}/code'
 CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
-DSP_LOGFOLDER       = f'{MAINFOLDER}/log'
+LOGFOLDER           = f'{MAINFOLDER}/log'
 PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
 
 LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
@@ -31,7 +31,7 @@ PLAYER_META_PATH    = f'{MAINFOLDER}/.player_metadata'
 
 
 try:
-    os.mkdir(DSP_LOGFOLDER)
+    os.mkdir(LOGFOLDER)
 except:
     pass
 
@@ -288,7 +288,7 @@ def read_json_file(fpath, timeout=5):
     if not tries:
         print(f'{Fmt.RED}(!) Cannot read `{fpath}`{Fmt.END}')
 
-    elif not d:
+    if not d:
         print(f'{Fmt.RED}(i) Void JSON in `{fpath}`{Fmt.END}')
 
     return d
@@ -521,6 +521,29 @@ def process_is_running(pattern):
         if pattern in p:
             return True
     return False
+
+
+def wait4jackports( pattern, timeout=5 ):
+    """ Waits for jack ports with name *pattern* to be available.
+        Returns: <bool>
+    """
+    period = .25
+    tries = int(timeout / period)
+
+    while tries:
+        try:
+            tmp = sp.check_output(f'jack_lsp {pattern} 2>/dev/null', shell=True).decode().split()
+        except:
+            tmp = []
+        if len( tmp ) >= 2:
+            break
+        tries -= 1
+        sleep(period)
+
+    if tries:
+        return True
+    else:
+        return False
 
 
 def get_default_device_PENDING():
