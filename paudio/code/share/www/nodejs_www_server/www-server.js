@@ -35,7 +35,7 @@ if ( opcs.indexOf('-vv') != -1 ){
 }
 
 
-// Getting address & port to communicate to pe.audio.sys
+// Getting address & port to communicate to pAudio
 try {
     var PA_ADDR =   os.hostname() + '.local';
 
