@@ -285,8 +285,11 @@ def read_json_file(fpath, timeout=5):
             tries -= 1
             sleep(period)
 
-    if not d:
+    if not tries:
         print(f'{Fmt.RED}(!) Cannot read `{fpath}`{Fmt.END}')
+
+    if not d:
+        print(f'{Fmt.RED}(i) Void JSON in `{fpath}`{Fmt.END}')
 
     return d
 
