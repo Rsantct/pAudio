@@ -7,7 +7,7 @@
 BOLD=$(tput bold)
 NORMAL=$(tput sgr0)
 
-# Reading TCP address and port from the pe.audio.sy config file
+# Reading TCP address and port from the pAudio config file
 ADDR=$( grep paudio_addr ~/paudio/config.yml | grep -v \# | awk '{print $NF}' )
 ADDR=${ADDR//\"/}; CTL_ADDR=${ADDR//\'/}
 PORT=$( grep paudio_port ~/paudio/config.yml | grep -v \# | awk '{print $NF}' )
