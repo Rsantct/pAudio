@@ -394,7 +394,7 @@ def _update_config(pAudio_config):
     update_xo_stuff()
 
     # Dumping config
-    with open(f'{DSP_LOGFOLDER}/camilladsp_init.yml', 'w') as f:
+    with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
         yaml.safe_dump(cfg, f)
 
     return cfg
@@ -409,7 +409,7 @@ def init_camilladsp(pAudio_config):
     def check_cdsp_running(timeout=10):
 
         def grep_log_errors():
-            with open(f'{DSP_LOGFOLDER}/camilladsp.log', 'r') as f:
+            with open(f'{LOGFOLDER}/camilladsp.log', 'r') as f:
                 logs = f.read().strip().split('\n')
             return [l.strip() for l in logs if 'ERROR' in l]
 
@@ -447,7 +447,7 @@ def init_camilladsp(pAudio_config):
     # Starting CamillaDSP (MUTED)
     print(f'{Fmt.BLUE}Logging CamillaDSP to log/camilladsp.log ...{Fmt.END}')
     cdsp_cmd = f'camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
-               f'--logfile "{DSP_LOGFOLDER}/camilladsp.log"'
+               f'--logfile "{LOGFOLDER}/camilladsp.log"'
     p = sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
