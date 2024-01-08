@@ -26,7 +26,22 @@ PREAMP_STATE_PATH = f'{MAINFOLDER}/.preamp_state'
 from common import  CONFIG, LDMON_PATH, LDCTRL_PATH
 from common import  read_json_file
 
-AUDIO_SOURCE = CONFIG["input"]["device"]
+
+if 'sound_server' in CONFIG and CONFIG["sound_server"]:
+    ss = CONFIG["sound_server"].lower()
+
+    match ss:
+        case 'coreaudio':
+            AUDIO_SOURCE = CONFIG["input"]["device"]
+        case 'jack':
+            AUDIO_SOURCE = 'pre_in_loop'
+        case _ :
+            print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
+            sys.exit()
+else:
+    print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
+    sys.exit()
+
 
 def prepare_control_fifo(fname):
     try:
