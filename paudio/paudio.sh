@@ -3,13 +3,21 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+
+BOLD=$(tput bold)
+NORMAL=$(tput sgr0)
+
 # Reading TCP address and port from the pe.audio.sy config file
 ADDR=$( grep paudio_addr ~/paudio/config.yml | grep -v \# | awk '{print $NF}' )
 ADDR=${ADDR//\"/}; CTL_ADDR=${ADDR//\'/}
 PORT=$( grep paudio_port ~/paudio/config.yml | grep -v \# | awk '{print $NF}' )
 if [[ ! $ADDR || ! $PORT ]]; then
-    echo ERROR reading config.yml
-    exit -1
+    echo ${BOLD}
+    echo '(i) Not found pAudio control TCP server address/port in `config.yml`,'
+    echo '    using defaults `localhost:9980`'
+    echo ${NORMAL}
+    ADDR='localhost'
+    PORT=9980
 fi
 
 
