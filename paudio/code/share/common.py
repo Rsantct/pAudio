@@ -268,23 +268,46 @@ def get_bit_depth(fmt):
     return bd
 
 
-def read_json_file(fpath):
-    with open(fpath, 'r') as f:
-        d = json.loads(f.read())
+def read_json_file(fpath, timeout=5):
+    """ Some json files cannot be ready to read in first pAudio run,
+        so let's retry
+    """
+    d = {}
+
+    period = 0.5
+    tries = int(timeout / period)
+    while tries:
+        try:
+            with open(fpath, 'r') as f:
+                d = json.loads(f.read())
+            break
+        except:
+            tries -= 1
+            sleep(period)
+
+    if not d:
+        print(f'{Fmt.RED}(!) Cannot read `{fpath}`{Fmt.END}')
+
     return d
 
 
-def save_json_file(d, fpath):
-    c=10
-    while c:
+def save_json_file(d, fpath, timeout=1):
+    """ Some json files cannot be ready to write because concurrency,
+        so let's retry
+    """
+
+    period = 0.1
+    tries = int(timeout / period)
+    while tries:
         try:
             with open(fpath, 'w') as f:
                 f.write(json.dumps(d))
             break
         except:
-            sleep (.1)
-            c -= 1
-    if c:
+            tries -= 1
+            sleep(period)
+
+    if tries:
         return True
     else:
         return False
