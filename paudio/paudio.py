@@ -18,7 +18,8 @@ UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/paudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
-from common import *
+from    common import *
+import  jack_mod as jm
 
 
 def get_srv_addr_port():
@@ -36,21 +37,55 @@ def get_srv_addr_port():
     return addr, port
 
 
-def stop():
+# *** WORK IN PROGRESS ***
+def prepare_jack_stuff():
+    """ *** WORK IN PROGRESS ***
+    """
 
-    print('Stopping pAudio...')
+    alsa_dev = 'hw:U192k'
+    fs       = CONFIG["fs"]
+    period   = 2048
+    nperiods = 3
 
-    # camilladsp
-    sp.call('pkill camilladsp', shell=True)
+    if not jm.run_jackd( alsa_dev=alsa_dev,
+                         fs=fs,
+                         period=period, nperiods=nperiods,
+                         jloops=['pre_in_loop']):
 
-    # node web server
-    sp.call('pkill -f "paudio\/code\/"', shell=True)
+        print(f'{Fmt.BOLD}Cannot run JACKD, exiting :-({Fmt.END}')
+        sys.exit()
+
+
+def start():
 
     # Jack audio server
-    sp.call('pkill jackd', shell=True)
-    sleep(1)
-    if wait4jackports('system', timeout=.5):
-        print(f'{Fmt.RED}Cannot stop JACKD{Fmt.END}')
+    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+        prepare_jack_stuff()
+
+    # Control web page
+    node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
+    sp.Popen(node_cmd, shell=True)
+    print("pAudio web server running in background ...")
+
+    # Do audio processing and listenting for commands
+    addr, port = get_srv_addr_port()
+    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {addr} {port}'
+    if verbose:
+        srv_cmd += ' -v'
+    else:
+        srv_cmd += ' 1>/dev/null 2>&1'
+        print("pAudio will run in background ...")
+    sp.Popen(srv_cmd, shell=True)
+
+    # Removing the CamillaDSP auto spawned Jack connections
+    # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
+    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+        if wait4jackports('cpal_client_in', timeout=20):
+            # (!) MUST wait a little in order to CamillaDSP Jack internal
+            #     to self detect.
+            sleep(1)
+            jm.connect_bypattern('system', 'cpal_client_in', 'disconnect')
+            jm.connect_bypattern('pre_in_loop', 'cpal_client_in', 'connect')
 
 
 def restore_playback_device_settings():
@@ -83,29 +118,21 @@ def restore_playback_device_settings():
             print("Cannot read `.previous_default_device_volume`")
 
 
-def start():
+def stop():
 
-    # Jack audio server
-    jack_cmd = f'jackd -d alsa -d hw:U192k -r44100 1>{LOGFOLDER}/jackd.log 2>&1'
-    sp.Popen(jack_cmd, shell=True)
-    if not wait4jackports('system'):
-        print(f'{Fmt.BOLD}Cannot run JACKD, exiting :-({Fmt.END}')
-        sys.exit()
+    print('Stopping pAudio...')
 
-    # Control web page
-    node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
-    sp.Popen(node_cmd, shell=True)
-    print("pAudio web server running in background ...")
+    # camilladsp
+    sp.call('pkill camilladsp', shell=True)
 
-    # Do audio processing and listenting for commands
-    addr, port = get_srv_addr_port()
-    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {addr} {port}'
-    if verbose:
-        srv_cmd += ' -v'
-    else:
-        srv_cmd += ' 1>/dev/null 2>&1'
-        print("pAudio will run in background ...")
-    sp.Popen(srv_cmd, shell=True)
+    # node web server
+    sp.call('pkill -f "paudio\/code\/"', shell=True)
+
+    # Jack audio server (jloops will also die)
+    sp.call('pkill jackd', shell=True)
+    sleep(1)
+    if wait4jackports('system', timeout=.5):
+        print(f'{Fmt.RED}Cannot stop JACKD{Fmt.END}')
 
 
 if __name__ == "__main__":
