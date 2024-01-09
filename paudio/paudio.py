@@ -95,19 +95,19 @@ def restore_playback_device_settings():
 
         try:
             with open(f'{MAINFOLDER}/.previous_default_device', 'r') as f:
-                dev = f.read().split()
+                dev = f.read().strip()
         except:
             dev = ''
 
         if dev:
             print("Restoring previous Default Playback Device")
-            sp.call('SwitchAudioSource -s "$dev"', shell=True)
+            sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
         else:
             print("Cannot read `.previous_default_device`")
 
         try:
             with open(f'{MAINFOLDER}/.previous_default_device_volume', 'r') as f:
-                vol = f.read().split()
+                vol = f.read().strip()
         except:
             vol = ''
 
