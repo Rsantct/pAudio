@@ -71,7 +71,7 @@ def manage_onoff(mode):
     #sp.Popen('pkill -KILL -f "\/paudio"', shell=True)
 
     # A clean stop, restoring audio playback device and volume
-    sp.Popen(f'{MAINFOLDER}/paudio.sh stop', shell=True)
+    sp.Popen(f'{MAINFOLDER}/paudio.py stop', shell=True)
 
     sys.exit()
 
