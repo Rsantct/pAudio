@@ -33,19 +33,27 @@ if ( opcs.indexOf('-vv') != -1 ){
     verbose = true;
     vv      = true;
 }
+var PA_ADDR = '0.0.0.0'
+var PA_PORT = 9980
 
 
 // Getting address & port to communicate to pAudio
 try {
-    var PA_ADDR =   os.hostname() + '.local';
-
     const UHOME = os.homedir();
     let fileContents = fs.readFileSync(UHOME + '/paudio/config.yml', 'utf8');
     let CFG = yaml.load(fileContents);
-    var PA_PORT =   CFG.paudio_port;
+    const tmp_ADDR =   CFG.paudio_addr;
+    const tmp_PORT =   CFG.paudio_port;
+    if (tmp_ADDR){
+        PA_ADDR = tmp_ADDR;
+    }
+    if (tmp_PORT){
+        PA_ADDR = tmp_PORT;
+    }
 
 } catch (e) {
     console.log(e);
+    console.log('USING DEFAULT pAudio address at ' + PA_ADDR + ':' + PA_PORT)
 }
 
 
