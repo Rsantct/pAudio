@@ -94,6 +94,6 @@ if __name__ == "__main__":
     sys.path.append( MODULEPATH )
     PROCESSOR_MOD = __import__(SERVICE)
 
-    print( f'{Fmt.BOLD}{Fmt.BLUE}(server.py) will use \'{SERVICE}.py\' module, '
+    print( f'{Fmt.MAGENTA}(server.py) Loading \'{SERVICE}.py\' module, '
            f'listening at {ADDR}:{PORT} ...{Fmt.END}' )
     run_server( ADDR, PORT )
