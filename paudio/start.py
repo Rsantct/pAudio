@@ -10,6 +10,12 @@
 
             -v      verbose in attached terminal
 """
+#
+# A helper command to check which things are running:
+#
+# pgrep -fla camilla; pgrep -fla node; pgrep -fla "server.py"; pgrep -fla 'plugins'
+#
+
 
 import  sys
 import  os
@@ -31,7 +37,7 @@ def get_srv_addr_port():
         addr = CONFIG["paudio_addr"]
         port = CONFIG["paudio_port"]
     except:
-        print(f'{Fmt.GRAY}(i) pAudio addr/port not found in`config.yml`' + \
+        print(f'{Fmt.GRAY}(start.py) pAudio addr/port not found in`config.yml`' + \
               f' using defaults `{addr}:{port}`{Fmt.END}')
 
     return addr, port
@@ -49,10 +55,10 @@ def restore_playback_device_settings():
             dev = ''
 
         if dev:
-            print("Restoring previous Default Playback Device")
+            print("(start.py) Restoring previous Default Playback Device")
             sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
         else:
-            print("Cannot read `.previous_default_device`")
+            print("(start.py) Cannot read `.previous_default_device`")
 
         try:
             with open(f'{MAINFOLDER}/.previous_default_device_volume', 'r') as f:
@@ -61,10 +67,10 @@ def restore_playback_device_settings():
             vol = ''
 
         if vol:
-            print("Restoring previous Playback Device Volume")
+            print("(start.py) Restoring previous Playback Device Volume")
             sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
         else:
-            print("Cannot read `.previous_default_device_volume`")
+            print("(start.py) Cannot read `.previous_default_device_volume`")
 
 
 # *** WORK IN PROGRESS ***
@@ -82,32 +88,45 @@ def prepare_jack_stuff():
                          period=period, nperiods=nperiods,
                          jloops=['pre_in_loop']):
 
-        print(f'{Fmt.BOLD}Cannot run JACKD, exiting :-({Fmt.END}')
+        print(f'{Fmt.BOLD}(start.py) Cannot run JACKD, exiting :-({Fmt.END}')
         sys.exit()
 
 
 def start():
 
+    ADDR, PORT = get_srv_addr_port()
+    CTRL_PORT  = PORT + 1
+
+    # The stand-alone control server
+    if not process_is_running('paudio_ctrl'):
+        srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio_ctrl {ADDR} {CTRL_PORT}'
+        sp.Popen(srv_cmd, shell=True)
+    else:
+        print(f'{Fmt.MAGENTA}(restart.py) paudio_ctrl server is already running.{Fmt.END}')
+
     # Jack audio server
     if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
         prepare_jack_stuff()
 
-    # Control web page
-    node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
-    sp.Popen(node_cmd, shell=True)
-    print("pAudio web server running in background ...")
+    # Node.js control web page
+    if not process_is_running('www-server'):
+        node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
+        sp.Popen(node_cmd, shell=True)
+        print(f'{Fmt.MAGENTA}(restart.py) pAudio web server running in background ...{Fmt.END}')
+    else:
+        print(f'{Fmt.MAGENTA}(restart.py) pAudio web server is already running.{Fmt.END}')
 
     # Do audio processing and listenting for commands
-    addr, port = get_srv_addr_port()
-    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {addr} {port}'
+    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {ADDR} {PORT}'
     if verbose:
         srv_cmd += ' -v'
     else:
         srv_cmd += ' 1>/dev/null 2>&1'
-        print("pAudio will run in background ...")
+        print("(start.py) pAudio will run in background ...")
     sp.Popen(srv_cmd, shell=True)
     if not wait4server():
-        print(f'{Fmt.BOLD}PANIC NO ANSWER FROM `server.py`{Fmt.END}')
+        print(f'{Fmt.RED}(start.py) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
+        stop()
         sys.exit()
 
     # Plugins (stand-alone processes)
@@ -126,7 +145,7 @@ def start():
 
 def stop():
 
-    print('Stopping pAudio...')
+    print('(start.py) Stopping pAudio...')
 
     # Plugins (stand-alone processes)
     run_plugins('stop')
@@ -136,16 +155,13 @@ def stop():
         sp.call('pkill -KILL jackd', shell=True)
         sleep(1)
         if wait4jackports('system', timeout=.5):
-            print(f'{Fmt.RED}Cannot stop JACKD{Fmt.END}')
-
-    # node web server
-    sp.call('pkill -KILL -f "www\-server\.js"', shell=True)
+            print(f'{Fmt.RED}(start.py) Cannot stop JACKD{Fmt.END}')
 
     # CamillaDSP
     sp.call('pkill -KILL camilladsp', shell=True)
 
-    # server.py
-    sp.call('pkill -KILL -f "server\.py paudio"', shell=True)
+    # server.py (be careful with trailing space in command line below)
+    sp.call('pkill -KILL -f "server\.py paudio\ "', shell=True)
 
 
 if __name__ == "__main__":
@@ -157,12 +173,16 @@ if __name__ == "__main__":
 
         if 'start' in opc:
             mode = 'start'
+
         elif 'stop' in opc:
             mode = 'stop'
+
         elif 'toggle' in opc:
             mode = 'toggle'
+
         elif '-v' in opc:
             verbose = True
+
 
     match mode:
 
