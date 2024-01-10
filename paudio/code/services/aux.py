@@ -62,18 +62,6 @@ def manage_lu_monitor(commandphrase):
         return f'ERROR writing FIFO \`{LDCTRL_PATH}\`: {str(e)}'
 
 
-def manage_onoff(mode):
-    """ currently only force to stop all stuff
-    """
-    print(f'{Fmt.BOLD}BYE !{Fmt.END}')
-
-    # A clean stop, restoring audio playback device and volume
-    sp.Popen(f'{MAINFOLDER}/restart.py stop', shell=True)
-
-    # MUST exit in order to not keep server.py in `defunct` state
-    sys.exit()
-
-
 # Entry function
 def do(cmd, args, add):
 
@@ -104,9 +92,9 @@ def do(cmd, args, add):
             args = 'input' # FORCED to input
             result = manage_lu_monitor(f'scope={args}')
 
-        case 'amp_switch':
-            result = manage_onoff(args)
 
+    if type(result) != str:
+        result = json.dumps(result)
 
     return result
 
