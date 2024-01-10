@@ -24,17 +24,6 @@ from common import *
 from services import preamp, aux, players
 
 
-def run_plugins():
-    """ Run plugins (stand-alone processes)
-    """
-
-    if not 'plugins' in CONFIG or not CONFIG["plugins"]:
-        return
-
-    for p in CONFIG["plugins"]:
-        sp.Popen(f'python3 {PLUGINSFOLDER}/{p} start', shell=True)
-
-
 def run_drc2png():
     """ Prepare DRC graphs
     """
@@ -74,5 +63,3 @@ def do(cmd_phrase):
 
 
 run_drc2png()
-
-run_plugins()
