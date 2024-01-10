@@ -6,7 +6,7 @@
 """
     This is the command line pAudio launcher
 
-        restart.py   start [-v]  |  stop  |  toggle
+        start.py   start [-v]  |  stop  |  toggle
 
             -v      verbose in attached terminal
 """
