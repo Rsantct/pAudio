@@ -55,6 +55,7 @@ try {
     console.log(e);
     console.log('USING DEFAULT pAudio address at ' + PA_ADDR + ':' + PA_PORT)
 }
+const PA_CTRL_PORT = PA_PORT + 1
 
 
 // Helpers to printout http TX and RX chunks w/o repeating them
@@ -214,8 +215,15 @@ function onHttpReq( httpReq, httpRes ){
                 last_cmd_phrase = cmd_phrase;
             }
 
+            let port = PA_PORT;
+
+            // Diverting special commands to paudio_ctrl server
+            if (cmd_phrase.match(/restart_/g) || cmd_phrase.match(/amp_/g)){
+                port += 1;
+            }
+
             // Create a socket client to the paudio TCP server side
-            const client = net.createConnection( { port:PA_PORT,
+            const client = net.createConnection( { port:port,
                                                    host:PA_ADDR },
                                                    () => {
             });
@@ -226,7 +234,7 @@ function onHttpReq( httpReq, httpRes ){
                 client.destroy();
                 //console.log(err);
                 console.log( FgRed, '(node) cannot connect to paudio at '
-                             + PA_ADDR + ':' + PA_PORT, Reset );
+                             + PA_ADDR + ':' + port, Reset );
             });
 
             // Will use timeout when connecting as a client to the paudio server
@@ -234,14 +242,14 @@ function onHttpReq( httpReq, httpRes ){
             //     https://nodejs.org/api/net.html#net_socket_settimeout_timeout_callback
             //     Some heavy commands (i.e. player get_all_info) takes a while > 200 ms
             if (cmd_phrase.match(/^player/g)){
-                client.setTimeout(300);
+                client.setTimeout(500);
             }else{
-                client.setTimeout(100);
+                client.setTimeout(250);
             }
             client.on('timeout', () => {
               console.log( FgRed, '(node) sending to paudio:', cmd_phrase, Reset);
               console.log( FgRed, '(node) client socket timeout to paudio at '
-                           + PA_ADDR + ':' + PA_PORT, Reset );
+                           + PA_ADDR + ':' + port, Reset );
               client.end();
             });
 
@@ -249,7 +257,7 @@ function onHttpReq( httpReq, httpRes ){
             client.write( cmd_phrase + '\r\n' );
             if (verbose){
                 console.log( FgGreen, '(node) ' + PA_ADDR + ':' +
-                             PA_PORT + ' TX: ' + cmd_phrase, Reset );
+                             port + ' TX: ' + cmd_phrase, Reset );
             }
 
             // The key (**) ==> the handler for socket received data
@@ -259,12 +267,12 @@ function onHttpReq( httpReq, httpRes ){
                 if (verbose){
                     if ( ans.length > 40 ){
                         console.log( FgGreen, '(node) ' + PA_ADDR + ':' +
-                                     PA_PORT + ' RX:', ans.slice(0,40) +
+                                     port + ' RX:', ans.slice(0,40) +
                                      ' ... ...', Reset );
                     }
                     else {
                         console.log( FgGreen, '(node) ' + PA_ADDR + ':' +
-                                     PA_PORT + ' RX:', ans, Reset);
+                                     port + ' RX:', ans, Reset);
                     }
                 }
 
