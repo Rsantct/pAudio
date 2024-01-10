@@ -71,6 +71,7 @@ class Fmt:
     MAGENTA         = '\033[35m'
     CYAN            = '\033[36m'
     WHITE           = '\033[37m'
+    GRAY            = '\033[90m'
 
     BRIGHTBLACK     = '\033[90m'
     BRIGHTRED       = '\033[91m'
