@@ -67,12 +67,10 @@ def manage_onoff(mode):
     """
     print(f'{Fmt.BOLD}BYE !{Fmt.END}')
 
-    # Forced stop
-    #sp.Popen('pkill -KILL -f "\/paudio"', shell=True)
-
     # A clean stop, restoring audio playback device and volume
-    sp.Popen(f'{MAINFOLDER}/paudio.py stop', shell=True)
+    sp.Popen(f'{MAINFOLDER}/restart.py stop', shell=True)
 
+    # MUST exit in order to not keep server.py in `defunct` state
     sys.exit()
 
 
@@ -82,6 +80,9 @@ def do(cmd, args, add):
     result  = 'nothing was done'
 
     match cmd:
+
+        case 'echo' | 'hello':
+            result = 'ACK'
 
         case 'get_web_config':
             result = {  'main_selector':        'inputs',
