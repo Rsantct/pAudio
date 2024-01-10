@@ -6,7 +6,7 @@
 """
     This is the command line pAudio launcher
 
-        paudio.py   start [-v]  |  stop  |  toggle
+        restart.py   start [-v]  |  stop  |  toggle
 
             -v      verbose in attached terminal
 """
@@ -31,10 +31,40 @@ def get_srv_addr_port():
         addr = CONFIG["paudio_addr"]
         port = CONFIG["paudio_port"]
     except:
-        print( '(i) Not found pAudio control TCP server address/port in `config.yml`,')
-        print(f'    using defaults `{addr}:{port}`')
+        print(f'{Fmt.GRAY}(i) pAudio addr/port not found in`config.yml`' + \
+              f' using defaults `{addr}:{port}`{Fmt.END}')
 
     return addr, port
+
+
+def restore_playback_device_settings():
+    """ Only for MacOS CoreAudio """
+
+    if sys.platform == 'darwin':
+
+        try:
+            with open(f'{MAINFOLDER}/.previous_default_device', 'r') as f:
+                dev = f.read().strip()
+        except:
+            dev = ''
+
+        if dev:
+            print("Restoring previous Default Playback Device")
+            sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
+        else:
+            print("Cannot read `.previous_default_device`")
+
+        try:
+            with open(f'{MAINFOLDER}/.previous_default_device_volume', 'r') as f:
+                vol = f.read().strip()
+        except:
+            vol = ''
+
+        if vol:
+            print("Restoring previous Playback Device Volume")
+            sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
+        else:
+            print("Cannot read `.previous_default_device_volume`")
 
 
 # *** WORK IN PROGRESS ***
@@ -76,6 +106,12 @@ def start():
         srv_cmd += ' 1>/dev/null 2>&1'
         print("pAudio will run in background ...")
     sp.Popen(srv_cmd, shell=True)
+    if not wait4server():
+        print(f'{Fmt.BOLD}PANIC NO ANSWER FROM `server.py`{Fmt.END}')
+        sys.exit()
+
+    # Plugins (stand-alone processes)
+    run_plugins()
 
     # Removing the CamillaDSP auto spawned Jack connections
     # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
@@ -88,51 +124,28 @@ def start():
             jm.connect_bypattern('pre_in_loop', 'cpal_client_in', 'connect')
 
 
-def restore_playback_device_settings():
-    """ Only for MacOS CoreAudio """
-
-    if sys.platform == 'darwin':
-
-        try:
-            with open(f'{MAINFOLDER}/.previous_default_device', 'r') as f:
-                dev = f.read().strip()
-        except:
-            dev = ''
-
-        if dev:
-            print("Restoring previous Default Playback Device")
-            sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
-        else:
-            print("Cannot read `.previous_default_device`")
-
-        try:
-            with open(f'{MAINFOLDER}/.previous_default_device_volume', 'r') as f:
-                vol = f.read().strip()
-        except:
-            vol = ''
-
-        if vol:
-            print("Restoring previous Playback Device Volume")
-            sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
-        else:
-            print("Cannot read `.previous_default_device_volume`")
-
-
 def stop():
 
     print('Stopping pAudio...')
 
-    # camilladsp
-    sp.call('pkill camilladsp', shell=True)
-
-    # node web server
-    sp.call('pkill -f "paudio\/code\/"', shell=True)
+    # Plugins (stand-alone processes)
+    run_plugins('stop')
 
     # Jack audio server (jloops will also die)
-    sp.call('pkill jackd', shell=True)
-    sleep(1)
-    if wait4jackports('system', timeout=.5):
-        print(f'{Fmt.RED}Cannot stop JACKD{Fmt.END}')
+    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+        sp.call('pkill -KILL jackd', shell=True)
+        sleep(1)
+        if wait4jackports('system', timeout=.5):
+            print(f'{Fmt.RED}Cannot stop JACKD{Fmt.END}')
+
+    # node web server
+    sp.call('pkill -KILL -f "www\-server\.js"', shell=True)
+
+    # CamillaDSP
+    sp.call('pkill -KILL camilladsp', shell=True)
+
+    # server.py
+    sp.call('pkill -KILL -f "server\.py paudio"', shell=True)
 
 
 if __name__ == "__main__":
