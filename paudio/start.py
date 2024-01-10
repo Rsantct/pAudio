@@ -43,36 +43,6 @@ def get_srv_addr_port():
     return addr, port
 
 
-def restore_playback_device_settings():
-    """ Only for MacOS CoreAudio """
-
-    if sys.platform == 'darwin':
-
-        try:
-            with open(f'{MAINFOLDER}/.previous_default_device', 'r') as f:
-                dev = f.read().strip()
-        except:
-            dev = ''
-
-        if dev:
-            print("(start.py) Restoring previous Default Playback Device")
-            sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
-        else:
-            print("(start.py) Cannot read `.previous_default_device`")
-
-        try:
-            with open(f'{MAINFOLDER}/.previous_default_device_volume', 'r') as f:
-                vol = f.read().strip()
-        except:
-            vol = ''
-
-        if vol:
-            print("(start.py) Restoring previous Playback Device Volume")
-            sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
-        else:
-            print("(start.py) Cannot read `.previous_default_device_volume`")
-
-
 # *** WORK IN PROGRESS ***
 def prepare_jack_stuff():
     """ *** WORK IN PROGRESS ***
@@ -127,7 +97,7 @@ def start():
     if not wait4server():
         print(f'{Fmt.RED}(start.py) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
         stop()
-        sys.exit()
+        return
 
     # Plugins (stand-alone processes)
     run_plugins()
