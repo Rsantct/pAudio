@@ -1,11 +1,11 @@
 ## Files here:
 
 
-### `paudio.sh`
+### `restart.py`
 
 This is the main script for you to **start/stop** the **pAudio** sound processing and control stuff.
 
-    ~/paudio/paudio.sh   start [-v] | stop
+    ~/paudio/restart.py   start [-v] | stop
 
     -v  verbose output in terminal
 
