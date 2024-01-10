@@ -508,6 +508,24 @@ def get_target_sets(fs=44100):
     return sorted(sets)
 
 
+def run_plugins(mode='start'):
+    """ Run plugins (stand-alone processes)
+    """
+
+    if not 'plugins' in CONFIG or not CONFIG["plugins"]:
+        return
+
+    if mode == 'start':
+        for p in CONFIG["plugins"]:
+            print(f'{Fmt.MAGENTA}Runinng: {p} ...{Fmt.END}')
+            sp.Popen(f'python3 {PLUGINSFOLDER}/{p} start', shell=True)
+
+    elif mode == 'stop':
+        for p in CONFIG["plugins"]:
+            print(f'{Fmt.BLUE}Stopping: {p} ...{Fmt.END}')
+            sp.Popen(f'python3 {PLUGINSFOLDER}/{p} stop', shell=True)
+
+
 def process_is_running(pattern):
     """ check for a system process to be running by a given pattern
         (bool)
@@ -521,6 +539,25 @@ def process_is_running(pattern):
         if pattern in p:
             return True
     return False
+
+
+def wait4server(timeout=10):
+
+    period = .5
+    tries  = int(timeout / period)
+
+    while tries:
+        try:
+            sp.check_output('echo aux hello | nc localhost 9980', shell=True)
+            break
+        except:
+            tries -= 1
+            sleep(period)
+
+    if tries:
+        return True
+    else:
+        return False
 
 
 def wait4jackports( pattern, timeout=5 ):
