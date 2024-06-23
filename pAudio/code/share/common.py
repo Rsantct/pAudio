@@ -541,7 +541,7 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=10):
+def wait4server(timeout=60):
 
     period = .5
     tries  = int(timeout / period)
