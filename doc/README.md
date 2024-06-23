@@ -125,11 +125,11 @@ More resources [here](https://www.minidsp.com/applications/advanced-tools/fir-fi
 
 To run the system-wide processor:
 
-    ~/paudio/restart.py   start
+    ~/paudio/start.py   start
 
 To stop: 
 
-    ~/paudio/restart.py   stop
+    ~/paudio/start.py   stop
 
 
 # Controlling pAudio
