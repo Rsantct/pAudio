@@ -59,9 +59,14 @@ Install the CamillaDSP module:
 
 **pAudio** is given in a folder to be located under your HOME directory.
 
-Download or clone this repo, unzip, then copy the **`pAudio`** folder to your home directory.
+You need to download or clone this repo, unzip, then copy the **`pAudio`** folder to your home directory.
 
 Make the launcher to be executable: `chmod +x ~/pAudio/start.sh`
+
+**The easy way:** 
+
+Just copy the script **`bin/paudio_update.sh`** into your `bin/` folder and run it.
+
 
 # Settings
 
