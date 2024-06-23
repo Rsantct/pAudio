@@ -21,7 +21,7 @@ import  sys
 import  os
 
 UHOME = os.path.expanduser("~")
-sys.path.append(f'{UHOME}/paudio/code/share')
+sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import *
 
@@ -107,7 +107,7 @@ def diracs():
 
 def get_drc_sets():
     """ find loudspeaker's drc_sets
-        *** OBSOLETE, see paudio/code/share/common ***
+        *** OBSOLETE, see pAudio/code/share/common ***
     """
     files   = os.listdir(LSPKFOLDER)
     coeffs  = [ x.replace('.pcm', '') for x in files if x[:4] == 'drc.']

@@ -14,7 +14,7 @@ import  os
 import  sys
 
 UHOME = os.path.expanduser("~")
-sys.path.append(f'{UHOME}/paudio/code/share')
+sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import *
 

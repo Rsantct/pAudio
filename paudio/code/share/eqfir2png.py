@@ -21,7 +21,7 @@ import  os
 matplotlib_use('Agg')
 
 UHOME = os.path.expanduser("~")
-sys.path.append(f'{UHOME}/paudio/code/share')
+sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import *
 

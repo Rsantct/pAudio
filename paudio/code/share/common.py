@@ -14,7 +14,7 @@ import  os
 
 UHOME = os.path.expanduser('~')
 
-MAINFOLDER          = f'{UHOME}/paudio'
+MAINFOLDER          = f'{UHOME}/pAudio'
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
 LSPKFOLDER          = f''
 LOUDSPEAKER         = f''   # to be found when loading CONFIG

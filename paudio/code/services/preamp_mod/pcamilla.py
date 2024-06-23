@@ -14,7 +14,7 @@ from    camilladsp import CamillaClient
 import  make_eq as mkeq
 
 UHOME       = os.path.expanduser('~')
-MAINFOLDER  = f'{UHOME}/paudio'
+MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common import *
@@ -462,7 +462,7 @@ def init_camilladsp(pAudio_config):
         if check_cdsp_running(timeout=5):
             return 'done'
         else:
-            return f'Cannot start `camilladsp` process, see `paudio/log`'
+            return f'Cannot start `camilladsp` process, see `pAudio/log`'
 
     except Exception as e:
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')

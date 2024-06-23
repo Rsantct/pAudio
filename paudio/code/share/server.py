@@ -29,7 +29,7 @@ UHOME = os.path.expanduser("~")
 
 
 # CONFIGURE here the path were the processing_module is located
-MODULEPATH = f'{UHOME}/paudio/code'
+MODULEPATH = f'{UHOME}/pAudio/code'
 
 # You can use these properties when importing this module:
 SERVICE = ''

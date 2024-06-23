@@ -70,13 +70,13 @@ filters:
     type: Dither
   drc.L.sofa:
     parameters:
-      filename: /Users/rafael/paudio/loudspeakers/2+1_way_example/drc.L.sofa.pcm
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/drc.L.sofa.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv
   drc.R.sofa:
     parameters:
-      filename: /Users/rafael/paudio/loudspeakers/2+1_way_example/drc.R.sofa.pcm
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/drc.R.sofa.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv
@@ -88,7 +88,7 @@ filters:
     type: Gain
   eq:
     parameters:
-      filename: /Users/rafael/paudio/eq/eq_flat.pcm
+      filename: /Users/rafael/pAudio/eq/eq_flat.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv
@@ -100,37 +100,37 @@ filters:
     type: Gain
   xo.hi.lp:
     parameters:
-      filename: /Users/rafael/paudio/loudspeakers/2+1_way_example/xo.hi.lp.pcm
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.hi.lp.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv
   xo.hi.mp:
     parameters:
-      filename: /Users/rafael/paudio/loudspeakers/2+1_way_example/xo.hi.mp.pcm
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.hi.mp.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv
   xo.lo.lp:
     parameters:
-      filename: /Users/rafael/paudio/loudspeakers/2+1_way_example/xo.lo.lp.pcm
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.lo.lp.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv
   xo.lo.mp:
     parameters:
-      filename: /Users/rafael/paudio/loudspeakers/2+1_way_example/xo.lo.mp.pcm
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.lo.mp.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv
   xo.sw.lp:
     parameters:
-      filename: /Users/rafael/paudio/loudspeakers/2+1_way_example/xo.sw.lp.pcm
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.sw.lp.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv
   xo.sw.mp:
     parameters:
-      filename: /Users/rafael/paudio/loudspeakers/2+1_way_example/xo.sw.mp.pcm
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.sw.mp.pcm
       format: FLOAT32LE
       type: Raw
     type: Conv

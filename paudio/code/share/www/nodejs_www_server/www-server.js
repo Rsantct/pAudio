@@ -40,7 +40,7 @@ var PA_PORT = 9980
 // Getting address & port to communicate to pAudio
 try {
     const UHOME = os.homedir();
-    let fileContents = fs.readFileSync(UHOME + '/paudio/config.yml', 'utf8');
+    let fileContents = fs.readFileSync(UHOME + '/pAudio/config.yml', 'utf8');
     let CFG = yaml.load(fileContents);
     const tmp_ADDR =   CFG.paudio_addr;
     const tmp_PORT =   CFG.paudio_port;
@@ -134,7 +134,7 @@ function onHttpReq( httpReq, httpRes ){
 
 
     // Prepare http header
-    httpRes.setHeader('server', 'paudio / Node.js ' + process.version);
+    httpRes.setHeader('server', 'pAudio / Node.js ' + process.version);
 
 
     // Parse the requested URL:
@@ -222,7 +222,7 @@ function onHttpReq( httpReq, httpRes ){
                 port += 1;
             }
 
-            // Create a socket client to the paudio TCP server side
+            // Create a socket client to the pAudio TCP server side
             const client = net.createConnection( { port:port,
                                                    host:PA_ADDR },
                                                    () => {
@@ -233,11 +233,11 @@ function onHttpReq( httpReq, httpRes ){
                 httpRes.end();
                 client.destroy();
                 //console.log(err);
-                console.log( FgRed, '(node) cannot connect to paudio at '
+                console.log( FgRed, '(node) cannot connect to pAudio at '
                              + PA_ADDR + ':' + port, Reset );
             });
 
-            // Will use timeout when connecting as a client to the paudio server
+            // Will use timeout when connecting as a client to the pAudio server
             // (i) It is a must to ending the socket if timeout happens
             //     https://nodejs.org/api/net.html#net_socket_settimeout_timeout_callback
             //     Some heavy commands (i.e. player get_all_info) takes a while > 200 ms
@@ -247,8 +247,8 @@ function onHttpReq( httpReq, httpRes ){
                 client.setTimeout(250);
             }
             client.on('timeout', () => {
-              console.log( FgRed, '(node) sending to paudio:', cmd_phrase, Reset);
-              console.log( FgRed, '(node) client socket timeout to paudio at '
+              console.log( FgRed, '(node) sending to pAudio:', cmd_phrase, Reset);
+              console.log( FgRed, '(node) client socket timeout to pAudio at '
                            + PA_ADDR + ':' + port, Reset );
               client.end();
             });

@@ -21,7 +21,7 @@ import  sys
 import  os
 
 UHOME       = os.path.expanduser('~')
-MAINFOLDER  = f'{UHOME}/paudio'
+MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common import *
@@ -165,7 +165,7 @@ if __name__ == "__main__":
             restore_playback_device_settings()
 
         case 'toggle':
-            if process_is_running(pattern='paudio/code'):
+            if process_is_running(pattern='pAudio/code'):
                 stop()
                 restore_playback_device_settings()
             else:

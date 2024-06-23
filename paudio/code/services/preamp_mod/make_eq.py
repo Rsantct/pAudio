@@ -16,7 +16,7 @@ import  sys
 import  numpy as np
 
 UHOME       = os.path.expanduser('~')
-MAINFOLDER  = f'{UHOME}/paudio'
+MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from common import *

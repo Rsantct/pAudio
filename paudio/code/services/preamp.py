@@ -16,7 +16,7 @@ import  subprocess as sp
 import  json
 
 UHOME       = os.path.expanduser('~')
-MAINFOLDER  = f'{UHOME}/paudio'
+MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
@@ -148,7 +148,7 @@ def init():
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
         print(f'    - The sound card is attached')
         print(f'    - The `config.yml` file')
-        print(f'    - Logs under ~/paudio/log/{Fmt.END}\n')
+        print(f'    - Logs under ~/pAudio/log/{Fmt.END}\n')
         sys.exit()
 
 

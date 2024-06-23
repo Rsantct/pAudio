@@ -15,7 +15,7 @@
 import os
 import sys
 UHOME       = os.path.expanduser('~')
-MAINFOLDER  = f'{UHOME}/paudio'
+MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 

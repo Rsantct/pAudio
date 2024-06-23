@@ -18,7 +18,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 UHOME           = os.path.expanduser("~")
-MAINFOLDER      = f'{UHOME}/paudio'
+MAINFOLDER      = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 
