@@ -12,7 +12,7 @@ fi
 
 function do_stop {
     echo '(i) STOPPING pAudio'
-    $HOME/pAudio/start.py stop
+    python3 $HOME/pAudio/start.py stop
 }
 
 
