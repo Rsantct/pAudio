@@ -21,7 +21,9 @@ UHOME = os.path.expanduser("~")
 
 
 def stop():
-    Popen( f'mpd --kill', shell=True )
+    # Let it be
+    #Popen( f'mpd --kill', shell=True )
+    pass
 
 def start():
     Popen( f'mpd {UHOME}/.mpdconf', shell=True )
