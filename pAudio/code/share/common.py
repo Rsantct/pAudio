@@ -516,14 +516,14 @@ def run_plugins(mode='start'):
         return
 
     if mode == 'start':
-        for p in CONFIG["plugins"]:
-            print(f'{Fmt.MAGENTA}Runinng: {p} ...{Fmt.END}')
-            sp.Popen(f'python3 {PLUGINSFOLDER}/{p} start', shell=True)
+        for plugin in CONFIG["plugins"]:
+            print(f'{Fmt.MAGENTA}Runinng: {plugin} ...{Fmt.END}')
+            sp.Popen(f'{PLUGINSFOLDER}/{plugin} start', shell=True)
 
     elif mode == 'stop':
-        for p in CONFIG["plugins"]:
-            print(f'{Fmt.BLUE}Stopping: {p} ...{Fmt.END}')
-            sp.Popen(f'python3 {PLUGINSFOLDER}/{p} stop', shell=True)
+        for plugin in CONFIG["plugins"]:
+            print(f'{Fmt.BLUE}Stopping: {plugin} ...{Fmt.END}')
+            sp.Popen(f'{PLUGINSFOLDER}/{plugin} stop', shell=True)
 
 
 def process_is_running(pattern):
