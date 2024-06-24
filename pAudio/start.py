@@ -71,6 +71,7 @@ def start():
     if not process_is_running('paudio_ctrl'):
         srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio_ctrl {ADDR} {CTRL_PORT}'
         sp.Popen(srv_cmd, shell=True)
+
     else:
         print(f'{Fmt.MAGENTA}(restart.py) paudio_ctrl server is already running.{Fmt.END}')
 
@@ -83,21 +84,28 @@ def start():
         node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
         sp.Popen(node_cmd, shell=True)
         print(f'{Fmt.MAGENTA}(restart.py) pAudio web server running in background ...{Fmt.END}')
+
     else:
         print(f'{Fmt.MAGENTA}(restart.py) pAudio web server is already running.{Fmt.END}')
 
     # Do audio processing and listenting for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {ADDR} {PORT}'
+
     if verbose:
         srv_cmd += ' -v'
     else:
         srv_cmd += ' 1>/dev/null 2>&1'
         print("(start.py) pAudio will run in background ...")
+
     sp.Popen(srv_cmd, shell=True)
+
     if not wait4server():
         print(f'{Fmt.RED}(start.py) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
         stop()
         return
+
+    # The loudness_monitor daemon
+    print('FALTA CARGAR LOUDNESS_MONITOR')
 
     # Plugins (stand-alone processes)
     run_plugins()
