@@ -117,6 +117,14 @@ def do_wire_dsp():
     jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
 
 
+def load_loudness_monitor_daemon():
+
+    print(f'{Fmt.GRAY}(start.py) Running loudness_monitor.py in background ...{Fmt.END}')
+
+    tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py start'
+    sp.Popen(tmp, shell=True)
+
+
 def stop():
 
     print('(start.py) Stopping pAudio...')
@@ -134,7 +142,7 @@ def stop():
     # server.py (be careful with trailing space in command line below)
     sp.call('pkill -KILL -f "server\.py paudio\ "', shell=True)
 
-    # NodeJS web server
+    # Node.js web server
     # ---
 
 
@@ -185,7 +193,7 @@ def start():
         do_wire_dsp()
 
     # The loudness_monitor daemon
-    print('FALTA CARGAR LOUDNESS_MONITOR')
+    load_loudness_monitor_daemon()
 
     # Plugins (stand-alone processes)
     run_plugins()
