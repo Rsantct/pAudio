@@ -23,6 +23,9 @@ sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 from    common      import *
 from    eqfir2png   import fir2png
 
+if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+    import  inputs
+
 import  pcamilla as DSP
 
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
@@ -74,7 +77,7 @@ def init():
 
     global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
-    INPUTS              = CONFIG["inputs"]
+    INPUTS              = CONFIG["inputs"].keys()
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
 
@@ -264,7 +267,7 @@ def set_xo(xoID):
 def set_input(inputID):
     """ fake selector """
     if inputID in INPUTS:
-        res = 'done'
+        res = inputs.select(inputID)
     else:
         res = f'must be in: {INPUTS}'
     return res
