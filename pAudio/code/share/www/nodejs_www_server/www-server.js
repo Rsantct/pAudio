@@ -46,14 +46,19 @@ try {
     const tmp_PORT =   CFG.paudio_port;
     if (tmp_ADDR){
         PA_ADDR = tmp_ADDR;
+        if (PA_ADDR == 'localhost'){
+            // force ipv4:
+            PA_ADDR = '127.0.0.1';
+        }
     }
     if (tmp_PORT){
-        PA_ADDR = tmp_PORT;
+        PA_PORT = tmp_PORT;
     }
+    console.log('Using pAudio address at ' + PA_ADDR + ':' + PA_PORT)
 
 } catch (e) {
     console.log(e);
-    console.log('USING DEFAULT pAudio address at ' + PA_ADDR + ':' + PA_PORT)
+    console.log('Using DEFAULT pAudio address at ' + PA_ADDR + ':' + PA_PORT)
 }
 const PA_CTRL_PORT = PA_PORT + 1
 
@@ -232,7 +237,7 @@ function onHttpReq( httpReq, httpRes ){
             client.on('error', function(err){
                 httpRes.end();
                 client.destroy();
-                //console.log(err);
+                console.log(err);
                 console.log( FgRed, '(node) cannot connect to pAudio at '
                              + PA_ADDR + ':' + port, Reset );
             });
