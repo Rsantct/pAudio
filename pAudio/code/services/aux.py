@@ -13,7 +13,7 @@ UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
-from    common      import *
+from common import *
 
 
 def init():
@@ -21,10 +21,8 @@ def init():
         preamp.py will alert there for eq_graph changes
     """
 
-    global AUXINFO, LU_MON_ENABLED
+    global AUXINFO
 
-    LU_MON_ENABLED  = True if 'loudness_monitor.py' in CONFIG["plugins"] \
-                           else False
 
     AUXINFO = {
         "amp":              "on",
@@ -72,9 +70,10 @@ def do(cmd, args, add):
         case 'echo' | 'hello':
             result = 'ACK'
 
+        # LU_monitor_enabled is a legacy option, now it is always enabled.
         case 'get_web_config':
             result = {  'main_selector':        'inputs',
-                        'LU_monitor_enabled':   LU_MON_ENABLED
+                        'LU_monitor_enabled':   True
             }
 
         case 'get_lu_monitor':
