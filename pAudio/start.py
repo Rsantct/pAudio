@@ -19,13 +19,14 @@
 
 import  sys
 import  os
+from    time import sleep
 
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common import *
-import  jack_mod as jm
+import  jack_mod
 
 
 def get_srv_addr_port():
@@ -43,23 +44,98 @@ def get_srv_addr_port():
     return addr, port
 
 
-# *** WORK IN PROGRESS ***
 def prepare_jack_stuff():
-    """ *** WORK IN PROGRESS ***
+    """ execute JACK with the convenient loops
     """
 
-    alsa_dev = 'hw:U192k'
-    fs       = CONFIG["fs"]
-    period   = 2048
-    nperiods = 3
+    jloops = ['pre_in_loop']
 
-    if not jm.run_jackd( alsa_dev=alsa_dev,
-                         fs=fs,
-                         period=period, nperiods=nperiods,
-                         jloops=['pre_in_loop']):
+    if any('mpd' in p for p in CONFIG["plugins"]):
+        jloops.append('mpd_loop')
+
+
+    alsa_dev = CONFIG["jack"]["device"]
+    period   = CONFIG["jack"]["period"]
+    nperiods = CONFIG["jack"]["nperiods"]
+    fs       = CONFIG["fs"]
+
+    if not jack_mod.run_jackd(  alsa_dev=alsa_dev,
+                                fs=fs, period=period, nperiods=nperiods,
+                                jloops=jloops):
 
         print(f'{Fmt.BOLD}(start.py) Cannot run JACKD, exiting :-({Fmt.END}')
         sys.exit()
+
+
+def do_wire_dsp():
+    """ https://github.com/HEnquist/camilladsp?tab=readme-ov-file#jack
+
+        CamillaDSP will show up in Jack as "cpal_client_in" and "cpal_client_out".
+    """
+
+    def cpal_alias():
+
+        def do_alias():
+            n = 3
+            while n:
+                try:
+                    sp.check_output(f'jack_alias cpal_client_{io}:{io}_{p} camilladsp:{io}.{ch}',
+                                    shell=True)
+                    break
+                except:
+                    sleep(.5)
+                    n -= 1
+            if not n:
+                return False
+            else:
+                return True
+
+        result = []
+
+        for io in ('in', 'out'):
+
+            for p in ('0', '1'):
+                ch = {'0':'L', '1':'R'}[p]
+                result.append( do_alias() )
+
+        if all(result):
+            print(f'{Fmt.BLUE}(start.py) set alias for camillaDSP jack ports.{Fmt.END}')
+        else:
+            print(f'{Fmt.BOLD}(start.py) ERROR setting alias for camillaDSP jack ports.{Fmt.END}')
+
+        return result
+
+
+    # camillaDSP jack ports aliases
+    cpal_alias()
+
+    # Removing the CamillaDSP auto spawned Jack connections
+    # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
+    print(f'{Fmt.GRAY}(start.py) Trying to wire camillaDSP jack ports ...{Fmt.END}')
+    # (a system capture port may not exist)
+    jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
+    jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
+
+
+def stop():
+
+    print('(start.py) Stopping pAudio...')
+
+    # Plugins (stand-alone processes)
+    run_plugins(mode='stop')
+
+    # CamillaDSP
+    sp.call('pkill -KILL camilladsp', shell=True)
+
+    # Jack audio server (jloops will also die)
+    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+        sp.call('pkill -KILL jackd', shell=True)
+
+    # server.py (be careful with trailing space in command line below)
+    sp.call('pkill -KILL -f "server\.py paudio\ "', shell=True)
+
+    # NodeJS web server
+    # ---
 
 
 def start():
@@ -73,7 +149,7 @@ def start():
         sp.Popen(srv_cmd, shell=True)
 
     else:
-        print(f'{Fmt.MAGENTA}(restart.py) paudio_ctrl server is already running.{Fmt.END}')
+        print(f'{Fmt.MAGENTA}(start.py) paudio_ctrl server is already running.{Fmt.END}')
 
     # Jack audio server
     if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
@@ -83,12 +159,12 @@ def start():
     if not process_is_running('www-server'):
         node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
         sp.Popen(node_cmd, shell=True)
-        print(f'{Fmt.MAGENTA}(restart.py) pAudio web server running in background ...{Fmt.END}')
+        print(f'{Fmt.MAGENTA}(start.py) pAudio web server running in background ...{Fmt.END}')
 
     else:
-        print(f'{Fmt.MAGENTA}(restart.py) pAudio web server is already running.{Fmt.END}')
+        print(f'{Fmt.MAGENTA}(start.py) pAudio web server is already running.{Fmt.END}')
 
-    # Do audio processing and listenting for commands
+    # Run the DSP and listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {ADDR} {PORT}'
 
     if verbose:
@@ -104,42 +180,15 @@ def start():
         stop()
         return
 
+    # Wire DSP
+    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+        do_wire_dsp()
+
     # The loudness_monitor daemon
     print('FALTA CARGAR LOUDNESS_MONITOR')
 
     # Plugins (stand-alone processes)
     run_plugins()
-
-    # Removing the CamillaDSP auto spawned Jack connections
-    # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
-    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
-        if wait4jackports('cpal_client_in', timeout=20):
-            # (!) MUST wait a little in order to CamillaDSP Jack internal
-            #     to self detect.
-            sleep(1)
-            jm.connect_bypattern('system', 'cpal_client_in', 'disconnect')
-            jm.connect_bypattern('pre_in_loop', 'cpal_client_in', 'connect')
-
-
-def stop():
-
-    print('(start.py) Stopping pAudio...')
-
-    # Plugins (stand-alone processes)
-    run_plugins('stop')
-
-    # Jack audio server (jloops will also die)
-    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
-        sp.call('pkill -KILL jackd', shell=True)
-        sleep(1)
-        if wait4jackports('system', timeout=.5):
-            print(f'{Fmt.RED}(start.py) Cannot stop JACKD{Fmt.END}')
-
-    # CamillaDSP
-    sp.call('pkill -KILL camilladsp', shell=True)
-
-    # server.py (be careful with trailing space in command line below)
-    sp.call('pkill -KILL -f "server\.py paudio\ "', shell=True)
 
 
 if __name__ == "__main__":
