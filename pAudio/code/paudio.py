@@ -8,7 +8,6 @@
 
     - Loads the preamp module
     - Processing commands entry point: do()
-    - Run plugins (stand-alone processes)
 
 """
 
