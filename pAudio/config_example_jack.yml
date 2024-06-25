@@ -1,0 +1,36 @@
+# Sound server
+sound_server:       jack
+jack:
+        device:     hw:sndrpihifiberry
+        period:     1024
+        nperiods:   2
+
+# Audio devices
+input:
+    device:         default
+    format:         FLOAT32LE
+
+output:
+    device:         default
+    format:         FLOAT32LE
+
+# Loudspeaker name
+loudspeaker: KEF_C35
+
+# Internal server address
+paudio_addr:    localhost
+paudio_port:    9980
+
+# Plugins
+plugins:
+            - mpd.py
+
+# Preamp sources selector (only for Linux + JACK)
+inputs:
+        mpd:
+            gain:           0.0
+            jack_pname:     mpd_loop
+
+        remoteSalon:
+            gain:           0.0
+            jack_pname:     192.168.1.234
