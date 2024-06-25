@@ -31,16 +31,26 @@ if 'sound_server' in CONFIG and CONFIG["sound_server"]:
     ss = CONFIG["sound_server"].lower()
 
     match ss:
+
         case 'coreaudio':
             AUDIO_SOURCE = CONFIG["input"]["device"]
+
         case 'jack':
             AUDIO_SOURCE = 'pre_in_loop'
+
         case _ :
             print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
             sys.exit()
+
 else:
     print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
     sys.exit()
+
+
+def prepare_ldmon_path():
+    init_values = {"LU_I": -77.0, "LU_M": -80.0, "scope": "track"}
+    with open( LDMON_PATH, 'w') as f:
+        f.write( json.dumps(init_values) )
 
 
 def prepare_control_fifo(fname):
@@ -202,6 +212,9 @@ if __name__ == '__main__':
     else:
         print(__doc__)
         sys.exit()
+
+    # Prepare LDMON_PATH file on disk
+    prepare_ldmon_path()
 
     # Initialize the scope of the measurements (input, album or track)
     scope = get_configured_scope()
