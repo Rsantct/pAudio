@@ -180,9 +180,6 @@ def init():
         if not 'outputs' in CONFIG:
             CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
 
-        if not 'inputs' in CONFIG:
-            CONFIG["inputs"] = ['system-wide']
-
         # Outputs
         for out, params in CONFIG["outputs"].items():
 
@@ -236,6 +233,11 @@ def init():
     if not "plugins" in CONFIG or not CONFIG["plugins"]:
         CONFIG["plugins"] = []
 
+
+    if not 'inputs' in CONFIG:
+        CONFIG["inputs"] = ['system-wide']
+    else:
+        CONFIG["inputs"]["none"] = {}
 
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
