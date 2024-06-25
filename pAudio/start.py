@@ -117,17 +117,27 @@ def do_wire_dsp():
     jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
 
 
-def load_loudness_monitor_daemon():
+def load_loudness_monitor_daemon(mode='start'):
 
-    print(f'{Fmt.GRAY}(start.py) Running loudness_monitor.py in background ...{Fmt.END}')
+    if mode == 'stop':
+        print(f'{Fmt.GRAY}(start.py) Stopping loudness_monitor.py{Fmt.END}')
 
-    tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py start'
-    sp.Popen(tmp, shell=True)
+        tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py stop'
+        sp.Popen(tmp, shell=True)
+
+    else:
+        print(f'{Fmt.GRAY}(start.py) Running loudness_monitor.py in background ...{Fmt.END}')
+
+        tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py start'
+        sp.Popen(tmp, shell=True)
 
 
 def stop():
 
     print('(start.py) Stopping pAudio...')
+
+    # The loudness_monitor daemon
+    load_loudness_monitor_daemon(mode='stop')
 
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
@@ -167,7 +177,7 @@ def start():
     if not process_is_running('www-server'):
         node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
         sp.Popen(node_cmd, shell=True)
-        print(f'{Fmt.MAGENTA}(start.py) pAudio web server running in background ...{Fmt.END}')
+        print(f'{Fmt.MAGENTA}(start.py) Launching pAudio web server running in background ...{Fmt.END}')
 
     else:
         print(f'{Fmt.MAGENTA}(start.py) pAudio web server is already running.{Fmt.END}')
