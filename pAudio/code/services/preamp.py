@@ -77,6 +77,9 @@ def init():
         else:
             set_xo( state["xo_set"] )
 
+        set_input(state["input"])
+
+
     global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
     INPUTS              = CONFIG["inputs"].keys()
