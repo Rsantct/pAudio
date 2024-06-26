@@ -15,6 +15,7 @@
     "xo_set":           "",
     "solo":              "off",
     "muted":            false,
+    "midside":          "off",
     "polarity":         "++",
     "subsonic":         "off",
     "extra_delay":      0.0
