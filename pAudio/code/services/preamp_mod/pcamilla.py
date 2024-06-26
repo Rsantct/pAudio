@@ -943,7 +943,7 @@ def set_midside(mode):
         c = PC.config.active()
         if mode == 'off':
             mode = 'normal'
-        c["mixers"]["preamp_mixer"] = make_mixer(midside_mode = mode)
+        c["mixers"]["preamp_mixer"] = make_preamp_mixer(midside_mode = mode)
         set_config_sync(c)
         return 'done'
 
