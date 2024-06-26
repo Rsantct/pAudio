@@ -550,12 +550,12 @@ def append_item_to_pipeline(cfg, item = ''):
         cfg["pipeline"][n]['names'] = names_new
 
 
-def set_config_sync(cfg):
+def set_config_sync(cfg, wait=0.1):
     """ (i) When ordering set config some time is needed to be running
-        This is a fake sync, but it works
+        This is a fake sync, but just works  >:-)
     """
     PC.config.set_active(cfg)
-    sleep(.1)
+    sleep(wait)
 
 
 def get_state():
@@ -1091,7 +1091,7 @@ def set_drc(drcID):
 
     if drcID == 'none':
         try:
-            cfg = clear_pipeline_input_filters(cfg, pattern='drc.')
+            clear_pipeline_input_filters(cfg, pattern='drc.')
             set_config_sync(cfg)
             result = 'done'
         except Exception as e:
