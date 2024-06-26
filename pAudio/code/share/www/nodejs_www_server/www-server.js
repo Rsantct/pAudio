@@ -6,7 +6,7 @@
 */
 
 // The DEFAULT listening HTTP PORT unless passed via command line
-let NODEJS_PORT = 8080;
+let NODEJS_PORT = 8088;
 const myArgs = process.argv.slice(2);
 if (myArgs[0]){
     NODEJS_PORT = myArgs[0];
