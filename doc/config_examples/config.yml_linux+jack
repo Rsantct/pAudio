@@ -25,7 +25,7 @@ paudio_port:    9980
 plugins:
             - mpd.py
 
-# Preamp sources selector (only for Linux + JACK)
+# Inputs (preamp sources selector, only is using the JACK sound server)
 inputs:
         mpd:
             gain:           0.0
