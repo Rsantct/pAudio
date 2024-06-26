@@ -13,7 +13,7 @@ from common import *
 
 import jack_mod
 
-jack_mod._jcli_activate()
+jack_mod._jcli_activate('inputs')
 
 
 def select(name):
