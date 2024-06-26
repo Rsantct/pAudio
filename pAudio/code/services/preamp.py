@@ -245,7 +245,7 @@ def set_drc(drcID):
         # Because DRCs are supposed to have a non positive unity gain offset,
         # we first put down volume when drc='none'
         if drcID == 'none':
-            DSP.set_drc_gain(CONFIG["drcs_offset"])
+            tmp = DSP.set_drc_gain(CONFIG["drcs_offset"])
 
         res = DSP.set_drc(drcID)
 
