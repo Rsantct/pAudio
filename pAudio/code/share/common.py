@@ -523,12 +523,12 @@ def run_plugins(mode='start'):
 
     if mode == 'start':
         for plugin in CONFIG["plugins"]:
-            print(f'{Fmt.MAGENTA}Runinng: {plugin} ...{Fmt.END}')
+            print(f'{Fmt.MAGENTA}Runinng plugin: {plugin} ...{Fmt.END}')
             sp.Popen(f'{PLUGINSFOLDER}/{plugin} start', shell=True)
 
     elif mode == 'stop':
         for plugin in CONFIG["plugins"]:
-            print(f'{Fmt.BLUE}Stopping: {plugin} ...{Fmt.END}')
+            print(f'{Fmt.BLUE}Stopping plugin: {plugin} ...{Fmt.END}')
             sp.Popen(f'{PLUGINSFOLDER}/{plugin} stop', shell=True)
 
 
