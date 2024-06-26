@@ -225,7 +225,9 @@ def init():
 
     CONFIG["DSP"] = get_DSP_in_use()
 
-
+    #
+    # Default values if omited parameters
+    #
     if not "fs" in CONFIG:
         CONFIG["fs"] = 44100
         print(f'{Fmt.BOLD}\n!!! fs NOT configured, default to fs=44100\n{Fmt.END}')
@@ -233,11 +235,13 @@ def init():
     if not "plugins" in CONFIG or not CONFIG["plugins"]:
         CONFIG["plugins"] = []
 
-
     if not 'inputs' in CONFIG:
         CONFIG["inputs"] = ['system-wide']
     else:
         CONFIG["inputs"]["none"] = {}
+
+    if not 'drcs_offset' in CONFIG:
+        CONFIG["drcs_offset"] = 0.0
 
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
