@@ -82,7 +82,7 @@ def init():
 
     global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
 
-    INPUTS              = CONFIG["inputs"].keys()
+    INPUTS              = tuple( CONFIG["inputs"].keys() )
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
 
@@ -273,7 +273,7 @@ def set_input(iname):
     if iname in INPUTS:
         res = inputs.select(iname)
     else:
-        res = f'must be in: {tuple(INPUTS)}'
+        res = f'must be in: {INPUTS}'
     return res
 
 
