@@ -48,13 +48,3 @@ bass:               0
 treble:             0
 tone_defeat:        false
 drc_set:            sofa
-
-
-# Inputs. By now only system-wide
-inputs:
-    - system-wide
-
-
-# plugins (stand-alone processes)
-plugins:
-    - loudness_monitor.py
