@@ -236,7 +236,7 @@ def init():
         CONFIG["plugins"] = []
 
     if not 'inputs' in CONFIG:
-        CONFIG["inputs"] = ['system-wide']
+        CONFIG["inputs"] = {'system-wide':{}}
     else:
         CONFIG["inputs"]["none"] = {}
 
