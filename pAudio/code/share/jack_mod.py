@@ -24,7 +24,7 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[]):
 
     if wait4jackports('system', timeout=5):
 
-        _jcli_activate()
+        _jcli_activate('jloops')
 
         if jloops:
             run_jloops(jloops)
@@ -35,9 +35,9 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[]):
         return False
 
 
-def _jcli_activate():
+def _jcli_activate(cname = 'tmp'):
     global JCLI
-    JCLI = jack.Client('tmp', no_start_server=True)
+    JCLI = jack.Client(cname, no_start_server=True)
     JCLI.activate()
 
 
@@ -212,11 +212,11 @@ def connect_bypattern( cap_pattern, pbk_pattern, mode='connect' ):
 
     errors = ''
     if not cap_ports:
-        tmp = f'cannot find jack port "{cap_pattern}" '
+        tmp = f'cannot find capture jack port "{cap_pattern}" '
         print(f'(jack_mod) {tmp}')
         errors += tmp
     if not pbk_ports:
-        tmp = f'cannot find jack port "{pbk_pattern}" '
+        tmp = f'cannot find playback jack port "{pbk_pattern}" '
         print(f'(jack_mod) {tmp}')
         errors += tmp
 
