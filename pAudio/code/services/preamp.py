@@ -30,7 +30,9 @@ import  pcamilla as DSP
 
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 
+#
 # Main variable (preamplifier state)
+#
 state = read_json_file(STATE_PATH)
 
 
@@ -264,12 +266,11 @@ def set_xo(xoID):
     return res
 
 
-def set_input(inputID):
-    """ fake selector """
-    if inputID in INPUTS:
-        res = inputs.select(inputID)
+def set_input(iname):
+    if iname in INPUTS:
+        res = inputs.select(iname)
     else:
-        res = f'must be in: {INPUTS}'
+        res = f'must be in: {tuple(INPUTS)}'
     return res
 
 
@@ -467,7 +468,7 @@ def do(cmd, args, add):
             new = args
             if state["input"] != new:
                 result = set_input(new)
-                if result == 'done':
+                if result in ('done', 'ordered'):
                     state["input"] = new
 
         case 'mono':
