@@ -20,6 +20,8 @@ output:
 # Loudspeaker in use
 loudspeaker:    FullRange_example
 
+# This depends on your analog chain, it should be zero or negative but not much.
+ref_level_gain_offset:  -0.0
 
 # Mapping of physical soundcard ports
 #
