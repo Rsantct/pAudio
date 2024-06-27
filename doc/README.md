@@ -93,11 +93,7 @@ You can also check device names by running:
 
 See `Linux.md`
 
-## optional: PEQ parametric equalizer
-
-Just prepare a PEQ section inside `pAudio/config.yml`, see the given example file.
-
-## optional: Digital Room Correction DRC-FIR
+## recommended: Digital Room Correction DRC-FIR
 
 Simply drop your DRC FIR files under the loudspeaker folder.
 
@@ -110,6 +106,11 @@ DRC tools:
  - [Rsantct/DRC](https://github.com/Rsantct/DRC)
  - [rripio/DSC](https://github.com/rripio/DSC)
  - Room EQ Wizard
+
+
+## optional: PEQ parametric equalizer
+
+Just prepare a PEQ section inside `pAudio/config.yml`, see the given example file.
 
 
 ## optional: Active loudspeaker FIR filtering: EQ and XOVER
