@@ -31,7 +31,7 @@ CamillaDSP is provided as a single executable binary. Proceed as follow:
 
 - Choose **`amd64`** for Intel CPU or **`aarch64`** for Apple CPU, download the **`Latest`** version.
 
-- Doubleclick to the downloaded `.tar` file to uncompress it. 
+- Doubleclick to the downloaded `.tar` file to uncompress it.
 
 - Move the extracted binary **`camilladsp`** to your **`~/bin`** folder.
 
@@ -59,19 +59,24 @@ Install the CamillaDSP module:
 
 **pAudio** is given in a folder to be located under your HOME directory.
 
-Download or clone this repo, unzip, then copy the **`paudio`** folder to your home directory.
+You need to download or clone this repo, unzip, then copy the **`pAudio`** folder to your home directory.
 
-Make the launcher to be executable: `chmod +x ~/paudio/paudio.sh`
+Make the launcher to be executable: `chmod +x ~/pAudio/start.sh`
+
+**The easy way:** 
+
+Just copy the script **`bin/paudio_update.sh`** into your `bin/` folder and run it.
+
 
 # Settings
 
 You don't have to worry about preparing CamillaDSP configuration files.
 
-All settings are done inside **`paudio/config.yml`**
+All settings are done inside **`pAudio/config.yml`**
 
 ## Sound Device
 
-Set the output device name to be used in **`~/paudio/config.yml`**, for example:
+Set the output device name to be used in **`~/pAudio/config.yml`**, for example:
 
     output:
         device:      E30 II      # DAC USB Topping E30
@@ -89,13 +94,13 @@ TO BE DONE
 
 ## optional: PEQ parametric equalizer
 
-Just prepare a PEQ section inside `paudio/config.ym`, see the given example file.
+Just prepare a PEQ section inside `pAudio/config.yml`, see the given example file.
 
-## optional: Digital Room Correction DRC-FIR 
+## optional: Digital Room Correction DRC-FIR
 
 Simply drop your DRC FIR files under the loudspeaker folder.
 
-        paudio/loudspeakeres/MyLspkName/
+        pAudio/loudspeakeres/MyLspkName/
             drc.L.setName.pcm
             drc.R.setName.pcm
 
@@ -125,11 +130,11 @@ More resources [here](https://www.minidsp.com/applications/advanced-tools/fir-fi
 
 To run the system-wide processor:
 
-    ~/paudio/paudio.sh   start
+    ~/pAudio/start.py   start
 
-To stop: 
+To stop:
 
-    ~/paudio/paudio.sh   stop
+    ~/pAudio/start.py   stop
 
 
 # Controlling pAudio

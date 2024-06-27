@@ -1,0 +1,39 @@
+# Sound server
+sound_server:       jack
+jack:
+        device:     hw:sndrpihifiberry
+        period:     1024
+        nperiods:   2
+
+# Audio devices
+input:
+    device:         default
+    format:         FLOAT32LE
+
+output:
+    device:         default
+    format:         FLOAT32LE
+
+# Loudspeaker name
+loudspeaker: KEF_C35
+
+# This depends on your analog chain, it should be zero or negative but not much.
+ref_level_gain_offset:  -0.0
+
+# Internal server address
+paudio_addr:    localhost
+paudio_port:    9980
+
+# Plugins
+plugins:
+            - mpd.py
+
+# Inputs (preamp sources selector, only is using the JACK sound server)
+inputs:
+        mpd:
+            gain:           0.0
+            jack_pname:     mpd_loop
+
+        remoteSalon:
+            gain:           0.0
+            jack_pname:     192.168.1.234

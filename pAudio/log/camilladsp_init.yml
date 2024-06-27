@@ -1,0 +1,249 @@
+devices:
+  capture:
+    channels: 2
+    device: BlackHole 2ch
+    format: FLOAT32LE
+    type: CoreAudio
+  chunksize: 1024
+  playback:
+    channels: 6
+    device: MOTU UltraLite-mk5
+    exclusive: false
+    format: S24LE
+    type: CoreAudio
+  samplerate: 44100
+  silence_threshold: -80
+  silence_timeout: 30
+filters:
+  bal_pol_L:
+    parameters:
+      gain: 0.0
+      inverted: false
+      mute: false
+    type: Gain
+  bal_pol_R:
+    parameters:
+      gain: 0.0
+      inverted: false
+      mute: false
+    type: Gain
+  delay.:
+    parameters:
+      delay: 0.0
+      subsample: false
+      unit: ms
+    type: Delay
+  delay.hi.L:
+    parameters:
+      delay: 0.15
+      subsample: false
+      unit: ms
+    type: Delay
+  delay.hi.R:
+    parameters:
+      delay: 0.15
+      subsample: false
+      unit: ms
+    type: Delay
+  delay.lo.L:
+    parameters:
+      delay: 0.0
+      subsample: false
+      unit: ms
+    type: Delay
+  delay.lo.R:
+    parameters:
+      delay: 0.0
+      subsample: false
+      unit: ms
+    type: Delay
+  delay.sw:
+    parameters:
+      delay: 0.0
+      subsample: false
+      unit: ms
+    type: Delay
+  dither:
+    parameters:
+      bits: 16
+      type: Shibata441
+    type: Dither
+  drc.L.sofa:
+    parameters:
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/drc.L.sofa.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+  drc.R.sofa:
+    parameters:
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/drc.R.sofa.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+  drc_gain:
+    parameters:
+      gain: 0.0
+      inverted: false
+      mute: false
+    type: Gain
+  eq:
+    parameters:
+      filename: /Users/rafael/pAudio/eq/eq_flat.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+  lu_offset:
+    parameters:
+      gain: 0.0
+      inverted: false
+      mute: false
+    type: Gain
+  xo.hi.lp:
+    parameters:
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.hi.lp.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+  xo.hi.mp:
+    parameters:
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.hi.mp.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+  xo.lo.lp:
+    parameters:
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.lo.lp.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+  xo.lo.mp:
+    parameters:
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.lo.mp.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+  xo.sw.lp:
+    parameters:
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.sw.lp.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+  xo.sw.mp:
+    parameters:
+      filename: /Users/rafael/pAudio/loudspeakers/2+1_way_example/xo.sw.mp.pcm
+      format: FLOAT32LE
+      type: Raw
+    type: Conv
+mixers:
+  from2to5channels:
+    channels:
+      in: 2
+      out: 6
+    description: 'Sound card map: 1/lo.L, 2/lo.R, 3/hi.L, 4/hi.R, 5/, 6/sw'
+    mapping:
+    - dest: 0
+      sources:
+      - channel: 0
+        gain: 0.0
+        inverted: false
+    - dest: 1
+      sources:
+      - channel: 1
+        gain: 0.0
+        inverted: false
+    - dest: 2
+      sources:
+      - channel: 0
+        gain: -2.0
+        inverted: true
+    - dest: 3
+      sources:
+      - channel: 1
+        gain: -2.0
+        inverted: true
+    - dest: 5
+      sources:
+      - channel: 0
+        gain: -5.5
+        inverted: false
+      - channel: 1
+        gain: -5.5
+        inverted: false
+  preamp_mixer:
+    channels:
+      in: 2
+      out: 2
+    mapping:
+    - dest: 0
+      sources:
+      - channel: 0
+        gain: 0.0
+        inverted: false
+        mute: false
+      - channel: 1
+        gain: 0.0
+        inverted: false
+        mute: true
+    - dest: 1
+      sources:
+      - channel: 0
+        gain: 0.0
+        inverted: false
+        mute: true
+      - channel: 1
+        gain: 0.0
+        inverted: false
+        mute: false
+pipeline:
+- name: preamp_mixer
+  type: Mixer
+- channel: 0
+  names:
+  - eq
+  - drc.L.sofa
+  - drc_gain
+  - lu_offset
+  - bal_pol_L
+  - dither
+  type: Filter
+- channel: 1
+  names:
+  - eq
+  - drc.L.sofa
+  - drc_gain
+  - lu_offset
+  - bal_pol_R
+  - dither
+  type: Filter
+- name: from2to5channels
+  type: Mixer
+- channel: 0
+  names:
+  - xo.lo.mp
+  - delay.lo.L
+  - dither
+  type: Filter
+- channel: 1
+  names:
+  - xo.lo.mp
+  - delay.lo.R
+  - dither
+  type: Filter
+- channel: 2
+  names:
+  - xo.hi.mp
+  - delay.hi.L
+  - dither
+  type: Filter
+- channel: 3
+  names:
+  - xo.hi.mp
+  - delay.hi.R
+  - dither
+  type: Filter
+- channel: 5
+  names:
+  - xo.sw.mp
+  - delay.sw
+  - dither
+  type: Filter

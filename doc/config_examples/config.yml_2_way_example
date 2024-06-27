@@ -20,6 +20,11 @@ output:
 # Loudspeaker in use
 loudspeaker:    2way_example
 
+
+# This depends on your analog chain, it should be zero or negative but not much.
+ref_level_gain_offset:  -0.0
+
+
 # Mapping of physical soundcard ports
 outputs:
 
@@ -48,15 +53,3 @@ bass:               0
 treble:             0
 tone_defeat:        false
 drc_set:            sofa
-
-
-# Inputs. By now only system-wide
-inputs:
-    - system-wide
-
-
-# plugins (stand-alone processes)
-plugins:
-    - loudness_monitor.py
-
-
