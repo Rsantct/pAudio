@@ -16,7 +16,7 @@ PORT=$( grep paudio_port ~/pAudio/config.yml | grep -v \# | awk '{print $NF}' )
 if [[ ! $ADDR || ! $PORT ]]; then
     ADDR='localhost'
     PORT=9980
-    echo -e "${GRAY}addr/port not in config.yml, trying default "$ADDR":"$PORT"${OFF}"
+    # echo -e "${GRAY}addr/port not in config.yml, trying default "$ADDR":"$PORT"${OFF}"
 fi
 
 if [[ $(uname) == *'Linux'* ]]; then
