@@ -113,7 +113,7 @@ DRC tools:
 Just prepare a PEQ section inside `pAudio/config.yml`, see the given example file.
 
 
-## optional: Active loudspeaker FIR filtering: EQ and XOVER
+## optional: Active loudspeaker FIR filtering: driver EQ and XOVER
 
 You may want to apply FIR filtering to your loudspeaker.
 
