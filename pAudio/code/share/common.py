@@ -243,6 +243,10 @@ def init():
     if not 'drcs_offset' in CONFIG:
         CONFIG["drcs_offset"] = 0.0
 
+    if not 'ref_level_gain_offset' in CONFIG:
+        CONFIG["ref_level_gain_offset"] = 0.0
+
+
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
 

@@ -288,7 +288,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
     """
 
     def set_level(dB):
-        DSP.set_volume(dB)
+        DSP.set_volume(dB + CONFIG["ref_level_gain_offset"] )
         return set_loudness(mode=state["equal_loudness"], level=dB)
 
 
@@ -339,8 +339,10 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         else:
             candidate[cmd] = dB
 
-        hr = - candidate["level"] + candidate["lu_offset"] \
-             - abs(candidate["balance"])/2.0 \
+        hr = - candidate["level"]                           \
+             + candidate["lu_offset"]                       \
+             - CONFIG["ref_level_gain_offset"]              \
+             - abs(candidate["balance"]) / 2.0              \
              - CONFIG["drcs_offset"]
 
         if not candidate["tone_defeat"]:

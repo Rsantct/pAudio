@@ -16,8 +16,8 @@ In order to automatically switch the Mac system-wide audio playback to the pAudi
 - [SwitchAudioSource](https://github.com/deweller/switchaudio-osx)
 
 ## Linux
-TO BE DONE
 
+see `Linux.md`
 
 ## CamillaDSP
 
@@ -36,6 +36,8 @@ CamillaDSP is provided as a single executable binary. Proceed as follow:
 - Move the extracted binary **`camilladsp`** to your **`~/bin`** folder.
 
 ## Python modules
+
+NOTE: needs Python >= 3.10
 
 [pip](https://pip.pypa.io/en/stable/) is the standard Python package manager.
 
@@ -90,13 +92,10 @@ You can also check device names by running:
     system_profiler $( system_profiler -listDataTypes | grep Audio)
 
 #### Linux
-TO BE DONE
 
-## optional: PEQ parametric equalizer
+See `Linux.md`
 
-Just prepare a PEQ section inside `pAudio/config.yml`, see the given example file.
-
-## optional: Digital Room Correction DRC-FIR
+## recommended: Digital Room Correction DRC-FIR
 
 Simply drop your DRC FIR files under the loudspeaker folder.
 
@@ -111,7 +110,12 @@ DRC tools:
  - Room EQ Wizard
 
 
-## optional: Active loudspeaker FIR filtering: EQ and XOVER
+## optional: PEQ parametric equalizer
+
+Just prepare a PEQ section inside `pAudio/config.yml`, see the given example file.
+
+
+## optional: Active loudspeaker FIR filtering: driver EQ and XOVER
 
 You may want to apply FIR filtering to your loudspeaker.
 

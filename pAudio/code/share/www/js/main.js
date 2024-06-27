@@ -17,6 +17,25 @@
 const URL_PREFIX = '/';
 const AUTO_UPDATE_INTERVAL = 1000;      // Auto-update interval millisec
 
+const USER_ALERT = `
+The volume MUST be controlled here. [LC] Loudness Contour compensation allows a tonal balanced low volume listenting experience.
+
+[0.0] dB means the normal "loud SPL" for your listening position, say around 75~80 dBSPL.
+
+CHECK that your DAC and AMPLIFIER are running at "full volume" to reach your target "loud SPL".
+
+If your music program is loud (most CDs are), use the LU_offset slider to compensate.
+
+LU_monitor indicates approximately how much excess volume your music program has.
+
+Some LU_offset settings:
+
+- 0 dB: very rare recordings. The BIS Records label is a good reference.
+- 6 dB: a good mastered CD
+- 9 dB: most CD even in classical
+- 12 dB: most pop music CD
+- 15 dB: ultra compressed music, usually in pop
+`
 
 //////// GLOBAL VARIABLES ////////
 var state               = {};       // The preamp-convolver state
@@ -241,6 +260,10 @@ function manage_main_cside(){
 
 function init(){
 
+    function init_alert(){
+        window.alert(USER_ALERT)
+    }
+
     function download_drc_graphs(){
         if (web_config.show_graphs==false){
             return;
@@ -369,9 +392,12 @@ function init(){
 
     show_hide_LU_frame();
 
-    // SCHEDULES THE PAGE_UPDATE (only runtime variable items):
-    // Notice: the function call inside setInterval uses NO brackets)
+    // SCHEDULES THE PAGE_UPDATE (only runtime variable items)
     setInterval( page_update, AUTO_UPDATE_INTERVAL );
+
+    // Alert user
+    setTimeout(init_alert, 3000)
+
 }
 
 
