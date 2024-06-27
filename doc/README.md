@@ -37,6 +37,8 @@ CamillaDSP is provided as a single executable binary. Proceed as follow:
 
 ## Python modules
 
+NOTE: needs Python >= 3.10
+
 [pip](https://pip.pypa.io/en/stable/) is the standard Python package manager.
 
 Upgrade `pip`:
