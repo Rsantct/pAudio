@@ -16,8 +16,8 @@ In order to automatically switch the Mac system-wide audio playback to the pAudi
 - [SwitchAudioSource](https://github.com/deweller/switchaudio-osx)
 
 ## Linux
-TO BE DONE
 
+see `Linux.md`
 
 ## CamillaDSP
 
@@ -90,7 +90,8 @@ You can also check device names by running:
     system_profiler $( system_profiler -listDataTypes | grep Audio)
 
 #### Linux
-TO BE DONE
+
+See `Linux.md`
 
 ## optional: PEQ parametric equalizer
 
