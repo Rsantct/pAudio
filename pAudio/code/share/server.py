@@ -28,8 +28,8 @@ from    fmt import Fmt
 UHOME = os.path.expanduser("~")
 
 
-# CONFIGURE here the path were the processing_module is located
-MODULEPATH = f'{UHOME}/pAudio/code'
+# CONFIGURE here the directory path were the processing_module is located
+MODULEFOLDER = f'{UHOME}/pAudio/code'
 
 # You can use these properties when importing this module:
 SERVICE = ''
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     # Importing the service module to be used later when processing commands
     # https://python-reference.readthedocs.io/en/latest/docs/functions/__import__.html
-    sys.path.append( MODULEPATH )
+    sys.path.append( MODULEFOLDER )
     PROCESSOR_MOD = __import__(SERVICE)
 
     print( f'{Fmt.MAGENTA}(server.py) Loading \'{SERVICE}.py\' module, '

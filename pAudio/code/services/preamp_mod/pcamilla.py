@@ -454,17 +454,22 @@ def init_camilladsp(pAudio_config):
     # Checking the websocket connection
     print('Trying to connect to CamillaDSP websocket...')
     try:
+
         PC = CamillaClient("127.0.0.1", 1234)
         PC.connect()
         print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
+
         PC.config.set_active(cfg_init)
         print(f'{Fmt.BLUE}Trying to load configuration and run.{Fmt.END}')
+
         if check_cdsp_running(timeout=5):
             return 'done'
+
         else:
             return f'Cannot start `camilladsp` process, see `pAudio/log`'
 
     except Exception as e:
+
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
         return str(e)
 

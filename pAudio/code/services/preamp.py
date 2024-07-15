@@ -28,6 +28,7 @@ if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
 
 import  pcamilla as DSP
 
+
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 
 #
@@ -92,15 +93,8 @@ def init():
     XO_SETS             = get_xo_sets_from_loudspeaker_folder()
     CONFIG["xo_sets"]   = XO_SETS
 
-    # Default CONFIG values
-    if not "tones_span_dB" in CONFIG:
-        CONFIG["tones_span_dB"] = 6.0
 
-    if not "drcs_offset" in CONFIG:
-        CONFIG["drcs_offset"] = 0.0
-
-
-    # Optional user configs having precedence over the saved state:
+    # Optional user config settings having precedence over the saved state:
     for prop in 'level', 'balance', 'bass', 'treble', 'tone_defeat',  \
                 'lu_offset', 'equal_loudness', 'target', 'drc_set':
 
@@ -133,8 +127,9 @@ def init():
     state["output_dev"]     = CONFIG["output"]["device"]
     state["buffer_size"]    = 0
 
+
     # Preparing and running camillaDSP
-    run_cdsp = DSP.init_camilladsp(pAudio_config=CONFIG)
+    run_cdsp = DSP.init_camilladsp( pAudio_config=CONFIG )
 
     if run_cdsp == 'done':
 

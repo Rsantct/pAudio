@@ -246,6 +246,9 @@ def init():
     if not 'ref_level_gain_offset' in CONFIG:
         CONFIG["ref_level_gain_offset"] = 0.0
 
+    if not "tones_span_dB" in CONFIG:
+        CONFIG["tones_span_dB"] = 6.0
+
 
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
