@@ -257,30 +257,49 @@ def _update_config(pAudio_config):
         # Default sound server is CoreAudio
         if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
 
-            cap_dev["type"] = pAudio_config["sound_server"]
-            pbk_dev["type"] = pAudio_config["sound_server"]
+            if pAudio_config["sound_server"] == 'fifo_alsa':
+
+                fifopath = f"{UHOME}/pAudio/audiofifo"
+                sp.Popen(f"mkfifo {fifopath} 1>/dev/null 2>&1", shell=True)
+
+                cap_dev["type"] = 'File'
+                cap_dev["filename"] = fifopath
+
+                del(cap_dev["device"])
+                pbk_dev["type"] = 'Alsa'
+
+            else:
+                cap_dev["type"] = pAudio_config["sound_server"]
+                pbk_dev["type"] = pAudio_config["sound_server"]
 
             if cap_dev["type"].lower() == 'coreaudio':
                 cap_dev["type"] = 'CoreAudio'
+
             elif cap_dev["type"].lower() == 'alsa':
                 cap_dev["type"] = 'Alsa'
+
             elif cap_dev["type"].lower() == 'jack':
                 cap_dev["type"] = 'Jack'
 
             if pbk_dev["type"].lower() == 'coreaudio':
                 pbk_dev["type"] = 'CoreAudio'
+
             elif pbk_dev["type"].lower() == 'alsa':
                 pbk_dev["type"] = 'Alsa'
+
             elif pbk_dev["type"].lower() == 'jack':
                 pbk_dev["type"] = 'Jack'
+
+            pbk_dev["device"] = pAudio_config["output"]["device"]
 
         else:
 
             cap_dev["type"] = 'CoreAudio'
             pbk_dev["type"] = 'CoreAudio'
 
-        cap_dev["device"] = pAudio_config["input"]["device"]
-        pbk_dev["device"] = pAudio_config["output"]["device"]
+            cap_dev["device"] = pAudio_config["input"]["device"]
+            pbk_dev["device"] = pAudio_config["output"]["device"]
+
         cap_dev["format"] = pAudio_config["input"]["format"]
         pbk_dev["format"] = pAudio_config["output"]["format"]
 
