@@ -22,7 +22,7 @@ The control web page needs:
 You need to prepare a Python Virtual Environment for your user (by inheriting the system Python packages)
 
 ```
-$ python -m venv --system-site-packages ~/.env
+$ python3 -m venv --system-site-packages ~/.env
 $ source ~/.env/bin/activate
 (.env) $ pip3 install sounddevice
 (.env) $ pip3 install git+https://github.com/HEnquist/pycamilladsp.git
