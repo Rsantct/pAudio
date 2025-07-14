@@ -43,6 +43,10 @@ NOTE: do not need `sudo`, just complite under your pAudio regular Linux user.
 
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
+### Get the CamillaDSP source code
+
+https://github.com/HEnquist/camilladsp/releases
+
 ### Install compiler dependencies
 
     sudo apt-get install pkg-config libasound2-dev openssl libssl-dev \
