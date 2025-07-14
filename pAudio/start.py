@@ -64,7 +64,7 @@ def prepare_jack_stuff():
                                 fs=fs, period=period, nperiods=nperiods,
                                 jloops=jloops):
 
-        print(f'{Fmt.BOLD}(start.py) Cannot run JACKD, exiting :-({Fmt.END}')
+        print(f'{Fmt.BOLD}(start.py) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
 
 
@@ -151,7 +151,7 @@ def stop():
         sp.call('pkill -KILL jackd', shell=True)
 
     # server.py (be careful with trailing space in command line below)
-    sp.call('pkill -KILL -f "server\.py paudio\ "', shell=True)
+    sp.call('pkill -KILL -f "server.py paudio "', shell=True)
 
     # Node.js web server
     # ---
