@@ -18,7 +18,12 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[]):
     """ Run JACK in a separate process
     """
 
-    jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} 1>{LOGFOLDER}/jackd.log 2>&1'
+    jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} 1>>{LOGFOLDER}/jackd.log 2>&1'
+
+    with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
+        f.write('JACKD COMMAND LINE:\n')
+        f.write(jack_cmd)
+        f.write('\n\n')
 
     sp.Popen(jack_cmd, shell=True)
 
