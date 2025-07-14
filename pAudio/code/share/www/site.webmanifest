@@ -1,6 +1,6 @@
 {
-    "name":         "pe.audio.sys",
-    "short_name":   "pe.audio.sys",
+    "name":         "pAudio",
+    "short_name":   "pAudio",
     "icons":[
         {   "src":      "/site-icons/android-chrome-192x192.png",
             "sizes":    "192x192",

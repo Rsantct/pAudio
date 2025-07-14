@@ -22,7 +22,7 @@ The control web page needs:
 You need to prepare a Python Virtual Environment for your user (by inheriting the system Python packages)
 
 ```
-$ python -m venv --system-site-packages ~/.env
+$ python3 -m venv --system-site-packages ~/.env
 $ source ~/.env/bin/activate
 (.env) $ pip3 install sounddevice
 (.env) $ pip3 install git+https://github.com/HEnquist/pycamilladsp.git
@@ -42,6 +42,10 @@ NOTE: do not need `sudo`, just complite under your pAudio regular Linux user.
 ### Get the RUST compiler
 
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+### Get the CamillaDSP source code
+
+https://github.com/HEnquist/camilladsp/releases
 
 ### Install compiler dependencies
 

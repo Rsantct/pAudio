@@ -26,6 +26,7 @@ MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common import *
+
 import  jack_mod
 
 

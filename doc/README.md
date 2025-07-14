@@ -63,11 +63,11 @@ Install the CamillaDSP module:
 
 You need to download or clone this repo, unzip, then copy the **`pAudio`** folder to your home directory.
 
-Make the launcher to be executable: `chmod +x ~/pAudio/start.sh`
+**The easy way:** just get the script **`bin/paudio_update.sh`** into your `bin/` folder and run it:
 
-**The easy way:** 
-
-Just copy the script **`bin/paudio_update.sh`** into your `bin/` folder and run it.
+    mkdir -p ~/bin
+    wget -O ~/bin/paudio_update.sh https://raw.githubusercontent.com/Rsantct/pAudio/master/bin/paudio_update.sh
+    sh ~/bin/paudio_update.sh
 
 
 # Settings
