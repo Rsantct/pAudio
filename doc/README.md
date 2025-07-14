@@ -65,7 +65,7 @@ You need to download or clone this repo, unzip, then copy the **`pAudio`** folde
 
     mkdir -p ~/bin
     wget -O ~/bin/paudio_update.sh https://raw.githubusercontent.com/Rsantct/pAudio/master/bin/paudio_update.sh
-    sh ~/bin/paudio_update.sh
+    bash ~/bin/paudio_update.sh
 
 
 # Settings
