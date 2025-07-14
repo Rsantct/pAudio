@@ -196,7 +196,7 @@ if __name__ == '__main__':
     if sys.argv[1:]:
 
         if sys.argv[1] == 'stop':
-            Popen( 'pkill -KILL -f "loudness_monitor.py\ start"', shell=True )
+            Popen( 'pkill -KILL -f "loudness_monitor.py start"', shell=True )
             with open(LDMON_PATH, 'w') as f:
                 f.write('{"LU_I": -99.0, "LU_M": -99.0, "scope": "album"}')
             sys.exit()
