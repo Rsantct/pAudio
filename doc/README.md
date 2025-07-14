@@ -1,6 +1,4 @@
-# Install
-
-## MacOS
+# Install needed audio software on MacOS
 
 - [BlackHole](https://github.com/ExistentialAudio/BlackHole#installation-instructions) to route your audio.
 
@@ -8,16 +6,12 @@
 
 - [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools (this includes the [git](https://git-scm.com) tool).
 
-### recommended
+## recommended
 
 In order to automatically switch the Mac system-wide audio playback to the pAudio BlackHole input, and restore later, you may want to install a couple of additional tools:
 
 - [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster)
 - [SwitchAudioSource](https://github.com/deweller/switchaudio-osx)
-
-## Linux
-
-see `Linux.md`
 
 ## CamillaDSP
 
@@ -57,7 +51,11 @@ Install the CamillaDSP python module:
     pip3 install git+https://github.com/HEnquist/pycamilladsp.git
 
 
-## The pAudio application
+# Install needed audio software on Linux
+
+see `Linux.md`
+
+# Install the pAudio application
 
 **pAudio** is given in a folder to be located under your HOME directory.
 
