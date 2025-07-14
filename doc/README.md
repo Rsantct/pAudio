@@ -52,7 +52,7 @@ Install standard Python modules:
     pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
 
 
-Install the CamillaDSP module:
+Install the CamillaDSP python module:
 
     pip3 install git+https://github.com/HEnquist/pycamilladsp.git
 
