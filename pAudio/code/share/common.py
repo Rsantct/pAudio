@@ -228,9 +228,9 @@ def init():
     #
     # Default values if omited parameters
     #
-    if not "fs" in CONFIG:
-        CONFIG["fs"] = 44100
-        print(f'{Fmt.BOLD}\n!!! fs NOT configured, default to fs=44100\n{Fmt.END}')
+    if not "samplerate" in CONFIG:
+        CONFIG["samplerate"] = 44100
+        print(f'{Fmt.BOLD}\n!!! samplerate NOT configured, default to fs=44100\n{Fmt.END}')
 
     if not "plugins" in CONFIG or not CONFIG["plugins"]:
         CONFIG["plugins"] = []
@@ -613,7 +613,7 @@ def get_default_device_PENDING():
         return dd
 
 
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  CONFIG["audio_backend"].lower() != "coreaudio":
         return ''
 
     dd = ''
@@ -633,7 +633,7 @@ def get_default_device():
     """ Currently only works with CoreAudio
         AND NEEDS SwitchAudioSource
     """
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  CONFIG["audio_backend"].lower() != "coreaudio":
         return ''
 
     dd = ''
@@ -647,7 +647,7 @@ def get_default_device():
 def get_default_device_vol():
     """ Currently only works with CoreAudio
     """
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  CONFIG["audio_backend"].lower() != "coreaudio":
         return ''
 
     cmd = "osascript -e 'output volume of (get volume settings)'"
@@ -662,7 +662,7 @@ def get_default_device_vol():
 def set_default_device_vol(vol):
     """ Currently only works with CoreAudio
     """
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  CONFIG["audio_backend"].lower() != "coreaudio":
         return 'not available'
 
     dev = get_default_device()
@@ -700,7 +700,7 @@ def set_device_vol(dev, vol):
 def set_default_device_mute(mode='false'):
     """ Currently only works with CoreAudio
     """
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  CONFIG["audio_backend"].lower() != "coreaudio":
         return 'not available'
 
     dev = get_default_device()
@@ -752,7 +752,7 @@ def change_default_sound_device(new_dev):
         Currently only works with CoreAudio
     """
 
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  CONFIG["audio_backend"].lower() != "coreaudio":
         return
 
     # Getting PREVIOUS PLAYBACK DEV
