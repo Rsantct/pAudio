@@ -23,8 +23,8 @@ sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 from    common      import *
 from    eqfir2png   import fir2png
 
-if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
-    import  inputs
+if sys.platform == 'linux' and CONFIG["audio_backend"].lower() == 'jack':
+    import  sources
 
 import  pcamilla as DSP
 
@@ -78,14 +78,17 @@ def init():
         else:
             set_xo( state["xo_set"] )
 
-        set_input(state["input"])
+        set_source(state["source"])
 
 
-    global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
+    global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
 
-    INPUTS              = list( CONFIG["inputs"].keys() )
+    if CONFIG["jack"].get("sources"):
+        SOURCES         = list ( CONFIG["jack"].get("sources") )
+    else:
+        SOURCES         = []
 
-    TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
+    TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
     DRC_SETS            = get_drc_sets_from_loudspeaker_folder()
     CONFIG["drc_sets"]  = DRC_SETS
@@ -121,22 +124,24 @@ def init():
 
     # Forced init settings
     state["loudspeaker"]    = CONFIG["loudspeaker"]
-    state["fs"]             = CONFIG["fs"]
+    state["fs"]             = CONFIG["samplerate"]
     state["polarity"]       = '++'
 
-    try:
-        state["input_dev"]  = CONFIG["input"]["device"]
 
-    except:
-        state["input_dev"]  = None
-        print(f'{Fmt.BOLD}Cannot read input device {Fmt.END}')
+    match CONFIG["audio_backend"].lower():
 
-    try:
-        state["output_dev"]  = CONFIG["output"]["device"]
+        case 'jack':
+            state["input_dev"]  = CONFIG["jack"]["device"]
+            state["output_dev"] = CONFIG["jack"]["device"]
 
-    except:
-        state["output_dev"]  = None
-        print(f'{Fmt.BOLD}Cannot read output device {Fmt.END}')
+        case 'coreaudio':
+            state["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
+            state["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
+
+        case _:
+            state["input_dev"]  = 'unknown'
+            state["output_dev"] = 'unknown'
+
 
     state["buffer_size"]    = 0
 
@@ -150,7 +155,7 @@ def init():
 
         # Changing MacOS default playback device
         # (It will be restored when ordering `paudio.sh stop`)
-        if 'coreaudio' in CONFIG["sound_server"].lower():
+        if 'coreaudio' in CONFIG["audio_backend"].lower():
             save_default_sound_device()
             change_default_sound_device( CONFIG["input"]["device"] )
 
@@ -277,17 +282,17 @@ def set_xo(xoID):
     return res
 
 
-def set_input(iname):
+def set_source(iname):
     """ This works only with JACK
     """
 
-    if CONFIG["sound_server"] != 'jack':
-        return 'input change is not available'
+    if CONFIG["audio_backend"] != 'jack':
+        return 'source change only available with Jack backend.'
 
-    if iname in INPUTS:
-        res = inputs.select(iname)
+    if iname in SOURCES:
+        res = sources.select(iname)
     else:
-        res = f'must be in: {INPUTS}'
+        res = f'must be in: {SOURCES}'
     return res
 
 
@@ -451,7 +456,8 @@ def do(cmd, args, add):
                     'set_target':   'target',
                     'drc':          'set_drc',
                     'xo':           'set_xo',
-                    'input':        'set_input',
+                    'input':        'set_source',
+                    'source':       'set_source',
             }[cmd]
         except:
             pass
@@ -471,8 +477,8 @@ def do(cmd, args, add):
         case 'state':
             result = json.dumps(state)
 
-        case 'get_inputs':
-            result = json.dumps(INPUTS)
+        case 'get_sources':
+            result = json.dumps(SOURCES)
 
         case 'get_target_sets':
             result = json.dumps(TARGET_SETS)
@@ -483,12 +489,12 @@ def do(cmd, args, add):
         case 'get_xo_sets':
             result = json.dumps(XO_SETS)
 
-        case 'set_input':
+        case 'set_source':
             new = args
-            if state["input"] != new:
-                result = set_input(new)
+            if state["source"] != new:
+                result = set_source(new)
                 if result in ('done', 'ordered'):
-                    state["input"] = new
+                    state["source"] = new
 
         case 'mono':
             result = 'needs: on|off|toggle'
