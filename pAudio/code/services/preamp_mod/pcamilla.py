@@ -208,16 +208,6 @@ def _update_config(pAudio_config):
 
         fs              = cfg["devices"]["samplerate"]
 
-        # Jack device has not `format` field
-        if 'format' in cfg["devices"]["capture"]:
-            cap_fmt = cfg["devices"]["capture"]["format"]
-        else:
-            cap_fmt = 'FLOAT32LE'
-        if 'format' in cfg["devices"]["capture"]:
-            pbk_fmt = cfg["devices"]["playback"]["format"]
-        else:
-            pbk_fmt = 'FLOAT32LE'
-
         cap_bit_depth   = get_bit_depth(cap_fmt)
         pbk_bit_depth   = get_bit_depth(pbk_fmt)
         bits            = 0
@@ -300,14 +290,14 @@ def _update_config(pAudio_config):
             cap_dev["device"] = pAudio_config["input"]["device"]
             pbk_dev["device"] = pAudio_config["output"]["device"]
 
-        cap_dev["format"] = pAudio_config["input"]["format"]
-        pbk_dev["format"] = pAudio_config["output"]["format"]
-
         # Jack does not need `format` field
-        if cap_dev["type"] == 'Jack':
-            del cap_dev["format"]
-        if pbk_dev["type"] == 'Jack':
-            del pbk_dev["format"]
+        if cap_dev["type"] != 'Jack':
+            cap_dev["format"] = pAudio_config["input"]["format"]
+            pbk_dev["format"] = pAudio_config["output"]["format"]
+        else:
+            cap_dev["format"] = 'FLOAT32LE'
+            pbk_dev["format"] = 'FLOAT32LE'
+
 
         # Channels to use from the playback device
         pbk_dev["channels"] = len(CONFIG["outputs"].keys())
@@ -400,7 +390,7 @@ def _update_config(pAudio_config):
     prepare_multiway_structure()
 
     # Dither
-    update_dither()
+    #update_dither()
 
     # The PEQ
     update_peq_stuff()
@@ -666,7 +656,7 @@ def make_delay_filter(delay):
 
 
 def make_preamp_mixer(midside_mode='normal'):
-    """
+    r"""
         modes:
 
             normal
