@@ -13,17 +13,17 @@ from common import *
 
 import jack_mod
 
-jack_mod._jcli_activate('inputs')
+jack_mod._jcli_activate('source_selector')
 
 
-def select(name):
+def select(source_name):
 
     jack_mod.clear_preamp()
 
     if name == 'none':
         return 'ordered'
 
-    jack_pname = CONFIG["inputs"][name]["jack_pname"]
+    jack_pname = CONFIG["sources"][source_name]["jack_pname"]
 
-    return jack_mod.connect_bypattern(jack_pname, 'source_loop')
+    return jack_mod.connect_bypattern(jack_pname, 'pre_in_loop')
 
