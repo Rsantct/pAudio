@@ -36,7 +36,7 @@ if 'sound_server' in CONFIG and CONFIG["sound_server"]:
             AUDIO_SOURCE = CONFIG["input"]["device"]
 
         case 'jack':
-            AUDIO_SOURCE = 'pre_in_loop'
+            AUDIO_SOURCE = 'source_loop'
 
         case _ :
             print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
