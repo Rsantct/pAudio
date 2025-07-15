@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
 
     # Get sample rate
-    FS = CONFIG["fs"]
+    FS = CONFIG["samplerate"]
     if verbose:
         print( f'(drc2png) using sample rate: {FS}' )
 
