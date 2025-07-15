@@ -49,7 +49,7 @@ def prepare_jack_stuff():
     """ execute JACK with the convenient loops
     """
 
-    jloops = ['pre_in_loop']
+    jloops = ['source_loop']
 
     if any('mpd' in p for p in CONFIG["plugins"]):
         jloops.append('mpd_loop')
@@ -111,11 +111,11 @@ def do_wire_dsp():
     cpal_alias()
 
     # Removing the CamillaDSP auto spawned Jack connections
-    # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
+    # and connecting pAudio `source_loop` to CamillaDSP Jack port
     print(f'{Fmt.GRAY}(start.py) Trying to wire camillaDSP jack ports ...{Fmt.END}')
     # (a system capture port may not exist)
     jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
-    jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
+    jack_mod.connect_bypattern('source_loop', 'camilla', 'connect'   )
 
 
 def load_loudness_monitor_daemon(mode='start'):
