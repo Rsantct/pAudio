@@ -239,7 +239,7 @@ def connect_bypattern( cap_pattern, pbk_pattern, mode='connect' ):
 def clear_preamp():
     """ Force clearing ANY clients, no matter what input was selected
     """
-    preamp_ports = JCLI.get_ports('pre_in_loop', is_input=True)
+    preamp_ports = JCLI.get_ports('source_loop', is_input=True)
     for preamp_port in preamp_ports:
         for client in JCLI.get_all_connections(preamp_port):
             connect( client, preamp_port, mode='off' )
