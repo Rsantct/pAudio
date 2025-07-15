@@ -49,7 +49,7 @@ def prepare_jack_stuff():
     """ execute JACK with the convenient loops
     """
 
-    jloops = ['source_loop']
+    jloops = ['pre_in_loop']
 
     if any('mpd' in p for p in CONFIG["plugins"]):
         jloops.append('mpd_loop')
@@ -58,7 +58,7 @@ def prepare_jack_stuff():
     alsa_dev = CONFIG["jack"]["device"]
     period   = CONFIG["jack"]["period"]
     nperiods = CONFIG["jack"]["nperiods"]
-    fs       = CONFIG["fs"]
+    fs       = CONFIG["samplerate"]
 
     if not jack_mod.run_jackd(  alsa_dev=alsa_dev,
                                 fs=fs, period=period, nperiods=nperiods,
@@ -111,11 +111,11 @@ def do_wire_dsp():
     cpal_alias()
 
     # Removing the CamillaDSP auto spawned Jack connections
-    # and connecting pAudio `source_loop` to CamillaDSP Jack port
+    # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
     print(f'{Fmt.GRAY}(start.py) Trying to wire camillaDSP jack ports ...{Fmt.END}')
     # (a system capture port may not exist)
     jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
-    jack_mod.connect_bypattern('source_loop', 'camilla', 'connect'   )
+    jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
 
 
 def load_loudness_monitor_daemon(mode='start'):
@@ -147,7 +147,7 @@ def stop():
     sp.call('pkill -KILL camilladsp', shell=True)
 
     # Jack audio server (jloops will also die)
-    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+    if sys.platform == 'linux' and CONFIG["audio_backend"].lower() == 'jack':
         sp.call('pkill -KILL jackd', shell=True)
 
     # server.py (be careful with trailing space in command line below)
@@ -171,7 +171,7 @@ def start():
         print(f'{Fmt.MAGENTA}(start.py) paudio_ctrl server is already running.{Fmt.END}')
 
     # Jack audio server
-    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+    if sys.platform == 'linux' and CONFIG["audio_backend"].lower() == 'jack':
         prepare_jack_stuff()
 
     # Node.js control web page
@@ -200,7 +200,7 @@ def start():
         return
 
     # Wire DSP
-    if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
+    if sys.platform == 'linux' and CONFIG["audio_backend"].lower() == 'jack':
         do_wire_dsp()
 
     # The loudness_monitor daemon
