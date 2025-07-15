@@ -123,8 +123,21 @@ def init():
     state["loudspeaker"]    = CONFIG["loudspeaker"]
     state["fs"]             = CONFIG["fs"]
     state["polarity"]       = '++'
-    state["input_dev"]      = CONFIG["input"]["device"]
-    state["output_dev"]     = CONFIG["output"]["device"]
+
+    try:
+        state["input_dev"]  = CONFIG["input"]["device"]
+
+    except:
+        state["input_dev"]  = None
+        print(f'{Fmt.BOLD}Cannot read input device {Fmt.END}')
+
+    try:
+        state["output_dev"]  = CONFIG["output"]["device"]
+
+    except:
+        state["output_dev"]  = None
+        print(f'{Fmt.BOLD}Cannot read output device {Fmt.END}')
+
     state["buffer_size"]    = 0
 
 
