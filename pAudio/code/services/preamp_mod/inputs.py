@@ -25,5 +25,5 @@ def select(name):
 
     jack_pname = CONFIG["inputs"][name]["jack_pname"]
 
-    return jack_mod.connect_bypattern(jack_pname, 'pre_in_loop')
+    return jack_mod.connect_bypattern(jack_pname, 'source_loop')
 
