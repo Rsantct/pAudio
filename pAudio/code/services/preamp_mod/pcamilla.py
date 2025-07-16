@@ -106,6 +106,11 @@ def _prepare_cam_config(pAudio_config):
             # Jack
             elif pAudio_config.get('jack'):
 
+                out_channels = 2
+
+                if pAudio_config.get('outputs'):
+                    out_channels = len( pAudio_config.get('outputs') )
+
                 if pAudio_config["jack"].get('period'):
                     chunksize = pAudio_config["jack"].get('period')
 
@@ -116,7 +121,7 @@ def _prepare_cam_config(pAudio_config):
                                 'type':         'Jack'
                             },
 
-                'playback': {   'channels':     2,
+                'playback': {   'channels':     out_channels,
                                 'device':       'default',
                                 'type':         'Jack'
                             }
@@ -233,8 +238,8 @@ def _prepare_cam_config(pAudio_config):
         # Prepare the needed expander mixer
         num_outputs_used = make_multi_way_mixer(cam_config)
 
-        # and adding it to the pipeline
 
+        # and adding it to the pipeline
         if num_outputs_used > 2:
             mwm = {'type': 'Mixer', 'name': f'from2to{num_outputs_used}channels'}
             cam_config["pipeline"].append(mwm)
@@ -288,7 +293,7 @@ def _prepare_cam_config(pAudio_config):
         # drc filters
         for drcset in pAudio_config["drc_sets"]:
             for ch in 'L', 'R':
-                cam_config["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset)
+                cam_config["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset, pAudio_config["samplerate"])
 
         # The initial pipeline points to the FIRST drc_set
         insert_drc_to_pipeline(cam_config, drcID=pAudio_config["drc_sets"][0])
@@ -300,9 +305,14 @@ def _prepare_cam_config(pAudio_config):
 
         xo_filters = get_xo_filters_from_loudspeaker_folder()
 
+        if xo_filters:
+            print(f'{Fmt.BLUE}{Fmt.BOLD}Found loudspeaker XOVER filter PCMs: {xo_filters}{Fmt.END}')
+        else:
+            print(f'{Fmt.BOLD}{Fmt.BLINK}Loudspeaker xover PCMs NOT found{Fmt.END}')
+
         # xo filters
         for xo_filter in (xo_filters):
-            cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter)
+            cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter, pAudio_config["samplerate"])
 
         # Auxiliary delay filters definition
         for _, pms in CONFIG["outputs"].items():
@@ -350,9 +360,6 @@ def _prepare_cam_config(pAudio_config):
     # Prepare CamillaDSP base config
     prepare_base_config()
 
-    # Making the multiway structure if necessary
-    prepare_multiway_structure()
-
     # The PEQ
     update_peq_stuff()
 
@@ -360,8 +367,14 @@ def _prepare_cam_config(pAudio_config):
     if pAudio_config["drc_sets"]:
         update_drc_stuff()
 
-    # The XO
-    update_xo_stuff()
+    # Multiway
+    if pAudio_config.get('outputs'):
+
+        # Making the multiway structure if necessary
+        prepare_multiway_structure()
+
+        # The XO
+        update_xo_stuff()
 
     # Dither
     update_dither()
@@ -582,8 +595,8 @@ def make_dither_filter(d_type, bits):
     return f
 
 
-def make_drc_filter(channel, drc_set):
-    fir_path = f'{LSPKFOLDER}/drc.{channel}.{drc_set}.pcm'
+def make_drc_filter(channel, drc_set, fs):
+    fir_path = f'{LSPKFOLDER}/{fs}/drc.{channel}.{drc_set}.pcm'
     f = {
             "type": 'Conv',
             "parameters": {
@@ -595,8 +608,8 @@ def make_drc_filter(channel, drc_set):
     return f
 
 
-def make_xo_filter(xo_filter):
-    fir_path = f'{LSPKFOLDER}/xo.{xo_filter}.pcm'
+def make_xo_filter(xo_filter, fs):
+    fir_path = f'{LSPKFOLDER}/{fs}/xo.{xo_filter}.pcm'
     f = {
             "type": 'Conv',
             "parameters": {
@@ -851,11 +864,13 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
         else:
             way = 'sw'
 
-        step = {    'description':  f'xover.{way}',
+        ch = 'L' if not (out % 2) else 'R'
+
+        step = {    'description':  f'xover.{ch}.{way}',
 
                     'type':         'Filter',
 
-                    'channel':      out - 1,
+                    'channels':     [out - 1],
 
                     'names':        [ f'xo.{way}.{default_filter_type}',
                                       f'delay.{o_name}'
