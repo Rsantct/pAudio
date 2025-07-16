@@ -25,10 +25,30 @@ from    common import *
 
 
 # The CamillaDSP connection
-PC = None
+HOST        = '127.0.0.1'
+PORT        = 1234
+PC = CamillaClient(HOST, PORT)
 
 
-# INTERNAL
+def _connect_to_camilla():
+
+    tries = 15   # 3 sec
+
+    while tries:
+        try:
+            PC.connect()
+            break
+        except:
+            sleep(.2)
+            tries -= 1
+
+    if not tries:
+        print(f'{Fmt.RED}Unable to connect to CamillaDSP, check log folder.{Fmt.END}')
+        return False
+
+    return True
+
+
 
 def _init():
     """ CamillaDSP needs a new FIR filename in order to
@@ -59,8 +79,10 @@ def _prepare_cam_config(pAudio_config):
 
         def prepare_devices():
 
+            chunksize = 1024
+
             # Coreaudio
-            if pAudio_config["audio_backend"].lower() == 'coreaudio':
+            if pAudio_config.get('coreaudio'):
 
                 cam_config["devices"] = {
 
@@ -82,7 +104,10 @@ def _prepare_cam_config(pAudio_config):
                     cam_config["devices"]["playback"]["exclusive"] = True
 
             # Jack
-            elif pAudio_config["audio_backend"].lower() == 'jack':
+            elif pAudio_config.get('jack'):
+
+                if pAudio_config["jack"].get('period'):
+                    chunksize = pAudio_config["jack"].get('period')
 
                 cam_config["devices"] = {
 
@@ -101,13 +126,13 @@ def _prepare_cam_config(pAudio_config):
                 print(f'{Fmt.BOLD}Audio backend still not supported{Fmt.END}')
                 sys.exit()
 
+
             cam_config["devices"]["samplerate"]         = pAudio_config["samplerate"]
 
-            cam_config["devices"]["chunksize"] = 1024
-            if cam_config["devices"]["samplerate"] > 48000:
-                cam_config["devices"]["chunksize"] = 2048
+            cam_config["devices"]["chunksize"]          = chunksize
 
             cam_config["devices"]["silence_threshold"]  = -80
+
             cam_config["devices"]["silence_timeout"]    = 30
 
 
@@ -154,13 +179,13 @@ def _prepare_cam_config(pAudio_config):
                             }
                         },
 
-            # EQ (tones anf loudnes curves)
-            'eq':       {   'type': 'Conv',
-                            'parameters': {
-                                'filename': f'{EQFOLDER}/eq_flat.pcm',
-                                'format': 'FLOAT32LE',
-                                'type': 'Raw'
-                            }
+            # Preamp EQ (tones anf loudnes curves)
+            'preamp_eq':    {   'type': 'Conv',
+                                'parameters': {
+                                    'filename': f'{EQFOLDER}/eq_flat.pcm',
+                                    'format': 'FLOAT32LE',
+                                    'type': 'Raw'
+                                }
                         }
             }
 
@@ -183,13 +208,15 @@ def _prepare_cam_config(pAudio_config):
                 },
 
                 # Stereo filtering at preamp stage
-                {   'channels': [0],
-                    'type':     'Filter',
-                    'names':    ['eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                {   'description':  'preamp.L',
+                    'channels':     [0],
+                    'type':         'Filter',
+                    'names':        ['preamp_eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
                 },
-                {   'channels': [1],
-                    'type':     'Filter',
-                    'names':    ['eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                {   'description':  'preamp.R',
+                    'channels':     [1],
+                    'type':         'Filter',
+                    'names':        ['preamp_eq', 'drc_gain', 'lu_offset', 'bal_pol_R']
                 }
             ]
 
@@ -214,54 +241,46 @@ def _prepare_cam_config(pAudio_config):
 
 
     def update_dither():
-        """ Adjust the dither filter as per the used sample format
+        """ Adjust the dither filter as per the output sample format and samplerate
         """
 
-        def validate_bits():
-
-            if not( type(bits) == int and bits in range(2, 33)):
-                print(f'{Fmt.BOLD}BAD dither_bits: {dither_bits}{Fmt.END}')
-                result = False
-
-            elif bits not in (16, 24):
-                print(f'{Fmt.BLUE}Using rare {dither_bits} dither_bits' \
-                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
-                result = True
-
-            else:
-                print(f'{Fmt.BLUE}Using {dither_bits} dither_bits' \
-                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
-                result = True
-
-            return result
-
-
-        dither_bits = 0
-
-        if pAudio_config.get("dither_bits"):
-
-            if pAudio_config["audio_backend"].lower() == 'jack':
-                print(f'{Fmt.BOLD}If audio backend is JACK, use dither there.{Fmt.END}')
-                sys.exit()
-
-            dither_bits = pAudio_config["dither_bits"]
-
-
-        if not dither_bits:
-            print(f'{Fmt.BLUE}- Dithering is disabled-{Fmt.END}')
+        if not( pAudio_config.get("coreaudio") and pAudio_config["coreaudio"].get("dither") ):
             return
 
-        pbk_bit_depth   = get_bit_depth( cam_config["devices"]["playback"]["format"] )
+        # Update `dither` filter parameters
 
-        if validate_bits():
+        dither_bits = get_bit_depth( cam_config["devices"]["playback"]["format"] )
 
-            # https://github.com/HEnquist/camilladsp#dither
-            match cam_config["devices"]["samplerate"]:
-                case 44100:     d_type = 'Shibata441'
-                case 48000:     d_type = 'Shibata48'
-                case _:         d_type = 'Simple'
+        # https://github.com/HEnquist/camilladsp#dither
+        match cam_config["devices"]["samplerate"]:
+            case 44100:     d_type = 'Shibata441'
+            case 48000:     d_type = 'Shibata48'
+            case _:         d_type = 'Simple'
 
-            cam_config["filters"]["dither"] = make_dither_filter(d_type, bits)
+        cam_config["filters"]["dither"] = make_dither_filter(d_type, dither_bits)
+
+        # Add dither to the last steps of the pipeline
+
+        step_type = ''
+        last_step_type = ''
+
+        for step in cam_config["pipeline"][::-1]:
+
+            if step.get('description'):
+
+                if 'preamp.' in step.get('description'):
+                    step_type = 'preamp'
+
+                elif 'xover.' in step.get('description'):
+                    step_type = 'xover'
+
+                if step_type in ('preamp', 'xover'):
+                    step["names"].append('dither')
+
+                last_step_type = step_type
+
+                if step_type and step_type != last_step_type:
+                    break
 
 
     def update_drc_stuff():
@@ -277,7 +296,6 @@ def _prepare_cam_config(pAudio_config):
 
     def update_xo_stuff():
         """ This is the LAST step into the PIPELINE.
-            Here we add the dither filters at sound card outputs end.
         """
 
         xo_filters = get_xo_filters_from_loudspeaker_folder()
@@ -292,13 +310,7 @@ def _prepare_cam_config(pAudio_config):
 
         # pipeline
         if xo_filters:
-            # includes adding dither
             make_xover_steps(cam_config)
-        else:
-            # If no multiway mixer, will add dither on preamp stereo channels,
-            # that is, the 2nd and the 3th pipeline steps
-            cam_config["pipeline"][1]["names"].append('dither')
-            cam_config["pipeline"][2]["names"].append('dither')
 
 
     def update_peq_stuff():
@@ -341,9 +353,6 @@ def _prepare_cam_config(pAudio_config):
     # Making the multiway structure if necessary
     prepare_multiway_structure()
 
-    # Dither
-    update_dither()
-
     # The PEQ
     update_peq_stuff()
 
@@ -353,6 +362,9 @@ def _prepare_cam_config(pAudio_config):
 
     # The XO
     update_xo_stuff()
+
+    # Dither
+    update_dither()
 
     # Dumping config
     with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
@@ -413,14 +425,9 @@ def init_camilladsp(pAudio_config):
     sleep(1)
 
     # Checking the websocket connection
-    try:
-        print('Trying to connect to CamillaDSP websocket...')
-        PC = CamillaClient("127.0.0.1", 1234)
-        PC.connect()
+    if _connect_to_camilla():
         print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
-
-    except Exception as e:
-
+    else:
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
         return str(e)
 
@@ -558,7 +565,7 @@ def reload_eq():
 
 
     cfg = PC.config.active()
-    cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
+    cfg["filters"]["preamp_eq"]["parameters"]["filename"] = eq_path
     set_config_sync(cfg)
 
     toggle_last_eq()
@@ -806,35 +813,30 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
             names:
               - lo.mp
               - delay.lo.L
-              - dither
 
           - type: Filter
             channel: 1
             names:
               - lo.mp
               - delay.lo.R
-              - dither
 
           - type: Filter
             channel: 2
             names:
               - hi.mp
               - delay.hi.L
-              - dither
 
           - type: Filter
             channel: 3
             names:
               - hi.mp
               - delay.hi.R
-              - dither
 
           - type: Filter
             channel: 5
             names:
               - sw
               - delay.sw
-              - dither
     """
 
     for out, pms in CONFIG["outputs"].items():
@@ -849,14 +851,15 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
         else:
             way = 'sw'
 
-        step = {    'type':'Filter',
+        step = {    'description':  f'xover.{way}',
 
-                    'channel': out - 1,
+                    'type':         'Filter',
 
-                    'names': [ f'xo.{way}.{default_filter_type}',
-                               f'delay.{o_name}',
-                               'dither'
-                              ]
+                    'channel':      out - 1,
+
+                    'names':        [ f'xo.{way}.{default_filter_type}',
+                                      f'delay.{o_name}'
+                                    ]
                 }
 
         cfg["pipeline"].append(step)
