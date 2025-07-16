@@ -55,14 +55,15 @@ def prepare_jack_stuff():
         jloops.append('mpd_loop')
 
 
+    fs       = CONFIG["samplerate"]
     alsa_dev = CONFIG["jack"]["device"]
     period   = CONFIG["jack"]["period"]
     nperiods = CONFIG["jack"]["nperiods"]
-    fs       = CONFIG["samplerate"]
+    dither   = CONFIG["jack"]["dither"]
 
     if not jack_mod.run_jackd(  alsa_dev=alsa_dev,
                                 fs=fs, period=period, nperiods=nperiods,
-                                jloops=jloops):
+                                jloops=jloops, dither=dither):
 
         print(f'{Fmt.BOLD}(start.py) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
@@ -147,7 +148,7 @@ def stop():
     sp.call('pkill -KILL camilladsp', shell=True)
 
     # Jack audio server (jloops will also die)
-    if sys.platform == 'linux' and CONFIG["audio_backend"].lower() == 'jack':
+    if sys.platform == 'linux' and CONFIG.get('jack'):
         sp.call('pkill -KILL jackd', shell=True)
 
     # server.py (be careful with trailing space in command line below)
@@ -171,7 +172,7 @@ def start():
         print(f'{Fmt.MAGENTA}(start.py) paudio_ctrl server is already running.{Fmt.END}')
 
     # Jack audio server
-    if sys.platform == 'linux' and CONFIG["audio_backend"].lower() == 'jack':
+    if sys.platform == 'linux' and CONFIG.get('jack'):
         prepare_jack_stuff()
 
     # Node.js control web page
@@ -200,7 +201,7 @@ def start():
         return
 
     # Wire DSP
-    if sys.platform == 'linux' and CONFIG["audio_backend"].lower() == 'jack':
+    if sys.platform == 'linux' and CONFIG.get('jack'):
         do_wire_dsp()
 
     # The loudness_monitor daemon
