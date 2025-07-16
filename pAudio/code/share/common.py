@@ -613,7 +613,7 @@ def get_default_device_PENDING():
         return dd
 
 
-    if  CONFIG["audio_backend"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return ''
 
     dd = ''
@@ -633,7 +633,7 @@ def get_default_device():
     """ Currently only works with CoreAudio
         AND NEEDS SwitchAudioSource
     """
-    if  CONFIG["audio_backend"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return ''
 
     dd = ''
@@ -647,7 +647,7 @@ def get_default_device():
 def get_default_device_vol():
     """ Currently only works with CoreAudio
     """
-    if  CONFIG["audio_backend"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return ''
 
     cmd = "osascript -e 'output volume of (get volume settings)'"
@@ -662,7 +662,7 @@ def get_default_device_vol():
 def set_default_device_vol(vol):
     """ Currently only works with CoreAudio
     """
-    if  CONFIG["audio_backend"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return 'not available'
 
     dev = get_default_device()
@@ -700,7 +700,7 @@ def set_device_vol(dev, vol):
 def set_default_device_mute(mode='false'):
     """ Currently only works with CoreAudio
     """
-    if  CONFIG["audio_backend"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return 'not available'
 
     dev = get_default_device()
@@ -752,7 +752,7 @@ def change_default_sound_device(new_dev):
         Currently only works with CoreAudio
     """
 
-    if  CONFIG["audio_backend"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return
 
     # Getting PREVIOUS PLAYBACK DEV
