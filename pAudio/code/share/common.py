@@ -423,14 +423,16 @@ def get_xo_filters_from_loudspeaker_folder():
     xo_files    = []
     xo_filters  = []
 
+    LSPKFOLDER_FS = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
+
     try:
-        files = os.listdir(f'{LSPKFOLDER}')
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
+        files = os.listdir(LSPKFOLDER_FS)
+        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER_FS}/{x}') ]
         xo_files = [x for x in files if x.startswith('xo.')
                                         and
                                         x.endswith('.pcm')]
-    except:
-        pass
+    except Exception as e:
+        print(f'{Fmt.BOLD}get_xo_filters_from_loudspeaker_folder ERROR: {str(e)}{Fmt.END}')
 
     for f in xo_files:
         xo_id = f.replace('xo.', '').replace('.pcm', '')
