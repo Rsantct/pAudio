@@ -14,11 +14,17 @@ import  multiprocessing as mp
 JCLI = None
 
 
-def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[]):
+def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[], dither=False):
     """ Run JACK in a separate process
     """
 
-    jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} 1>>{LOGFOLDER}/jackd.log 2>&1'
+    if dither:
+        dither = 'shaped'
+    else:
+        dither = 'none'
+
+    jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
+               f' 1>>{LOGFOLDER}/jackd.log 2>&1'
 
     with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
         f.write('JACKD COMMAND LINE:\n')
@@ -34,6 +40,8 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[]):
         if jloops:
             run_jloops(jloops)
 
+        tmp = 'dither:shaped' if dither else ''
+        print(f'{Fmt.BLUE}(jack_mod) JACK fs:{fs} period:{period} n:{nperiods} {tmp}{Fmt.END}')
         return True
 
     else:
