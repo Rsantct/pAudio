@@ -23,7 +23,7 @@ sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 from    common      import *
 from    eqfir2png   import fir2png
 
-if sys.platform == 'linux' and CONFIG["audio_backend"].lower() == 'jack':
+if sys.platform == 'linux' and CONFIG.get('jack'):
     import  sources
 
 import  pcamilla as DSP
@@ -128,19 +128,17 @@ def init():
     state["polarity"]       = '++'
 
 
-    match CONFIG["audio_backend"].lower():
+    if CONFIG.get('jack'):
+        state["input_dev"]  = CONFIG["jack"]["device"]
+        state["output_dev"] = CONFIG["jack"]["device"]
 
-        case 'jack':
-            state["input_dev"]  = CONFIG["jack"]["device"]
-            state["output_dev"] = CONFIG["jack"]["device"]
+    elif CONFIG.get('coreaudio'):
+        state["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
+        state["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
 
-        case 'coreaudio':
-            state["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
-            state["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
-
-        case _:
-            state["input_dev"]  = 'unknown'
-            state["output_dev"] = 'unknown'
+    else:
+        state["input_dev"]  = 'unknown'
+        state["output_dev"] = 'unknown'
 
 
     state["buffer_size"]    = 0
@@ -155,7 +153,7 @@ def init():
 
         # Changing MacOS default playback device
         # (It will be restored when ordering `paudio.sh stop`)
-        if 'coreaudio' in CONFIG["audio_backend"].lower():
+        if CONFIG.get('coreaudio'):
             save_default_sound_device()
             change_default_sound_device( CONFIG["input"]["device"] )
 
@@ -286,7 +284,7 @@ def set_source(iname):
     """ This works only with JACK
     """
 
-    if CONFIG["audio_backend"] != 'jack':
+    if not CONFIG.get('jack'):
         return 'source change only available with Jack backend.'
 
     if iname in SOURCES:
