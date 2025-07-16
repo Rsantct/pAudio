@@ -31,9 +31,10 @@ cd
 
 # Backup config
 cp ~/pAudio/config.yml ~/pAudio/config.yml.BAK 1>/dev/null 2>&1
+
+# Copy all stuff
 cp -r ~/tmp/pAudio-$BRANCH/pAudio  ~/
 cp    ~/tmp/pAudio-$BRANCH/bin/*   ~/bin/
-
 chmod +x ~/bin/paudio*
 chmod +x ~/pAudio/start*
 
