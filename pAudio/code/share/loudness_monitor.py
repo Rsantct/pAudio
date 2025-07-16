@@ -27,19 +27,11 @@ from common import  CONFIG, LDMON_PATH, LDCTRL_PATH
 from common import  read_json_file
 
 
-if 'audio_backend' in CONFIG and CONFIG["audio_backend"]:
+if CONFIG.get('coreaudio'):
+    AUDIO_SOURCE = CONFIG["input"]["device"]
 
-    match CONFIG["audio_backend"].lower():
-
-        case 'coreaudio':
-            AUDIO_SOURCE = CONFIG["input"]["device"]
-
-        case 'jack':
-            AUDIO_SOURCE = 'pre_in_loop'
-
-        case _ :
-            print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
-            sys.exit()
+elif CONFIG.get('jack'):
+    AUDIO_SOURCE = 'pre_in_loop'
 
 else:
     print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
