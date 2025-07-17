@@ -11,19 +11,60 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 
 from common import *
 
-import jack_mod
+import jack_mod as jm
 
-jack_mod._jcli_activate('source_selector')
+jm._jcli_activate('source_selector')
 
 
-def select(source_name):
+def get_sources():
+    """
+        - Scan for well known plugins then prepare
+          their corresponding sources
 
-    jack_mod.clear_preamp()
+        - Read other configured sources under jack: in config.yml
+    """
 
-    if name == 'none':
+    sources = [ {'name': 'none'} ]
+
+    # Scan well known plugins
+    for plugin in CONFIG.get('plugins'):
+
+        # MPD
+        if 'mpd' in plugin:
+
+            sources.append( {
+                'name':     'mpd',
+                'jport':    'mpd_loop'
+            } )
+
+        # TODO
+        # ....
+
+
+    snames = [ x["name"] for x in sources ]
+
+
+    # Other user defined sources
+    if CONFIG["jack"].get('sources'):
+
+        for source in CONFIG["jack"].get('sources'):
+
+            if not source["name"] in snames:
+                sources.append( source )
+
+            else:
+                print(f'{Fmt.BOLD}Jack source `{source["name"]}` is not needed when the plugin is used{Fmt.END}')
+
+
+    return sources
+
+
+def select(source):
+
+    jm.clear_preamp()
+
+    if source["name"] == 'none':
         return 'ordered'
 
-    jack_pname = CONFIG["sources"][source_name]["jack_pname"]
-
-    return jack_mod.connect_bypattern(jack_pname, 'pre_in_loop')
+    return jm.connect_bypattern(source["jport"], 'pre_in_loop')
 
