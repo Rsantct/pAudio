@@ -84,10 +84,13 @@ def init():
 
     global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
 
-    if CONFIG["jack"].get("sources"):
-        SOURCES         = list ( CONFIG["jack"].get("sources") )
+    if CONFIG.get("jack"):
+        # (i) SOURCES can be internally added for well known plugins,
+        #     so the YAML configured are only the user defined ones.
+        SOURCES         = sources.get_sources()
+
     else:
-        SOURCES         = []
+        SOURCES         = ['systemwide']
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
@@ -302,17 +305,25 @@ def set_xo(xoID):
     return res
 
 
-def set_source(iname):
+def set_source(sname):
     """ This works only with JACK
     """
 
     if not CONFIG.get('jack'):
         return 'source change only available with Jack backend.'
 
-    if iname in SOURCES:
-        res = sources.select(iname)
+    snames = [ x["name"] for x in SOURCES ]
+
+    if sname in snames:
+        sources_found = [ x for x in SOURCES if x["name"] == sname]
+        if len(sources_found) == 1:
+            res = sources.select( sources_found[0] )
+        else:
+            res = 'set_source internal error'
+
     else:
-        res = f'must be in: {SOURCES}'
+        res = f'must be in: {snames}'
+
     return res
 
 
@@ -498,7 +509,7 @@ def do(cmd, args, add):
             result = json.dumps(state)
 
         case 'get_sources':
-            result = json.dumps(SOURCES)
+            result = json.dumps([x["name"] for x in SOURCES])
 
         case 'get_target_sets':
             result = json.dumps(TARGET_SETS)
