@@ -21,6 +21,7 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
 from    common      import *
+from    jack_mod    import get_ports as jack_get_ports
 from    eqfir2png   import fir2png
 
 if sys.platform == 'linux' and CONFIG.get('jack'):
@@ -129,8 +130,20 @@ def init():
 
 
     if CONFIG.get('jack'):
-        state["input_dev"]  = CONFIG["jack"]["device"]
-        state["output_dev"] = CONFIG["jack"]["device"]
+
+        if jack_get_ports('system', is_physical=True, is_output=True):
+            state["input_dev"]  = CONFIG["jack"]["device"]
+        else:
+            state["input_dev"]  = ''
+
+        if jack_get_ports('system', is_physical=True, is_input=True):
+            state["output_dev"]  = CONFIG["jack"]["device"]
+        else:
+            state["output_dev"]  = ''
+
+        state["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
+        state["jack_buffer_ms"]   = int(round(state["jack_buffer_size"] / state["fs"] * 1000))
+
 
     elif CONFIG.get('coreaudio'):
         state["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
@@ -141,7 +154,15 @@ def init():
         state["output_dev"] = 'unknown'
 
 
-    state["buffer_size"]    = 0
+    if not CONFIG.get('jack'):
+        try:
+            del state["jack_buffer_size"]
+            del state["jack_buffer_ms"]
+        except:
+            pass
+
+
+    state["dsp_buffer_size"]    = 0
 
 
     # Preparing and running camillaDSP
@@ -149,7 +170,8 @@ def init():
 
     if run_cdsp == 'done':
 
-        state["buffer_size"] = DSP.PC.config.active()["devices"]["chunksize"]
+        state["dsp_buffer_size"] = DSP.PC.config.active()["devices"]["chunksize"]
+        state["dsp_buffer_ms"]   = int(round(state["dsp_buffer_size"] / state["fs"] * 1000))
 
         # Changing MacOS default playback device
         # (It will be restored when ordering `paudio.sh stop`)
