@@ -159,9 +159,9 @@ def get_all_connections(pname):
 
 
 def get_ports(pattern='',  is_audio=True, is_midi=False,
-                                is_input=False, is_output=False,
-                                is_physical=False, can_monitor=False,
-                                is_terminal=False ):
+                           is_input=False, is_output=False,
+                           is_physical=False, can_monitor=False,
+                           is_terminal=False ):
     """ wrap function """
     ports = JCLI.get_ports(pattern, is_audio, is_midi,
                                     is_input, is_output,
