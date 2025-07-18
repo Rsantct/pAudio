@@ -21,7 +21,7 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
 from    common      import *
-from    jack_mod    import get_ports as jack_get_ports
+import  jack_mod
 from    eqfir2png   import fir2png
 
 if sys.platform == 'linux' and CONFIG.get('jack'):
@@ -84,13 +84,9 @@ def init():
 
     global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
 
-    if CONFIG.get("jack"):
-        # (i) SOURCES can be internally added for well known plugins,
-        #     so the YAML configured are only the user defined ones.
-        SOURCES         = sources.get_sources()
-
-    else:
-        SOURCES         = ['systemwide']
+    # (i) SOURCES can be internally added for well known plugins,
+    #     so the YAML configured are only the user defined ones.
+    SOURCES             = sources.SOURCES
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
@@ -134,15 +130,22 @@ def init():
 
     if CONFIG.get('jack'):
 
-        if jack_get_ports('system', is_physical=True, is_output=True):
+        # open a temporary jack.Client
+        jack_mod._jcli_activate('preamp')
+
+        if jack_mod.get_ports('system', is_physical=True, is_output=True):
             state["input_dev"]  = CONFIG["jack"]["device"]
         else:
             state["input_dev"]  = ''
 
-        if jack_get_ports('system', is_physical=True, is_input=True):
+        if jack_mod.get_ports('system', is_physical=True, is_input=True):
             state["output_dev"]  = CONFIG["jack"]["device"]
         else:
             state["output_dev"]  = ''
+
+        # close the temporary jack.Client
+        del jack_mod.JCLI
+
 
         state["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
         state["jack_buffer_ms"]   = int(round(state["jack_buffer_size"] / state["fs"] * 1000))
@@ -312,17 +315,11 @@ def set_source(sname):
     if not CONFIG.get('jack'):
         return 'source change only available with Jack backend.'
 
-    snames = [ x["name"] for x in SOURCES ]
-
-    if sname in snames:
-        sources_found = [ x for x in SOURCES if x["name"] == sname]
-        if len(sources_found) == 1:
-            res = sources.select( sources_found[0] )
-        else:
-            res = 'set_source internal error'
+    if sname in SOURCES:
+        res = sources.select( sname )
 
     else:
-        res = f'must be in: {snames}'
+        res = f'must be in: {SOURCES.keys()}'
 
     return res
 
@@ -509,7 +506,7 @@ def do(cmd, args, add):
             result = json.dumps(state)
 
         case 'get_sources':
-            result = json.dumps([x["name"] for x in SOURCES])
+            result = json.dumps( list(SOURCES.keys()) )
 
         case 'get_target_sets':
             result = json.dumps(TARGET_SETS)
