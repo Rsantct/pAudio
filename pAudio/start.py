@@ -70,7 +70,7 @@ def prepare_jack_stuff():
         sys.exit()
 
 
-def do_wire_dsp():
+def rewire_dsp():
     """ https://github.com/HEnquist/camilladsp?tab=readme-ov-file#jack
 
         CamillaDSP will show up in Jack as "cpal_client_in" and "cpal_client_out".
@@ -116,11 +116,18 @@ def do_wire_dsp():
     # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
     print(f'{Fmt.GRAY}(start) Trying to wire camillaDSP jack ports ...{Fmt.END}')
 
+    # open a temporary jack.Client
+    jack_mod._jcli_activate('wire_CamillaDSP')
+
+
     # (i) system:capture ports may not exists, depending on sound card model
     if jack_mod.get_ports('system', is_physical=True, is_output=True):
         jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
 
     jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
+
+    # close the temporary jack.Client
+    del jack_mod.JCLI
 
 
 def load_loudness_monitor_daemon(mode='start'):
@@ -295,9 +302,9 @@ def start():
         stop()
         return
 
-    # Wire DSP
+    # Rewire CamillaDSP
     if sys.platform == 'linux' and CONFIG.get('jack'):
-        do_wire_dsp()
+        rewire_dsp()
 
 
     # The loudness_monitor daemon
