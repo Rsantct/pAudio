@@ -14,8 +14,21 @@ import  multiprocessing as mp
 JCLI = None
 
 
-def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[], dither=False):
-    """ Run JACK in a separate process
+def _jcli_activate(cli_name = 'jack_mod'):
+
+    global JCLI
+
+    JCLI = jack.Client(cli_name, no_start_server=True)
+
+    try:
+        JCLI.activate()
+    except:
+        print('(jack_mod) cannot activate jack.Client `{cli_name}`')
+
+
+def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloop_list=[], dither=False):
+    """ Run JACK in a separate process,
+        including jack_loops
     """
 
     if dither:
@@ -35,10 +48,8 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[], dither=
 
     if wait4jackports('system', timeout=5):
 
-        _jcli_activate('jloops')
-
-        if jloops:
-            run_jloops(jloops)
+        if jloop_list:
+            run_jloops(jloop_list)
 
         tmp = 'dither:shaped' if dither else ''
         print(f'{Fmt.BLUE}(jack_mod) JACK fs:{fs} period:{period} n:{nperiods} {tmp}{Fmt.END}')
@@ -46,12 +57,6 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[], dither=
 
     else:
         return False
-
-
-def _jcli_activate(cname = 'tmp'):
-    global JCLI
-    JCLI = jack.Client(cname, no_start_server=True)
-    JCLI.activate()
 
 
 def _jack_loop(clientname, nports=2):
@@ -252,3 +257,8 @@ def clear_preamp():
         for client in JCLI.get_all_connections(preamp_port):
             connect( client, preamp_port, mode='off' )
 
+
+try:
+    _jcli_activate()
+except:
+    pass
