@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
@@ -5,12 +6,17 @@
 
 import  subprocess as sp
 import  threading
+import  socket
 from    time import sleep
 import  yaml
 import  json
 from    fmt import Fmt
 import  sys
 import  os
+import  ipaddress
+from    getpass import getuser
+
+USER                = getuser()
 
 UHOME = os.path.expanduser('~')
 
@@ -255,6 +261,80 @@ def init():
 
     # Converting the Human Readable PEQ section to a dictionary
     reformat_PEQ()
+
+
+def wait4ports( pattern, timeout=10 ):
+    """ Waits for jack ports with name *pattern* to be available.
+        Default timeout 10 s
+        (bool)
+    """
+
+    period = 0.25
+    tries = int(timeout / period)
+
+    while tries:
+        tmp = sp.check_output(['jack_lsp', pattern]).decode().split()
+        if len( tmp ) >= 2:
+            break
+        tries -= 1
+        sleep(period)
+
+    if tries:
+        return True
+    else:
+        return False
+
+
+def send_cmd( cmd, sender='', verbose=False, timeout=3,
+              host='', port='' ):
+    """
+        Sends a command to a pAudio server partner.
+        Returns a string about the execution response or an error if so.
+    """
+    if not host or not port:
+        return 'bad address:port'
+
+    if not sender:
+        sender = 'share.common'
+
+    # Default answer: "no answer from ...."
+    ans = f'no answer from {host}:{port}'
+
+    # (i) We prefer high-level socket function 'create_connection()',
+    #     rather than low level 'settimeout() + connect()'
+    try:
+
+        with socket.create_connection( (host, port), timeout=timeout ) as s:
+
+            s.send( cmd.encode() )
+
+            if verbose:
+                print( f'{Fmt.BLUE}(send_cmd) ({sender}) Tx: \'{cmd}\'{Fmt.END}' )
+
+            ans = ''
+
+            while True:
+
+                tmp = s.recv(1024)
+
+                if not tmp:
+                    break
+
+                ans += tmp.decode()
+
+            if verbose:
+                print( f'{Fmt.BLUE}(send_cmd) ({sender}) Rx: \'{ans}\'{Fmt.END}' )
+
+            s.close()
+
+    except Exception as e:
+
+        ans = str(e)
+
+        if verbose:
+            print( f'{Fmt.RED}(send_cmd) ({sender}) {host}:{port} \'{ans}\' {Fmt.END}' )
+
+    return ans
 
 
 def get_DSP_in_use():
@@ -805,6 +885,97 @@ def restore_playback_device_settings():
             sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
         else:
             print("(start.py) Cannot read `.previous_default_device_volume`")
+
+
+def is_IP(s):
+    """ Validate if a given string is a valid IP address
+        (bool)
+    """
+    if type(s) == str:
+         try:
+             ipaddress.ip_address(s)
+             return True
+         except:
+             return False
+    else:
+         return False
+
+
+def get_my_ip():
+    """ retrieves the own IP address
+        (string)
+    """
+    try:
+        tmp = sp.check_output( 'hostname --all-ip-addresses'.split() ).decode()
+        return tmp.split()[0]
+    except:
+        return ''
+
+
+def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
+    """
+        Restarting zita-j2n on the multiroom sender's end,
+        pointing to our ip.
+
+        (i) The sender will run zita_j2n only when a receiver request it
+    """
+
+    if mode == 'stop':
+
+        zargs = json.dumps( (get_my_ip(), None, 'stop') )
+        remotecmd = f'aux zita_j2n {zargs}'
+
+        print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
+
+        send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
+
+        return None
+
+
+    zargs     = json.dumps( (get_my_ip(), zita_port, 'start') )
+    remotecmd = f'aux zita_j2n {zargs}'
+    result = send_cmd(remotecmd, host=raddr, port=ctrl_port)
+
+    print(f'(common) SENDING TO REMOTE: {remotecmd}')
+
+    return result
+
+
+def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='restart'):
+    """
+        Run zita-n2j listen ports on the multiroom receiver's end.
+
+        (i) Will log zita process printouts under LOGFOLDER
+    """
+
+    if mode == 'stop':
+
+        print(f'{Fmt.GRAY}(common) killing local zita-n2j: {jport}{Fmt.END}')
+
+        zitapattern  = f'zita-n2j --jname {jport}'
+        sp.call( ['pkill', '-KILL', '-u', USER, '-f',  zitapattern] )
+
+        return None
+
+
+    zitajname = f'zita_n2j_{ raddr.split(".")[-1] }'
+    zitacmd   = f'zita-n2j --jname {zitajname} --buff {buff_size} {get_my_ip()} {udp_port}'
+
+    # Assign ALIAS to ports to be able to switch by using
+    # the IP port name of a remoteXXXX input in config.yml
+    #
+    with open(f'{LOGFOLDER}/{zitajname}.log', 'w') as zitalog:
+
+        # Ignore if zita-njbridge is not available
+        try:
+            sp.Popen( zitacmd.split(), stdout=zitalog, stderr=zitalog )
+            wait4ports(zitajname, 3)
+            sp.Popen( f'jack_alias {zitajname}:out_1 {raddr}:out_1'.split() )
+            sp.Popen( f'jack_alias {zitajname}:out_2 {raddr}:out_2'.split() )
+            print(f'(common) RUNNING LOCAL: {zitacmd}, LOGGING under {LOGFOLDER}')
+
+        except Exception as e:
+            print(f'(common) ERROR: {e}, you may want run it for a remote source?')
 
 
 init()
