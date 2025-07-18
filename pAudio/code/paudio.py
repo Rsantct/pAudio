@@ -44,8 +44,8 @@ def do(cmd_phrase):
             result = aux.do(cmd, args, add)
 
         # PENDING
-        case 'players':
-            pass
+        case 'player':
+            result = 'WIP'
 
         case _:
             # This should never occur because preamp is the defaulted as prefix
