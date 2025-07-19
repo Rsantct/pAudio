@@ -310,6 +310,22 @@ def set_source(sname):
     if sname in SOURCES:
         res = sources.select( sname )
 
+        if 'remote' in sname:
+
+            # Example:
+            # 'remoteSalon': {  'remote_delay': 0,
+            #                   'remote_track_level': True,
+            #                   'ip': '192.168.1.57',
+            #                   'port': 9990,
+            #                   'jport': 'zita_n2j_57'  }
+
+            if SOURCES[sname].get('remote_track_level'):
+
+                remote_ip               = SOURCES[sname].get('ip')
+                remote_vol_daemon_port  = SOURCES[sname].get('port') + 5
+
+                send_cmd('hello', host=remote_ip, port=remote_vol_daemon_port)
+
     else:
         res = f'must be in: {SOURCES.keys()}'
 
