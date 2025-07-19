@@ -85,7 +85,7 @@ def init():
     global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
 
     # (i) SOURCES can be internally added for well known plugins,
-    #     so the YAML configured are only the user defined ones.
+    #     so the YAML configured has only the user defined ones.
     SOURCES             = sources.SOURCES
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
@@ -248,16 +248,8 @@ def set_mute(mode):
     return DSP.set_mute(mode)
 
 
-def set_midside(mode):
-    return DSP.set_midside(mode)
-
-
 def set_solo(mode):
-    mode = mode.lower()
-    result = 'needs L|R|off'
-    match mode:
-        case 'l'|'r'|'off':     result = DSP.set_solo(mode)
-    return result
+    return DSP.set_solo(mode)
 
 
 def set_polarity(mode):
@@ -525,39 +517,58 @@ def do(cmd, args, add):
                     state["source"] = new
 
         case 'mono':
-            result = 'needs: on|off|toggle'
+
+            # here we need to transate to internal `midside`
+
+            result = 'needs: on | off | toggle'
+
             match args:
+
                 case 'on':
                     new = 'mid'
-                    result = set_midside(new)
+                    result = DSP.set_midside(new)
+
                 case 'off':
                     new = 'off'
-                    result = set_midside(new)
+                    result = DSP.set_midside(new)
+
                 case 'toggle':
                     curr = state["midside"]
-                    new = {'off':'mid', 'mid':'off', 'side':'off'}[curr]
-                    result = set_midside(new)
+                    new = {'off': 'mid', 'mid': 'off', 'side': 'off'}[curr]
+                    result = DSP.set_midside(new)
+
             if result == 'done':
                 state["midside"] = new
 
         case 'midside':
+
             new = args
+
             if state["midside"] != new:
                 result = set_midside(new)
+
                 if result == 'done':
                     state["midside"] = new
 
         case 'solo':
+
             new = args.lower()
-            if state["solo"] != new:
+
+            if not new in state["solo"]:
                 result = set_solo(new)
+
                 if result == 'done':
                     state["solo"] = new
 
+            return result
+
         case 'polarity':
+
             new = args
+
             if state["polarity"] != new:
                 result = set_polarity(new)
+
                 if result == 'done':
                     state["polarity"] = new
 
