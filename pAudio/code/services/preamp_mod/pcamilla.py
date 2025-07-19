@@ -49,7 +49,6 @@ def _connect_to_camilla():
     return True
 
 
-
 def _init():
     """ CamillaDSP needs a new FIR filename in order to
         reload the convolver coeffs
@@ -62,6 +61,23 @@ def _init():
 
     shutil.copy(f'{EQFOLDER}/eq_flat.pcm', f'{EQFOLDER}/eq_A.pcm')
     shutil.copy(f'{EQFOLDER}/eq_flat.pcm', f'{EQFOLDER}/eq_B.pcm')
+
+
+def set_config_sync(cfg, wait=0.1):
+    """ (i) When ordering set config some time is needed to be running
+        This is a fake sync, but just works  >:-)
+    """
+    PC.config.set_active(cfg)
+    sleep(wait)
+
+
+def get_state():
+    """ This is the internal camillaDSP state """
+    return PC.general.state()
+
+
+def get_config():
+    return PC.config.active()
 
 
 def print_pipeline(cfg):
@@ -542,23 +558,6 @@ def append_item_to_pipeline(cfg, item = ''):
         cfg["pipeline"][n]['names'] = names_new
 
 
-def set_config_sync(cfg, wait=0.1):
-    """ (i) When ordering set config some time is needed to be running
-        This is a fake sync, but just works  >:-)
-    """
-    PC.config.set_active(cfg)
-    sleep(wait)
-
-
-def get_state():
-    """ This is the internal camillaDSP state """
-    return PC.general.state()
-
-
-def get_config():
-    return PC.config.active()
-
-
 def reload_eq():
 
     def toggle_last_eq():
@@ -916,11 +915,7 @@ def get_drc_gain():
 
 # Setting AUDIO, allways **MUST** return some string, usually 'done'
 
-def set_mute(mode='state'):
-    """ Mute camillaDSP
-
-        returns: the mute state (boolean)
-    """
+def set_mute(mode):
 
     if mode in (True, 'true', 'on', 1):
         PC.volume.set_main_mute(True)
@@ -932,19 +927,23 @@ def set_mute(mode='state'):
         new_mode = {True: False, False: True} [PC.volume.main_mute() ]
         PC.volume.set_main_mute(new_mode)
 
+    return 'done'
 
-    return PC.volume.main_mute()
 
 def set_midside(mode):
 
     modes = ('off', 'mid', 'side', 'solo_L', 'solo_R')
 
     if mode in modes:
+
         c = PC.config.active()
+
         if mode == 'off':
             mode = 'normal'
+
         c["mixers"]["preamp_mixer"] = make_preamp_mixer(midside_mode = mode)
         set_config_sync(c)
+
         return 'done'
 
     else:
@@ -952,14 +951,18 @@ def set_midside(mode):
 
 
 def set_solo(mode):
+
     c = PC.config.active()
+
     match mode:
-        case 'l':       m = make_preamp_mixer(midside_mode='solo_L')
-        case 'r':       m = make_preamp_mixer(midside_mode='solo_R')
+        case 'l' | 'L': m = make_preamp_mixer(midside_mode='solo_L')
+        case 'r' | 'R': m = make_preamp_mixer(midside_mode='solo_R')
         case 'off':     m = make_preamp_mixer(midside_mode='normal')
-        case _:         return 'solo mode must be L|R|off'
+        case _:         return 'solo mode must be in: L | R | off'
+
     c["mixers"]["preamp_mixer"] = m
     set_config_sync(c)
+
     return "done"
 
 
