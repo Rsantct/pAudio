@@ -650,7 +650,7 @@ def wait4server(timeout=60):
 
     while tries:
         try:
-            sp.check_output('echo aux hello | nc localhost 9980', shell=True)
+            sp.check_output(f'echo aux hello | nc localhost {CONFIG["paudio_port"]}', shell=True)
             break
         except:
             tries -= 1
