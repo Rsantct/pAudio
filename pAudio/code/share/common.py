@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
@@ -476,12 +475,20 @@ def x2float(x):
 
 
 def x2bool(x):
-    if x.lower() in ['true', 'on', '1']:
-        return True
-    elif x.lower() in ['false', 'off', '0']:
-        return False
-    else:
-        return None
+
+    if type(x) == str:
+
+        if x.lower() in ['true', 'on', '1']:
+            return True
+
+        elif x.lower() in ['false', 'off', '0']:
+            return False
+
+    elif type(x) == int:
+
+        return not x
+
+    return True
 
 
 def switch(new, curr):
