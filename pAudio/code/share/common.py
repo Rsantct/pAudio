@@ -6,7 +6,7 @@
 import  subprocess as sp
 import  threading
 import  socket
-from    time import sleep
+from    time import sleep, strftime
 import  yaml
 import  json
 from    fmt import Fmt
@@ -360,13 +360,13 @@ def get_bit_depth(fmt):
     return bd
 
 
-def read_json_file(fpath, timeout=5):
+def read_json_file(fpath, timeout=1):
     """ Some json files cannot be ready to read in first pAudio run,
         so let's retry
     """
     d = {}
 
-    period = 0.5
+    period = 0.25
     tries = int(timeout / period)
     while tries:
         try:
@@ -412,6 +412,73 @@ def read_yaml_file(fpath):
     with open(fpath, 'r') as f:
         c = yaml.safe_load(f.read())
     return c
+
+
+def read_last_line(filename=''):
+    """ Read the last line from a large file, efficiently.
+        (string)
+    """
+    # credits:
+    # https://stackoverflow.com/questions/46258499/read-the-last-line-of-a-file-in-python
+    # For large files it would be more efficient to seek to the end of the file,
+    # and move backwards to find a newline.
+    # Note that the file has to be opened in binary mode, otherwise,
+    # it will be impossible to seek from the end.
+    #
+    # https://python-reference.readthedocs.io/en/latest/docs/file/seek.html
+    # f.seek( offset, whence )
+
+    if not filename:
+        return ''
+
+    try:
+        with open(filename, 'rb') as f:
+            f.seek(-2, os.SEEK_END)             # Go to -2 bytes from file end
+
+            while f.read(1) != b'\n':           # Repeat reading until find \n
+                f.seek(-2, os.SEEK_CUR)
+
+            last_line = f.readline().decode()   # readline reads until \n
+
+        return last_line.strip()
+
+    except:
+        return ''
+
+
+def read_last_lines(filename='', nlines=1):
+    """ Read the last N lines from a large file, efficiently.
+        (list of strings)
+    """
+    # credits:
+    # https://stackoverflow.com/questions/46258499/read-the-last-line-of-a-file-in-python
+    # For large files it would be more efficient to seek to the end of the file,
+    # and move backwards to find a newline.
+    # Note that the file has to be opened in binary mode, otherwise,
+    # it will be impossible to seek from the end.
+    #
+    # https://python-reference.readthedocs.io/en/latest/docs/file/seek.html
+    # f.seek( offset, whence )
+
+    if not filename:
+        return ['']
+
+    try:
+        with open(filename, 'rb') as f:
+            f.seek(-2, os.SEEK_END)
+
+            c = nlines
+            while c:
+                if f.read(1) == b'\n':
+                    c -= 1
+                f.seek(-2, os.SEEK_CUR)
+
+            lines = f.read().decode()[2:].replace('\r', '').split('\n')
+
+        return [x.strip() for x in lines if x]
+
+    except:
+        return ['']
 
 
 def read_cmd_phrase(cmd_phrase):
