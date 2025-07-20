@@ -769,31 +769,33 @@ def make_multi_way_mixer(cfg):
     tmp = []
     description = f'Sound card map: '
 
+
     for dest, pms in CONFIG["outputs"].items():
 
-            way = pms["name"]
+        way = pms["name"]
 
-            if way.endswith('.L') or way.endswith('.R'):
-                tmp.append( {'dest': dest - 1,
-                             'sources': [ {'channel':   ch2num(way[-1]),
-                                           'gain':      pms["gain"],
-                                           'inverted':  pol2inv(pms["polarity"])
-                                          } ]
-                            } )
+        if way.endswith('.L') or way.endswith('.R'):
+            tmp.append( {'dest': dest - 1,
+                         'sources': [ {'channel':   ch2num(way[-1]),
+                                       'gain':      pms["gain"],
+                                       'inverted':  pol2inv(pms["polarity"])
+                                      } ]
+                        } )
 
-            elif 'sw' in way.lower():
-                tmp.append( {'dest': dest - 1,
-                             'sources': [ {'channel':   0,
-                                           'gain':      pms["gain"] / 2.0 - 3.0,
-                                           'inverted':  pol2inv(pms["polarity"])
-                                          },
-                                          {'channel':   1,
-                                           'gain':      pms["gain"] / 2.0 - 3.0,
-                                           'inverted':  pol2inv(pms["polarity"])
-                                          } ]
-                            } )
+        elif 'sw' in way.lower():
+            tmp.append( {'dest': dest - 1,
+                         'sources': [ {'channel':   0,
+                                       'gain':      pms["gain"] / 2.0 - 3.0,
+                                       'inverted':  pol2inv(pms["polarity"])
+                                      },
+                                      {'channel':   1,
+                                       'gain':      pms["gain"] / 2.0 - 3.0,
+                                       'inverted':  pol2inv(pms["polarity"])
+                                      } ]
+                        } )
 
-            description += f'{dest}/{way}, '
+        description += f'{dest}/{way}, '
+
 
     description = description.strip()[:-1]
 
