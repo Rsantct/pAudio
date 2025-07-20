@@ -281,7 +281,8 @@ def _init():
     # eq:
     # TODO
 
-    print( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
+    # DEBUG
+    #print( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
 
 
 _init()
