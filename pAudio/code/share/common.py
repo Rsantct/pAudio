@@ -254,7 +254,6 @@ def init():
     if not "tones_span_dB" in CONFIG:
         CONFIG["tones_span_dB"] = 6.0
 
-
     # Converting the Human Readable outputs section to a dictionary
     reformat_outputs()
 
@@ -615,12 +614,16 @@ def get_loudspeaker_ways():
     """ Read loudspeaker ways as per the outputs configuration
     """
     lws = []
+
     for o, pms in CONFIG["outputs"].items():
+
         if not 'sw' in pms["name"]:
             w = pms["name"].replace('.L', '').replace('.R', '')
             lws.append(w)
+
         else:
             lws.append('sw')
+
     return list(set(lws))
 
 
