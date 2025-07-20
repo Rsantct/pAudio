@@ -275,10 +275,10 @@ def _init():
     # Merging the specific LOUDSPEAKER configuration into CONFIG
     lspk_config = get_lspk_config()
     #
-    # outputs:
-    CONFIG["outpus"] = lspk_config["outputs"]
+    # loudspeaker multiway outputs:
+    CONFIG["outputs"] = lspk_config["outputs"]
     #
-    # eq:
+    # loudspeaker eq:
     # TODO
 
     # DEBUG
