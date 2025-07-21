@@ -29,6 +29,18 @@ CamillaDSP is provided as a single executable binary. Proceed as follow:
 
 - Move the extracted binary **`camilladsp`** to your **`~/bin`** folder.
 
+
+If the binary was downloaded using Safari, then macOS most likely won't allow it to be executed. Trying will result in an error message such as:
+
+    "camilladsp" can't be opened because its integrity cannot be verified.
+
+The solution is to remove the "quarantine" attribute from the binary using the xattr command.
+
+Open a a terminal and run:
+
+    xattr -d com.apple.quarantine /path/to/camilladsp
+
+
 ## Python modules
 
 NOTE: needs Python >= 3.10
