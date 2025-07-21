@@ -48,6 +48,7 @@ def prepare_control_fifo(fname):
     try:
         if os.path.exists(fname):
             os.remove(fname)
+        sleep(.1)
         os.mkfifo(fname)
     except:
         print(f'(loudness_monitor.py) ERROR preparing fifo {fname}')
