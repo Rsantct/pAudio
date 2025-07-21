@@ -101,24 +101,11 @@ def _prepare_cam_config(pAudio_config):
             # Coreaudio
             if pAudio_config.get('coreaudio'):
 
-                cam_config["devices"] = {
+                cam_config["devices"] = pAudio_config["coreaudio"].get('devices')
 
-                'capture': {    'channels':     2,
-                                'device':       'BlackHole 2ch',
-                                'format':       'FLOAT32LE',
-                                'type':         'CoreAudio'
-                            },
+                cam_config["devices"]["capture"] ["type"] = 'CoreAudio'
+                cam_config["devices"]["playback"]["type"] = 'CoreAudio'
 
-                'playback': {   'channels':     None,
-                                'device':       None,
-                                'format':       None,
-                                'type':         'CoreAudio',
-                                'exclusive':    False
-                            }
-                }
-
-                if pAudio_config["coreaudio"].get('exclusive'):
-                    cam_config["devices"]["playback"]["exclusive"] = True
 
             # Jack
             elif pAudio_config.get('jack'):
@@ -133,15 +120,15 @@ def _prepare_cam_config(pAudio_config):
 
                 cam_config["devices"] = {
 
-                'capture': {    'channels':     2,
-                                'device':       'default',
-                                'type':         'Jack'
-                            },
+                    'capture': {    'channels':     2,
+                                    'device':       'default',
+                                    'type':         'Jack'
+                                },
 
-                'playback': {   'channels':     out_channels,
-                                'device':       'default',
-                                'type':         'Jack'
-                            }
+                    'playback': {   'channels':     out_channels,
+                                    'device':       'default',
+                                    'type':         'Jack'
+                                }
                 }
 
             else:
@@ -296,8 +283,13 @@ def _prepare_cam_config(pAudio_config):
         """ Adjust the dither filter as per the output sample format and samplerate
         """
 
-        if not( pAudio_config.get("coreaudio") and pAudio_config["coreaudio"].get("dither") ):
+        if not( pAudio_config.get("coreaudio") and pAudio_config["coreaudio"]["devices"]["playback"].get("dither") ):
             return
+
+        # First we need to remove dither parameter.
+        # It was included in pAudio playback device because logical order,
+        # but it is not a CamillaDSP devices parameter.
+        del cam_config["devices"]["playback"]["dither"]
 
         # Update `dither` filter parameters
 
