@@ -26,10 +26,11 @@ MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
-import  jack_mod
 from    common  import *
-from    sources import SOURCES
 
+if sys.platform == 'linux' and CONFIG.get('jack'):
+    import  jack_mod
+    from    sources import SOURCES
 
 def get_srv_addr_port():
 
@@ -243,11 +244,13 @@ def stop():
     # CamillaDSP
     sp.call('pkill -KILL camilladsp', shell=True)
 
-    # Stop Zita_Link
-    stop_zita_link()
-
     # Jack audio server (jloops will also die)
     if sys.platform == 'linux' and CONFIG.get('jack'):
+
+        # Stop Zita_Link
+        stop_zita_link()
+
+        # Stop Jack
         sp.call('pkill -KILL jackd', shell=True)
 
     # server.py (be careful with trailing space in command line below)
@@ -272,10 +275,12 @@ def start():
 
     # Jack audio server
     if sys.platform == 'linux' and CONFIG.get('jack'):
+
+        # Jack
         prepare_jack_stuff()
 
-    # remote sources
-    start_zita_link()
+        # remote sources
+        start_zita_link()
 
     # Node.js control web page
     if not process_is_running('www-server'):
@@ -285,6 +290,7 @@ def start():
 
     else:
         print(f'{Fmt.MAGENTA}(start) pAudio web server is already running.{Fmt.END}')
+
 
     # Run the DSP and listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {ADDR} {PORT}'
