@@ -86,7 +86,10 @@ def init():
 
     # (i) SOURCES can be internally added for well known plugins,
     #     so the YAML configured has only the user defined ones.
-    SOURCES             = sources.SOURCES
+    if 'sources' in sys.modules:
+        SOURCES         = sources.SOURCES
+    else:
+        SOURCES         = {}
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
