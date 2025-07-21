@@ -251,6 +251,7 @@ def _prepare_cam_config(pAudio_config):
     def prepare_multiway_structure():
         """ The multiway N channel expander Mixer
         """
+
         # Prepare the needed expander mixer
         num_outputs_used = make_multi_way_mixer(cam_config)
 
@@ -766,7 +767,7 @@ def make_multi_way_mixer(cfg):
               }[pol]
 
 
-    tmp = []
+    tmp         = []
     description = f'Sound card map: '
 
 
@@ -853,28 +854,29 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
               - delay.sw
     """
 
-    for out, pms in CONFIG["outputs"].items():
+    for out_idx, out_params in CONFIG["outputs"].items():
 
-        o_name = pms["name"]
-
-        if not o_name:
+        if not out_params["name"]:
             continue
 
-        if not 'sw' in o_name:
-            way = o_name.replace('.L', '').replace('.R', '')
+        if not 'sw' in out_params["name"]:
+            # lo.R --> lo
+            way = out_params["name"].replace('.L', '').replace('.R', '')
         else:
             way = 'sw'
 
-        ch = 'L' if not (out % 2) else 'R'
+        ch = out_params["name"].split('.')[-1]
 
-        step = {    'description':  f'xover.{ch}.{way}',
+        step = {    'description':  f'xover.{way}.{ch}',
 
                     'type':         'Filter',
 
-                    'channels':     [out - 1],
+                                    # output indexes starts in `1` like
+                                    # jack `system:playback_N` ports numbering
+                    'channels':     [out_idx - 1],
 
                     'names':        [ f'xo.{way}.{default_filter_type}',
-                                      f'delay.{o_name}'
+                                      f'delay.{way}.{ch}'
                                     ]
                 }
 
