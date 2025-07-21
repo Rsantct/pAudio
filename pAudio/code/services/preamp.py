@@ -21,10 +21,11 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
 from    common      import *
+import  jack_mod
 from    eqfir2png   import fir2png
 
-if sys.platform == 'linux' and CONFIG["sound_server"].lower() == 'jack':
-    import  inputs
+if sys.platform == 'linux' and CONFIG.get('jack'):
+    import  sources
 
 import  pcamilla as DSP
 
@@ -78,14 +79,16 @@ def init():
         else:
             set_xo( state["xo_set"] )
 
-        set_input(state["input"])
+        set_source(state["source"])
 
 
-    global state, CONFIG, INPUTS, TARGET_SETS, DRC_SETS, XO_SETS
+    global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
 
-    INPUTS              = list( CONFIG["inputs"].keys() )
+    # (i) SOURCES can be internally added for well known plugins,
+    #     so the YAML configured has only the user defined ones.
+    SOURCES             = sources.SOURCES
 
-    TARGET_SETS         = get_target_sets(fs=CONFIG["fs"])
+    TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
     DRC_SETS            = get_drc_sets_from_loudspeaker_folder()
     CONFIG["drc_sets"]  = DRC_SETS
@@ -121,11 +124,51 @@ def init():
 
     # Forced init settings
     state["loudspeaker"]    = CONFIG["loudspeaker"]
-    state["fs"]             = CONFIG["fs"]
+    state["fs"]             = CONFIG["samplerate"]
     state["polarity"]       = '++'
-    state["input_dev"]      = CONFIG["input"]["device"]
-    state["output_dev"]     = CONFIG["output"]["device"]
-    state["buffer_size"]    = 0
+
+
+    if CONFIG.get('jack'):
+
+        # open a temporary jack.Client
+        jack_mod._jcli_activate('preamp')
+
+        if jack_mod.get_ports('system', is_physical=True, is_output=True):
+            state["input_dev"]  = CONFIG["jack"]["device"]
+        else:
+            state["input_dev"]  = ''
+
+        if jack_mod.get_ports('system', is_physical=True, is_input=True):
+            state["output_dev"]  = CONFIG["jack"]["device"]
+        else:
+            state["output_dev"]  = ''
+
+        # close the temporary jack.Client
+        del jack_mod.JCLI
+
+
+        state["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
+        state["jack_buffer_ms"]   = int(round(state["jack_buffer_size"] / state["fs"] * 1000))
+
+
+    elif CONFIG.get('coreaudio'):
+        state["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
+        state["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
+
+    else:
+        state["input_dev"]  = 'unknown'
+        state["output_dev"] = 'unknown'
+
+
+    if not CONFIG.get('jack'):
+        try:
+            del state["jack_buffer_size"]
+            del state["jack_buffer_ms"]
+        except:
+            pass
+
+
+    state["dsp_buffer_size"]    = 0
 
 
     # Preparing and running camillaDSP
@@ -133,11 +176,12 @@ def init():
 
     if run_cdsp == 'done':
 
-        state["buffer_size"] = DSP.PC.config.active()["devices"]["chunksize"]
+        state["dsp_buffer_size"] = DSP.PC.config.active()["devices"]["chunksize"]
+        state["dsp_buffer_ms"]   = int(round(state["dsp_buffer_size"] / state["fs"] * 1000))
 
         # Changing MacOS default playback device
         # (It will be restored when ordering `paudio.sh stop`)
-        if 'coreaudio' in CONFIG["sound_server"].lower():
+        if CONFIG.get('coreaudio'):
             save_default_sound_device()
             change_default_sound_device( CONFIG["input"]["device"] )
 
@@ -204,16 +248,8 @@ def set_mute(mode):
     return DSP.set_mute(mode)
 
 
-def set_midside(mode):
-    return DSP.set_midside(mode)
-
-
 def set_solo(mode):
-    mode = mode.lower()
-    result = 'needs L|R|off'
-    match mode:
-        case 'l'|'r'|'off':     result = DSP.set_solo(mode)
-    return result
+    return DSP.set_solo(mode)
 
 
 def set_polarity(mode):
@@ -264,17 +300,35 @@ def set_xo(xoID):
     return res
 
 
-def set_input(iname):
+def set_source(sname):
     """ This works only with JACK
     """
 
-    if CONFIG["sound_server"] != 'jack':
-        return 'input change is not available'
+    if not CONFIG.get('jack'):
+        return 'source change only available with Jack backend.'
 
-    if iname in INPUTS:
-        res = inputs.select(iname)
+    if sname in SOURCES:
+        res = sources.select( sname )
+
+        if 'remote' in sname:
+
+            # Example:
+            # 'remoteSalon': {  'remote_delay': 0,
+            #                   'remote_track_level': True,
+            #                   'ip': '192.168.1.57',
+            #                   'port': 9990,
+            #                   'jport': 'zita_n2j_57'  }
+
+            if SOURCES[sname].get('remote_track_level'):
+
+                remote_ip               = SOURCES[sname].get('ip')
+                remote_vol_daemon_port  = SOURCES[sname].get('port') + 5
+
+                send_cmd('hello', host=remote_ip, port=remote_vol_daemon_port)
+
     else:
-        res = f'must be in: {INPUTS}'
+        res = f'must be in: {SOURCES.keys()}'
+
     return res
 
 
@@ -438,7 +492,8 @@ def do(cmd, args, add):
                     'set_target':   'target',
                     'drc':          'set_drc',
                     'xo':           'set_xo',
-                    'input':        'set_input',
+                    'input':        'set_source',
+                    'source':       'set_source',
             }[cmd]
         except:
             pass
@@ -458,8 +513,8 @@ def do(cmd, args, add):
         case 'state':
             result = json.dumps(state)
 
-        case 'get_inputs':
-            result = json.dumps(INPUTS)
+        case 'get_sources':
+            result = json.dumps( list(SOURCES.keys()) )
 
         case 'get_target_sets':
             result = json.dumps(TARGET_SETS)
@@ -470,47 +525,66 @@ def do(cmd, args, add):
         case 'get_xo_sets':
             result = json.dumps(XO_SETS)
 
-        case 'set_input':
+        case 'set_source':
             new = args
-            if state["input"] != new:
-                result = set_input(new)
+            if state["source"] != new:
+                result = set_source(new)
                 if result in ('done', 'ordered'):
-                    state["input"] = new
+                    state["source"] = new
 
         case 'mono':
-            result = 'needs: on|off|toggle'
+
+            # here we need to transate to internal `midside`
+
+            result = 'needs: on | off | toggle'
+
             match args:
+
                 case 'on':
                     new = 'mid'
-                    result = set_midside(new)
+                    result = DSP.set_midside(new)
+
                 case 'off':
                     new = 'off'
-                    result = set_midside(new)
+                    result = DSP.set_midside(new)
+
                 case 'toggle':
                     curr = state["midside"]
-                    new = {'off':'mid', 'mid':'off', 'side':'off'}[curr]
-                    result = set_midside(new)
+                    new = {'off': 'mid', 'mid': 'off', 'side': 'off'}[curr]
+                    result = DSP.set_midside(new)
+
             if result == 'done':
                 state["midside"] = new
 
         case 'midside':
+
             new = args
+
             if state["midside"] != new:
                 result = set_midside(new)
+
                 if result == 'done':
                     state["midside"] = new
 
         case 'solo':
+
             new = args.lower()
-            if state["solo"] != new:
+
+            if not new in state["solo"]:
                 result = set_solo(new)
+
                 if result == 'done':
                     state["solo"] = new
 
+            return result
+
         case 'polarity':
+
             new = args
+
             if state["polarity"] != new:
                 result = set_polarity(new)
+
                 if result == 'done':
                     state["polarity"] = new
 

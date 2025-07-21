@@ -9,6 +9,8 @@
 
 import os
 import sys
+import jack
+
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
@@ -32,6 +34,55 @@ def init():
         "new_eq_graph":     False
     }
     save_aux_info()
+
+
+def zita_j2n(args):
+    """ This internal function is always issued from a multiroom receiver.
+
+        Feeds the preamp audio to a zita-j2n port pointing to the receiver.
+
+        args: a json tuple string "(dest, udpport, do_stop)"
+    """
+
+    dest, udpport, do_stop = json.loads(args)
+
+    # BAD ADDRESS
+    if not is_IP(dest):
+        return 'bad address'
+
+    zitajname = f'zita_j2n_{ dest.split(".")[-1] }'
+
+    # STOP mode
+    if do_stop == 'stop':
+        zitapattern  = f'zita-j2n --jname {zitajname}'
+        sp.Popen( ['pkill', '-KILL', '-f',  zitapattern] )
+        return f'killing {zitajname}'
+
+    # NORMAL mode
+    jcli = jack.Client(name='zitatmp', no_start_server=True)
+
+    jports = jcli.get_ports()
+
+    result = ''
+
+    if not [x for x in jports if zitajname in x.name]:
+        zitacmd     = f'zita-j2n --jname {zitajname} {dest} {udpport}'
+        with open('/dev/null', 'w') as fnull:
+            sp.Popen( zitacmd.split(), stdout=fnull, stderr=fnull )
+
+    wait4ports(zitajname, timeout=3)
+
+    try:
+        jcli.connect( 'pre_in_loop:output_1', f'{zitajname}:in_1' )
+        jcli.connect( 'pre_in_loop:output_2', f'{zitajname}:in_2' )
+        result = 'done'
+
+    except Exception as e:
+        result = str(e)
+
+    jcli.close()
+
+    return result
 
 
 def save_aux_info():
@@ -91,6 +142,8 @@ def do(cmd, args, add):
             args = 'input' # FORCED to input
             result = manage_lu_monitor(f'scope={args}')
 
+        case 'zita_j2n':
+            result = zita_j2n(args)
 
     if type(result) != str:
         result = json.dumps(result)

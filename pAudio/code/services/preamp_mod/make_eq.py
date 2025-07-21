@@ -28,7 +28,7 @@ from tools  import semispectrum2impulse, savePCM32
 LOUDNESS_REF_LEVEL = 83
 
 EQ_PCM_PATH        = f'{MAINFOLDER}/eq/eq.pcm'
-CURVES_FOLDER      = f'{EQFOLDER}/curves_{CONFIG["fs"]}_N11'
+CURVES_FOLDER      = f'{EQFOLDER}/curves_{CONFIG["samplerate"]}_N11'
 
 # Module global variables (initial values)
 bass            = 0

@@ -11,6 +11,7 @@ from    time import sleep
 import  yaml
 import  json
 from    camilladsp import CamillaClient
+import  jack
 import  make_eq as mkeq
 
 UHOME       = os.path.expanduser('~')
@@ -25,10 +26,29 @@ from    common import *
 
 
 # The CamillaDSP connection
-PC = None
+HOST        = '127.0.0.1'
+PORT        = 1234
+PC = CamillaClient(HOST, PORT)
 
 
-# INTERNAL
+def _connect_to_camilla():
+
+    tries = 15   # 3 sec
+
+    while tries:
+        try:
+            PC.connect()
+            break
+        except:
+            sleep(.2)
+            tries -= 1
+
+    if not tries:
+        print(f'{Fmt.RED}Unable to connect to CamillaDSP, check log folder.{Fmt.END}')
+        return False
+
+    return True
+
 
 def _init():
     """ CamillaDSP needs a new FIR filename in order to
@@ -44,6 +64,23 @@ def _init():
     shutil.copy(f'{EQFOLDER}/eq_flat.pcm', f'{EQFOLDER}/eq_B.pcm')
 
 
+def set_config_sync(cfg, wait=0.1):
+    """ (i) When ordering set config some time is needed to be running
+        This is a fake sync, but just works  >:-)
+    """
+    PC.config.set_active(cfg)
+    sleep(wait)
+
+
+def get_state():
+    """ This is the internal camillaDSP state """
+    return PC.general.state()
+
+
+def get_config():
+    return PC.config.active()
+
+
 def print_pipeline(cfg):
     print('-'*80)
     for s in cfg["pipeline"]:
@@ -51,7 +88,7 @@ def print_pipeline(cfg):
     print()
 
 
-def _update_config(pAudio_config):
+def _prepare_cam_config(pAudio_config):
     """ Updates camilladsp config as per the user pAudio configuration
     """
 
@@ -59,31 +96,71 @@ def _update_config(pAudio_config):
 
         def prepare_devices():
 
-            cfg["devices"] = {
+            chunksize = 1024
 
-            'samplerate': 44100,
+            # Coreaudio
+            if pAudio_config.get('coreaudio'):
 
-            'capture': {    'channels':     2,
-                            'device':       'BlackHole 2ch',
-                            'format':       'FLOAT32LE',
-                            'type':         'CoreAudio'
-                        },
+                cam_config["devices"] = {
 
-            'playback': {   'channels':     None,
-                            'device':       None,
-                            'format':       None,
-                            'type':         'CoreAudio'
-                        },
+                'capture': {    'channels':     2,
+                                'device':       'BlackHole 2ch',
+                                'format':       'FLOAT32LE',
+                                'type':         'CoreAudio'
+                            },
 
-            'chunksize': 1024,
-            'silence_threshold': -80,
-            'silence_timeout': 30
-            }
+                'playback': {   'channels':     None,
+                                'device':       None,
+                                'format':       None,
+                                'type':         'CoreAudio',
+                                'exclusive':    False
+                            }
+                }
+
+                if pAudio_config["coreaudio"].get('exclusive'):
+                    cam_config["devices"]["playback"]["exclusive"] = True
+
+            # Jack
+            elif pAudio_config.get('jack'):
+
+                out_channels = 2
+
+                if pAudio_config.get('outputs'):
+                    out_channels = len( pAudio_config.get('outputs') )
+
+                if pAudio_config["jack"].get('period'):
+                    chunksize = pAudio_config["jack"].get('period')
+
+                cam_config["devices"] = {
+
+                'capture': {    'channels':     2,
+                                'device':       'default',
+                                'type':         'Jack'
+                            },
+
+                'playback': {   'channels':     out_channels,
+                                'device':       'default',
+                                'type':         'Jack'
+                            }
+                }
+
+            else:
+                print(f'{Fmt.BOLD}Audio backend still not supported{Fmt.END}')
+                sys.exit()
+
+
+            cam_config["devices"]["samplerate"]         = pAudio_config["samplerate"]
+
+            cam_config["devices"]["chunksize"]          = chunksize
+
+            cam_config["devices"]["silence_threshold"]  = -80
+
+            cam_config["devices"]["silence_timeout"]    = 30
 
 
         def prepare_filters():
 
-            cfg["filters"] =    {
+            cam_config["filters"] =    {
 
             # Balance and Polarity
             'bal_pol_L':    {  'type': 'Gain',
@@ -124,13 +201,13 @@ def _update_config(pAudio_config):
                             }
                         },
 
-            # EQ (tones anf loudnes curves)
-            'eq':       {   'type': 'Conv',
-                            'parameters': {
-                                'filename': f'{EQFOLDER}/eq_flat.pcm',
-                                'format': 'FLOAT32LE',
-                                'type': 'Raw'
-                            }
+            # Preamp EQ (tones anf loudnes curves)
+            'preamp_eq':    {   'type': 'Conv',
+                                'parameters': {
+                                    'filename': f'{EQFOLDER}/eq_flat.pcm',
+                                    'format': 'FLOAT32LE',
+                                    'type': 'Raw'
+                                }
                         }
             }
 
@@ -139,27 +216,29 @@ def _update_config(pAudio_config):
             """ Only preamp mixer at init
             """
 
-            cfg["mixers"] = {}
+            cam_config["mixers"] = {}
 
-            cfg["mixers"]["preamp_mixer"] = make_preamp_mixer()
+            cam_config["mixers"]["preamp_mixer"] = make_preamp_mixer()
 
 
         def prepare_pipeline():
 
-            cfg["pipeline"] = [
+            cam_config["pipeline"] = [
 
                 # Input stereo preamp mixer
                 {   'type': 'Mixer', 'name': 'preamp_mixer'
                 },
 
                 # Stereo filtering at preamp stage
-                {   'channel': 0,
-                    'type': 'Filter',
-                    'names': ['eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                {   'description':  'preamp.L',
+                    'channels':     [0],
+                    'type':         'Filter',
+                    'names':        ['preamp_eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
                 },
-                {   'channel': 1,
-                    'type': 'Filter',
-                    'names': ['eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                {   'description':  'preamp.R',
+                    'channels':     [1],
+                    'type':         'Filter',
+                    'names':        ['preamp_eq', 'drc_gain', 'lu_offset', 'bal_pol_R']
                 }
             ]
 
@@ -173,152 +252,87 @@ def _update_config(pAudio_config):
     def prepare_multiway_structure():
         """ The multiway N channel expander Mixer
         """
+
+        def update_xo_stuff():
+            """ This is the LAST step into the PIPELINE.
+            """
+
+            xo_filters = get_xo_filters_from_loudspeaker_folder()
+
+            if xo_filters:
+                print(f'{Fmt.BLUE}{Fmt.BOLD}Found loudspeaker XOVER filter PCMs: {xo_filters}{Fmt.END}')
+
+            else:
+                print(f'{Fmt.BOLD}{Fmt.BLINK}Loudspeaker xover PCMs NOT found{Fmt.END}')
+
+
+            # xo filters
+            for xo_filter in (xo_filters):
+                cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter, pAudio_config["samplerate"])
+
+            # Auxiliary delay filters definition
+            for _, pms in CONFIG["outputs"].items():
+                if not pms["name"]:
+                    continue
+                cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
+
+            # pipeline
+            if xo_filters:
+                make_xover_steps(cam_config)
+
+
         # Prepare the needed expander mixer
-        num_outputs_used = make_multi_way_mixer(cfg)
-
+        mixer_name = make_multi_way_mixer(cam_config)
+        #
         # and adding it to the pipeline
+        mwm = {'type': 'Mixer', 'name': mixer_name}
+        cam_config["pipeline"].append(mwm)
 
-        if num_outputs_used > 2:
-            mwm = {'type': 'Mixer', 'name': f'from2to{num_outputs_used}channels'}
-            cfg["pipeline"].append(mwm)
+        # The final step in the pipeline: XO
+        update_xo_stuff()
 
 
     def update_dither():
-        """ Adjust the dither filter as per the used sample format
+        """ Adjust the dither filter as per the output sample format and samplerate
         """
 
-        def check_bits():
-
-            if not( type(bits) == int and bits in range(2, 33)):
-                print(f'{Fmt.BOLD}BAD dither_bits: {bits}{Fmt.END}')
-                result = False
-
-            elif bits not in (16, 24):
-                print(f'{Fmt.BOLD}Using rare {bits} dither_bits' \
-                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
-                result = True
-
-            else:
-                print(f'{Fmt.BOLD}{Fmt.BLUE}Using {bits} dither_bits' \
-                      f' over the {pbk_bit_depth} bits depth outputs{Fmt.END}')
-                result = True
-
-            return result
-
-
-        fs              = cfg["devices"]["samplerate"]
-
-        # Jack device has not `format` field
-        if 'format' in cfg["devices"]["capture"]:
-            cap_fmt = cfg["devices"]["capture"]["format"]
-        else:
-            cap_fmt = 'FLOAT32LE'
-        if 'format' in cfg["devices"]["capture"]:
-            pbk_fmt = cfg["devices"]["playback"]["format"]
-        else:
-            pbk_fmt = 'FLOAT32LE'
-
-        cap_bit_depth   = get_bit_depth(cap_fmt)
-        pbk_bit_depth   = get_bit_depth(pbk_fmt)
-        bits            = 0
-
-
-        if "dither_bits" in pAudio_config["output"] and \
-           pAudio_config["output"]["dither_bits"]:
-            bits = pAudio_config["output"]["dither_bits"]
-
-        if not bits:
-            print(f'{Fmt.BLUE}- Dithering is disabled-{Fmt.END}')
+        if not( pAudio_config.get("coreaudio") and pAudio_config["coreaudio"].get("dither") ):
             return
 
-        if check_bits():
+        # Update `dither` filter parameters
 
-            # https://github.com/HEnquist/camilladsp#dither
-            match fs:
-                case 44100:     d_type = 'Shibata441'
-                case 48000:     d_type = 'Shibata48'
-                case _:         d_type = 'Simple'
+        dither_bits = get_bit_depth( cam_config["devices"]["playback"]["format"] )
 
-            cfg["filters"]["dither"] = make_dither_filter(d_type, bits)
+        # https://github.com/HEnquist/camilladsp#dither
+        match cam_config["devices"]["samplerate"]:
+            case 44100:     d_type = 'Shibata441'
+            case 48000:     d_type = 'Shibata48'
+            case _:         d_type = 'Simple'
 
+        cam_config["filters"]["dither"] = make_dither_filter(d_type, dither_bits)
 
-    def update_audio_devices():
+        # Add dither to the last steps of the pipeline
 
-        cfg["devices"]["samplerate"] = pAudio_config["fs"]
+        step_type = ''
+        last_step_type = ''
 
-        if cfg["devices"]["samplerate"] <= 48000:
-            cfg["devices"]["chunksize"] = 1024
-        else:
-            cfg["devices"]["chunksize"] = 2048
+        for step in cam_config["pipeline"][::-1]:
 
-        cap_dev = cfg["devices"]["capture"]
-        pbk_dev = cfg["devices"]["playback"]
+            if step.get('description'):
 
-        # Default sound server is CoreAudio
-        if 'sound_server' in pAudio_config and pAudio_config["sound_server"]:
+                if 'preamp.' in step.get('description'):
+                    step_type = 'preamp'
 
-            if pAudio_config["sound_server"] == 'fifo_alsa':
+                elif 'xover.' in step.get('description'):
+                    step_type = 'xover'
 
-                fifopath = f"{UHOME}/pAudio/audiofifo"
-                sp.Popen(f"mkfifo {fifopath} 1>/dev/null 2>&1", shell=True)
+                if step_type in ('preamp', 'xover'):
+                    step["names"].append('dither')
 
-                cap_dev["type"] = 'File'
-                cap_dev["filename"] = fifopath
+                last_step_type = step_type
 
-                del(cap_dev["device"])
-                pbk_dev["type"] = 'Alsa'
-
-            else:
-                cap_dev["type"] = pAudio_config["sound_server"]
-                pbk_dev["type"] = pAudio_config["sound_server"]
-
-            if cap_dev["type"].lower() == 'coreaudio':
-                cap_dev["type"] = 'CoreAudio'
-
-            elif cap_dev["type"].lower() == 'alsa':
-                cap_dev["type"] = 'Alsa'
-
-            elif cap_dev["type"].lower() == 'jack':
-                cap_dev["type"] = 'Jack'
-
-            if pbk_dev["type"].lower() == 'coreaudio':
-                pbk_dev["type"] = 'CoreAudio'
-
-            elif pbk_dev["type"].lower() == 'alsa':
-                pbk_dev["type"] = 'Alsa'
-
-            elif pbk_dev["type"].lower() == 'jack':
-                pbk_dev["type"] = 'Jack'
-
-            pbk_dev["device"] = pAudio_config["output"]["device"]
-
-        else:
-
-            cap_dev["type"] = 'CoreAudio'
-            pbk_dev["type"] = 'CoreAudio'
-
-            cap_dev["device"] = pAudio_config["input"]["device"]
-            pbk_dev["device"] = pAudio_config["output"]["device"]
-
-        cap_dev["format"] = pAudio_config["input"]["format"]
-        pbk_dev["format"] = pAudio_config["output"]["format"]
-
-        # Jack does not need `format` field
-        if cap_dev["type"] == 'Jack':
-            del cap_dev["format"]
-        if pbk_dev["type"] == 'Jack':
-            del pbk_dev["format"]
-
-        # Channels to use from the playback device
-        pbk_dev["channels"] = len(CONFIG["outputs"].keys())
-
-        # MacOS Coreaudio exclusive mode
-        if pbk_dev["type"] == 'CoreAudio':
-            if 'exclusive_mode' in pAudio_config["output"] \
-               and pAudio_config["output"]["exclusive_mode"] == True:
-                pbk_dev["exclusive"] = True
-            else:
-                pbk_dev["exclusive"] = False
+                if step_type and step_type != last_step_type:
+                    break
 
 
     def update_drc_stuff():
@@ -326,36 +340,10 @@ def _update_config(pAudio_config):
         # drc filters
         for drcset in pAudio_config["drc_sets"]:
             for ch in 'L', 'R':
-                cfg["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset)
+                cam_config["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset, pAudio_config["samplerate"])
 
         # The initial pipeline points to the FIRST drc_set
-        insert_drc_to_pipeline(cfg, drcID=pAudio_config["drc_sets"][0])
-
-
-    def update_xo_stuff():
-        """ This is the LAST step into the PIPELINE.
-            Here we add the dither filters at sound card outputs end.
-        """
-
-        xo_filters = get_xo_filters_from_loudspeaker_folder()
-
-        # xo filters
-        for xo_filter in (xo_filters):
-            cfg["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter)
-
-        # Auxiliary delay filters definition
-        for _, pms in CONFIG["outputs"].items():
-            cfg["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
-
-        # pipeline
-        if xo_filters:
-            # includes adding dither
-            make_xover_steps(cfg)
-        else:
-            # If no multiway mixer, will add dither on preamp stereo channels,
-            # that is, the 2nd and the 3th pipeline steps
-            cfg["pipeline"][1]["names"].append('dither')
-            cfg["pipeline"][2]["names"].append('dither')
+        insert_drc_to_pipeline(cam_config, drcID=pAudio_config["drc_sets"][0])
 
 
     def update_peq_stuff():
@@ -363,67 +351,108 @@ def _update_config(pAudio_config):
         # Filters section
         for ch in CONFIG["PEQ"]:
             for peq, pms in CONFIG["PEQ"][ch].items():
-                cfg["filters"][f'peak.{ch}.{peq}'] = \
+                cam_config["filters"][f'peak.{ch}.{peq}'] = \
                     make_peq_filter(pms["freq"], pms["gain"], pms["q"])
 
         # Pipeline
         npL = 0
         npR = 0
-        for p in [x for x in cfg["filters"] if x.startswith('peak.')]:
+        for p in [x for x in cam_config["filters"] if x.startswith('peak.')]:
             if '.L' in p:
-                cfg["pipeline"][1]["names"].append(p)
+                cam_config["pipeline"][1]["names"].append(p)
                 npL += 1
             elif '.R' in p:
-                cfg["pipeline"][2]["names"].append(p)
+                cam_config["pipeline"][2]["names"].append(p)
                 npR += 1
 
         # Filling with dummies to balance number of peaking in L and R
         if npL != npR:
-            cfg["filters"][f'peak.dummy'] = \
+            cam_config["filters"][f'peak.dummy'] = \
                 make_peq_filter(freq=20, gain=0.0, qorbw=1.0)
         if npL < npR:
             for i in range(npR - npL):
-                cfg["pipeline"][1]["names"].append('peak.dummy')
+                cam_config["pipeline"][1]["names"].append('peak.dummy')
         if npR < npL:
             for i in range(npL - npR):
-                cfg["pipeline"][2]["names"].append('peak.dummy')
+                cam_config["pipeline"][2]["names"].append('peak.dummy')
 
+
+    # From here `cam_config` will grow progressively
+    cam_config = {}
 
     # Prepare CamillaDSP base config
-    cfg = {}
     prepare_base_config()
 
-    # Audio Device updating as per pAudio config
-    update_audio_devices()
+    # The PEQ **PENDING TO REVIEW**
+    # update_peq_stuff()
 
-    # Making the multiway structure if necessary
-    prepare_multiway_structure()
+    # FIR DRCs **PENDING TO REVIEW**
+    #if pAudio_config["drc_sets"]:
+    #    update_drc_stuff()
+
+    # Multiway if more than 2 outputs
+    outputs_in_use = [ x for x in CONFIG["outputs"] if CONFIG["outputs"][x].get('name') ]
+    if len(outputs_in_use) > 2:
+        prepare_multiway_structure()
 
     # Dither
     update_dither()
 
-    # The PEQ
-    update_peq_stuff()
-
-    # The DRCs
-    if pAudio_config["drc_sets"]:
-        update_drc_stuff()
-
-    # The XO
-    update_xo_stuff()
-
     # Dumping config
     with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
-        yaml.safe_dump(cfg, f)
+        yaml.safe_dump(cam_config, f)
 
-    return cfg
+    return cam_config
 
 
 def init_camilladsp(pAudio_config):
     """ Updates camilladsp.yml with user configs,
         includes auto making the DRC yaml stuff,
         then runs the CamillaDSP process.
+
+        returns a <string>:
+
+            'done' OR 'some problem description...'
     """
+
+    def cpal_ports_ok(cpal2system_alowed=True):
+        """ Check for:
+
+            - no weird cpal ports named like `cpal_client_in-01`
+
+            - no cpal ports are connected to system ports (optional)
+
+            (bool)
+        """
+
+        result = True
+
+        jcli = jack.Client(name='tmp', no_start_server=True)
+
+        cpal_ports = jcli.get_ports('cpal_client')
+
+        for cpal_port in cpal_ports:
+
+            # Early return if any `cpal_client_in-01` is detected
+            if '-' in cpal_port.name:
+                print(f'{Fmt.BOLD}Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
+                result = False
+                break
+
+            if cpal2system_alowed:
+                continue
+
+            conns = jcli.get_all_connections( cpal_port )
+
+            for c in conns:
+                if 'system' in c.name:
+                    print(f'{Fmt.BOLD}CPAL <--> SYSTEM detected: {cpal_port.name} {c.name}{Fmt.END}')
+                    result = False
+
+        jcli.close()
+
+        return result
+
 
     def check_cdsp_running(timeout=10):
 
@@ -457,8 +486,8 @@ def init_camilladsp(pAudio_config):
 
     global PC
 
-    # Updating pAudio user config.yml ---> camilladsp.yml
-    cfg_init = _update_config(pAudio_config)
+    # Prepare the camilladsp.yml as per the pAudio user configuration
+    cfg_init = _prepare_cam_config(pAudio_config)
 
     # Stop if any process running
     sp.call('pkill -KILL camilladsp'.split())
@@ -470,18 +499,27 @@ def init_camilladsp(pAudio_config):
     p = sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
-    # Checking the websocket connection
-    print('Trying to connect to CamillaDSP websocket...')
-    try:
 
-        PC = CamillaClient("127.0.0.1", 1234)
-        PC.connect()
+    if _connect_to_camilla():
         print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
 
+    else:
+        print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
+        return str(e)
+
+
+    # Loading configuration
+    try:
+        print(f'Trying to load configuration and run.')
         PC.config.set_active(cfg_init)
-        print(f'{Fmt.BLUE}Trying to load configuration and run.{Fmt.END}')
 
         if check_cdsp_running(timeout=5):
+
+            # Check CPAL jack ports
+            if not cpal_ports_ok():
+                return f'problems with Camilla DSP CPAL ports'
+
+            # ALL IS OK
             return 'done'
 
         else:
@@ -489,7 +527,7 @@ def init_camilladsp(pAudio_config):
 
     except Exception as e:
 
-        print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
+        print(f'{Fmt.BOLD}ERROR loading CamillaDSP configuration. {str(e)}{Fmt.END}')
         return str(e)
 
 
@@ -574,23 +612,6 @@ def append_item_to_pipeline(cfg, item = ''):
         cfg["pipeline"][n]['names'] = names_new
 
 
-def set_config_sync(cfg, wait=0.1):
-    """ (i) When ordering set config some time is needed to be running
-        This is a fake sync, but just works  >:-)
-    """
-    PC.config.set_active(cfg)
-    sleep(wait)
-
-
-def get_state():
-    """ This is the internal camillaDSP state """
-    return PC.general.state()
-
-
-def get_config():
-    return PC.config.active()
-
-
 def reload_eq():
 
     def toggle_last_eq():
@@ -610,7 +631,7 @@ def reload_eq():
 
 
     cfg = PC.config.active()
-    cfg["filters"]["eq"]["parameters"]["filename"] = eq_path
+    cfg["filters"]["preamp_eq"]["parameters"]["filename"] = eq_path
     set_config_sync(cfg)
 
     toggle_last_eq()
@@ -627,8 +648,8 @@ def make_dither_filter(d_type, bits):
     return f
 
 
-def make_drc_filter(channel, drc_set):
-    fir_path = f'{LSPKFOLDER}/drc.{channel}.{drc_set}.pcm'
+def make_drc_filter(channel, drc_set, fs):
+    fir_path = f'{LSPKFOLDER}/{fs}/drc.{channel}.{drc_set}.pcm'
     f = {
             "type": 'Conv',
             "parameters": {
@@ -640,8 +661,8 @@ def make_drc_filter(channel, drc_set):
     return f
 
 
-def make_xo_filter(xo_filter):
-    fir_path = f'{LSPKFOLDER}/xo.{xo_filter}.pcm'
+def make_xo_filter(xo_filter, fs):
+    fir_path = f'{LSPKFOLDER}/{fs}/xo.{xo_filter}.pcm'
     f = {
             "type": 'Conv',
             "parameters": {
@@ -666,7 +687,7 @@ def make_delay_filter(delay):
 
 
 def make_preamp_mixer(midside_mode='normal'):
-    """
+    r"""
         modes:
 
             normal
@@ -799,42 +820,42 @@ def make_multi_way_mixer(cfg):
               }[pol]
 
 
-    tmp = []
+    tmp         = []
     description = f'Sound card map: '
+
+    number_of_outputs_in_use = 0
 
     for dest, pms in CONFIG["outputs"].items():
 
-            way = pms["name"]
+        way = pms["name"]
 
-            if way.endswith('.L') or way.endswith('.R'):
-                tmp.append( {'dest': dest - 1,
-                             'sources': [ {'channel':   ch2num(way[-1]),
-                                           'gain':      pms["gain"],
-                                           'inverted':  pol2inv(pms["polarity"])
-                                          } ]
-                            } )
+        if way.endswith('.L') or way.endswith('.R'):
+            tmp.append( {'dest': dest - 1,
+                         'sources': [ {'channel':   ch2num(way[-1]),
+                                       'gain':      pms["gain"],
+                                       'inverted':  pol2inv(pms["polarity"])
+                                      } ]
+                        } )
 
-            elif 'sw' in way.lower():
-                tmp.append( {'dest': dest - 1,
-                             'sources': [ {'channel':   0,
-                                           'gain':      pms["gain"] / 2.0 - 3.0,
-                                           'inverted':  pol2inv(pms["polarity"])
-                                          },
-                                          {'channel':   1,
-                                           'gain':      pms["gain"] / 2.0 - 3.0,
-                                           'inverted':  pol2inv(pms["polarity"])
-                                          } ]
-                            } )
+        elif 'sw' in way.lower():
+            tmp.append( {'dest': dest - 1,
+                         'sources': [ {'channel':   0,
+                                       'gain':      pms["gain"] / 2.0 - 3.0,
+                                       'inverted':  pol2inv(pms["polarity"])
+                                      },
+                                      {'channel':   1,
+                                       'gain':      pms["gain"] / 2.0 - 3.0,
+                                       'inverted':  pol2inv(pms["polarity"])
+                                      } ]
+                        } )
 
-            description += f'{dest}/{way}, '
+        description += f'{dest}/{way}, '
+
+        number_of_outputs_in_use += 1
 
     description = description.strip()[:-1]
 
-    n = len(tmp)
-    if n <= 2:
-        return n
-
-    mixer_name = f'from2to{n}channels'
+    mixer_name = f'from2to{number_of_outputs_in_use}channels'
 
     cfg["mixers"][mixer_name] = {
         'channels': { 'in': 2, 'out': len(CONFIG["outputs"]) },
@@ -843,9 +864,9 @@ def make_multi_way_mixer(cfg):
     }
 
     # Useful info
-    print(f'{Fmt.GREEN}{description}{Fmt.END}')
+    print(f'{Fmt.GREEN}{mixer_name} | {description}{Fmt.END}')
 
-    return n
+    return mixer_name
 
 
 def make_xover_steps(cfg, default_filter_type = 'mp'):
@@ -858,57 +879,56 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
             names:
               - lo.mp
               - delay.lo.L
-              - dither
 
           - type: Filter
             channel: 1
             names:
               - lo.mp
               - delay.lo.R
-              - dither
 
           - type: Filter
             channel: 2
             names:
               - hi.mp
               - delay.hi.L
-              - dither
 
           - type: Filter
             channel: 3
             names:
               - hi.mp
               - delay.hi.R
-              - dither
 
           - type: Filter
             channel: 5
             names:
               - sw
               - delay.sw
-              - dither
     """
 
-    for out, pms in CONFIG["outputs"].items():
+    for out_idx, out_params in CONFIG["outputs"].items():
 
-        o_name = pms["name"]
-
-        if not o_name:
+        if not out_params["name"]:
             continue
 
-        if not 'sw' in o_name:
-            way = o_name.replace('.L', '').replace('.R', '')
+        if not 'sw' in out_params["name"]:
+            # lo.R --> lo
+            way = out_params["name"].replace('.L', '').replace('.R', '')
         else:
             way = 'sw'
 
-        step = {    'type':'Filter',
+        ch = out_params["name"].split('.')[-1]
 
-                    'channel': out - 1,
+        step = {    'description':  f'xover.{way}.{ch}',
 
-                    'names': [ f'xo.{way}.{default_filter_type}',
-                               f'delay.{o_name}',
-                               'dither'
-                              ]
+                    'type':         'Filter',
+
+                                    # output indexes starts with `1` like
+                                    # jack `system:playback_N` ports numbering
+                    'channels':     [out_idx - 1],
+
+                    'names':        [ f'xo.{way}.{default_filter_type}',
+                                      f'delay.{way}.{ch}'
+                                    ]
                 }
 
         cfg["pipeline"].append(step)
@@ -951,12 +971,18 @@ def get_drc_gain():
 # Setting AUDIO, allways **MUST** return some string, usually 'done'
 
 def set_mute(mode):
-    if type(mode) != bool:
-        return 'must be True/False'
-    res = str( PC.mute.set_main(mode) )
-    if res == 'None':
-        res = 'done'
-    return res
+
+    if mode in (True, 'true', 'on', 1):
+        PC.volume.set_main_mute(True)
+
+    if mode in (False, 'false', 'off', 0):
+        PC.volume.set_main_mute(False)
+
+    if mode == 'toggle':
+        new_mode = {True: False, False: True} [PC.volume.main_mute() ]
+        PC.volume.set_main_mute(new_mode)
+
+    return 'done'
 
 
 def set_midside(mode):
@@ -964,11 +990,15 @@ def set_midside(mode):
     modes = ('off', 'mid', 'side', 'solo_L', 'solo_R')
 
     if mode in modes:
+
         c = PC.config.active()
+
         if mode == 'off':
             mode = 'normal'
+
         c["mixers"]["preamp_mixer"] = make_preamp_mixer(midside_mode = mode)
         set_config_sync(c)
+
         return 'done'
 
     else:
@@ -976,14 +1006,18 @@ def set_midside(mode):
 
 
 def set_solo(mode):
+
     c = PC.config.active()
+
     match mode:
-        case 'l':       m = make_preamp_mixer(midside_mode='solo_L')
-        case 'r':       m = make_preamp_mixer(midside_mode='solo_R')
+        case 'l' | 'L': m = make_preamp_mixer(midside_mode='solo_L')
+        case 'r' | 'R': m = make_preamp_mixer(midside_mode='solo_R')
         case 'off':     m = make_preamp_mixer(midside_mode='normal')
-        case _:         return 'solo mode must be L|R|off'
+        case _:         return 'solo mode must be in: L | R | off'
+
     c["mixers"]["preamp_mixer"] = m
     set_config_sync(c)
+
     return "done"
 
 
@@ -1013,11 +1047,23 @@ def set_polarity(mode):
     return "done"
 
 
-def set_volume(dB):
-    res = str( PC.volume.set_main(dB) )
-    if res == 'None':
-        res = 'done'
-    return res
+def set_volume(dB=None, mode='abs'):
+    """ get or set the Main fader volume
+
+        mode: 'add' or 'rel' to make relative changes
+    """
+    try:
+
+        if 'rel' in mode or 'add' in mode:
+            dB = PC.volume.volume(0) + dB
+
+        if dB <= 0:
+            PC.volume.set_volume(0, dB)
+
+    except Exception as e:
+        pass
+
+    return PC.volume.volume(0)
 
 
 def set_balance(dB):

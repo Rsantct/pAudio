@@ -14,31 +14,49 @@ import  multiprocessing as mp
 JCLI = None
 
 
-def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops=[]):
-    """ Run JACK in a separate process
+def _jcli_activate(cli_name = 'jack_mod'):
+
+    global JCLI
+
+    JCLI = jack.Client(cli_name, no_start_server=True)
+
+    try:
+        JCLI.activate()
+    except:
+        print('(jack_mod) cannot activate jack.Client `{cli_name}`')
+
+
+def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloop_list=[], dither=False):
+    """ Run JACK in a separate process,
+        including jack_loops
     """
 
-    jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} 1>{LOGFOLDER}/jackd.log 2>&1'
+    if dither:
+        dither = 'shaped'
+    else:
+        dither = 'none'
+
+    jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
+               f' 1>>{LOGFOLDER}/jackd.log 2>&1'
+
+    with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
+        f.write('JACKD COMMAND LINE:\n')
+        f.write(jack_cmd)
+        f.write('\n\n')
 
     sp.Popen(jack_cmd, shell=True)
 
     if wait4jackports('system', timeout=5):
 
-        _jcli_activate('jloops')
+        if jloop_list:
+            run_jloops(jloop_list)
 
-        if jloops:
-            run_jloops(jloops)
-
+        tmp = 'dither:shaped' if dither else ''
+        print(f'{Fmt.BLUE}(jack_mod) JACK fs:{fs} period:{period} n:{nperiods} {tmp}{Fmt.END}')
         return True
 
     else:
         return False
-
-
-def _jcli_activate(cname = 'tmp'):
-    global JCLI
-    JCLI = jack.Client(cname, no_start_server=True)
-    JCLI.activate()
 
 
 def _jack_loop(clientname, nports=2):
@@ -146,9 +164,9 @@ def get_all_connections(pname):
 
 
 def get_ports(pattern='',  is_audio=True, is_midi=False,
-                                is_input=False, is_output=False,
-                                is_physical=False, can_monitor=False,
-                                is_terminal=False ):
+                           is_input=False, is_output=False,
+                           is_physical=False, can_monitor=False,
+                           is_terminal=False ):
     """ wrap function """
     ports = JCLI.get_ports(pattern, is_audio, is_midi,
                                     is_input, is_output,
@@ -239,3 +257,8 @@ def clear_preamp():
         for client in JCLI.get_all_connections(preamp_port):
             connect( client, preamp_port, mode='off' )
 
+
+try:
+    _jcli_activate()
+except:
+    pass

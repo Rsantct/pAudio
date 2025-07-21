@@ -9,7 +9,6 @@
     This module is loaded by 'server.py', usually at pAudio's PORT + 1
 """
 from    subprocess  import Popen
-from    time        import  strftime
 import  os
 import  sys
 
@@ -20,10 +19,12 @@ from common import *
 
 
 # COMMAND LOG FILE
-logFname = f'{LOGFOLDER}/paudio_ctrl.log'
-if os.path.exists(logFname) and os.path.getsize(logFname) > 10e6:
-    print ( f"{Fmt.RED}(paudio_ctrl) log file exceeds ~ 10 MB '{logFname}'{Fmt.END}" )
-print ( f"{Fmt.BLUE}(paudio_ctrl) logging commands in '{logFname}'{Fmt.END}" )
+LOGFNAME = f'{LOGFOLDER}/paudio_ctrl.log'
+
+if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
+    print ( f"{Fmt.RED}(paudio_ctrl) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
+
+print ( f"{Fmt.BLUE}{Fmt.BOLD}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
 def restart_paudio(mode):
@@ -70,7 +71,7 @@ def do( cmdphrase):
 
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
 
-    with open(logFname, 'a') as FLOG:
+    with open(LOGFNAME, 'a') as FLOG:
             FLOG.write(f'{logline}\n')
 
     if type(result) != str:

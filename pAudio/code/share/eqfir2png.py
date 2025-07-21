@@ -105,7 +105,7 @@ def fir2png(firpath=EQFIR_PATH):
 
     ax.set_title( 'EQ' )
 
-    freqs, magdB = get_spectrum( readPCM(firpath), CONFIG["fs"] )
+    freqs, magdB = get_spectrum( readPCM(firpath), CONFIG["samplerate"] )
 
     ax.plot(freqs, magdB, color='grey', linewidth=3)
 

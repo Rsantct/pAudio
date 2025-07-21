@@ -13,14 +13,23 @@
 
 import os
 import sys
+
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
-
-from common import *
-
+from common   import *
 from services import preamp, aux, players
+
+
+# COMMAND LOG FILE
+LOGFNAME = f'{LOGFOLDER}/paudio_cmd.log'
+
+if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
+    print ( f"{Fmt.RED}(paudio_) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
+
+print ( f"{Fmt.BLUE}{Fmt.BOLD}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
+
 
 
 def run_drc2png():
@@ -44,13 +53,17 @@ def do(cmd_phrase):
             result = aux.do(cmd, args, add)
 
         # PENDING
-        case 'players':
-            pass
+        case 'player':
+            result = 'WIP'
 
         case _:
             # This should never occur because preamp is the defaulted as prefix
             result = 'unknown service'
 
+    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd_phrase}; {result}'
+
+    with open(LOGFNAME, 'a') as FLOG:
+            FLOG.write(f'{logline}\n')
 
     if type(result) != str:
         try:

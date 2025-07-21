@@ -5,256 +5,91 @@
 
 import  subprocess as sp
 import  threading
-from    time import sleep
+import  socket
+from    time import sleep, strftime
 import  yaml
 import  json
 from    fmt import Fmt
 import  sys
-import  os
+import  ipaddress
+from    getpass import getuser
+from    config import *
 
-UHOME = os.path.expanduser('~')
-
-MAINFOLDER          = f'{UHOME}/pAudio'
-LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
-LSPKFOLDER          = f''
-LOUDSPEAKER         = f''   # to be found when loading CONFIG
-EQFOLDER            = f'{MAINFOLDER}/eq'
-CODEFOLDER          = f'{MAINFOLDER}/code'
-CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
-LOGFOLDER           = f'{MAINFOLDER}/log'
-PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
-
-LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
-LDMON_PATH          = f'{MAINFOLDER}/.loudness_monitor'
-AUXINFO_PATH        = f'{MAINFOLDER}/.aux_info'
-PLAYER_META_PATH    = f'{MAINFOLDER}/.player_metadata'
+USER                = getuser()
 
 
-try:
-    os.mkdir(LOGFOLDER)
-except:
-    pass
+def wait4ports( pattern, timeout=10 ):
+    """ Waits for jack ports with name *pattern* to be available.
+        Default timeout 10 s
+        (bool)
+    """
 
-CONFIG = {}
+    period = 0.25
+    tries = int(timeout / period)
 
+    while tries:
+        tmp = sp.check_output(['jack_lsp', pattern]).decode().split()
+        if len( tmp ) >= 2:
+            break
+        tries -= 1
+        sleep(period)
 
-def init():
-
-    def reformat_PEQ():
-        """ PEQa are given in NON standard YML, having 3 fields. Example:
-
-            PEQ:
-                L:
-                    #   freq    gain    Q
-                    1:  123     -2.0    1.0
-                    2:  456     -3.0    0.5
-                R:
-                    ...
-
-            Here will convert the Human Readable fields into a dictionary.
-        """
-
-        def check_peq_params(params):
-
-            freq, gain, q = params
-
-            freq = float(freq)
-            gain = float(gain)
-            q    = float(q)
-
-            if freq < 20.0 or freq > 20e3:
-                raise Exception('Freq must be 20 ~ 20000 (Hz)')
-
-            if gain < -20 or gain > 6:
-                raise Exception('Gain must be in -20.0 ~ +6.0 (dB)')
-
-            if q < 0.1 or q > 10:
-                raise Exception('Q must be in 0.1 ~ 10')
-
-            return freq, gain, q
-
-
-        # Filling the empty keys
-        if not 'PEQ' in CONFIG or not CONFIG["PEQ"]:
-            CONFIG["PEQ"] = {'L': {}, 'R': {}}
-        if not 'L' in CONFIG["PEQ"]:
-            CONFIG["PEQ"]["L"] = {}
-        if not 'R' in CONFIG["PEQ"]:
-            CONFIG["PEQ"]["R"] = {}
-
-        # PEQ parameters
-        for ch in CONFIG["PEQ"]:
-
-            if not ch in ('L', 'R'):
-                raise Exception('PEQ channel must be `L` or `R`')
-
-            if not CONFIG["PEQ"][ch]:
-                CONFIG["PEQ"][ch] = {}
-
-            for peq, params in CONFIG["PEQ"][ch].items():
-
-                # It is expected 3 fields
-                params = params.split()
-                if len(params) != 3:
-                    raise Exception(f'Bad PEQ #{peq}')
-
-                # Redo in dictionary form
-                freq, gain, q = check_peq_params(params)
-                params = {  'freq':     freq,
-                            'gain':     gain,
-                            'q':        q       }
-
-                CONFIG["PEQ"][ch][peq] = params
-
-
-    def reformat_outputs():
-        """
-            Outputs are given in NON standard YML, having 4 fields.
-
-            An output can be void, or at least must have a valid <Name>.
-
-            Out# starts from 1 until the max number of available channels
-            of the used sound card.
-
-            Valid names are '[lo|mi|hi].[L|R]' or 'sw', e.g.: 'lo.L', 'hi.L'
-
-            Example:
-
-                # Out       Name         Gain    Polarity  Delay (ms)
-                1:          lo.L          0.0       +       0.0
-                2:          lo.R          0.0       +       0.0
-                3:          hi.L          0.0       -       0.15
-                4:          hi.R          0.0       -       0.15
-                5:
-                6:          sw            0.0       +       0.0
-
-
-            Here will convert the Human Readable fields into a dictionary.
-        """
-
-        def check_output_params(out, params):
-
-            out_name, gain, pol, delay = params
-
-            if not out_name or not out_name.replace('.', '').replace('_', '').isalpha():
-                raise Exception( f'Output {out} bad name: {out_name}' )
-
-            if not out_name[:2] == 'sw' and not out_name[-2:] in ('.L', '.R'):
-                raise Exception( f'Output {out} bad name: {out_name}' )
-
-            if gain:
-                gain = round(float(gain), 1)
-            else:
-                gain = 0.0
-
-            if pol:
-                valid_pol = ('+', '-', '1', '-1', 1, -1)
-                if not pol in valid_pol:
-                    raise Exception( f'Polarity must be in {valid_pol}' )
-            else:
-                pol = 1
-
-            if delay:
-                delay = round(float(delay), 3)
-            else:
-                delay = 0.0
-
-            return out, (out_name, gain, pol, delay)
-
-
-        def check_output_names():
-            """ Check L/R pairs
-            """
-            outputs = CONFIG["outputs"]
-
-            L_outs  = [ pms["name"] for o, pms in outputs.items()
-                        if pms["name"] and pms["name"][-1]=='L' ]
-            R_outs  = [ pms["name"] for o, pms in outputs.items()
-                        if pms["name"] and pms["name"][-1]=='R' ]
-
-            if len(L_outs) != len(R_outs):
-                raise Exception('Number of outputs for L and R does not match')
-
-
-        # A simple stereo I/O configuration if not defined
-        if not 'outputs' in CONFIG:
-            CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
-
-        # Outputs
-        for out, params in CONFIG["outputs"].items():
-
-            # It is expected 4 fields
-            params = params.split() if params else []
-            params += [''] * (4 - len(params))
-
-            # Redo in dictionary form
-            if not any(params):
-                params = {  'name':     '',
-                            'gain':     0.0,
-                            'polarity': '+',
-                            'delay':    0.0     }
-
-            else:
-                _, p = check_output_params(out, params)
-                name, gain, pol, delay = p
-                params = {  'name':     name,
-                            'gain':     gain,
-                            'polarity': pol,
-                            'delay':    delay   }
-
-            CONFIG["outputs"][out] = params
-
-        # Check L/R pairs
-        check_output_names()
-
-
-    global CONFIG, LOUDSPEAKER, LSPKFOLDER
-
-    CONFIG = read_yaml_file(CONFIG_PATH)
-
-    if 'loudspeaker' in CONFIG:
-        LOUDSPEAKER = CONFIG["loudspeaker"]
+    if tries:
+        return True
     else:
-        LOUDSPEAKER = 'generic_loudspk'
-        CONFIG["loudspeaker"] = LOUDSPEAKER
-
-    LSPKFOLDER = f'{LSPKSFOLDER}/{LOUDSPEAKER}'
-    if not os.path.isdir(LSPKFOLDER):
-        os.mkdir(LSPKFOLDER)
+        return False
 
 
-    CONFIG["DSP"] = get_DSP_in_use()
+def send_cmd( cmd, sender='', verbose=False, timeout=3,
+              host='', port='' ):
+    """
+        Sends a command to a pAudio server partner.
+        Returns a string about the execution response or an error if so.
+    """
+    if not host or not port:
+        return 'bad address:port'
 
-    #
-    # Default values if omited parameters
-    #
-    if not "fs" in CONFIG:
-        CONFIG["fs"] = 44100
-        print(f'{Fmt.BOLD}\n!!! fs NOT configured, default to fs=44100\n{Fmt.END}')
+    if not sender:
+        sender = 'share.common'
 
-    if not "plugins" in CONFIG or not CONFIG["plugins"]:
-        CONFIG["plugins"] = []
+    # Default answer: "no answer from ...."
+    ans = f'no answer from {host}:{port}'
 
-    if not 'inputs' in CONFIG:
-        CONFIG["inputs"] = {'system-wide':{}}
-    else:
-        CONFIG["inputs"]["none"] = {}
+    # (i) We prefer high-level socket function 'create_connection()',
+    #     rather than low level 'settimeout() + connect()'
+    try:
 
-    if not 'drcs_offset' in CONFIG:
-        CONFIG["drcs_offset"] = 0.0
+        with socket.create_connection( (host, port), timeout=timeout ) as s:
 
-    if not 'ref_level_gain_offset' in CONFIG:
-        CONFIG["ref_level_gain_offset"] = 0.0
+            s.send( cmd.encode() )
 
-    if not "tones_span_dB" in CONFIG:
-        CONFIG["tones_span_dB"] = 6.0
+            if verbose:
+                print( f'{Fmt.BLUE}(send_cmd) ({sender}) Tx: \'{cmd}\'{Fmt.END}' )
 
+            ans = ''
 
-    # Converting the Human Readable outputs section to a dictionary
-    reformat_outputs()
+            while True:
 
-    # Converting the Human Readable PEQ section to a dictionary
-    reformat_PEQ()
+                tmp = s.recv(1024)
+
+                if not tmp:
+                    break
+
+                ans += tmp.decode()
+
+            if verbose:
+                print( f'{Fmt.BLUE}(send_cmd) ({sender}) Rx: \'{ans}\'{Fmt.END}' )
+
+            s.close()
+
+    except Exception as e:
+
+        ans = str(e)
+
+        if verbose:
+            print( f'{Fmt.RED}(send_cmd) ({sender}) {host}:{port} \'{ans}\' {Fmt.END}' )
+
+    return ans
 
 
 def get_DSP_in_use():
@@ -281,13 +116,13 @@ def get_bit_depth(fmt):
     return bd
 
 
-def read_json_file(fpath, timeout=5):
+def read_json_file(fpath, timeout=1):
     """ Some json files cannot be ready to read in first pAudio run,
         so let's retry
     """
     d = {}
 
-    period = 0.5
+    period = 0.25
     tries = int(timeout / period)
     while tries:
         try:
@@ -333,6 +168,73 @@ def read_yaml_file(fpath):
     with open(fpath, 'r') as f:
         c = yaml.safe_load(f.read())
     return c
+
+
+def read_last_line(filename=''):
+    """ Read the last line from a large file, efficiently.
+        (string)
+    """
+    # credits:
+    # https://stackoverflow.com/questions/46258499/read-the-last-line-of-a-file-in-python
+    # For large files it would be more efficient to seek to the end of the file,
+    # and move backwards to find a newline.
+    # Note that the file has to be opened in binary mode, otherwise,
+    # it will be impossible to seek from the end.
+    #
+    # https://python-reference.readthedocs.io/en/latest/docs/file/seek.html
+    # f.seek( offset, whence )
+
+    if not filename:
+        return ''
+
+    try:
+        with open(filename, 'rb') as f:
+            f.seek(-2, os.SEEK_END)             # Go to -2 bytes from file end
+
+            while f.read(1) != b'\n':           # Repeat reading until find \n
+                f.seek(-2, os.SEEK_CUR)
+
+            last_line = f.readline().decode()   # readline reads until \n
+
+        return last_line.strip()
+
+    except:
+        return ''
+
+
+def read_last_lines(filename='', nlines=1):
+    """ Read the last N lines from a large file, efficiently.
+        (list of strings)
+    """
+    # credits:
+    # https://stackoverflow.com/questions/46258499/read-the-last-line-of-a-file-in-python
+    # For large files it would be more efficient to seek to the end of the file,
+    # and move backwards to find a newline.
+    # Note that the file has to be opened in binary mode, otherwise,
+    # it will be impossible to seek from the end.
+    #
+    # https://python-reference.readthedocs.io/en/latest/docs/file/seek.html
+    # f.seek( offset, whence )
+
+    if not filename:
+        return ['']
+
+    try:
+        with open(filename, 'rb') as f:
+            f.seek(-2, os.SEEK_END)
+
+            c = nlines
+            while c:
+                if f.read(1) == b'\n':
+                    c -= 1
+                f.seek(-2, os.SEEK_CUR)
+
+            lines = f.read().decode()[2:].replace('\r', '').split('\n')
+
+        return [x.strip() for x in lines if x]
+
+    except:
+        return ['']
 
 
 def read_cmd_phrase(cmd_phrase):
@@ -396,12 +298,20 @@ def x2float(x):
 
 
 def x2bool(x):
-    if x.lower() in ['true', 'on', '1']:
-        return True
-    elif x.lower() in ['false', 'off', '0']:
-        return False
-    else:
-        return None
+
+    if type(x) == str:
+
+        if x.lower() in ['true', 'on', '1']:
+            return True
+
+        elif x.lower() in ['false', 'off', '0']:
+            return False
+
+    elif type(x) == int:
+
+        return not x
+
+    return True
 
 
 def switch(new, curr):
@@ -423,14 +333,16 @@ def get_xo_filters_from_loudspeaker_folder():
     xo_files    = []
     xo_filters  = []
 
+    LSPKFOLDER_FS = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
+
     try:
-        files = os.listdir(f'{LSPKFOLDER}')
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
+        files = os.listdir(LSPKFOLDER_FS)
+        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER_FS}/{x}') ]
         xo_files = [x for x in files if x.startswith('xo.')
                                         and
                                         x.endswith('.pcm')]
-    except:
-        pass
+    except Exception as e:
+        print(f'{Fmt.BOLD}get_xo_filters_from_loudspeaker_folder ERROR: {str(e)}{Fmt.END}')
 
     for f in xo_files:
         xo_id = f.replace('xo.', '').replace('.pcm', '')
@@ -459,12 +371,16 @@ def get_loudspeaker_ways():
     """ Read loudspeaker ways as per the outputs configuration
     """
     lws = []
+
     for o, pms in CONFIG["outputs"].items():
+
         if not 'sw' in pms["name"]:
             w = pms["name"].replace('.L', '').replace('.R', '')
             lws.append(w)
+
         else:
             lws.append('sw')
+
     return list(set(lws))
 
 
@@ -561,7 +477,7 @@ def wait4server(timeout=60):
 
     while tries:
         try:
-            sp.check_output('echo aux hello | nc localhost 9980', shell=True)
+            sp.check_output(f'echo aux hello | nc localhost {CONFIG["paudio_port"]}', shell=True)
             break
         except:
             tries -= 1
@@ -613,7 +529,7 @@ def get_default_device_PENDING():
         return dd
 
 
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return ''
 
     dd = ''
@@ -633,7 +549,7 @@ def get_default_device():
     """ Currently only works with CoreAudio
         AND NEEDS SwitchAudioSource
     """
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return ''
 
     dd = ''
@@ -647,7 +563,7 @@ def get_default_device():
 def get_default_device_vol():
     """ Currently only works with CoreAudio
     """
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return ''
 
     cmd = "osascript -e 'output volume of (get volume settings)'"
@@ -660,9 +576,9 @@ def get_default_device_vol():
 
 
 def set_default_device_vol(vol):
-    """ Currently only works with CoreAudio
+    """ only for CoreAudio
     """
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return 'not available'
 
     dev = get_default_device()
@@ -700,7 +616,7 @@ def set_device_vol(dev, vol):
 def set_default_device_mute(mode='false'):
     """ Currently only works with CoreAudio
     """
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return 'not available'
 
     dev = get_default_device()
@@ -752,7 +668,7 @@ def change_default_sound_device(new_dev):
         Currently only works with CoreAudio
     """
 
-    if  CONFIG["sound_server"].lower() != "coreaudio":
+    if  not CONFIG.get('coreaudio'):
         return
 
     # Getting PREVIOUS PLAYBACK DEV
@@ -805,4 +721,93 @@ def restore_playback_device_settings():
             print("(start.py) Cannot read `.previous_default_device_volume`")
 
 
-init()
+def is_IP(s):
+    """ Validate if a given string is a valid IP address
+        (bool)
+    """
+    if type(s) == str:
+         try:
+             ipaddress.ip_address(s)
+             return True
+         except:
+             return False
+    else:
+         return False
+
+
+def get_my_ip():
+    """ retrieves the own IP address
+        (string)
+    """
+    try:
+        tmp = sp.check_output( 'hostname --all-ip-addresses'.split() ).decode()
+        return tmp.split()[0]
+    except:
+        return ''
+
+
+def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
+    """
+        Restarting zita-j2n on the multiroom sender's end,
+        pointing to our ip.
+
+        (i) The sender will run zita_j2n only when a receiver request it
+    """
+
+    if mode == 'stop':
+
+        zargs = json.dumps( (get_my_ip(), None, 'stop') )
+        remotecmd = f'aux zita_j2n {zargs}'
+
+        print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
+
+        send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
+
+        return None
+
+
+    zargs     = json.dumps( (get_my_ip(), zita_port, 'start') )
+    remotecmd = f'aux zita_j2n {zargs}'
+    result = send_cmd(remotecmd, host=raddr, port=ctrl_port)
+
+    print(f'(common) SENDING TO REMOTE: {remotecmd}')
+
+    return result
+
+
+def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='restart'):
+    """
+        Run zita-n2j listen ports on the multiroom receiver's end.
+
+        (i) Will log zita process printouts under LOGFOLDER
+    """
+
+    if mode == 'stop':
+
+        print(f'{Fmt.GRAY}(common) killing local zita-n2j: {jport}{Fmt.END}')
+
+        zitapattern  = f'zita-n2j --jname {jport}'
+        sp.call( ['pkill', '-KILL', '-u', USER, '-f',  zitapattern] )
+
+        return None
+
+
+    zitajname = f'zita_n2j_{ raddr.split(".")[-1] }'
+    zitacmd   = f'zita-n2j --jname {zitajname} --buff {buff_size} {get_my_ip()} {udp_port}'
+
+    # Assign ALIAS to ports to be able to switch by using
+    # the IP port name of a remoteXXXX input in config.yml
+    #
+    with open(f'{LOGFOLDER}/{zitajname}.log', 'w') as zitalog:
+
+        # Ignore if zita-njbridge is not available
+        try:
+            sp.Popen( zitacmd.split(), stdout=zitalog, stderr=zitalog )
+            wait4ports(zitajname, 3)
+            sp.Popen( f'jack_alias {zitajname}:out_1 {raddr}:out_1'.split() )
+            sp.Popen( f'jack_alias {zitajname}:out_2 {raddr}:out_2'.split() )
+            print(f'(common) RUNNING LOCAL: {zitacmd}, LOGGING under {LOGFOLDER}')
+
+        except Exception as e:
+            print(f'(common) ERROR: {e}, you may want run it for a remote source?')
+

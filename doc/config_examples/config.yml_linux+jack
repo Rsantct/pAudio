@@ -1,39 +1,50 @@
-# Sound server
-sound_server:       jack
-jack:
-        device:     hw:sndrpihifiberry
-        period:     1024
-        nperiods:   2
+#
+# This is the simplest config :-)
+# Please see doc/ and doc/config_examples for more features
+#
 
-# Audio devices
-input:
-    device:         default
-    format:         FLOAT32LE
-
-output:
-    device:         default
-    format:         FLOAT32LE
-
-# Loudspeaker name
-loudspeaker: KEF_C35
-
-# This depends on your analog chain, it should be zero or negative but not much.
-ref_level_gain_offset:  -0.0
-
-# Internal server address
+# control server
 paudio_addr:    localhost
 paudio_port:    9980
 
-# Plugins
+# Samplerate
+samplerate:         48000
+
+# Audio Backend
+audio_backend:      jack
+
+# Use if no Jack backend, otherwise set dither on Jack parameters
+dither_bits:
+
+# Special config for the JACK audio backend
+jack:
+
+    device:         hw:UDJ6,0
+    period:         1024
+    nperiods:       2
+    dither_bits:    16
+
+    sources:
+
+#coreaudio:
+#    devices:
+#        capture:
+#            channels: 2
+#            device: BlackHole 2ch
+#            format: FLOAT32LE
+#        playback:
+#            channels: 6
+#            device: MOTU UltraLite-mk5
+#            exclusive: false
+#            format: S24LE
+#        chunksize: 1024
+
+
+loudspeaker: SeasFlat
+
+
+ref_level_gain_offset:  0.0
+
+
 plugins:
-            - mpd.py
-
-# Inputs (preamp sources selector, only is using the JACK sound server)
-inputs:
-        mpd:
-            gain:           0.0
-            jack_pname:     mpd_loop
-
-        remoteSalon:
-            gain:           0.0
-            jack_pname:     192.168.1.234
+    - mpd.py

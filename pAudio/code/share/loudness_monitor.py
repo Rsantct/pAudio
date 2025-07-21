@@ -27,20 +27,11 @@ from common import  CONFIG, LDMON_PATH, LDCTRL_PATH
 from common import  read_json_file
 
 
-if 'sound_server' in CONFIG and CONFIG["sound_server"]:
-    ss = CONFIG["sound_server"].lower()
+if CONFIG.get('coreaudio'):
+    AUDIO_SOURCE = CONFIG["input"]["device"]
 
-    match ss:
-
-        case 'coreaudio':
-            AUDIO_SOURCE = CONFIG["input"]["device"]
-
-        case 'jack':
-            AUDIO_SOURCE = 'pre_in_loop'
-
-        case _ :
-            print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
-            sys.exit()
+elif CONFIG.get('jack'):
+    AUDIO_SOURCE = 'pre_in_loop'
 
 else:
     print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
@@ -196,7 +187,7 @@ if __name__ == '__main__':
     if sys.argv[1:]:
 
         if sys.argv[1] == 'stop':
-            Popen( 'pkill -KILL -f "loudness_monitor.py\ start"', shell=True )
+            Popen( 'pkill -KILL -f "loudness_monitor.py start"', shell=True )
             with open(LDMON_PATH, 'w') as f:
                 f.write('{"LU_I": -99.0, "LU_M": -99.0, "scope": "album"}')
             sys.exit()
@@ -220,7 +211,7 @@ if __name__ == '__main__':
     scope = get_configured_scope()
 
     # Initialize current preamp source
-    source = read_json_file(PREAMP_STATE_PATH)['input']
+    source = read_json_file(PREAMP_STATE_PATH)['source']
 
     # Starts a LU_meter instance with relevant parameters:
     # M_threshold = 10.0   To avoid stress saving values to disk, because this

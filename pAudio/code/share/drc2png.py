@@ -182,8 +182,10 @@ def prepare_IMGFOLDER():
 
 if __name__ == '__main__':
 
+    DSP_IN_USE = get_DSP_in_use()
+
     BF_DRC_COEFFS = []
-    if CONFIG["DSP"] == 'brutefir':
+    if DSP_IN_USE == 'brutefir':
         # Reading drc coeffs inside brutefir_config in order to get coeff attenuation
         bf_coeffs = bf_get_config()["coeffs"]
         BF_DRC_COEFFS = [x for x in bf_coeffs if x["name"].startswith('drc')]
@@ -204,7 +206,7 @@ if __name__ == '__main__':
 
 
     # Get sample rate
-    FS = CONFIG["fs"]
+    FS = CONFIG["samplerate"]
     if verbose:
         print( f'(drc2png) using sample rate: {FS}' )
 
@@ -248,17 +250,22 @@ if __name__ == '__main__':
 
         # Each IR has the following fields: fs, imp, drc_set, channel
         for IR in IRs:
+
             freqs, magdB = get_spectrum( IR["imp"], FS )
-            if CONFIG["DSP"] == 'brutefir':
+
+            if DSP_IN_USE == 'brutefir':
                 atten = get_coeff_atten( IR["drc_set"], IR["channel"] )
-            if CONFIG["DSP"] == 'camilladsp':
+
+            if DSP_IN_USE == 'camilladsp':
                 if drc_set == 'none':
                     atten = 0.0
                 else:
                     atten = CONFIG["drcs_offset"]
             else:
                 atten = 0.0
+
             magdB -= atten
+
             ax.plot(freqs, magdB,
                     label=f'{IR["channel"]}',
                     color={'L': LINEBLUE, 'R': LINERED}
