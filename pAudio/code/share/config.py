@@ -5,7 +5,7 @@
 
 import  os
 import  yaml
-from    fmt     import Fmt
+from    fmt         import Fmt
 
 UHOME = os.path.expanduser('~')
 
@@ -233,17 +233,6 @@ def _init():
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
 
-
-    if 'loudspeaker' in CONFIG:
-        LOUDSPEAKER = CONFIG["loudspeaker"]
-    else:
-        LOUDSPEAKER = 'generic_loudspk'
-        CONFIG["loudspeaker"] = LOUDSPEAKER
-
-    LSPKFOLDER = f'{LSPKSFOLDER}/{LOUDSPEAKER}'
-    if not os.path.isdir(LSPKFOLDER):
-        os.mkdir(LSPKFOLDER)
-
     #
     # Default values if omited parameters
     #
@@ -267,6 +256,18 @@ def _init():
 
     if not "tones_span_dB" in CONFIG:
         CONFIG["tones_span_dB"] = 6.0
+
+    if CONFIG.get('loudspeaker'):
+        LOUDSPEAKER = CONFIG["loudspeaker"]
+    else:
+        LOUDSPEAKER = 'generic_loudspeaker'
+        CONFIG["loudspeaker"] = LOUDSPEAKER
+
+    LSPKFOLDER = f'{LSPKSFOLDER}/{LOUDSPEAKER}'
+    if not os.path.isdir(LSPKFOLDER):
+        os.mkdir(LSPKFOLDER)
+    if not os.path.isdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}'):
+        os.mkdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}')
 
 
     # Converting the Human Readable PEQ section under CONFIG to a dictionary
