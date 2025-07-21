@@ -11,7 +11,6 @@ from    time import sleep
 import  yaml
 import  json
 from    camilladsp import CamillaClient
-import  jack
 import  make_eq as mkeq
 
 UHOME       = os.path.expanduser('~')
@@ -19,6 +18,10 @@ MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common import *
+
+if sys.platform == 'linux' and CONFIG.get('jack'):
+    import  jack
+
 
 #####
 # (!) use set_config_sync(some_config) to upload a new one
@@ -508,8 +511,9 @@ def init_camilladsp(pAudio_config):
         if check_cdsp_running(timeout=5):
 
             # Check CPAL jack ports
-            if not cpal_ports_ok():
-                return f'problems with Camilla DSP CPAL ports'
+            if pAudio_config.get('jack'):
+                if not cpal_ports_ok():
+                    return f'problems with Camilla DSP CPAL ports'
 
             # ALL IS OK
             return 'done'
