@@ -113,7 +113,7 @@ def get_bit_depth(fmt):
     """
     digits = [x for x in fmt if x.isdigit()]
     bd = ''.join(digits)
-    return bd
+    return int(bd)
 
 
 def read_json_file(fpath, timeout=1):
