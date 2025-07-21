@@ -873,7 +873,7 @@ def make_xover_steps(cfg, default_filter_type = 'mp'):
 
                     'type':         'Filter',
 
-                                    # output indexes starts in `1` like
+                                    # output indexes starts with `1` like
                                     # jack `system:playback_N` ports numbering
                     'channels':     [out_idx - 1],
 
