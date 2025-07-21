@@ -253,14 +253,43 @@ def _prepare_cam_config(pAudio_config):
         """ The multiway N channel expander Mixer
         """
 
+        def update_xo_stuff():
+            """ This is the LAST step into the PIPELINE.
+            """
+
+            xo_filters = get_xo_filters_from_loudspeaker_folder()
+
+            if xo_filters:
+                print(f'{Fmt.BLUE}{Fmt.BOLD}Found loudspeaker XOVER filter PCMs: {xo_filters}{Fmt.END}')
+
+            else:
+                print(f'{Fmt.BOLD}{Fmt.BLINK}Loudspeaker xover PCMs NOT found{Fmt.END}')
+
+
+            # xo filters
+            for xo_filter in (xo_filters):
+                cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter, pAudio_config["samplerate"])
+
+            # Auxiliary delay filters definition
+            for _, pms in CONFIG["outputs"].items():
+                if not pms["name"]:
+                    continue
+                cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
+
+            # pipeline
+            if xo_filters:
+                make_xover_steps(cam_config)
+
+
         # Prepare the needed expander mixer
-        num_outputs_used = make_multi_way_mixer(cam_config)
-
-
+        mixer_name = make_multi_way_mixer(cam_config)
+        #
         # and adding it to the pipeline
-        if num_outputs_used > 2:
-            mwm = {'type': 'Mixer', 'name': f'from2to{num_outputs_used}channels'}
-            cam_config["pipeline"].append(mwm)
+        mwm = {'type': 'Mixer', 'name': mixer_name}
+        cam_config["pipeline"].append(mwm)
+
+        # The final step in the pipeline: XO
+        update_xo_stuff()
 
 
     def update_dither():
@@ -317,32 +346,6 @@ def _prepare_cam_config(pAudio_config):
         insert_drc_to_pipeline(cam_config, drcID=pAudio_config["drc_sets"][0])
 
 
-    def update_xo_stuff():
-        """ This is the LAST step into the PIPELINE.
-        """
-
-        xo_filters = get_xo_filters_from_loudspeaker_folder()
-
-        if xo_filters:
-            print(f'{Fmt.BLUE}{Fmt.BOLD}Found loudspeaker XOVER filter PCMs: {xo_filters}{Fmt.END}')
-        else:
-            print(f'{Fmt.BOLD}{Fmt.BLINK}Loudspeaker xover PCMs NOT found{Fmt.END}')
-
-        # xo filters
-        for xo_filter in (xo_filters):
-            cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter, pAudio_config["samplerate"])
-
-        # Auxiliary delay filters definition
-        for _, pms in CONFIG["outputs"].items():
-            if not pms["name"]:
-                continue
-            cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
-
-        # pipeline
-        if xo_filters:
-            make_xover_steps(cam_config)
-
-
     def update_peq_stuff():
 
         # Filters section
@@ -380,21 +383,17 @@ def _prepare_cam_config(pAudio_config):
     # Prepare CamillaDSP base config
     prepare_base_config()
 
-    # The PEQ
-    update_peq_stuff()
+    # The PEQ **PENDING TO REVIEW**
+    # update_peq_stuff()
 
-    # The DRCs
-    if pAudio_config["drc_sets"]:
-        update_drc_stuff()
+    # FIR DRCs **PENDING TO REVIEW**
+    #if pAudio_config["drc_sets"]:
+    #    update_drc_stuff()
 
-    # Multiway
-    if pAudio_config.get('outputs'):
-
-        # Making the multiway structure if necessary
+    # Multiway if more than 2 outputs
+    outputs_in_use = [ x for x in CONFIG["outputs"] if CONFIG["outputs"][x].get('name') ]
+    if len(outputs_in_use) > 2:
         prepare_multiway_structure()
-
-        # The XO
-        update_xo_stuff()
 
     # Dither
     update_dither()
@@ -824,6 +823,7 @@ def make_multi_way_mixer(cfg):
     tmp         = []
     description = f'Sound card map: '
 
+    number_of_outputs_in_use = 0
 
     for dest, pms in CONFIG["outputs"].items():
 
@@ -851,14 +851,11 @@ def make_multi_way_mixer(cfg):
 
         description += f'{dest}/{way}, '
 
+        number_of_outputs_in_use += 1
 
     description = description.strip()[:-1]
 
-    n = len(tmp)
-    if n <= 2:
-        return n
-
-    mixer_name = f'from2to{n}channels'
+    mixer_name = f'from2to{number_of_outputs_in_use}channels'
 
     cfg["mixers"][mixer_name] = {
         'channels': { 'in': 2, 'out': len(CONFIG["outputs"]) },
@@ -867,9 +864,9 @@ def make_multi_way_mixer(cfg):
     }
 
     # Useful info
-    print(f'{Fmt.GREEN}{description}{Fmt.END}')
+    print(f'{Fmt.GREEN}{mixer_name} | {description}{Fmt.END}')
 
-    return n
+    return mixer_name
 
 
 def make_xover_steps(cfg, default_filter_type = 'mp'):
