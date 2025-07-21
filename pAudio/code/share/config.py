@@ -39,7 +39,11 @@ CONFIG = {}
 def _init():
 
     def get_lspk_config():
-        """ retunrs void {} if not found a loudspeaker's CamillaDSP yml file
+        """
+            - try to load a loudspeaker's CamillaDSP YAML file
+
+            - if outputs: section is NOT defined, defaults to an stereo ones
+
         """
 
         def reformat_outputs():
@@ -111,10 +115,6 @@ def _init():
                     raise Exception('Number of outputs for L and R does not match')
 
 
-            # A simple stereo I/O configuration if not defined
-            if not 'outputs' in LSPK_CGF:
-                LSPK_CGF["outputs"] = {1: 'fr.L', 2: 'fr.R'}
-
             # Outputs
             for out, params in LSPK_CGF["outputs"].items():
 
@@ -146,13 +146,19 @@ def _init():
 
         LSPK_CGF = {}
 
-        try:
-            with open(LSPK_YML_PATH, 'r') as f:
-                LSPK_CGF = yaml.safe_load( f.read() )
-            print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/camilladsp_lspk.yml was found{Fmt.END}')
+        if os.path.isfile(LSPK_YML_PATH):
 
-        except Exception as e:
-            print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/camilladsp_lspk.yml {str(e)}{Fmt.END}')
+            try:
+                with open(LSPK_YML_PATH, 'r') as f:
+                    LSPK_CGF = yaml.safe_load( f.read() )
+                print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/camilladsp_lspk.yml was found{Fmt.END}')
+
+            except Exception as e:
+                print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/camilladsp_lspk.yml {str(e)}{Fmt.END}')
+
+        # DEFAULT FULL RANGE LOUDSPEAKER OUTPUTs
+        if not LSPK_CGF.get("outputs"):
+            LSPK_CGF["outputs"] = {1: 'fr.L', 2: 'fr.R'}
 
 
         # Converting the Human Readable outputs section to a dictionary
@@ -239,7 +245,7 @@ def _init():
         CONFIG["samplerate"] = 44100
         print(f'{Fmt.BOLD}\n!!! samplerate NOT configured, default to fs=44100\n{Fmt.END}')
 
-    if not "plugins" in CONFIG or not CONFIG["plugins"]:
+    if not CONFIG.get("plugins"):
         CONFIG["plugins"] = []
 
     if not 'inputs' in CONFIG:
@@ -271,20 +277,19 @@ def _init():
     LSPK_YML_PATH = f'{LSPKFOLDER}/camilladsp_lspk.yml'
 
 
-
     # Converting the Human Readable PEQ section under CONFIG to a dictionary
-    reformat_PEQ()
+    # **PENDING**
+    #reformat_PEQ()
 
-    # Merging the specific LOUDSPEAKER configuration into CONFIG
-    if os.path.isfile(LSPK_YML_PATH):
 
-        lspk_config = get_lspk_config()
-
-        # loudspeaker multiway outputs:
-        CONFIG["outputs"] = lspk_config["outputs"]
-
-        # loudspeaker eq:
-        # TODO
+    # Merging the specific LOUDSPEAKER YAML configuration
+    lspk_config = get_lspk_config()
+    #
+    # loudspeaker multiway outputs:
+    CONFIG["outputs"] = lspk_config["outputs"]
+    #
+    # loudspeaker eq:
+    # TODO
 
 
     # DEBUG
