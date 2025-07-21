@@ -15,7 +15,7 @@ import  ipaddress
 from    getpass import getuser
 from    config import *
 
-USER                = getuser()
+USER = getuser()
 
 
 def wait4ports( pattern, timeout=10 ):
