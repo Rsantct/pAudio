@@ -186,7 +186,7 @@ def init():
         # (It will be restored when ordering `paudio.sh stop`)
         if CONFIG.get('coreaudio'):
             save_default_sound_device()
-            change_default_sound_device( CONFIG["input"]["device"] )
+            change_default_sound_device( CONFIG["coreaudio"]["devices"]["capture"]["device"] )
 
         # Resuming audio settings on the DSP
         resume_audio()
