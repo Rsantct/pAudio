@@ -10,9 +10,12 @@ from    fmt         import Fmt
 UHOME = os.path.expanduser('~')
 
 MAINFOLDER          = f'{UHOME}/pAudio'
+
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
 LSPKFOLDER          = f''
-LOUDSPEAKER         = f''   # to be found when loading CONFIG
+LOUDSPEAKER         = f''   # to be found later
+LSPK_YML_PATH       = f''   #
+
 EQFOLDER            = f'{MAINFOLDER}/eq'
 CODEFOLDER          = f'{MAINFOLDER}/code'
 CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
@@ -143,17 +146,13 @@ def _init():
 
         LSPK_CGF = {}
 
-        lspk = CONFIG["loudspeaker"]
-
-        lspk_camilla_yml_path = f'{MAINFOLDER}/loudspeakers/{lspk}/camilladsp_lspk.yml'
-
         try:
-            with open(lspk_camilla_yml_path, 'r') as f:
+            with open(LSPK_YML_PATH, 'r') as f:
                 LSPK_CGF = yaml.safe_load( f.read() )
-            print(f'{Fmt.BLUE}Loudspeaker {lspk}/camilladsp_lspk.yml was found{Fmt.END}')
+            print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/camilladsp_lspk.yml was found{Fmt.END}')
 
         except Exception as e:
-            print(f'{Fmt.RED}Cannot load {lspk}/camilladsp_lspk.yml {str(e)}{Fmt.END}')
+            print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/camilladsp_lspk.yml {str(e)}{Fmt.END}')
 
 
         # Converting the Human Readable outputs section to a dictionary
@@ -269,18 +268,24 @@ def _init():
     if not os.path.isdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}'):
         os.mkdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}')
 
+    LSPK_YML_PATH = f'{LSPKFOLDER}/camilladsp_lspk.yml'
+
+
 
     # Converting the Human Readable PEQ section under CONFIG to a dictionary
     reformat_PEQ()
 
     # Merging the specific LOUDSPEAKER configuration into CONFIG
-    lspk_config = get_lspk_config()
-    #
-    # loudspeaker multiway outputs:
-    CONFIG["outputs"] = lspk_config["outputs"]
-    #
-    # loudspeaker eq:
-    # TODO
+    if os.path.isfile(LSPK_YML_PATH):
+
+        lspk_config = get_lspk_config()
+
+        # loudspeaker multiway outputs:
+        CONFIG["outputs"] = lspk_config["outputs"]
+
+        # loudspeaker eq:
+        # TODO
+
 
     # DEBUG
     #print( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
