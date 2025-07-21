@@ -28,7 +28,7 @@ from common import  read_json_file
 
 
 if CONFIG.get('coreaudio'):
-    AUDIO_SOURCE = CONFIG["input"]["device"]
+    AUDIO_SOURCE = CONFIG["coreaudio"]["devices"]["capture"]["device"]
 
 elif CONFIG.get('jack'):
     AUDIO_SOURCE = 'pre_in_loop'
