@@ -11,6 +11,7 @@ from    time import sleep
 import  yaml
 import  json
 from    camilladsp import CamillaClient
+import  jack
 import  make_eq as mkeq
 
 UHOME       = os.path.expanduser('~')
@@ -409,7 +410,50 @@ def init_camilladsp(pAudio_config):
     """ Updates camilladsp.yml with user configs,
         includes auto making the DRC yaml stuff,
         then runs the CamillaDSP process.
+
+        returns a <string>:
+
+            'done' OR 'some problem description...'
     """
+
+    def cpal_ports_ok(cpal2system_alowed=True):
+        """ Check for:
+
+            - no weird cpal ports named like `cpal_client_in-01`
+
+            - no cpal ports are connected to system ports (optional)
+
+            (bool)
+        """
+
+        result = True
+
+        jcli = jack.Client(name='tmp', no_start_server=True)
+
+        cpal_ports = jcli.get_ports('cpal_client')
+
+        for cpal_port in cpal_ports:
+
+            # Early return if any `cpal_client_in-01` is detected
+            if '-' in cpal_port.name:
+                print(f'{Fmt.BOLD}Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
+                result = False
+                break
+
+            if cpal2system_alowed:
+                continue
+
+            conns = jcli.get_all_connections( cpal_port )
+
+            for c in conns:
+                if 'system' in c.name:
+                    print(f'{Fmt.BOLD}CPAL <--> SYSTEM detected: {cpal_port.name} {c.name}{Fmt.END}')
+                    result = False
+
+        jcli.close()
+
+        return result
+
 
     def check_cdsp_running(timeout=10):
 
@@ -456,12 +500,14 @@ def init_camilladsp(pAudio_config):
     p = sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
 
-    # Checking the websocket connection
+
     if _connect_to_camilla():
         print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
+
     else:
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
         return str(e)
+
 
     # Loading configuration
     try:
@@ -469,6 +515,12 @@ def init_camilladsp(pAudio_config):
         PC.config.set_active(cfg_init)
 
         if check_cdsp_running(timeout=5):
+
+            # Check CPAL jack ports
+            if not cpal_ports_ok():
+                return f'problems with Camilla DSP CPAL ports'
+
+            # ALL IS OK
             return 'done'
 
         else:
