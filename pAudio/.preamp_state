@@ -1,7 +1,7 @@
 {
     "loudspeaker":      "MyLoudspeaker",
     "fs":               44100,
-    "input":            "system-wide",
+    "source":           "system-wide",
     "level":            -20.0,
     "gain_headroom":    12.3,
     "equal_loudness":   true,
