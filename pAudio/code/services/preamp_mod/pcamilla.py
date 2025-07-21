@@ -333,6 +333,8 @@ def _prepare_cam_config(pAudio_config):
 
         # Auxiliary delay filters definition
         for _, pms in CONFIG["outputs"].items():
+            if not pms["name"]:
+                continue
             cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
         # pipeline
