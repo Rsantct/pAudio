@@ -38,7 +38,7 @@ The solution is to remove the "quarantine" attribute from the binary using the x
 
 Open a a terminal and run:
 
-    xattr -d com.apple.quarantine /path/to/camilladsp
+    xattr -d com.apple.quarantine ~/bin/camilladsp
 
 
 ## Python modules
