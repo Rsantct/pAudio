@@ -293,11 +293,11 @@ def _init():
     CONFIG["outputs"] = lspk_config["outputs"]
     #
     # 2. Loudspeaker IIR_EQ:
-    if not CONFIG.get('filters'):
-        CONFIG["filters"] = {}
+    if not CONFIG.get('iir_eq'):
+        CONFIG["iir_eq"] = {}
     if lspk_config.get('iir_eq'):
         for fname, fparams in lspk_config["iir_eq"].items():
-            CONFIG["filters"][fname] = fparams
+            CONFIG["iir_eq"][fname] = fparams
 
 
     # DEBUG
