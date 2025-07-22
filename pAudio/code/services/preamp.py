@@ -21,10 +21,11 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
 from    common      import *
-import  jack_mod
 from    eqfir2png   import fir2png
 
+# import Jack stuff ONLY with LINUX
 if sys.platform == 'linux' and CONFIG.get('jack'):
+    import  jack
     import  sources
 
 import  pcamilla as DSP
@@ -134,20 +135,20 @@ def init():
     if CONFIG.get('jack'):
 
         # open a temporary jack.Client
-        jack_mod._jcli_activate('preamp')
+        jcli = jack.Client(name='tmp', no_start_server=True)
 
-        if jack_mod.get_ports('system', is_physical=True, is_output=True):
+        if jcli.get_ports('system', is_physical=True, is_output=True):
             state["input_dev"]  = CONFIG["jack"]["device"]
         else:
             state["input_dev"]  = ''
 
-        if jack_mod.get_ports('system', is_physical=True, is_input=True):
+        if jcli.get_ports('system', is_physical=True, is_input=True):
             state["output_dev"]  = CONFIG["jack"]["device"]
         else:
             state["output_dev"]  = ''
 
         # close the temporary jack.Client
-        del jack_mod.JCLI
+        del jcli
 
 
         state["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
