@@ -6,7 +6,7 @@
 """
     Dumps all DRC sets tp png images under to www/images/<LOUDSPEAKER>
 
-    usage:      drc2png.py [--quiet]
+    usage:      drcfir2png.py [--quiet]
 
     NOTICE: Even if short lenght IR are used for DRC, thus low resolution
             in low freq correction, the correction curve will be
@@ -55,7 +55,7 @@ def get_spectrum(imp, fs):
     try:
         N = fft.next_fast_len(N)
     except:
-        print(f'(drc2png) fft.next_fast_len not availble on this scipy version')
+        print(f'(drcfir2png) fft.next_fast_len not availble on this scipy version')
 
     # Semispectrum (whole=False -->  w to Nyquist)
     w, h = signal.freqz(imp, worN=N, whole=False)
@@ -161,11 +161,11 @@ def png_is_outdated(drc_set):
             png_ctime = os.path.getctime(png_path)
             if (png_ctime - pcm_ctime) < 0:
                 if verbose:
-                    print(f'(drc2png) found old PNG file for "{drc_set}"')
+                    print(f'(drcfir2png) found old PNG file for "{drc_set}"')
                 return True
         except:
             if verbose:
-                print(f'(drc2png) PNG file for "{drc_set}" not found')
+                print(f'(drcfir2png) PNG file for "{drc_set}" not found')
             return True
 
     return False
@@ -177,7 +177,7 @@ def prepare_IMGFOLDER():
     except FileExistsError:
         pass
     except:
-        print(f'drc2png unexpected error when mkdir "{IMGFOLDER}"')
+        print(f'drcfir2png unexpected error when mkdir "{IMGFOLDER}"')
 
 
 if __name__ == '__main__':
@@ -208,7 +208,7 @@ if __name__ == '__main__':
     # Get sample rate
     FS = CONFIG["samplerate"]
     if verbose:
-        print( f'(drc2png) using sample rate: {FS}' )
+        print( f'(drcfir2png) using sample rate: {FS}' )
 
     # Get DRC sets names
     drc_sets = get_drc_sets_from_loudspeaker_folder()
@@ -220,11 +220,11 @@ if __name__ == '__main__':
         # Check for outdated PNG file
         if not png_is_outdated(drc_set):
             if verbose:
-                print(f'(drc2png) found PNG file for {LOUDSPEAKER}: {drc_set}')
+                print(f'(drcfir2png) found PNG file for {LOUDSPEAKER}: {drc_set}')
             continue
         else:
             if verbose:
-                print(f'(drc2png) processing PNG file for {LOUDSPEAKER}: {drc_set}')
+                print(f'(drcfir2png) processing PNG file for {LOUDSPEAKER}: {drc_set}')
 
         fig, ax = plt.subplots()
         fig.set_figwidth( 5 )   # 5 inches at 100dpi => 500px wide
@@ -277,5 +277,5 @@ if __name__ == '__main__':
         fpng = f'{IMGFOLDER}/drc_{drc_set}.png'
         plt.savefig( fpng, facecolor=WEBCOLOR )
         if verbose:
-            print( f'(drc2png) saved: \'{fpng}\' ' )
+            print( f'(drcfir2png) saved: \'{fpng}\' ' )
         #plt.show()
