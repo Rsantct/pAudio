@@ -30,7 +30,7 @@ LOGFNAME = f'{LOGFOLDER}/paudio_cmd.log'
 if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
     print ( f"{Fmt.RED}(paudio_) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
 
-print ( f"{Fmt.BLUE}{Fmt.BOLD}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
+print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
 def _init():
