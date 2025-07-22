@@ -282,17 +282,26 @@ def _init():
     #reformat_PEQ()
 
 
-    # Merging the specific LOUDSPEAKER YAML configuration
+    # MERGING the specific LOUDSPEAKER YAML configuration
     lspk_config = get_lspk_config()
     #
-    # loudspeaker multiway outputs:
+    # DEBUG
+    #print('--- lspk_yaml ----')
+    #print( yaml.dump(lspk_config, default_flow_style=False, sort_keys=False, indent=2) )
+    #
+    # 1. Loudspeaker multiway outputs:
     CONFIG["outputs"] = lspk_config["outputs"]
     #
-    # loudspeaker eq:
-    # TODO
+    # 2. Loudspeaker IIR_EQ:
+    if not CONFIG.get('filters'):
+        CONFIG["filters"] = {}
+    if lspk_config.get('iir_eq'):
+        for fname, fparams in lspk_config["iir_eq"].items():
+            CONFIG["filters"][fname] = fparams
 
 
     # DEBUG
+    #print('--- pAudio ----')
     #print( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
 
 
