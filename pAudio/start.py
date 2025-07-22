@@ -28,9 +28,11 @@ sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
 from    common  import *
 
+# import Jack stuff ONLY with LINUX
 if sys.platform == 'linux' and CONFIG.get('jack'):
     import  jack_mod
     from    sources import SOURCES
+
 
 def get_srv_addr_port():
 
@@ -131,9 +133,31 @@ def rewire_dsp():
     del jack_mod.JCLI
 
 
+def run_plugins(mode='start'):
+    """ Run plugins (stand-alone processes)
+    """
+
+    if not 'plugins' in CONFIG or not CONFIG["plugins"]:
+        return
+
+    if mode == 'start':
+        for plugin in CONFIG["plugins"]:
+            print(f'{Fmt.MAGENTA}Runinng plugin: {plugin} ...{Fmt.END}')
+            sp.Popen(f'{PLUGINSFOLDER}/{plugin} start', shell=True)
+
+    elif mode == 'stop':
+        for plugin in CONFIG["plugins"]:
+            print(f'{Fmt.BLUE}Stopping plugin: {plugin} ...{Fmt.END}')
+            sp.Popen(f'{PLUGINSFOLDER}/{plugin} stop', shell=True)
+
+
 def load_loudness_monitor_daemon(mode='start'):
 
     if mode == 'stop':
+
+        if not process_is_running('loudness_monitor.py'):
+            return()
+
         print(f'{Fmt.GRAY}(start) Stopping loudness_monitor.py{Fmt.END}')
 
         tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py stop'
@@ -271,7 +295,7 @@ def start():
         sp.Popen(srv_cmd, shell=True)
 
     else:
-        print(f'{Fmt.MAGENTA}(start) paudio_ctrl server is already running.{Fmt.END}')
+        print(f'{Fmt.GREEN}(start) paudio_ctrl server is already running.{Fmt.END}')
 
     # Jack audio server
     if sys.platform == 'linux' and CONFIG.get('jack'):
@@ -289,10 +313,11 @@ def start():
         print(f'{Fmt.MAGENTA}(start) Launching pAudio web server running in background ...{Fmt.END}')
 
     else:
-        print(f'{Fmt.MAGENTA}(start) pAudio web server is already running.{Fmt.END}')
+        print(f'{Fmt.GREEN}(start) pAudio web server is already running.{Fmt.END}')
 
 
-    # Run the DSP and listen for commands
+    # Run the pAudio main server to listen for commands
+    # This INCLUDES running CamillaDSP
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {ADDR} {PORT}'
 
     if verbose:
@@ -308,7 +333,8 @@ def start():
         stop()
         return
 
-    # Rewire CamillaDSP
+
+    # Rewire CamillaDSP ONLY with JACK
     if sys.platform == 'linux' and CONFIG.get('jack'):
         rewire_dsp()
 
