@@ -14,8 +14,8 @@ from    camilladsp      import  CamillaClient
 
 import  make_eq         as      mkeq
 
-from    pcamilla_mod.do_makes  import  *
-from    pcamilla_mod.do_clears import  *
+from    pcamilla_mod.do_makes       import  *
+from    pcamilla_mod.do_clears      import  *
 
 
 UHOME       = os.path.expanduser('~')
@@ -87,7 +87,9 @@ def get_config():
 
 
 def _prepare_cam_config(pAudio_config):
-    """ Updates camilladsp config as per the user pAudio configuration
+    """
+        1. Prepares a base CamillaDSP config
+        2. Translates pAudio configuration to the CamillaDSP config
     """
 
     def prepare_base_config():
@@ -260,7 +262,7 @@ def _prepare_cam_config(pAudio_config):
                                                                           )
 
             # Auxiliary delay filters definition
-            for _, pms in CONFIG["outputs"].items():
+            for _, pms in pAudio_config["outputs"].items():
 
                 if not pms["name"]:
                     continue
@@ -270,14 +272,14 @@ def _prepare_cam_config(pAudio_config):
             # pipeline
             if xo_filters:
 
-                xo_steps = make_xover_steps( CONFIG["outputs"] )
+                xo_steps = make_xover_steps( pAudio_config["outputs"] )
 
                 for xo_step in xo_steps:
                     cam_config["pipeline"].append(xo_step)
 
 
         # Prepare the needed expander mixer ...
-        m          = make_mixer_multi_way( CONFIG["outputs"] )
+        m          = make_mixer_multi_way( pAudio_config["outputs"] )
         mixer_name = f'from2to{ len(m["mapping"]) }channels'
         cam_config["mixers"][mixer_name] = m
         #
@@ -289,6 +291,138 @@ def _prepare_cam_config(pAudio_config):
 
         # The final step in the pipeline: XO
         do_xo_stuff()
+
+
+    def update_drc_fir():
+
+        # drc filters
+        for drcset in pAudio_config["drc_sets"]:
+
+            for ch in 'L', 'R':
+
+                cam_config["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(  ch,
+                                                                                drcset,
+                                                                                pAudio_config["samplerate"],
+                                                                                LSPKFOLDER
+                                                                              )
+
+        # The initial pipeline points to the FIRST drc_set
+        insert_drc_to_pipeline(cam_config, drcID=pAudio_config["drc_sets"][0])
+
+
+    def update_peq_stuff():
+
+        # Filters section
+        for ch in pAudio_config["PEQ"]:
+            for peq, pms in pAudio_config["PEQ"][ch].items():
+                cam_config["filters"][f'peak.{ch}.{peq}'] = \
+                    make_peq_filter(pms["freq"], pms["gain"], pms["q"])
+
+        # Pipeline
+        npL = 0
+        npR = 0
+        for p in [x for x in cam_config["filters"] if x.startswith('peak.')]:
+            if '.L' in p:
+                cam_config["pipeline"][1]["names"].append(p)
+                npL += 1
+            elif '.R' in p:
+                cam_config["pipeline"][2]["names"].append(p)
+                npR += 1
+
+        # Filling with dummies to balance number of peaking in L and R
+        if npL != npR:
+            cam_config["filters"][f'peak.dummy'] = \
+                make_peq_filter(freq=20, gain=0.0, qorbw=1.0)
+        if npL < npR:
+            for i in range(npR - npL):
+                cam_config["pipeline"][1]["names"].append('peak.dummy')
+        if npR < npL:
+            for i in range(npL - npR):
+                cam_config["pipeline"][2]["names"].append('peak.dummy')
+
+
+    def update_lspk_iir():
+
+        # Import the filters
+
+        if not cam_config.get('filters'):
+            cam_config["filters"] = {}
+
+        for fname, fparams in pAudio_config["iir_eq"].items():
+            cam_config["filters"][fname] = fparams
+
+        # Pipeline step for loudspeaker EQ filters (will be applied at both channels)
+        pipeline_eq_L_step = {
+            'type':         'Filter',
+            'description':  f'{ pAudio_config["loudspeaker"] } (EQ left)',
+            'channels':     [0],
+            'bypassed':     False,
+            'names':        []
+        }
+        pipeline_eq_R_step = {
+            'type':         'Filter',
+            'description':  f'{ pAudio_config["loudspeaker"] } (EQ right)',
+            'channels':     [1],
+            'bypassed':     False,
+            'names':        []
+        }
+        pipeline_eq_L_step_names = []
+        pipeline_eq_R_step_names = []
+
+
+        # Pipeline step for loudspeaker DRC filters
+        pipeline_drc_L_step = {
+            'type':         'Filter',
+            'description':  f'{ pAudio_config["loudspeaker"] } (DRC left)',
+            'channels':     [0],
+            'bypassed':     False,
+            'names':        []
+        }
+        pipeline_drc_R_step = {
+            'type':         'Filter',
+            'description':  f'{ pAudio_config["loudspeaker"]} (DRC right)',
+            'channels':     [1],
+            'bypassed':     False,
+            'names':        []
+        }
+        pipeline_drc_L_step_names = []
+        pipeline_drc_R_step_names = []
+
+        # Iterate over loudspeaker filters
+        for f in pAudio_config["iir_eq"]:
+
+            # Filter is common for both channels
+            if not '_L_' in f and not '_R_' in f:
+
+                pipeline_eq_L_step_names.append(f)
+                print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_eq_L_step["description"]}`{Fmt.END}')
+                pipeline_eq_R_step_names.append(f)
+                print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_eq_R_step["description"]}`{Fmt.END}')
+
+            # Filter is for an specific channel (i.e. DRC)
+            else:
+
+                if '_L_' in f:
+                    pipeline_drc_L_step_names.append(f)
+                    print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_drc_L_step["description"]}`{Fmt.END}')
+
+                if '_R_' in f:
+                    pipeline_drc_R_step_names.append(f)
+                    print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_drc_R_step["description"]}`{Fmt.END}')
+
+        pipeline_eq_L_step["names"] = pipeline_eq_L_step_names
+        pipeline_eq_R_step["names"] = pipeline_eq_R_step_names
+
+        pipeline_drc_L_step["names"] = pipeline_drc_L_step_names
+        pipeline_drc_R_step["names"] = pipeline_drc_R_step_names
+
+        if pipeline_eq_L_step["names"] :
+            cam_config["pipeline"].append( pipeline_eq_L_step )
+            cam_config["pipeline"].append( pipeline_eq_R_step )
+
+        if pipeline_drc_L_step["names"] :
+            cam_config["pipeline"].append( pipeline_drc_L_step )
+            cam_config["pipeline"].append( pipeline_drc_R_step )
 
 
     def update_dither():
@@ -324,67 +458,32 @@ def _prepare_cam_config(pAudio_config):
 
             if step.get('description'):
 
-                if 'preamp.' in step.get('description'):
-                    step_type = 'preamp'
-
-                elif 'xover.' in step.get('description'):
+                # Multiway have XOVER in last steps of the pipeline
+                if 'xover.' in step.get('description').lower():
                     step_type = 'xover'
 
-                if step_type in ('preamp', 'xover'):
+                # Full Range can have PREAMP, and optionally EQ and/or DRC
+                else:
+
+                    if   '(drc'    in step.get('description').lower():
+                        step_type = 'drc'
+                    elif '(eq'     in step.get('description').lower():
+                        step_type = 'eq'
+                    elif 'preamp.' in step.get('description').lower():
+                        step_type = 'preamp'
+
+                if last_step_type and step_type != last_step_type:
+                    break
+
+                if step_type in ('xover', 'drc', 'eq', 'preamp'):
                     step["names"].append('dither')
 
                 last_step_type = step_type
 
-                if step_type and step_type != last_step_type:
-                    break
 
-
-    def update_drc_stuff():
-
-        # drc filters
-        for drcset in pAudio_config["drc_sets"]:
-
-            for ch in 'L', 'R':
-
-                cam_config["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(  ch,
-                                                                                drcset,
-                                                                                pAudio_config["samplerate"],
-                                                                                LSPKFOLDER
-                                                                              )
-
-        # The initial pipeline points to the FIRST drc_set
-        insert_drc_to_pipeline(cam_config, drcID=pAudio_config["drc_sets"][0])
-
-
-    def update_peq_stuff():
-
-        # Filters section
-        for ch in CONFIG["PEQ"]:
-            for peq, pms in CONFIG["PEQ"][ch].items():
-                cam_config["filters"][f'peak.{ch}.{peq}'] = \
-                    make_peq_filter(pms["freq"], pms["gain"], pms["q"])
-
-        # Pipeline
-        npL = 0
-        npR = 0
-        for p in [x for x in cam_config["filters"] if x.startswith('peak.')]:
-            if '.L' in p:
-                cam_config["pipeline"][1]["names"].append(p)
-                npL += 1
-            elif '.R' in p:
-                cam_config["pipeline"][2]["names"].append(p)
-                npR += 1
-
-        # Filling with dummies to balance number of peaking in L and R
-        if npL != npR:
-            cam_config["filters"][f'peak.dummy'] = \
-                make_peq_filter(freq=20, gain=0.0, qorbw=1.0)
-        if npL < npR:
-            for i in range(npR - npL):
-                cam_config["pipeline"][1]["names"].append('peak.dummy')
-        if npR < npL:
-            for i in range(npL - npR):
-                cam_config["pipeline"][2]["names"].append('peak.dummy')
+    # pAudio config DEBUG
+    print('--- pAudio ----')
+    print( yaml.dump(pAudio_config, default_flow_style=False, sort_keys=False, indent=2) )
 
 
     # From here `cam_config` will grow progressively
@@ -394,23 +493,25 @@ def _prepare_cam_config(pAudio_config):
     prepare_base_config()
 
     # The PEQ **PENDING TO REVIEW**
+    # this intended to read a human readable user section
     # update_peq_stuff()
 
     # FIR DRCs **PENDING TO REVIEW**
     #if pAudio_config["drc_sets"]:
-    #    update_drc_stuff()
+    #    update_drc_fir()
+
+    # IIR EQ filters: pAudio_config can have a set of CamillaDSP filters
+    #                 from the loudspeaker yaml file.
+    if pAudio_config.get('iir_eq'):
+        update_lspk_iir()
 
     # Multiway if more than 2 outputs
-    outputs_in_use = [ x for x in CONFIG["outputs"] if CONFIG["outputs"][x].get('name') ]
+    outputs_in_use = [ x for x in pAudio_config["outputs"] if pAudio_config["outputs"][x].get('name') ]
     if len(outputs_in_use) > 2:
         prepare_multiway_structure()
 
     # Dither
     update_dither()
-
-    # Dumping config
-    with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
-        yaml.safe_dump(cam_config, f)
 
     return cam_config
 
@@ -498,6 +599,10 @@ def init_camilladsp(pAudio_config):
 
     # Prepare the camilladsp.yml as per the pAudio user configuration
     cfg_init = _prepare_cam_config(pAudio_config)
+
+    # Dumping config
+    with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
+        yaml.safe_dump(cfg_init, f)
 
     # Stop if any process running
     sp.call('pkill -KILL camilladsp'.split())
@@ -591,6 +696,7 @@ def get_drc_gain():
 
 # Setting AUDIO, allways **MUST** return some string, usually 'done'
 
+# RELOAD EQ setting audio functions
 def set_treble(dB):
 
     result = 'done'
@@ -661,7 +767,24 @@ def set_loudness(mode, level):
     return 'done'
 
 
+# Other setting audio functions
+def set_volume(dB=None, mode='abs'):
+    """ get or set the Main fader volume
 
+        mode: 'add' or 'rel' to make relative changes
+    """
+    try:
+
+        if 'rel' in mode or 'add' in mode:
+            dB = CC.volume.volume(0) + dB
+
+        if dB <= 0:
+            CC.volume.set_volume(0, dB)
+
+    except Exception as e:
+        print(f'(pcamilla.set_volume) ERROR: {str(e)}')
+
+    return CC.volume.volume(0)
 
 
 def set_mute(mode):
@@ -741,25 +864,6 @@ def set_polarity(mode):
     set_config_sync(c)
 
     return "done"
-
-
-def set_volume(dB=None, mode='abs'):
-    """ get or set the Main fader volume
-
-        mode: 'add' or 'rel' to make relative changes
-    """
-    try:
-
-        if 'rel' in mode or 'add' in mode:
-            dB = CC.volume.volume(0) + dB
-
-        if dB <= 0:
-            CC.volume.set_volume(0, dB)
-
-    except Exception as e:
-        print(f'(pcamilla.set_volume) ERROR: {str(e)}')
-
-    return CC.volume.volume(0)
 
 
 def set_balance(dB):
@@ -864,10 +968,6 @@ def set_lu_offset(dB):
     set_config_sync(cfg)
 
     return 'done'
-
-
-
-
 
 
 _prepare_eq_conv_pcms()
