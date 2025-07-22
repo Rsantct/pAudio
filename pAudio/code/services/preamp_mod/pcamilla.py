@@ -258,7 +258,12 @@ def _prepare_cam_config(pAudio_config):
 
             # xo filters
             for xo_filter in (xo_filters):
-                cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(xo_filter, pAudio_config["samplerate"])
+
+                fir_path = f'{LSPKFOLDER}/{fs}/xo.{xo_filter}.pcm'
+                cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(  xo_filter,
+                                                                            pAudio_config["samplerate"],
+                                                                            fir_path
+                                                                          )
 
             # Auxiliary delay filters definition
             for _, pms in CONFIG["outputs"].items():
@@ -334,8 +339,15 @@ def _prepare_cam_config(pAudio_config):
 
         # drc filters
         for drcset in pAudio_config["drc_sets"]:
+
             for ch in 'L', 'R':
-                cam_config["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(ch, drcset, pAudio_config["samplerate"])
+
+                fir_path = f'{LSPKFOLDER}/{fs}/drc.{channel}.{drc_set}.pcm'
+                cam_config["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(  ch,
+                                                                                drcset,
+                                                                                pAudio_config["samplerate"],
+                                                                                fir_path
+                                                                              )
 
         # The initial pipeline points to the FIRST drc_set
         insert_drc_to_pipeline(cam_config, drcID=pAudio_config["drc_sets"][0])
@@ -644,8 +656,8 @@ def make_dither_filter(d_type, bits):
     return f
 
 
-def make_drc_filter(channel, drc_set, fs):
-    fir_path = f'{LSPKFOLDER}/{fs}/drc.{channel}.{drc_set}.pcm'
+def make_drc_filter(channel, drc_set, fs, fir_path):
+
     f = {
             "type": 'Conv',
             "parameters": {
@@ -654,11 +666,12 @@ def make_drc_filter(channel, drc_set, fs):
                 "type":     'Raw'
             }
         }
+
     return f
 
 
-def make_xo_filter(xo_filter, fs):
-    fir_path = f'{LSPKFOLDER}/{fs}/xo.{xo_filter}.pcm'
+def make_xo_filter(xo_filter, fs, fir_path):
+
     f = {
             "type": 'Conv',
             "parameters": {
@@ -667,6 +680,7 @@ def make_xo_filter(xo_filter, fs):
                 "type":     'Raw'
             }
         }
+
     return f
 
 
@@ -728,7 +742,7 @@ def make_preamp_mixer(midside_mode='normal'):
 
         case 'side':
             g00 =  0.0; i00 = False; m00 = False;    g10 =  0.0; i10 = False; m10 = True
-            g01 =  0.0; i01 = False; m01 = True;     g11 =  0.0; i11 = True; m11 = False
+            g01 =  0.0; i01 = False; m01 = True;     g11 =  0.0; i11 = True;  m11 = False
 
         case 'solo_L':
             g00 =  0.0; i00 = False; m00 = False;    g10 =  0.0; i10 = False; m10 = True
