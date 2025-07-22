@@ -78,15 +78,18 @@ def get_sources():
         for source, params in CONFIG["jack"].get('sources').items():
 
             if not source in sources:
+
                 sources[source] = params
 
                 # Complete other parameters for remote sources
                 if 'remote' in source:
+
                     ip, port = get_remote_source_addr_port(params["remote_addr"])
-                    jport = f'zita_n2j_{ip.split('.')[-1]}'
+                    jport = f'zita_n2j_{ip.split(".")[-1]}'
                     sources[source]["ip"]    = ip
                     sources[source]["port"]  = port
                     sources[source]["jport"] = jport
+
                     del sources[source]["remote_addr"]
 
             else:

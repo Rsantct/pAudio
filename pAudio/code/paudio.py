@@ -19,7 +19,9 @@ MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from common   import *
-from services import preamp, aux, players
+from services import preamp
+from services import aux
+from services import players
 
 
 # COMMAND LOG FILE
@@ -28,14 +30,17 @@ LOGFNAME = f'{LOGFOLDER}/paudio_cmd.log'
 if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
     print ( f"{Fmt.RED}(paudio_) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
 
-print ( f"{Fmt.BLUE}{Fmt.BOLD}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
+print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
+def _init():
+    run_drcfir2png()
 
-def run_drc2png():
-    """ Prepare DRC graphs
+
+def run_drcfir2png():
+    """ Prepare DRC FIR graphs
     """
-    cmd = f'python3 {CODEFOLDER}/share/drc2png.py'
+    cmd = f'python3 {CODEFOLDER}/share/drcfir2png.py'
     sp.Popen(cmd, shell=True)
 
 
@@ -54,7 +59,7 @@ def do(cmd_phrase):
 
         # PENDING
         case 'player':
-            result = 'WIP'
+            result = 'WIP players'
 
         case _:
             # This should never occur because preamp is the defaulted as prefix
@@ -74,4 +79,5 @@ def do(cmd_phrase):
     return result
 
 
-run_drc2png()
+_init()
+

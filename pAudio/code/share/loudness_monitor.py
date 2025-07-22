@@ -28,7 +28,7 @@ from common import  read_json_file
 
 
 if CONFIG.get('coreaudio'):
-    AUDIO_SOURCE = CONFIG["input"]["device"]
+    AUDIO_SOURCE = CONFIG["coreaudio"]["devices"]["capture"]["device"]
 
 elif CONFIG.get('jack'):
     AUDIO_SOURCE = 'pre_in_loop'
@@ -48,6 +48,7 @@ def prepare_control_fifo(fname):
     try:
         if os.path.exists(fname):
             os.remove(fname)
+        sleep(.1)
         os.mkfifo(fname)
     except:
         print(f'(loudness_monitor.py) ERROR preparing fifo {fname}')
