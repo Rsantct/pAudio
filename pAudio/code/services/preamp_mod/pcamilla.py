@@ -208,7 +208,7 @@ def _prepare_cam_config(pAudio_config):
 
             cam_config["mixers"] = {}
 
-            cam_config["mixers"]["preamp_mixer"] = make_preamp_mixer()
+            cam_config["mixers"]["preamp_mixer"] = make_mixer_preamp()
 
 
         def prepare_pipeline():
@@ -259,16 +259,17 @@ def _prepare_cam_config(pAudio_config):
             # xo filters
             for xo_filter in (xo_filters):
 
-                fir_path = f'{LSPKFOLDER}/{fs}/xo.{xo_filter}.pcm'
                 cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(  xo_filter,
                                                                             pAudio_config["samplerate"],
-                                                                            fir_path
+                                                                            LSPKFOLDER
                                                                           )
 
             # Auxiliary delay filters definition
             for _, pms in CONFIG["outputs"].items():
+
                 if not pms["name"]:
                     continue
+
                 cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
             # pipeline
@@ -276,12 +277,16 @@ def _prepare_cam_config(pAudio_config):
                 make_xover_steps(cam_config)
 
 
-        # Prepare the needed expander mixer
-        mixer_name = make_multi_way_mixer(cam_config)
+        # Prepare the needed expander mixer ...
+        m          = make_mixer_multi_way( CONFIG["outputs"] )
+        mixer_name = f'from2to{ len(m["mapping"]) }channels'
+        cam_config["mixers"][mixer_name] = m
         #
-        # and adding it to the pipeline
-        mwm = {'type': 'Mixer', 'name': mixer_name}
-        cam_config["pipeline"].append(mwm)
+        print(f'{Fmt.GREEN}{mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
+        #
+        # ... and adding it to the pipeline
+        mwm_step = {'type': 'Mixer', 'name': mixer_name}
+        cam_config["pipeline"].append(mwm_step)
 
         # The final step in the pipeline: XO
         update_xo_stuff()
@@ -342,11 +347,10 @@ def _prepare_cam_config(pAudio_config):
 
             for ch in 'L', 'R':
 
-                fir_path = f'{LSPKFOLDER}/{fs}/drc.{channel}.{drc_set}.pcm'
                 cam_config["filters"][f'drc.{ch}.{drcset}'] = make_drc_filter(  ch,
                                                                                 drcset,
                                                                                 pAudio_config["samplerate"],
-                                                                                fir_path
+                                                                                LSPKFOLDER
                                                                               )
 
         # The initial pipeline points to the FIRST drc_set
@@ -656,7 +660,9 @@ def make_dither_filter(d_type, bits):
     return f
 
 
-def make_drc_filter(channel, drc_set, fs, fir_path):
+def make_drc_filter(channel, drc_set, fs, lspkfolder):
+
+    fir_path = f'{lspkfolder}/{fs}/drc.{channel}.{drc_set}.pcm'
 
     f = {
             "type": 'Conv',
@@ -670,7 +676,9 @@ def make_drc_filter(channel, drc_set, fs, fir_path):
     return f
 
 
-def make_xo_filter(xo_filter, fs, fir_path):
+def make_xo_filter(xo_filter, fs, lspkfolder):
+
+    fir_path = f'{lspkfolder}/{fs}/xo.{xo_filter}.pcm'
 
     f = {
             "type": 'Conv',
@@ -685,6 +693,7 @@ def make_xo_filter(xo_filter, fs, fir_path):
 
 
 def make_delay_filter(delay):
+
     f = {
             "type": 'Delay',
             "parameters": {
@@ -693,10 +702,11 @@ def make_delay_filter(delay):
                 "subsample": False
             }
         }
+
     return f
 
 
-def make_preamp_mixer(midside_mode='normal'):
+def make_mixer_preamp(midside_mode='normal'):
     r"""
         modes:
 
@@ -774,7 +784,7 @@ def make_preamp_mixer(midside_mode='normal'):
     return m
 
 
-def make_multi_way_mixer(cfg):
+def make_mixer_multi_way(pAudio_outputs):
     """ Makes a mixer to route L/R to multiway outputs
 
         --> and returns the number of used outputs
@@ -830,53 +840,48 @@ def make_multi_way_mixer(cfg):
               }[pol]
 
 
-    tmp         = []
+    mapping     = []
     description = f'Sound card map: '
 
-    number_of_outputs_in_use = 0
+    for dest, params in pAudio_outputs.items():
 
-    for dest, pms in CONFIG["outputs"].items():
-
-        way = pms["name"]
+        way = params["name"]
 
         if way.endswith('.L') or way.endswith('.R'):
-            tmp.append( {'dest': dest - 1,
-                         'sources': [ {'channel':   ch2num(way[-1]),
-                                       'gain':      pms["gain"],
-                                       'inverted':  pol2inv(pms["polarity"])
+
+            mapping.append( {   'dest': dest - 1,
+                                'sources': [ {  'channel':   ch2num(way[-1]),
+                                                'gain':      params["gain"],
+                                                'inverted':  pol2inv(params["polarity"])
                                       } ]
                         } )
 
         elif 'sw' in way.lower():
-            tmp.append( {'dest': dest - 1,
-                         'sources': [ {'channel':   0,
-                                       'gain':      pms["gain"] / 2.0 - 3.0,
-                                       'inverted':  pol2inv(pms["polarity"])
-                                      },
-                                      {'channel':   1,
-                                       'gain':      pms["gain"] / 2.0 - 3.0,
-                                       'inverted':  pol2inv(pms["polarity"])
-                                      } ]
+
+            mapping.append( {   'dest': dest - 1,
+                                'sources': [ {  'channel':   0,
+                                                'gain':      params["gain"] / 2.0 - 3.0,
+                                                'inverted':  pol2inv(params["polarity"])
+                                             },
+                                             {  'channel':   1,
+                                                'gain':      params["gain"] / 2.0 - 3.0,
+                                                'inverted':  pol2inv(params["polarity"])
+                                             }
+                                           ]
                         } )
 
         description += f'{dest}/{way}, '
 
-        number_of_outputs_in_use += 1
 
+    # remove tail
     description = description.strip()[:-1]
 
-    mixer_name = f'from2to{number_of_outputs_in_use}channels'
+    m = {   'description':  description,
+            'channels':     { 'in': 2, 'out': len( pAudio_outputs ) },
+            'mapping':      mapping,
+        }
 
-    cfg["mixers"][mixer_name] = {
-        'channels': { 'in': 2, 'out': len(CONFIG["outputs"]) },
-        'mapping': tmp,
-        'description': description
-    }
-
-    # Useful info
-    print(f'{Fmt.GREEN}{mixer_name} | {description}{Fmt.END}')
-
-    return mixer_name
+    return m
 
 
 def make_xover_steps(cfg, default_filter_type = 'mp'):
@@ -1006,7 +1011,7 @@ def set_midside(mode):
         if mode == 'off':
             mode = 'normal'
 
-        c["mixers"]["preamp_mixer"] = make_preamp_mixer(midside_mode = mode)
+        c["mixers"]["preamp_mixer"] = make_mixer_preamp(midside_mode = mode)
         set_config_sync(c)
 
         return 'done'
@@ -1020,9 +1025,9 @@ def set_solo(mode):
     c = PC.config.active()
 
     match mode:
-        case 'l' | 'L': m = make_preamp_mixer(midside_mode='solo_L')
-        case 'r' | 'R': m = make_preamp_mixer(midside_mode='solo_R')
-        case 'off':     m = make_preamp_mixer(midside_mode='normal')
+        case 'l' | 'L': m = make_mixer_preamp(midside_mode='solo_L')
+        case 'r' | 'R': m = make_mixer_preamp(midside_mode='solo_R')
+        case 'off':     m = make_mixer_preamp(midside_mode='normal')
         case _:         return 'solo mode must be in: L | R | off'
 
     c["mixers"]["preamp_mixer"] = m
