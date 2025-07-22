@@ -13,8 +13,9 @@ import  json
 from    camilladsp      import  CamillaClient
 
 import  make_eq         as      mkeq
-from    pcamilla_makes  import  *
-from    pcamilla_clears import  *
+
+from    pcamilla_mod.do_makes  import  *
+from    pcamilla_mod.do_clears import  *
 
 
 UHOME       = os.path.expanduser('~')
