@@ -180,7 +180,7 @@ def init():
 
     if run_cdsp == 'done':
 
-        state["dsp_buffer_size"] = DSP.PC.config.active()["devices"]["chunksize"]
+        state["dsp_buffer_size"] = DSP.CC.config.active()["devices"]["chunksize"]
         state["dsp_buffer_ms"]   = int(round(state["dsp_buffer_size"] / state["fs"] * 1000))
 
         # Changing MacOS default playback device
