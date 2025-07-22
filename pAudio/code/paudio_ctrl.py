@@ -24,7 +24,7 @@ LOGFNAME = f'{LOGFOLDER}/paudio_ctrl.log'
 if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
     print ( f"{Fmt.RED}(paudio_ctrl) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
 
-print ( f"{Fmt.BLUE}{Fmt.BOLD}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
+print ( f"{Fmt.BLUE}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
 def restart_paudio(mode):
