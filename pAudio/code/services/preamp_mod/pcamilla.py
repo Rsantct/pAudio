@@ -482,8 +482,8 @@ def _prepare_cam_config(pAudio_config):
 
 
     # pAudio config DEBUG
-    print('--- pAudio ----')
-    print( yaml.dump(pAudio_config, default_flow_style=False, sort_keys=False, indent=2) )
+    #print('--- pAudio ----')
+    #print( yaml.dump(pAudio_config, default_flow_style=False, sort_keys=False, indent=2) )
 
 
     # From here `cam_config` will grow progressively
