@@ -437,24 +437,6 @@ def get_target_sets(fs=44100):
     return sorted(sets)
 
 
-def run_plugins(mode='start'):
-    """ Run plugins (stand-alone processes)
-    """
-
-    if not 'plugins' in CONFIG or not CONFIG["plugins"]:
-        return
-
-    if mode == 'start':
-        for plugin in CONFIG["plugins"]:
-            print(f'{Fmt.MAGENTA}Runinng plugin: {plugin} ...{Fmt.END}')
-            sp.Popen(f'{PLUGINSFOLDER}/{plugin} start', shell=True)
-
-    elif mode == 'stop':
-        for plugin in CONFIG["plugins"]:
-            print(f'{Fmt.BLUE}Stopping plugin: {plugin} ...{Fmt.END}')
-            sp.Popen(f'{PLUGINSFOLDER}/{plugin} stop', shell=True)
-
-
 def process_is_running(pattern):
     """ check for a system process to be running by a given pattern
         (bool)
@@ -556,7 +538,7 @@ def get_default_device():
     try:
         dd = sp.check_output('SwitchAudioSource -c'.split()).decode().strip()
     except Exception as e:
-        print(f'(pAudio) warning: {str(e)}')
+        print(f'{Fmt.GRAY}(pAudio) warning: {str(e)}{Fmt.END}')
     return dd
 
 
@@ -570,7 +552,7 @@ def get_default_device_vol():
     try:
         vol = sp.check_output(cmd, shell=True).decode().strip()
     except Exception as e:
-        print(f'(pAudio) warning: {str(e)}')
+        print(f'{Fmt.GRAY}(pAudio) warning: {str(e)}{Fmt.END}')
         vol = ''
     return vol
 
@@ -592,7 +574,7 @@ def set_default_device_vol(vol):
         return 'done'
 
     else:
-        print(f'(pAudio) Problems setting system volume to MAX on "{dev}"')
+        print(f'{Fmt.GRAY}(pAudio) Problems setting system volume to MAX on "{dev}"{Fmt.END}')
         return 'error'
 
 
@@ -609,7 +591,7 @@ def set_device_vol(dev, vol):
         return 'done'
 
     except Exception as e:
-        print(f'(pAudio) ERROR with AdjustVolume: {str(e)}')
+        print(f'{Fmt.GRAY}(pAudio) ERROR with AdjustVolume: {str(e)}{Fmt.END}')
         return 'error'
 
 
@@ -633,7 +615,7 @@ def set_default_device_mute(mode='false'):
         return 'done'
 
     else:
-        print(f'(pAudio) Problems muting on "{dev}"')
+        print(f'{Fmt.GRAY}(pAudio) Problems muting on "{dev}"{Fmt.END}')
         return 'error'
 
 
@@ -680,7 +662,7 @@ def change_default_sound_device(new_dev):
     if tmp == 0:
         print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Default Device: "{new_dev}"{Fmt.END}')
     else:
-        print(f'(pAudio) Problems setting default MacOS playback default device')
+        print(f'{Fmt.GRAY}(pAudio) Problems setting default MacOS playback default device{Fmt.END}')
 
     # Set volume to max on the NEW PLAYBACK DEV
     set_default_device_vol('100')
@@ -718,7 +700,7 @@ def restore_playback_device_settings():
             print("(start.py) Restoring previous Playback Device Volume")
             sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
         else:
-            print("(start.py) Cannot read `.previous_default_device_volume`")
+            print(f"{Fmt.GRAY}(start.py) Cannot read `.previous_default_device_volume`{Fmt.END}")
 
 
 def is_IP(s):
