@@ -34,13 +34,13 @@ print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
 def _init():
-    run_drc2png()
+    run_drcfir2png()
 
 
-def run_drc2png():
-    """ Prepare DRC graphs
+def run_drcfir2png():
+    """ Prepare DRC FIR graphs
     """
-    cmd = f'python3 {CODEFOLDER}/share/drc2png.py'
+    cmd = f'python3 {CODEFOLDER}/share/drcfir2png.py'
     sp.Popen(cmd, shell=True)
 
 
