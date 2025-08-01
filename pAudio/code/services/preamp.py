@@ -23,12 +23,14 @@ sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 from    common      import *
 from    eqfir2png   import fir2png
 
-# import Jack stuff ONLY with LINUX
-if sys.platform == 'linux' and CONFIG.get('jack'):
-    import  jack
-    import  sources
-
 import  pcamilla as DSP
+
+if sys.platform.lower() == 'linux' and CONFIG.get('jack'):
+    import  jack
+    import  jack_sources
+
+elif sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
+    import  coreaudio_sources
 
 
 STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
@@ -83,14 +85,81 @@ def init():
         set_source(state["source"])
 
 
+    def prepare_coreaudio_init_devices():
+
+        """
+        (i) THERE ARE TWO sintax options for Coreaudio capture device(s):
+
+        coreaudio:
+
+            devices:
+
+                capture:
+
+                    ---------------------------------------------------------------
+                    Normal coreaudio input device directly specified:
+
+                    channels: 2
+                    device: BlackHole 2ch
+                    format: FLOAT32LE
+
+
+                    ---------------------------------------------------------------
+                    Alternative more than one section, to have source selection
+
+                    Mac Desktop:
+                        channels: 2
+                        device: BlackHole 2ch
+                        format: FLOAT32LE
+
+                    TV:
+                        channels: 2
+                        device: Micrófono del MacBook Pro
+                        format: FLOAT32LE
+                    ---------------------------------------------------------------
+
+
+                playback:
+
+                    channels: 2
+                    device: Altavoces del MacBook Pro
+                    format: FLOAT32LE
+
+        --> If the ALTERNATIVE syntax was used, we complete the normal syntax here,
+            taking the first device found.
+
+        """
+
+
+        if not CONFIG["coreaudio"]["devices"]["capture"].get('device'):
+
+            in_devices = CONFIG["coreaudio"]["devices"].get('capture')
+
+            first_in_device, first_in_device_params = next( iter( in_devices.items() ) )
+
+            CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
+
+
+    def get_coreaudio_sources():
+        """ see Coreaudio syntax in the above function
+        """
+        sources = {}
+
+        if not CONFIG["coreaudio"]["devices"]["capture"].get('device'):
+            sources = CONFIG["coreaudio"]["devices"].get('capture')
+
+        return sources
+
+
     global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
 
     # (i) SOURCES can be internally added for well known plugins,
     #     so the YAML configured has only the user defined ones.
     if 'sources' in sys.modules:
-        SOURCES         = sources.SOURCES
+        SOURCES         = jack_sources.SOURCES
     else:
-        SOURCES         = {}
+        SOURCES         = get_coreaudio_sources()
+
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
@@ -132,6 +201,11 @@ def init():
     state["polarity"]       = '++'
 
 
+    # State input and output devices
+    #
+    # 1st we need to prepare Coreaudio capture section, see above funcion
+    prepare_coreaudio_init_devices()
+    #
     if CONFIG.get('jack'):
 
         # open a temporary jack.Client
@@ -305,14 +379,15 @@ def set_xo(xoID):
 
 
 def set_source(sname):
-    """ This works only with JACK
+    """ Jack and Coreaudio have different source switching
     """
 
     if not CONFIG.get('jack'):
         return 'source change only available with Jack backend.'
 
     if sname in SOURCES:
-        res = sources.select( sname )
+
+        res = jack_sources.select( sname )
 
         if 'remote' in sname:
 
