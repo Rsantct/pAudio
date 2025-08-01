@@ -33,7 +33,7 @@ This example is a MacBook Pro without Line In, but an USB sound card with line i
 
 **NOTICE:**
 
-
+If you use your integrated Mac Line IN / OUT connections, set the **Source Clock** to Line In, this way **Drif correction** will be applied to the BlackHole device.
 
 #### MacOs:
 
