@@ -2,7 +2,7 @@
 
 ## Basic setup
 
-Listen to **MacOs Desktop sounds** (Spotify, Safari web browser, Music, ...) through by the pAudio processor.
+Listen to **Mac Desktop sound** (Spotify, Safari web browser, Music, ...) through by the pAudio processor.
 
 #### MacOs:
 
@@ -20,21 +20,37 @@ Listen to **MacOs Desktop sounds** (Spotify, Safari web browser, Music, ...) thr
 ## Combined setup
 
 For example if you have a TV connected to Line In on your Mac, and you want not to take care of selecting the source:
-- **Mac desktop** sound
-- **TV** sound
+- Mac Desktop sound
+- TV sound
 
-#### MacOS:
+#### MacOS MIDI Audio Configuration:
 
 You need to prepare an **Aggregate Device** under _MIDI Audio Configuration_, having both BlackHole and your Line In, example:
 
-<img src="./img/nac%20os%20aggregate%20audio%29device.png" width="500"><img src="./img/pAudio%20web%200dB.png" width="500">
+<img src="./img/mac%20os%20aggregate%20audio%20device.png" width="800">
 
-This example MacBook Pro has no Line In, but an USB sound card with line input doing the same.
+This example is a MacBook Pro without Line In, but an USB sound card with line input doing the same.
+
+**NOTICE:**
 
 
-If you have Line In on your Mac and also you use your Mac Line Out for your loudspekeUse the proper Line In available on your system.
 
+#### MacOs:
 
     Settings ---> Sound Output --> Aggregate Device
 
+#### pAudio:
+    
+    pAudio/config.yml
+        coreaudio:
+            devices:
+                capture:    Aggregate Device
+                playback:   Line Out (or whatever sound card output for your loudspeakers)
 
+## Advanced setup: source selection
+
+pAudio will select one of:
+- Mac Desktop sound
+- Line In (example: a TV)
+
+-- WORK IN PROGRESS --
