@@ -1,6 +1,6 @@
 # MacOS: advanced audio sources
 
-## Basic setup
+## - Basic setup
 
 Listen to **Mac Desktop sound** (Spotify, Safari web browser, Music, ...) through by the pAudio processor.
 
@@ -17,7 +17,7 @@ Listen to **Mac Desktop sound** (Spotify, Safari web browser, Music, ...) throug
                 playback:   Line Out (or whatever sound card output for your loudspeakers)
 
 
-## Combined setup
+## - Combined setup
 
 For example if you have a TV connected to Line In on your Mac, and you want not to take care of selecting the source:
 - Mac Desktop sound
@@ -47,7 +47,7 @@ This example is a MacBook Pro without Line In, but an USB sound card with line i
                 capture:    Aggregate Device
                 playback:   Line Out (or whatever sound card output for your loudspeakers)
 
-## Advanced setup: source selection
+## - Advanced setup: source selection
 
 pAudio will select one of:
 - Mac Desktop sound
