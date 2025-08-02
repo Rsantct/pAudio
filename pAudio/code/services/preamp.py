@@ -104,8 +104,7 @@ def init():
 
 
                     ---------------------------------------------------------------
-                    Alternative more than one section,
-                    to have source selection capability:
+                    Alternative more than one section, to have source selection
 
                     Mac Desktop:
                         channels: 2
