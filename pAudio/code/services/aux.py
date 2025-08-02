@@ -123,7 +123,7 @@ def do(cmd, args, add):
 
         # LU_monitor_enabled is a legacy option, now it is always enabled.
         case 'get_web_config':
-            result = {  'main_selector':        'inputs',
+            result = {  'main_selector':        'sources',
                         'LU_monitor_enabled':   True
             }
 
