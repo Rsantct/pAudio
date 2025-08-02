@@ -53,4 +53,40 @@ pAudio will select one of:
 - Mac Desktop sound
 - Line In (example: a TV)
 
--- WORK IN PROGRESS --
+See below, normal and alternative source selection syntax are shown:
+
+    coreaudio:
+
+        devices:
+
+            capture:
+
+                ---------------------------------------------------------------
+                Normal coreaudio input device directly specified:
+
+                channels: 2
+                device: BlackHole 2ch
+                format: FLOAT32LE
+
+
+                ---------------------------------------------------------------
+                Alternative more than one section, to have source selection
+                (source names without spaces, use underscore instead)
+
+                Mac_Desktop:
+                    channels: 2
+                    device: BlackHole 2ch
+                    format: FLOAT32LE
+
+                TV:
+                    channels: 2
+                    device: UMC204HD 192k
+                    format: S24LE
+                ---------------------------------------------------------------
+
+
+            playback:
+
+                channels: 2
+                device: Altavoces del MacBook Pro
+                format: FLOAT32LE
