@@ -86,9 +86,8 @@ def init():
 
 
     def prepare_coreaudio_init_devices():
-
         """
-        (i) THERE ARE TWO sintax options for Coreaudio capture device(s):
+        (i) THERE ARE TWO syntax options for Coreaudio capture device(s):
 
         coreaudio:
 
@@ -105,7 +104,8 @@ def init():
 
 
                     ---------------------------------------------------------------
-                    Alternative more than one section, to have source selection
+                    Alternative more than one section,
+                    to have source selection capability:
 
                     Mac Desktop:
                         channels: 2
@@ -114,8 +114,8 @@ def init():
 
                     TV:
                         channels: 2
-                        device: Micrófono del MacBook Pro
-                        format: FLOAT32LE
+                        device: UMC204HD 192k
+                        format: S24LE
                     ---------------------------------------------------------------
 
 
@@ -140,17 +140,6 @@ def init():
             CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
 
 
-    def get_coreaudio_sources():
-        """ see Coreaudio syntax in the above function
-        """
-        sources = {}
-
-        if not CONFIG["coreaudio"]["devices"]["capture"].get('device'):
-            sources = CONFIG["coreaudio"]["devices"].get('capture')
-
-        return sources
-
-
     global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
 
     # (i) SOURCES can be internally added for well known plugins,
@@ -158,7 +147,7 @@ def init():
     if 'sources' in sys.modules:
         SOURCES         = jack_sources.SOURCES
     else:
-        SOURCES         = get_coreaudio_sources()
+        SOURCES         = coreaudio_sources.SOURCES
 
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
@@ -382,10 +371,22 @@ def set_source(sname):
     """ Jack and Coreaudio have different source switching
     """
 
-    if not CONFIG.get('jack'):
-        return 'source change only available with Jack backend.'
+    if not sname in SOURCES:
+        return f'must be in: { list( SOURCES.keys() ) }'
 
-    if sname in SOURCES:
+
+    # COREAUDIO
+    if CONFIG.get('coreaudio'):
+
+        # 'systemwide' is used when there are no alternative capture devices in config.yml
+        if sname == 'systemwide':
+            return 'no change available'
+
+        res = DSP.set_capture( SOURCES[sname] )
+
+
+    # JACK
+    elif CONFIG.get('jack'):
 
         res = jack_sources.select( sname )
 
@@ -405,8 +406,11 @@ def set_source(sname):
 
                 send_cmd('hello', host=remote_ip, port=remote_vol_daemon_port)
 
+
     else:
-        res = f'must be in: {SOURCES.keys()}'
+
+        res = 'bad config.yml'
+
 
     return res
 
@@ -705,7 +709,7 @@ def do(cmd, args, add):
                 dB = x2float(args)
                 result = do_levels(cmd, dB=dB, add=add)
             except:
-                result = 'needs a float value'
+                result = 'value error'
 
         case 'target':
             newt = args
