@@ -3,19 +3,22 @@
 # Please see doc/ and doc/config_examples for more features
 #
 
-# Sound server
-sound_server:       coreaudio
-
-# Audio devices
-input:
-
-    device:         BlackHole 2ch
-    format:         FLOAT32LE
+samplerate: 44100
 
 
-output:
+coreaudio:
 
-    device:         E30 II
-    format:         S32LE
+    devices:
 
-loudspeaker: MyLoudspeaker
+        capture:
+
+            channels: 2
+            device: BlackHole 2ch
+            format: FLOAT32LE
+
+        playback:
+
+            channels: 2
+            device: Altavoces del MacBook Pro
+            format: FLOAT32LE
+
