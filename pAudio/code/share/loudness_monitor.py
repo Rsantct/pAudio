@@ -27,14 +27,44 @@ from common import  CONFIG, LDMON_PATH, LDCTRL_PATH
 from common import  read_json_file
 
 
+# AUXILIARY for Coreaudio multi capture device syntax (see doc)
+def get_coreaudio_source():
+    """ See pAudio doc for multi capture device syntax
+    """
+
+    result = ''
+
+
+    with open(PREAMP_STATE_PATH, 'r') as f:
+        state = json.loads( f.read() )
+
+
+    if CONFIG["coreaudio"]["devices"]["capture"].get('device'):
+
+        result = CONFIG["coreaudio"]["devices"]["capture"]["device"]
+
+    else:
+
+        in_devices = CONFIG["coreaudio"]["devices"].get('capture')
+
+        result = in_devices[ state["source"] ] ["device"]
+
+    return result
+
+
 if CONFIG.get('coreaudio'):
-    AUDIO_SOURCE = CONFIG["coreaudio"]["devices"]["capture"]["device"]
+    AUDIO_SOURCE = get_coreaudio_source()
 
 elif CONFIG.get('jack'):
     AUDIO_SOURCE = 'pre_in_loop'
 
 else:
     print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
+    sys.exit()
+
+
+if not AUDIO_SOURCE:
+    print(f'(loudness_monitor.py) ERROR getting a device to listen from. Exiting.')
     sys.exit()
 
 
