@@ -48,7 +48,7 @@ var aux_info            = { 'amp': 'n/a',
                             'warning': ''
 };
 
-var web_config          = { 'main_selector':      'inputs',
+var web_config          = { 'main_selector':      'sources',
                             'hide_LU':            false,
                             'LU_monitor_enabled': false,
                             'show_graphs':        false,
@@ -81,7 +81,7 @@ var hide_graphs         = true;     // defaults for displaying graphs
 var last_eq_params      = {};       // To evaluate if eq curve changed
 var last_drc            = '';       // To evaluate if drc changed
 var last_disc           = '';       // Helps on refreshing cd tracks list
-var last_input          = '';       // Helps on refreshing sources playlits
+var last_source         = '';       // Helps on refreshing sources playlits
 var last_loudspeaker    = '';       // Will detect if audio processes has beeen
                                     // restarted with new loudspeaker configuration.
 var last_delay          = 0;        // A helper for the delay toggle button
@@ -98,28 +98,29 @@ function fill_in_page_statics(){
 
     function fill_in_main_selector(){
 
-        function fill_in_main_as_inputs() {
-            // MAIN SELECTOR manages inputs:
+        function fill_in_main_as_sources() {
+            // MAIN SELECTOR manages sources:
 
-            // getting input names
+            // getting sources names
             try{
-                var inputs = JSON.parse( control_cmd( 'get_inputs' ) );
+                var sources = JSON.parse( control_cmd( 'get_sources' ) );
             }catch(e){
                 console.log( e.name, e.message );
                 return;
             }
+
             // clearing selector options
             select_clear_options("mainSelector");
             // Filling in options in a selector
             // https://www.w3schools.com/jsref/dom_obx.length-1j_select.asp
             var mySel = document.getElementById("mainSelector");
-            for ( const i in inputs) {
+            for ( const i in sources) {
                 var option = document.createElement("option");
-                option.text = inputs[i];
+                option.text = sources[i];
                 mySel.add(option);
             }
-            // And adds the input 'none' as expected in core.Preamp
-            // so that all inputs will be disconnected.
+            // And adds the source 'none' as expected in core.Preamp
+            // so that all sources will be disconnected.
             var option = document.createElement("option");
             option.text = 'none';
             mySel.add(option);
@@ -145,11 +146,11 @@ function fill_in_page_statics(){
         }
 
 
-        // standard: main selector as INPUTS manager
-        if ( web_config.main_selector == 'inputs' ){
+        // standard: main selector as SOURCE manager
+        if ( web_config.main_selector == 'sources' ){
             document.getElementById("mainSelector").title = 'Source Selector';
             document.getElementById("macro_buttons").style.display = 'inline-table';
-            fill_in_main_as_inputs();
+            fill_in_main_as_sources();
 
         // alternative: main selector as MACROS manager
         }else{
@@ -207,7 +208,7 @@ function fill_in_page_statics(){
     function fill_in_LUscope_selector() {
         select_clear_options("LUscopeSelector");
         const mySel = document.getElementById("LUscopeSelector");
-        const scopes = ['input', 'album', 'track'];
+        const scopes = ['source', 'album', 'track'];
         for ( const i in scopes ) {
             var option = document.createElement("option");
             option.text = scopes[i];
@@ -263,6 +264,7 @@ function init(){
     function init_alert(){
         window.alert(USER_ALERT)
     }
+
 
     function download_drc_graphs(){
         if (web_config.show_graphs==false){
@@ -542,19 +544,19 @@ function page_update() {
             last_disc = player_info.discid;
         }
 
-        // Updates the playlist loader when input source changed, keep hidden if empty.
-        if (last_input != state.input){
+        // Updates the playlist loader when source changed, keep hidden if empty.
+        if (last_source != state.source){
             const plists = fill_in_playlists_selector();
             if ( plists.length > 0 ) {
                 document.getElementById( "playlist_selector").style.display = "inline";
             }else{
                 document.getElementById( "playlist_selector").style.display = "none";
             }
-            last_input = state.input;
+            last_source = state.source;
         }
 
-        // Displays the track selector if input == 'cd'
-        if ( state.input == "cd") {
+        // Displays the track selector if source == 'cd'
+        if ( state.source == "cd") {
             document.getElementById( "track_selector").style.display = "inline";
         }
         else {
@@ -567,9 +569,9 @@ function page_update() {
             document.getElementById('track_selector').value = '--';
         }
 
-        // Displays the [url] button if input == 'iradio' or 'istreams'
-        if (state.input == "iradio" ||
-            state.input == "istreams") {
+        // Displays the [url] button if source == 'iradio' or 'istreams'
+        if (state.source == "iradio" ||
+            state.source == "istreams") {
             document.getElementById( "url_button").style.display = "inline";
         }
         else {
@@ -699,13 +701,13 @@ function page_update() {
             document.getElementById("levelInfo").innerHTML  = '--';
         }
 
-        // Updates current INPUTS, XO, DRC, and TARGET (PEQ is meant to be static)
+        // Updates current SOURCES, XO, DRC, and TARGET (PEQ is meant to be static)
         if ( web_config.main_selector == 'macros' ){
             const mName = aux_info.last_macro;
             document.getElementById("mainSelector").value =
                                 mName.slice(mName.indexOf('_') + 1, mName.length);
         }else{
-            document.getElementById("mainSelector").value = state.input;
+            document.getElementById("mainSelector").value = state.source;
         }
         document.getElementById("xoSelector").value     = state.xo_set;
         document.getElementById("drcSelector").value    = state.drc_set;
@@ -813,7 +815,7 @@ function page_update() {
 
 function oc_main_select(itemName){
     // (i) The main selector can have two flavors:
-    //      - regular input selector management
+    //      - regular source selector management
     //      - alternative macros management
 
     // helper for macros manager behavior
@@ -834,11 +836,11 @@ function oc_main_select(itemName){
     main_cside_msg = 'Please wait for "' + itemName + '"';
 
     // (i) The arrow syntax '=>' fails on Safari iPad 1 (old version)
-    // setTimeout( () => { control_cmd('input ' + itemName); }, 200 );
+    // setTimeout( () => { control_cmd('source ' + itemName); }, 200 );
     function tmp(itemName){
-        // regular behavior managing preamp inputs
-        if ( web_config.main_selector == 'inputs' ){
-            control_cmd('input ' + itemName);
+        // regular behavior managing preamp sourcess
+        if ( web_config.main_selector == 'sources' ){
+            control_cmd('source ' + itemName);
         // alternative behavior managing macros
         }else{
             mName = find_macroName(itemName);
@@ -1088,7 +1090,7 @@ function omd_macro_buttons_display_toggle() {
     var curMode = document.getElementById( "macro_buttons").style.display;
     if (curMode == 'none') {
         document.getElementById( "macro_buttons").style.display = 'inline-table'
-        web_config.main_selector = 'inputs';
+        web_config.main_selector = 'sources';
     }
     else {
         document.getElementById( "macro_buttons").style.display = 'none'
