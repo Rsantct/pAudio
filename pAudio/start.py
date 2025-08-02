@@ -11,7 +11,7 @@
             -v      verbose in attached terminal
 """
 #
-# A helper command to check which things are running:
+# A helper command to check what things are running:
 #
 # pgrep -fla camilla; pgrep -fla node; pgrep -fla "server.py"; pgrep -fla 'plugins'
 #
