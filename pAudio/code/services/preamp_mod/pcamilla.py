@@ -696,6 +696,20 @@ def get_drc_gain():
 
 # Setting AUDIO, allways **MUST** return some string, usually 'done'
 
+# SOURCE SELECTOR function
+def set_capture( source ):
+
+    c = CC.config.active()
+
+    c["devices"]["capture"]["channels"] = source["channels"]
+    c["devices"]["capture"]["device"]   = source["device"]
+    c["devices"]["capture"]["format"]   = source["format"]
+
+    set_config_sync(c)
+
+    return "done"
+
+
 # RELOAD EQ setting audio functions
 def set_treble(dB):
 
