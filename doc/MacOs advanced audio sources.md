@@ -71,9 +71,8 @@ See below, normal and alternative source selection syntax are shown:
 
                 ---------------------------------------------------------------
                 Alternative more than one section, to have source selection
-                (source names without spaces, use underscore instead)
 
-                Mac_Desktop:
+                Mac Desktop:
                     channels: 2
                     device: BlackHole 2ch
                     format: FLOAT32LE
