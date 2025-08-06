@@ -248,10 +248,10 @@ def _init():
     if not CONFIG.get("plugins"):
         CONFIG["plugins"] = []
 
-    if not 'inputs' in CONFIG:
-        CONFIG["inputs"] = {'system-wide':{}}
+    if not 'sources' in CONFIG:
+        CONFIG["sources"] = {'system-wide':{}}
     else:
-        CONFIG["inputs"]["none"] = {}
+        CONFIG["sources"]["none"] = {}
 
     if not 'drcs_offset' in CONFIG:
         CONFIG["drcs_offset"] = 0.0
