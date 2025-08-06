@@ -778,7 +778,7 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
     zitacmd   = f'zita-n2j --jname {zitajname} --buff {buff_size} {get_my_ip()} {udp_port}'
 
     # Assign ALIAS to ports to be able to switch by using
-    # the IP port name of a remoteXXXX input in config.yml
+    # the IP port name of a remoteXXXX source in config.yml
     #
     with open(f'{LOGFOLDER}/{zitajname}.log', 'w') as zitalog:
 
