@@ -139,7 +139,7 @@ def do(cmd, args, add):
             result = manage_lu_monitor('reset')
 
         case 'set_loudness_monitor_scope' | 'set_lu_monitor_scope':
-            args = 'input' # FORCED to input
+            args = 'source' # FORCED to source
             result = manage_lu_monitor(f'scope={args}')
 
         case 'zita_j2n':
