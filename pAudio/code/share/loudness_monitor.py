@@ -27,8 +27,8 @@ from common import  CONFIG, LDMON_PATH, LDCTRL_PATH
 from common import  read_json_file
 
 
-# AUXILIARY for Coreaudio multi capture device syntax (see doc)
-def get_coreaudio_source():
+# AUXILIAR for Coreaudio multi capture device syntax (see doc)
+def get_coreaudio_capture_device():
     """ See pAudio doc for multi capture device syntax
     """
 
@@ -53,7 +53,7 @@ def get_coreaudio_source():
 
 
 if CONFIG.get('coreaudio'):
-    AUDIO_SOURCE = get_coreaudio_source()
+    AUDIO_SOURCE = get_coreaudio_capture_device()
 
 elif CONFIG.get('jack'):
     AUDIO_SOURCE = 'pre_in_loop'
