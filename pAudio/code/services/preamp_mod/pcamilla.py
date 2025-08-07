@@ -33,14 +33,22 @@ HOST = '127.0.0.1'
 PORT = 1234
 CC   = CamillaClient(HOST, PORT)
 
-#####
-# (!) use ALWAYS set_config_sync(some_config) to upload a new one
-#####
+# Optional to dump active config to disk
+DUMP_ACTIVE = True
+
+#######################################################33##########
+# (!) use ALWAYS THIS FUNCTION to load a new config into CamillaDSP
+###################################################################
 def set_config_sync(cfg, wait=0.1):
     """ (i) When ordering set config some time is needed to be running
         This is a fake sync, but just works  >:-)
     """
     CC.config.set_active(cfg)
+
+    if DUMP_ACTIVE:
+        with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
+            yaml.safe_dump(cfg, f)
+
     sleep(wait)
 
 
@@ -600,9 +608,13 @@ def init_camilladsp(pAudio_config):
     # Prepare the camilladsp.yml as per the pAudio user configuration
     cfg_init = _prepare_cam_config(pAudio_config)
 
-    # Dumping config
+    # Dumping init config
     with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
         yaml.safe_dump(cfg_init, f)
+    if DUMP_ACTIVE:
+        with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
+            yaml.safe_dump(cfg_init, f)
+
 
     # Stop if any process running
     sp.call('pkill -KILL camilladsp'.split())
