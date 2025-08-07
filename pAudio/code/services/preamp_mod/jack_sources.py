@@ -56,7 +56,7 @@ def get_sources():
     global SOURCES
 
     if not CONFIG.get("jack"):
-        return { 'systemwide': {} }
+        return { 'system-wide': {} }
 
     sources = { 'none': {} }
 
