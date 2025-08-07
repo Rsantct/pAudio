@@ -699,7 +699,7 @@ def do(cmd, args, add):
             new = args
 
             if state["midside"] != new:
-                result = set_midside(new)
+                result = DSP.set_midside(new)
 
                 if result == 'done':
                     state["midside"] = new
