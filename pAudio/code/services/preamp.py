@@ -41,8 +41,31 @@ PREAMP_STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 state = read_json_file(PREAMP_STATE_PATH)
 
 
+
 # INIT
 def init():
+
+    def get_coreaudio_source():
+        """ This retrieves the source name in coreaudio,
+            from the `capture:` section in config.yml
+        """
+        # default source
+        result = 'system-wide'
+
+        # 1. Read the 'normal' section, previously populated
+        #    even if the 'alternative' syntax was used
+        cap_device = CONFIG["coreaudio"]["devices"]["capture"]["device"]
+
+        # 2. Check in there are any source entry under `capture:` in `config.yml`
+        config_yml = yaml.safe_load( open(CONFIG_PATH, 'r') )
+
+        for item, params in config_yml["coreaudio"]["devices"]["capture"].items():
+
+            if params.get('device') == cap_device:
+                result = item
+
+        return result
+
 
     def resume_audio():
 
@@ -85,7 +108,7 @@ def init():
         # Source needs a little care
         last_source = state.get('source')
 
-        if last_source:
+        if last_source and last_source in SOURCES:
 
             set_source( last_source )
 
@@ -93,8 +116,10 @@ def init():
 
             if 'jack_sources' in sys.modules:
                 state["source"] = 'none'
+
             elif 'coreaudio_sources' in sys.modules:
-                state["source"] = 'system-wide'
+                state["source"] = get_coreaudio_source()
+
             else:
                 state["source"] = ''
 
@@ -146,12 +171,15 @@ def init():
         """
 
 
+        # If 'alternative' syntax was used,
+        # we need to generate a 'normal' capture section
         if not CONFIG["coreaudio"]["devices"]["capture"].get('device'):
 
             in_devices = CONFIG["coreaudio"]["devices"].get('capture')
 
             first_in_device, first_in_device_params = next( iter( in_devices.items() ) )
 
+            # Adding the 'normal' capture section
             CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
 
 
@@ -397,11 +425,16 @@ def set_source(sname):
     # COREAUDIO
     if CONFIG.get('coreaudio'):
 
-        # 'systemwide' is used when there are no alternative capture devices in config.yml
-        if sname == 'systemwide':
+        # 'system-wide' is used when there are no alternative capture devices in config.yml
+        if sname == 'system-wide':
             return 'no change available'
 
         res = DSP.set_capture( SOURCES[sname] )
+
+        # Extra in coreaudio update state.input_dev
+        config_yml         = yaml.safe_load( open(CONFIG_PATH, 'r') )
+        state["input_dev"] = config_yml["coreaudio"]["devices"]["capture"][sname]["device"]
+        save_json_file(state, PREAMP_STATE_PATH)
 
 
     # JACK
