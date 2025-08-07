@@ -61,6 +61,9 @@ def init():
 
         for item, params in config_yml["coreaudio"]["devices"]["capture"].items():
 
+            if not type(params) == dict:
+                continue
+
             if params.get('device') == cap_device:
                 result = item
 
