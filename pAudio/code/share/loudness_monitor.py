@@ -47,7 +47,7 @@ def get_coreaudio_source():
 
         in_devices = CONFIG["coreaudio"]["devices"].get('capture')
 
-        result = in_devices[ state["source"] ] ["device"]
+        result = in_devices[ state.get('source') ] .get('device')
 
     return result
 
@@ -242,7 +242,7 @@ if __name__ == '__main__':
     scope = get_configured_scope()
 
     # Initialize current preamp source
-    source = read_json_file(PREAMP_STATE_PATH)['source']
+    source = read_json_file(PREAMP_STATE_PATH).get('source')
 
     # Starts a LU_meter instance with relevant parameters:
     # M_threshold = 10.0   To avoid stress saving values to disk, because this
