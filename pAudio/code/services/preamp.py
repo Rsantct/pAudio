@@ -33,12 +33,12 @@ elif sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
     import  coreaudio_sources
 
 
-STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
+PREAMP_STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 
 #
 # Main variable (preamplifier state)
 #
-state = read_json_file(STATE_PATH)
+state = read_json_file(PREAMP_STATE_PATH)
 
 
 # INIT
@@ -82,7 +82,23 @@ def init():
         else:
             set_xo( state["xo_set"] )
 
-        set_source(state["source"])
+        # Source needs a little care
+        last_source = state.get('source')
+
+        if last_source:
+
+            set_source( last_source )
+
+        else:
+
+            if 'jack_sources' in sys.modules:
+                state["source"] = 'none'
+            elif 'coreaudio_sources' in sys.modules:
+                state["source"] = 'system-wide'
+            else:
+                state["source"] = ''
+
+            save_json_file(state, PREAMP_STATE_PATH)
 
 
     def prepare_coreaudio_init_devices():
@@ -141,13 +157,16 @@ def init():
 
     global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
 
-    # (i) SOURCES can be internally added for well known plugins,
-    #     so the YAML configured has only the user defined ones.
-    if 'sources' in sys.modules:
-        SOURCES         = jack_sources.SOURCES
-    else:
-        SOURCES         = coreaudio_sources.SOURCES
+    # (i) SOURCES can be populated internally with known plugins,
+    #     so the configured YAML should only contain user-defined sources.
+    if 'jack_sources' in sys.modules:
+        SOURCES = jack_sources.SOURCES
 
+    elif 'coreaudio_sources' in sys.modules:
+        SOURCES = coreaudio_sources.SOURCES
+
+    else:
+        SOURCES = {}
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
@@ -191,9 +210,6 @@ def init():
 
     # State input and output devices
     #
-    # 1st we need to prepare Coreaudio capture section, see above funcion
-    prepare_coreaudio_init_devices()
-    #
     if CONFIG.get('jack'):
 
         # open a temporary jack.Client
@@ -218,6 +234,10 @@ def init():
 
 
     elif CONFIG.get('coreaudio'):
+
+        # 1st we need to prepare Coreaudio capture section, see above funcion
+        prepare_coreaudio_init_devices()
+
         state["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
         state["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
 
@@ -255,7 +275,7 @@ def init():
         resume_audio()
 
         # Saving state with user settings mods
-        save_json_file(state, STATE_PATH)
+        save_json_file(state, PREAMP_STATE_PATH)
 
     else:
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
@@ -367,7 +387,7 @@ def set_xo(xoID):
 
 
 def set_source(sname):
-    """ Jack and Coreaudio have different source switching
+    """ Jack and Coreaudio have different source management
     """
 
     if not sname in SOURCES:
@@ -609,7 +629,7 @@ def do(cmd, args, add):
 
         case 'set_source':
             new = args
-            if state["source"] != new:
+            if state.get("source") != new:
                 result = set_source(new)
                 if result in ('done', 'ordered'):
                     state["source"] = new
@@ -739,7 +759,7 @@ def do(cmd, args, add):
             result = 'unknown command'
 
     if dosave:
-        save_json_file(state, STATE_PATH)
+        save_json_file(state, PREAMP_STATE_PATH)
 
     if type(result) != str:
         try:
