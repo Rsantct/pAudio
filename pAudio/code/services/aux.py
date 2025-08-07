@@ -108,7 +108,7 @@ def manage_lu_monitor(commandphrase):
             f.write(commandphrase)
         return 'ordered'
     except Exception as e:
-        return f'ERROR writing FIFO \`{LDCTRL_PATH}\`: {str(e)}'
+        return f'ERROR writing FIFO `{LDCTRL_PATH}`: {str(e)}'
 
 
 # Entry function
