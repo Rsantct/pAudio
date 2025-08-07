@@ -60,13 +60,13 @@ def get_sources():
 
 
     --> This function retrieves the ALTERNATIVE syntax sources is used
-        OR { 'systemwide': {} } if normal syntax is used.
+        OR { 'system-wide': {} } if normal syntax is used.
 
     """
     global SOURCES
 
     if CONFIG["coreaudio"]["devices"]["capture"].get('device'):
-        SOURCES = { 'systemwide': {} }
+        SOURCES = { 'system-wide': {} }
 
     else:
         SOURCES = CONFIG["coreaudio"]["devices"].get('capture')
