@@ -384,7 +384,27 @@ def get_loudspeaker_ways():
     return list(set(lws))
 
 
-def get_drc_sets_from_loudspeaker_folder():
+def get_drc_iir_sets_from_loudspeaker_folder():
+    """ This
+    """
+    result = {}
+
+    lspk_cfg_path = f'{LSPKFOLDER}/camilladsp_lspk.yml'
+
+    try:
+
+        with open(lspk_cfg_path, 'r') as f:
+            lspk_cfg = yaml.safe_load( f.read() )
+            result = lspk_cfg.get('iir_eq', {}).get('drc', {})
+
+    except:
+        print(f'(get_drc_iir_sets_from_loudspeaker_folder) cannot read {lspk_cfg_path}')
+
+    return result
+
+
+# PENDING ADAPTATION WITH FS FOLDER
+def get_drc_fir_sets_from_loudspeaker_folder():
     """ looks for drc.Channel.DrcId.pcm files inside the loudspeaker folder
     """
     drc_files = []
