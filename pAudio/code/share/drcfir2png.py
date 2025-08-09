@@ -180,6 +180,21 @@ def prepare_IMGFOLDER():
         print(f'drcfir2png unexpected error when mkdir "{IMGFOLDER}"')
 
 
+def get_DSP_in_use():
+    """ The DSP in use is set inside preamp.py
+    """
+    with open(f'{CODEFOLDER}/services/preamp.py', 'r') as f:
+        tmp = f.readlines()
+    import_lines = [line for line in tmp if 'import ' in line]
+    import_DSP_line = str([line for line in import_lines if 'DSP' in line])
+    res = 'unknown'
+    if 'camilla' in import_DSP_line:
+        res = 'camilladsp'
+    elif 'brutefir' in import_DSP_line:
+        res = 'brutefir'
+    return res
+
+
 if __name__ == '__main__':
 
     DSP_IN_USE = get_DSP_in_use()
