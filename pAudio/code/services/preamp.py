@@ -21,7 +21,7 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 
 from    common      import *
-from    eqfir2png   import fir2png
+from    eq_fir2png  import fir2png
 
 import  pcamilla as DSP
 
