@@ -153,7 +153,7 @@ def prepare_base_config(pAudio_config, cam_config):
     prepare_pipeline()
 
 
-def update_dither(pAudio_config, cam_config):
+def append_dither(pAudio_config, cam_config):
     """ Adjust the dither filter as per the output sample format and samplerate
     """
 
@@ -169,7 +169,7 @@ def update_dither(pAudio_config, cam_config):
     if not( pAudio_config.get("coreaudio") and pAudio_config["coreaudio"]["devices"]["playback"].get("dither") ):
         return
 
-    # First of all we need to remove dither parameter.
+    # First of all we need to remove the pAudio dither parameter.
     # It was included in pAudio playback device because logical order,
     # but it is not a CamillaDSP devices parameter.
     del cam_config["devices"]["playback"]["dither"]
