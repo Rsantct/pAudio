@@ -327,7 +327,7 @@ def get_xo_filters_from_loudspeaker_folder():
     return xo_filters
 
 
-def get_xo_sets_from_loudspeaker_folder():
+def get_xo_sets():
     """ xo.WW.FF.pcm files can exist on two flavours:
 
             FF = mp: minimum phase filter
@@ -360,10 +360,17 @@ def get_loudspeaker_ways():
     return list(set(lws))
 
 
-def get_DRC_SETS_from_loudspeaker_folder():
-    """ This reads camilladsp_lspk.yml
+def get_drc_sets():
+    """ This reads the loudspeaker folder for DRC stuff
+
+        - camilladsp_lspk.yml
+
+        - FS/drc_xxxxxx.pcm (PENDING)
+
     """
-    result = {}
+    drc_type = 'iir'
+
+    drc_sets = {}
 
     lspk_cfg_path = f'{LSPKFOLDER}/camilladsp_lspk.yml'
 
@@ -371,12 +378,14 @@ def get_DRC_SETS_from_loudspeaker_folder():
 
         with open(lspk_cfg_path, 'r') as f:
             lspk_cfg = yaml.safe_load( f.read() )
-            result = lspk_cfg.get('iir_eq', {}).get('drc', {})
+            drc_sets = lspk_cfg.get('iir_eq', {}).get('drc', {})
 
     except:
         print(f'(get_DRC_SETS_from_loudspeaker_folder) cannot read {lspk_cfg_path}')
 
-    return result
+    drc_sets["none"] = {}
+
+    return drc_sets, drc_type
 
 
 # PENDING ADAPTATION WITH FS FOLDER
