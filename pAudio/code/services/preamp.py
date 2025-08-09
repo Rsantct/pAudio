@@ -99,9 +99,10 @@ def init():
 
         set_loudness( mode=state["equal_loudness"] )
 
-        if not state["drc_set"] in DRC_SETS:
-            state["drc_set"] = 'none'
-        set_drc( state["drc_set"] )
+        # PENDING
+        #if not state["drc_set"] in DRC_SETS or not state["drc_set"] in DRC_SETS:
+        #    state["drc_set"] = 'none'
+        #set_drc( state["drc_set"] )
 
         if not state["xo_set"] in XO_SETS:
             state["xo_set"] = ''
@@ -201,7 +202,7 @@ def init():
 
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
-    DRC_SETS            = get_drc_sets_from_loudspeaker_folder()
+    DRC_SETS            = get_DRC_SETS_from_loudspeaker_folder()
     CONFIG["drc_sets"]  = DRC_SETS
 
     XO_SETS             = get_xo_sets_from_loudspeaker_folder()
@@ -218,18 +219,21 @@ def init():
             match prop:
 
                 case 'target':
+
                     if CONFIG["target"] in TARGET_SETS + ['none']:
                         state["target"] = CONFIG["target"]
                     else:
                         print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
 
                 case 'drc_set':
-                    if CONFIG["drc_set"] in DRC_SETS + ['none']:
+
+                    if CONFIG["drc_set"] in DRC_SETS or CONFIG["drc_set"] == 'none':
                         state["drc_set"] = CONFIG["drc_set"]
                     else:
                         print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
 
                 case _:
+
                     state[prop] = CONFIG[prop]
 
 
@@ -383,7 +387,7 @@ def set_drc(drcID):
     if not DRC_SETS:
         res = 'not available'
 
-    elif not drcID in DRC_SETS + ['none']:
+    elif not drcID in DRC_SETS:
         res = f'must be in: {DRC_SETS}'
 
     else:
@@ -648,6 +652,7 @@ def do(cmd, args, add):
 
     match cmd:
 
+        # Query commands
         case 'state':
             result = json.dumps(state)
 
@@ -658,10 +663,12 @@ def do(cmd, args, add):
             result = json.dumps(TARGET_SETS)
 
         case 'get_drc_sets':
-            result = json.dumps(DRC_SETS)
+            result = json.dumps( list(DRC_SETS.keys()) )
 
         case 'get_xo_sets':
             result = json.dumps(XO_SETS)
+
+        # Change commands
 
         case 'set_source':
             new = args
@@ -714,8 +721,6 @@ def do(cmd, args, add):
                 if result == 'done':
                     state["solo"] = new
 
-            return result
-
         case 'polarity':
 
             new = args
@@ -727,56 +732,76 @@ def do(cmd, args, add):
                     state["polarity"] = new
 
         case 'mute':
+
             curr =  state['muted']
             new = switch(args, curr)
+
             if type(new) == bool and new != curr:
                 result = set_mute(new)
+
             if result == 'done':
                 state['muted'] = new
 
         case 'equal_loudness':
+
             curr_mode =  state['equal_loudness']
             new_mode = switch(args, curr_mode)
+
             if type(new_mode) == bool and new_mode != curr_mode:
                 result = set_loudness(mode=new_mode)
+
             if result == 'done':
                 state['equal_loudness'] = new_mode
                 # dumps eq to png
                 eq2png()
 
         case 'set_drc':
+
             new = args
+
             if state["drc_set"] != new:
                 result = set_drc(new)
+
                 if result == 'done':
                     state["drc_set"] = new
 
         case 'set_xo':
+
             new = args
+
             if state["xo_set"] != new:
                 result = set_xo(new)
+
                 if result == 'done':
                     state["xo_set"] = new
 
-        # Level related commands (state updated by do_levels)
+        # Level related commands
+        # NOTICE that state will be updated by do_levels()
         case 'level' | 'lu_offset' | 'bass' | 'treble' | 'balance':
+
             try:
                 dB = x2float(args)
                 result = do_levels(cmd, dB=dB, add=add)
+
             except:
                 result = 'value error'
 
         case 'target':
+
             newt = args
+
             if newt in TARGET_SETS + ['none']:
                 if state["target"] != newt:
                     result = do_levels('target', tID=newt)
 
         case 'tone_defeat':
+
             curr =  state['tone_defeat']
             new = switch(args, curr)
+
             if type(new) == bool and new != curr:
                 result = do_levels('tone_defeat', tone_defeat=new)
+
 
         # Special commands when using cammillaDSP
         case 'get_cdsp_config':
