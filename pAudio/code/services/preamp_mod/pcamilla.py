@@ -183,7 +183,7 @@ def _prepare_cam_config(pAudio_config):
         prepare_multiway_structure()
 
     # Dither
-    base_config.update_dither(pAudio_config, cam_config)
+    base_config.append_dither(pAudio_config, cam_config)
 
     return cam_config
 
@@ -586,11 +586,50 @@ def set_xo(xo_set):
     return result
 
 
-def set_drc(drcID):
+def set_drc(drc_id, drc_type):
+    """
+        drc_type:   iir | fir
 
-    result = 'WIP'
+        drc_id:     It is supposed to receive a validated drc_id one OR 'none'
 
-    return result
+                    If 'none' the program will flush any drc_xxxx
+                    into the pipeline step `names` field
+
+
+        (!) fir drc_type is PENDING
+    """
+
+    if drc_type != 'iir':
+        return 'ONLY WORKS FOR DRC IIR'
+
+    # get all filters named drc_<drc_id>_xxx
+    cfg           = get_config()
+    fnames        = cfg.get('filters')
+    drc_fnames    = [ x for x in fnames if x[:4] == 'drc_' and x[-2:] in ('_L', '_R') ]
+    drc_id_fnames = [ x for x in drc_fnames if f'_{drc_id}_' in x ]
+    drc_id_fnames = sorted( drc_id_fnames )
+
+    # Iterate over the pipeline steps
+    for i, step in enumerate( cfg["pipeline"] ):
+
+        # filter DRC steps
+        if step.get('description') and  '(DRC ' in step.get('description', ''):
+
+            step_ch = step["channels"][0]
+
+            # remove any 'drc_xxxx' in `names:` (will keep dither if so)
+            new_names = [ x for x in step["names"] if x[:4] != 'drc_' ]
+
+            # add the new drc filters in `names:`
+            for fname in drc_id_fnames:
+                if step_ch == 0 and fname[-2:] == '_L' or step_ch == 1 and fname[-2:] == '_R':
+                    new_names = [fname] + new_names
+
+            cfg["pipeline"][i]["names"] = new_names
+
+    set_config_sync(cfg)
+
+    return 'done'
 
 
 def set_drc_gain(dB):
