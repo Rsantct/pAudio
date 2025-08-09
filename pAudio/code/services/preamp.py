@@ -324,8 +324,9 @@ def init():
         sys.exit()
 
 
-# Dumping EQ to .png file and alerting clients to let them know
 def eq2png():
+    """  Dumping EQ to .png file and alerting clients to let them know
+    """
 
     def alert_new_eq_graph(timeout=1):
         """ This sets the 'new_eq_graph' field to True for a while
