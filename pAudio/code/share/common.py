@@ -92,30 +92,6 @@ def send_cmd( cmd, sender='', verbose=False, timeout=3,
     return ans
 
 
-def get_DSP_in_use():
-    """ The DSP in use is set inside preamp.py
-    """
-    with open(f'{CODEFOLDER}/services/preamp.py', 'r') as f:
-        tmp = f.readlines()
-    import_lines = [line for line in tmp if 'import ' in line]
-    import_DSP_line = str([line for line in import_lines if 'DSP' in line])
-    res = 'unknown'
-    if 'camilla' in import_DSP_line:
-        res = 'camilladsp'
-    elif 'brutefir' in import_DSP_line:
-        res = 'brutefir'
-    return res
-
-
-def get_bit_depth(fmt):
-    """ retrieves the bit depth from a given audio sample format,
-        e.g. FLOAT32LE, S24LE, ...
-    """
-    digits = [x for x in fmt if x.isdigit()]
-    bd = ''.join(digits)
-    return int(bd)
-
-
 def read_json_file(fpath, timeout=1):
     """ Some json files cannot be ready to read in first pAudio run,
         so let's retry
@@ -384,8 +360,8 @@ def get_loudspeaker_ways():
     return list(set(lws))
 
 
-def get_drc_iir_sets_from_loudspeaker_folder():
-    """ This
+def get_DRC_SETS_from_loudspeaker_folder():
+    """ This reads camilladsp_lspk.yml
     """
     result = {}
 
@@ -398,7 +374,7 @@ def get_drc_iir_sets_from_loudspeaker_folder():
             result = lspk_cfg.get('iir_eq', {}).get('drc', {})
 
     except:
-        print(f'(get_drc_iir_sets_from_loudspeaker_folder) cannot read {lspk_cfg_path}')
+        print(f'(get_DRC_SETS_from_loudspeaker_folder) cannot read {lspk_cfg_path}')
 
     return result
 
