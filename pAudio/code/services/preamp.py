@@ -187,7 +187,7 @@ def init():
             CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
 
 
-    global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, XO_SETS
+    global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, DRC_TYPE, XO_SETS
 
     # (i) SOURCES can be populated internally with known plugins,
     #     so the configured YAML should only contain user-defined sources.
@@ -200,12 +200,17 @@ def init():
     else:
         SOURCES = {}
 
+    # Target curve sets
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
-    DRC_SETS            = get_DRC_SETS_from_loudspeaker_folder()
+    # DRC sets and type ('iir' or 'fir')
+    DRC_SETS, DRC_TYPE  = get_drc_sets()
     CONFIG["drc_sets"]  = DRC_SETS
+    CONFIG["drc_type"]  = DRC_TYPE
+    state["drc_type"]   = DRC_TYPE
 
-    XO_SETS             = get_xo_sets_from_loudspeaker_folder()
+    # XO sets
+    XO_SETS             = get_xo_sets()
     CONFIG["xo_sets"]   = XO_SETS
 
 
@@ -388,21 +393,10 @@ def set_drc(drcID):
         res = 'not available'
 
     elif not drcID in DRC_SETS:
-        res = f'must be in: {DRC_SETS}'
+        res = f'must be in: { list(DRC_SETS.keys()) }'
 
     else:
-        # camillaDSP has not gain setting for a FIR filter,
-        # so it must be done outside
-
-        # Because DRCs are supposed to have a non positive unity gain offset,
-        # we first put down volume when drc='none'
-        if drcID == 'none':
-            tmp = DSP.set_drc_gain(CONFIG["drcs_offset"])
-
-        res = DSP.set_drc(drcID)
-
-        if res == 'done' and drcID != 'none':
-            DSP.set_drc_gain(0.0)
+        res = DSP.set_drc(drcID, DRC_TYPE)
 
     return res
 
