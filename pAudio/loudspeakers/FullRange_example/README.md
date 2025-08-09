@@ -8,7 +8,7 @@
 
 IIR filters can be set into **`camilladsp_lspk.yml`**, whit a logical syntax, see example file.
 
-## FIR filtering (PENDING)
+## FIR filtering _PENDING_
 
 All pcm files are fake ones, just to illustrate `.pcm` files naming
 
