@@ -6,7 +6,7 @@
 
 ## IIR filtering
 
-IIR filters ca be set into **`camilladsp_lspk.yml`**, whit a logical syntax, see example file.
+IIR filters can be set into **`camilladsp_lspk.yml`**, whit a logical syntax, see example file.
 
 ## FIR filtering (PENDING)
 
