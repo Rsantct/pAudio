@@ -42,12 +42,11 @@ iir_eq:
                 gain: 1.5
                 q: 3.0
 
-
+    # DRC filters are expected to be divided in set-names and then in L: and R: sections
     drc:
 
         sofa:
 
-            # DRC filters are expected to be divided in L: and R: sections
             L:
 
                 1:
