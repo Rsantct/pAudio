@@ -361,14 +361,17 @@ def get_loudspeaker_ways():
 
 
 def get_drc_sets():
-    """ This reads the loudspeaker folder for DRC stuff
 
-        - camilladsp_lspk.yml
-
-        - FS/drc_xxxxxx.pcm (PENDING)
-
-    """
     drc_type = 'iir'
+
+    drc_sets = get_drc_iir_sets()
+
+    return drc_sets, drc_type
+
+
+def get_drc_iir_sets():
+    """ This reads DRC inside camilladsp_lspk.yml in the loudspeaker folder
+    """
 
     drc_sets = {}
 
@@ -385,7 +388,7 @@ def get_drc_sets():
 
     drc_sets["none"] = {}
 
-    return drc_sets, drc_type
+    return drc_sets
 
 
 def get_drc_fir_sets():
