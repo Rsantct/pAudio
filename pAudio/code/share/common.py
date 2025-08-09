@@ -388,17 +388,18 @@ def get_drc_sets():
     return drc_sets, drc_type
 
 
-# PENDING ADAPTATION WITH FS FOLDER
-def get_drc_fir_sets_from_loudspeaker_folder():
+def get_drc_fir_sets():
     """ looks for drc.Channel.DrcId.pcm files inside the loudspeaker folder
     """
     drc_files = []
     drc_sets_candidate  = {}
     drc_sets = []
 
+    pcms_folder = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
+
     try:
-        files = os.listdir(f'{LSPKFOLDER}')
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
+        files = os.listdir(pcms_folder)
+        files = [x for x in files if os.path.isfile(f'{pcms_folder}/{x}') ]
         drc_files = [x for x in files if x.startswith('drc.') ]
     except:
         pass
