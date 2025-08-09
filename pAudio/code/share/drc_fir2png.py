@@ -6,7 +6,7 @@
 """
     Dumps all DRC sets tp png images under to www/images/<LOUDSPEAKER>
 
-    usage:      drcfir2png.py [--quiet]
+    usage:      drc_fir2png.py [--quiet]
 
     NOTICE: Even if short lenght IR are used for DRC, thus low resolution
             in low freq correction, the correction curve will be
@@ -55,7 +55,7 @@ def get_spectrum(imp, fs):
     try:
         N = fft.next_fast_len(N)
     except:
-        print(f'(drcfir2png) fft.next_fast_len not availble on this scipy version')
+        print(f'(drc_fir2png) fft.next_fast_len not availble on this scipy version')
 
     # Semispectrum (whole=False -->  w to Nyquist)
     w, h = signal.freqz(imp, worN=N, whole=False)
@@ -80,7 +80,8 @@ def read_pcms(drc_set):
 
     fnames = []
     for ch in ('L', 'R'):
-        fnames.append(f'{LSPKFOLDER}/drc.{ch}.{drc_set}.pcm')
+        fnames.append(f'{LSPKFOLDER}/{FS}/drc.{ch}.{drc_set}.pcm')
+
     IRs = []
     for fname in fnames:
         imp = readPCM32(fname)
@@ -161,11 +162,11 @@ def png_is_outdated(drc_set):
             png_ctime = os.path.getctime(png_path)
             if (png_ctime - pcm_ctime) < 0:
                 if verbose:
-                    print(f'(drcfir2png) found old PNG file for "{drc_set}"')
+                    print(f'(drc_fir2png) found old PNG file for "{drc_set}"')
                 return True
         except:
             if verbose:
-                print(f'(drcfir2png) PNG file for "{drc_set}" not found')
+                print(f'(drc_fir2png) PNG file for "{drc_set}" not found')
             return True
 
     return False
@@ -177,7 +178,7 @@ def prepare_IMGFOLDER():
     except FileExistsError:
         pass
     except:
-        print(f'drcfir2png unexpected error when mkdir "{IMGFOLDER}"')
+        print(f'drc_fir2png unexpected error when mkdir "{IMGFOLDER}"')
 
 
 def get_DSP_in_use():
@@ -199,13 +200,10 @@ if __name__ == '__main__':
 
     DSP_IN_USE = get_DSP_in_use()
 
-    BF_DRC_COEFFS = []
     if DSP_IN_USE == 'brutefir':
         # Reading drc coeffs inside brutefir_config in order to get coeff attenuation
         bf_coeffs = bf_get_config()["coeffs"]
         BF_DRC_COEFFS = [x for x in bf_coeffs if x["name"].startswith('drc')]
-
-
 
     # Read command line (quiet mode or help)
     verbose = True
@@ -223,10 +221,10 @@ if __name__ == '__main__':
     # Get sample rate
     FS = CONFIG["samplerate"]
     if verbose:
-        print( f'(drcfir2png) using sample rate: {FS}' )
+        print( f'(drc_fir2png) using sample rate: {FS}' )
 
     # Get DRC sets names
-    drc_sets = get_drc_fir_sets_from_loudspeaker_folder()
+    drc_sets = get_drc_fir_sets()
 
     # Do plot png files from pcm files
     drc_sets.append('none')
@@ -235,11 +233,11 @@ if __name__ == '__main__':
         # Check for outdated PNG file
         if not png_is_outdated(drc_set):
             if verbose:
-                print(f'(drcfir2png) found PNG file for {LOUDSPEAKER}: {drc_set}')
+                print(f'(drc_fir2png) found PNG file for {LOUDSPEAKER}: {drc_set}')
             continue
         else:
             if verbose:
-                print(f'(drcfir2png) processing PNG file for {LOUDSPEAKER}: {drc_set}')
+                print(f'(drc_fir2png) processing PNG file for {LOUDSPEAKER}: {drc_set}')
 
         fig, ax = plt.subplots()
         fig.set_figwidth( 5 )   # 5 inches at 100dpi => 500px wide
@@ -292,5 +290,5 @@ if __name__ == '__main__':
         fpng = f'{IMGFOLDER}/drc_{drc_set}.png'
         plt.savefig( fpng, facecolor=WEBCOLOR )
         if verbose:
-            print( f'(drcfir2png) saved: \'{fpng}\' ' )
+            print( f'(drc_fir2png) saved: \'{fpng}\' ' )
         #plt.show()
