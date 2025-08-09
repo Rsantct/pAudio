@@ -17,7 +17,7 @@ Sections in `camilladsp_lspk.yml`:
 
       lspk_eq:    filters intended to EQ the loudspeaker itself
 
-      drc:        filters per channel for DRC (Digital Room Correction)
+      drc:        sets of filters per channel for DRC (Digital Room Correction)
 
 
 `fir_eq` is not set here, pAudio will take a look for **`xxxx.pcm`** files and will do the needed config.
