@@ -8,25 +8,12 @@ Fmt = None
 
 def update_lspk_iir(pAudio_config, cam_config):
 
-    # Import the filters
-
+    # Prepare filters sections
     if not cam_config.get('filters'):
         cam_config["filters"] = {}
 
-    # LOUDSPEAKER EQ filters
-    for fname, fparams in pAudio_config["iir_eq"].get('lspk_eq', {}).items():
-        cam_config["filters"][fname] = fparams
 
-    # DRC filters
-    for drc_set, drc_filters in pAudio_config["iir_eq"].get('drc', {}).items():
-        for ch in pAudio_config["iir_eq"]["drc"][drc_set]:
-            for fname, fparams in pAudio_config["iir_eq"]["drc"][drc_set][ch].items():
-                fname = f'drc_{drc_set}_{fname}_{ch}'
-                cam_config["filters"][fname] = fparams
-
-
-
-    # Pipeline step for loudspeaker EQ filters (will be applied at both channels)
+    # Prepare pipeline steps for loudspeaker EQ
     pipeline_eq_L_step = {
         'type':         'Filter',
         'description':  f'{ pAudio_config["loudspeaker"] } (EQ left)',
@@ -45,7 +32,7 @@ def update_lspk_iir(pAudio_config, cam_config):
     pipeline_eq_R_step_names = []
 
 
-    # Pipeline step for loudspeaker DRC filters
+    # Prepare pipeline steps for DRC
     pipeline_drc_L_step = {
         'type':         'Filter',
         'description':  f'{ pAudio_config["loudspeaker"] } (DRC left)',
@@ -62,6 +49,21 @@ def update_lspk_iir(pAudio_config, cam_config):
     }
     pipeline_drc_L_step_names = []
     pipeline_drc_R_step_names = []
+
+
+    # Import the filters pAudio_config ---> cam_config
+
+    #   Loudspeaker EQ filters
+    for fname, fparams in pAudio_config["iir_eq"].get('lspk_eq', {}).items():
+        cam_config["filters"][fname] = fparams
+
+    #   DRC filters
+    for drc_set, drc_filters in pAudio_config["iir_eq"].get('drc', {}).items():
+        for ch in pAudio_config["iir_eq"]["drc"][drc_set]:
+            for fname, fparams in pAudio_config["iir_eq"]["drc"][drc_set][ch].items():
+                fname = f'drc_{drc_set}_{fname}_{ch}'
+                cam_config["filters"][fname] = fparams
+
 
     # Append loudspeaker EQ filters to pipeline
     for f in pAudio_config["iir_eq"].get('lspk_eq', {}):
@@ -98,7 +100,7 @@ def update_lspk_iir(pAudio_config, cam_config):
 
             for f in pAudio_config["iir_eq"]["drc"][first_drc_set][ch]:
 
-                f = f'drc_{drc_set}_{f}_{ch}'
+                f = f'drc_{first_drc_set}_{f}_{ch}'
 
                 if ch == 'L':
                     pipeline_drc_L_step_names.append(f)
@@ -109,17 +111,18 @@ def update_lspk_iir(pAudio_config, cam_config):
                     print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_drc_R_step["description"]}`{Fmt.END}')
 
 
-
+    # Populate step names
     pipeline_eq_L_step["names"] = pipeline_eq_L_step_names
     pipeline_eq_R_step["names"] = pipeline_eq_R_step_names
 
     pipeline_drc_L_step["names"] = pipeline_drc_L_step_names
     pipeline_drc_R_step["names"] = pipeline_drc_R_step_names
 
-    if pipeline_eq_L_step["names"] :
+    # Then append pipeline steps if used
+    if pipeline_eq_L_step["names"] or pipeline_eq_R_step["names"] :
         cam_config["pipeline"].append( pipeline_eq_L_step )
         cam_config["pipeline"].append( pipeline_eq_R_step )
 
-    if pipeline_drc_L_step["names"] :
+    if pipeline_drc_L_step["names"] or pipeline_drc_R_step["names"] :
         cam_config["pipeline"].append( pipeline_drc_L_step )
         cam_config["pipeline"].append( pipeline_drc_R_step )
