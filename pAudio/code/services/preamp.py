@@ -99,7 +99,7 @@ def init():
 
         set_loudness( mode=state["equal_loudness"] )
 
-        if not state["drc_set"] in DRC_SETS or not state["drc_set"] in DRC_SETS:
+        if not state["drc_set"] in CONFIG["drc_sets"] or not state["drc_set"] in CONFIG["drc_sets"]:
             state["drc_set"] = 'none'
         set_drc( state["drc_set"] )
 
@@ -186,7 +186,7 @@ def init():
             CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
 
 
-    global state, CONFIG, SOURCES, TARGET_SETS, DRC_SETS, DRC_TYPE, XO_SETS
+    global state, CONFIG, SOURCES, TARGET_SETS, XO_SETS
 
     # (i) SOURCES can be populated internally with known plugins,
     #     so the configured YAML should only contain user-defined sources.
@@ -202,11 +202,8 @@ def init():
     # Target curve sets
     TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
 
-    # DRC sets and type ('iir' or 'fir')
-    DRC_SETS, DRC_TYPE  = get_drc_sets()
-    CONFIG["drc_sets"]  = DRC_SETS
-    CONFIG["drc_type"]  = DRC_TYPE
-    state["drc_type"]   = DRC_TYPE
+    # DRC sets
+    CONFIG["drc_sets"]  = get_drc_sets()
 
     # XO sets
     XO_SETS             = get_xo_sets()
@@ -231,7 +228,7 @@ def init():
 
                 case 'drc_set':
 
-                    if CONFIG["drc_set"] in DRC_SETS or CONFIG["drc_set"] == 'none':
+                    if CONFIG["drc_set"] in CONFIG["drc_sets"] or CONFIG["drc_set"] == 'none':
                         state["drc_set"] = CONFIG["drc_set"]
                     else:
                         print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
@@ -389,14 +386,14 @@ def set_loudness(mode, level=state["level"]):
 
 def set_drc(drcID):
 
-    if not DRC_SETS:
+    if not CONFIG["drc_sets"]:
         res = 'not available'
 
-    elif not drcID in DRC_SETS:
-        res = f'must be in: { list(DRC_SETS.keys()) }'
+    elif not drcID in CONFIG["drc_sets"]:
+        res = f'must be in: { list( CONFIG["drc_sets"].keys() ) }'
 
     else:
-        res = DSP.set_drc(drcID, DRC_TYPE)
+        res = DSP.set_drc(drcID)
 
     return res
 
@@ -657,7 +654,7 @@ def do(cmd, args, add):
             result = json.dumps(TARGET_SETS)
 
         case 'get_drc_sets':
-            result = json.dumps( list(DRC_SETS.keys()) )
+            result = json.dumps( list( CONFIG["drc_sets"].keys() ) )
 
         case 'get_xo_sets':
             result = json.dumps(XO_SETS)
