@@ -45,9 +45,7 @@ lspk_eq:
 drc:
 
     sofa:
-
         L:
-
             1:
                 type: Biquad
                 parameters:
@@ -69,9 +67,7 @@ drc:
                     freq: 243.0
                     gain: -1.5
                     q: 2.0
-
         R:
-
             1:
                 type: Biquad
                 parameters:
