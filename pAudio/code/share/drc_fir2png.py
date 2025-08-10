@@ -44,6 +44,44 @@ DB_TICKS    = [-18, -12, -6, 0, 6]
 DB_LABELS   = ['-18', '-12', '-6', '0', '6']
 
 
+def get_drc_fir_sets():
+    """ looks for drc FIR files inside the loudspeaker folder.
+    """
+    drc_files = []
+    drc_sets_candidate  = {}
+    drc_sets = []
+
+    pcms_folder = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
+
+    try:
+        files = os.listdir(pcms_folder)
+        files = [x for x in files if os.path.isfile(f'{pcms_folder}/{x}') ]
+        drc_files = [x for x in files if x.startswith('drc.') ]
+
+    except:
+        pass
+
+    for f in drc_files:
+        chID  = f.split('.')[1]
+        drcID = '.'.join(f.split('.')[2:]).replace('.pcm', '')
+
+        if not drcID in drc_sets_candidate:
+            drc_sets_candidate[drcID] = [chID]
+
+        else:
+            if not chID in drc_sets_candidate[drcID]:
+                drc_sets_candidate[drcID].append(chID)
+
+    for k in drc_sets_candidate:
+
+        channels = drc_sets_candidate[k]
+
+        if sorted(channels) == ['L', 'R']:
+            drc_sets.append(k)
+
+    return sorted(drc_sets)
+
+
 def get_spectrum(imp, fs):
 
     fNyq = fs / 2.0
