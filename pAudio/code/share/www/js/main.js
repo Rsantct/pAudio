@@ -184,9 +184,6 @@ function fill_in_page_statics(){
             option.text = drc_sets[i];
             mySel.add(option);
         }
-        var option = document.createElement("option");
-        option.text = 'none';
-        mySel.add(option);
     }
 
     function fill_in_target_selector() {
@@ -398,7 +395,7 @@ function init(){
     setInterval( page_update, AUTO_UPDATE_INTERVAL );
 
     // Alert user
-    setTimeout(init_alert, 3000)
+    setTimeout(init_alert, 2000)
 
 }
 
