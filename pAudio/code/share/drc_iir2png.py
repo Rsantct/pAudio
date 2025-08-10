@@ -3,8 +3,11 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
-""" This program makes png graphs for the drc sets found under
-    the camilladsp_lspk.yml file from the loudspeaker folder
+""" This program makes PNG graphs for the drc sets found inside
+
+        <LSPKFOLDER>/camilladsp_lspk.yml
+
+    PNG files are saved for the control web page to be displayed
 """
 
 import  sys
