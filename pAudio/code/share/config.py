@@ -167,73 +167,6 @@ def _init():
         return LSPK_CGF
 
 
-    def reformat_PEQ():
-        """ PEQa are given in NON standard YML, having 3 fields. Example:
-
-            PEQ:
-                L:
-                    #   freq    gain    Q
-                    1:  123     -2.0    1.0
-                    2:  456     -3.0    0.5
-                R:
-                    ...
-
-            Here will convert the Human Readable fields into a dictionary.
-        """
-
-        def check_peq_params(params):
-
-            freq, gain, q = params
-
-            freq = float(freq)
-            gain = float(gain)
-            q    = float(q)
-
-            if freq < 20.0 or freq > 20e3:
-                raise Exception('Freq must be 20 ~ 20000 (Hz)')
-
-            if gain < -20 or gain > 6:
-                raise Exception('Gain must be in -20.0 ~ +6.0 (dB)')
-
-            if q < 0.1 or q > 10:
-                raise Exception('Q must be in 0.1 ~ 10')
-
-            return freq, gain, q
-
-
-        # Filling the empty keys
-        if not 'PEQ' in CONFIG or not CONFIG["PEQ"]:
-            CONFIG["PEQ"] = {'L': {}, 'R': {}}
-        if not 'L' in CONFIG["PEQ"]:
-            CONFIG["PEQ"]["L"] = {}
-        if not 'R' in CONFIG["PEQ"]:
-            CONFIG["PEQ"]["R"] = {}
-
-        # PEQ parameters
-        for ch in CONFIG["PEQ"]:
-
-            if not ch in ('L', 'R'):
-                raise Exception('PEQ channel must be `L` or `R`')
-
-            if not CONFIG["PEQ"][ch]:
-                CONFIG["PEQ"][ch] = {}
-
-            for peq, params in CONFIG["PEQ"][ch].items():
-
-                # It is expected 3 fields
-                params = params.split()
-                if len(params) != 3:
-                    raise Exception(f'Bad PEQ #{peq}')
-
-                # Redo in dictionary form
-                freq, gain, q = check_peq_params(params)
-                params = {  'freq':     freq,
-                            'gain':     gain,
-                            'q':        q       }
-
-                CONFIG["PEQ"][ch][peq] = params
-
-
     global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
@@ -277,28 +210,32 @@ def _init():
     LSPK_YML_PATH = f'{LSPKFOLDER}/camilladsp_lspk.yml'
 
 
-    # Converting the Human Readable PEQ section under CONFIG to a dictionary
-    # **PENDING**
-    #reformat_PEQ()
-
-
     # MERGING the specific LOUDSPEAKER YAML configuration
     lspk_config = get_lspk_config()
     #
     # DEBUG
-    #print('--- lspk_yaml ----')
+    #print('--- camilladsp_lspk.yml ----')
     #print( yaml.dump(lspk_config, default_flow_style=False, sort_keys=False, indent=2) )
     #
+
     # 1. Loudspeaker multiway outputs:
     CONFIG["outputs"] = lspk_config["outputs"]
-    #
-    # 2. Loudspeaker IIR_EQ:
-    if not CONFIG.get('iir_eq'):
-        CONFIG["iir_eq"] = {}
-    if lspk_config.get('iir_eq'):
-        for fname, fparams in lspk_config["iir_eq"].items():
-            CONFIG["iir_eq"][fname] = fparams
 
+    # 2. Loudspeaker EQ:
+    if not CONFIG.get('lspk_eq'):
+        CONFIG["lspk_eq"] = {}
+
+    if lspk_config.get('lspk_eq'):
+        for fname, fparams in lspk_config["lspk_eq"].items():
+            CONFIG["lspk_eq"][fname] = fparams
+
+    # 3. Loudspeaker DRC:
+    if not CONFIG.get('drc'):
+        CONFIG["drc"] = {}
+
+    if lspk_config.get('drc'):
+        for fname, fparams in lspk_config["drc"].items():
+            CONFIG["drc"][fname] = fparams
 
     # DEBUG
     #print('--- pAudio ----')
