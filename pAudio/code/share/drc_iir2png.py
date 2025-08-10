@@ -228,7 +228,7 @@ if __name__ == "__main__":
 
     sp.Popen(f'mkdir -p {IMGFOLDER}', shell=True)
 
-    drc_sets = get_drc_iir_sets()
+    drc_sets = get_drc_sets()
 
     fs       = CONFIG["samplerate"]
 
