@@ -22,10 +22,10 @@ from    common import *
 
 from    pcamilla_mod.do_makes       import  *
 from    pcamilla_mod.do_clears      import  *
-import  pcamilla_mod.lspk_iir       as lspk_iir
+import  pcamilla_mod.lspk           as lspk
 import  pcamilla_mod.base_config    as base_config
 
-lspk_iir.Fmt         =  Fmt
+lspk.Fmt             =  Fmt
 base_config.Fmt      =  Fmt
 base_config.EQFOLDER =  EQFOLDER
 
@@ -173,9 +173,9 @@ def _prepare_cam_config(pAudio_config):
     # CamillaDSP base config
     base_config.prepare_base_config(pAudio_config, cam_config)
 
-    # IIR EQ filters previously imported from the loudspeaker folder 'camilla_dsp.yml' file
-    if pAudio_config.get('iir_eq'):
-        lspk_iir.update_lspk_iir(pAudio_config, cam_config)
+    # EQ and DRC filters previously imported from the loudspeaker folder 'camilla_dsp.yml' file
+    if pAudio_config.get('lspk_eq') or pAudio_config.get('drc'):
+        lspk.update_lspk(pAudio_config, cam_config)
 
     # Multiway if more than 2 outputs
     outputs_in_use = [ x for x in pAudio_config["outputs"] if pAudio_config["outputs"][x].get('name') ]
@@ -586,21 +586,13 @@ def set_xo(xo_set):
     return result
 
 
-def set_drc(drc_id, drc_type):
+def set_drc(drc_id):
     """
-        drc_type:   iir | fir
+        It is supposed to receive a validated drc_id one OR 'none'
 
-        drc_id:     It is supposed to receive a validated drc_id one OR 'none'
-
-                    If 'none' the program will flush any drc_xxxx
-                    into the pipeline step `names` field
-
-
-        (!) fir drc_type is PENDING
+        If 'none' the program will flush any drc_xxxx
+        into the pipeline step `names` field
     """
-
-    if drc_type != 'iir':
-        return 'ONLY WORKS FOR DRC IIR'
 
     # get all filters named drc_<drc_id>_xxx
     cfg           = get_config()
