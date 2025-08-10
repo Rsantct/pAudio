@@ -361,16 +361,7 @@ def get_loudspeaker_ways():
 
 
 def get_drc_sets():
-
-    drc_type = 'iir'
-
-    drc_sets = get_drc_iir_sets()
-
-    return drc_sets, drc_type
-
-
-def get_drc_iir_sets():
-    """ This reads DRC inside camilladsp_lspk.yml in the loudspeaker folder
+    """ DRC sets are defined inside the file: LSKPFOLDER/camilladsp_lspk.yml
     """
 
     drc_sets = {}
@@ -381,7 +372,7 @@ def get_drc_iir_sets():
 
         with open(lspk_cfg_path, 'r') as f:
             lspk_cfg = yaml.safe_load( f.read() )
-            drc_sets = lspk_cfg.get('iir_eq', {}).get('drc', {})
+            drc_sets = lspk_cfg.get('drc', {})
 
     except:
         print(f'(get_DRC_SETS_from_loudspeaker_folder) cannot read {lspk_cfg_path}')
@@ -389,39 +380,6 @@ def get_drc_iir_sets():
     drc_sets["none"] = {}
 
     return drc_sets
-
-
-def get_drc_fir_sets():
-    """ looks for drc.Channel.DrcId.pcm files inside the loudspeaker folder
-    """
-    drc_files = []
-    drc_sets_candidate  = {}
-    drc_sets = []
-
-    pcms_folder = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
-
-    try:
-        files = os.listdir(pcms_folder)
-        files = [x for x in files if os.path.isfile(f'{pcms_folder}/{x}') ]
-        drc_files = [x for x in files if x.startswith('drc.') ]
-    except:
-        pass
-
-    for f in drc_files:
-        chID  = f.split('.')[1]
-        drcID = '.'.join(f.split('.')[2:]).replace('.pcm', '')
-        if not drcID in drc_sets_candidate:
-            drc_sets_candidate[drcID] = [chID]
-        else:
-            if not chID in drc_sets_candidate[drcID]:
-                drc_sets_candidate[drcID].append(chID)
-
-    for k in drc_sets_candidate:
-        channels = drc_sets_candidate[k]
-        if sorted(channels) == ['L', 'R']:
-            drc_sets.append(k)
-
-    return sorted(drc_sets)
 
 
 def get_target_sets(fs=44100):
