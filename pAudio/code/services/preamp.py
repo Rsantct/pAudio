@@ -41,7 +41,6 @@ PREAMP_STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
 state = read_json_file(PREAMP_STATE_PATH)
 
 
-
 # INIT
 def init():
 
@@ -99,7 +98,7 @@ def init():
 
         set_loudness( mode=state["equal_loudness"] )
 
-        if not state["drc_set"] in CONFIG["drc_sets"] or not state["drc_set"] in CONFIG["drc_sets"]:
+        if not state["drc_set"] in DRC_SETS or not state["drc_set"] in DRC_SETS:
             state["drc_set"] = 'none'
         set_drc( state["drc_set"] )
 
@@ -186,7 +185,7 @@ def init():
             CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
 
 
-    global state, CONFIG, SOURCES, TARGET_SETS, XO_SETS
+    global state, CONFIG, SOURCES, TARGET_SETS, XO_SETS, DRC_SETS
 
     # (i) SOURCES can be populated internally with known plugins,
     #     so the configured YAML should only contain user-defined sources.
@@ -200,15 +199,13 @@ def init():
         SOURCES = {}
 
     # Target curve sets
-    TARGET_SETS         = get_target_sets(fs=CONFIG["samplerate"])
-
-    # DRC sets
-    CONFIG["drc_sets"]  = get_drc_sets()
+    TARGET_SETS = get_target_sets(fs=CONFIG["samplerate"])
 
     # XO sets
-    XO_SETS             = get_xo_sets()
-    CONFIG["xo_sets"]   = XO_SETS
+    XO_SETS = get_xo_sets()
 
+    # DRC sets
+    DRC_SETS = ['none'] + list( CONFIG["drc"].keys() )
 
     # Optional user config settings having precedence over the saved state:
     for prop in 'level', 'balance', 'bass', 'treble', 'tone_defeat',  \
@@ -228,7 +225,7 @@ def init():
 
                 case 'drc_set':
 
-                    if CONFIG["drc_set"] in CONFIG["drc_sets"] or CONFIG["drc_set"] == 'none':
+                    if CONFIG["drc_set"] in DRC_SETS or CONFIG["drc_set"] == 'none':
                         state["drc_set"] = CONFIG["drc_set"]
                     else:
                         print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
@@ -386,11 +383,11 @@ def set_loudness(mode, level=state["level"]):
 
 def set_drc(drcID):
 
-    if not CONFIG["drc_sets"]:
+    if not DRC_SETS:
         res = 'not available'
 
-    elif not drcID in CONFIG["drc_sets"]:
-        res = f'must be in: { list( CONFIG["drc_sets"].keys() ) }'
+    elif not drcID in DRC_SETS:
+        res = f'must be in: { DRC_SETS }'
 
     else:
         res = DSP.set_drc(drcID)
@@ -654,7 +651,7 @@ def do(cmd, args, add):
             result = json.dumps(TARGET_SETS)
 
         case 'get_drc_sets':
-            result = json.dumps( list( CONFIG["drc_sets"].keys() ) )
+            result = json.dumps(DRC_SETS)
 
         case 'get_xo_sets':
             result = json.dumps(XO_SETS)
