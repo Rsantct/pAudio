@@ -236,6 +236,11 @@ def _init():
         for fname, fparams in lspk_config["drc"].items():
             CONFIG["drc"][fname] = fparams
 
+    # Dump to disk for maintenence
+    pAudio_cfg_json_path = f'{LOGFOLDER}/.pAudio_cfg'
+    with open(pAudio_cfg_json_path, 'w') as f:
+        f.write( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
+
     # DEBUG
     #print('--- pAudio ----')
     #print(CONFIG.keys())
