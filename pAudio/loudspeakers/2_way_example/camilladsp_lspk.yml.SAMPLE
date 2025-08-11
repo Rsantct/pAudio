@@ -3,7 +3,36 @@
 safe_gain: -8
 
 drc:
+
+    # See fullrange example for DRC FIR and/or IIR
     cabecero: fir
+
+
+xo:
+
+    # For FIR XO sets, just provide one field as follow:
+    #   some-set-name: fir
+    # then pAudio will populate the needed parameters for each way (hi, lo, ...)
+    # by using this 'some-set-name' and searching for PCM files named like this
+    # under the loudspeaker folder. Example:
+
+    original.mp:   fir      # this assumes proper .pcm files named as follow:
+                            #   xo.lo.original.mp.pcm
+                            #   xo.hi.original.mp.pcm
+
+    original.lp:   fir
+
+    # For IIR XO sets, provide each way (lo, hi) and 3 parameters. Example:
+    prueba:
+        lo:
+            type:   LR      # or Butterworth
+            order:  2       # must be even for LinkwitzRelay
+            freq:   2000    # Hz
+        hi:
+            type:   LR
+            order:  2
+            freq:   2000
+
 
 # (i) output index starts with `1` like jack `system:playback_N` ports numbering
 outputs:
