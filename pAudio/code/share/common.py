@@ -303,46 +303,6 @@ def list_remove_by_pattern(l, p):
     return l
 
 
-def get_xo_filters_from_loudspeaker_folder():
-    """ looks for xo.xxxx.pcm files inside the loudspeaker folder
-    """
-    xo_files    = []
-    xo_filters  = []
-
-    LSPKFOLDER_FS = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
-
-    try:
-        files = os.listdir(LSPKFOLDER_FS)
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER_FS}/{x}') ]
-        xo_files = [x for x in files if x.startswith('xo.')
-                                        and
-                                        x.endswith('.pcm')]
-    except Exception as e:
-        print(f'{Fmt.BOLD}get_xo_filters_from_loudspeaker_folder ERROR: {str(e)}{Fmt.END}')
-
-    for f in xo_files:
-        xo_id = f.replace('xo.', '').replace('.pcm', '')
-        xo_filters.append(xo_id)
-
-    return xo_filters
-
-
-def get_xo_sets():
-    """ xo.WW.FF.pcm files can exist on two flavours:
-
-            FF = mp: minimum phase filter
-            FF = lp: linear phase filter
-    """
-    xo_filters = get_xo_filters_from_loudspeaker_folder()
-
-    xo_sets = [ x.replace('lo.', '')
-                 .replace('mi.', '')
-                 .replace('hi.', '')
-                 .replace('sw.', '') for x in xo_filters ]
-
-    return list(set(xo_sets))
-
-
 def get_loudspeaker_ways():
     """ Read loudspeaker ways as per the outputs configuration
     """
