@@ -15,7 +15,7 @@ def make_dither_filter(d_type, bits):
     return f
 
 
-def make_drc_filter(channel, drc_set, fs, lspkfolder):
+def make_drc_fir_filter(channel, drc_set, fs, lspkfolder):
 
     fir_path = f'{lspkfolder}/{fs}/drc.{channel}.{drc_set}.pcm'
 
