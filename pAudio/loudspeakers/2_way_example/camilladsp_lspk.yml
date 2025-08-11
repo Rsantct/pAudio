@@ -1,0 +1,18 @@
+# Safe gain to avoid clipping when applying filters below.
+# This is not a CamillaDSP native parameter but will affect the processor gain.
+safe_gain: -8
+
+drc:
+    cabecero: fir
+
+# (i) output index starts with `1` like jack `system:playback_N` ports numbering
+outputs:
+
+    #           name         Gain dB    Polarity +/-    Delay ms
+    1:
+    2:
+    3:          lo.L          0.0       +               0.0
+    4:          lo.R          0.0       +               0.0
+    5:          hi.L         -7.0       +               0.0
+    6:          hi.R         -7.0       +               0.0
+    
