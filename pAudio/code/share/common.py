@@ -360,28 +360,6 @@ def get_loudspeaker_ways():
     return list(set(lws))
 
 
-def get_drc_sets():
-    """ DRC sets are defined inside the file: LSKPFOLDER/camilladsp_lspk.yml
-    """
-
-    drc_sets = {}
-
-    lspk_cfg_path = f'{LSPKFOLDER}/camilladsp_lspk.yml'
-
-    try:
-
-        with open(lspk_cfg_path, 'r') as f:
-            lspk_cfg = yaml.safe_load( f.read() )
-            drc_sets = lspk_cfg.get('drc', {})
-
-    except:
-        print(f'(get_DRC_SETS_from_loudspeaker_folder) cannot read {lspk_cfg_path}')
-
-    drc_sets["none"] = {}
-
-    return drc_sets
-
-
 def get_target_sets(fs=44100):
     """ looks for '+x.x-x.x_target_mag.dat files inside the eq folder
     """
