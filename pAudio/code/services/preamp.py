@@ -71,6 +71,15 @@ def init():
 
     def resume_audio():
 
+        # Only multiway
+        if XO_SETS:
+            if not state["xo_set"] in XO_SETS:
+                state["xo_set"] = 'mp'
+            else:
+                set_xo( state["xo_set"] )
+
+
+        # All multiway and full-range
         do_levels( 'level', dB=state["level"] )
 
         set_polarity( state["polarity"] )
@@ -101,11 +110,6 @@ def init():
         if not state["drc_set"] in DRC_SETS or not state["drc_set"] in DRC_SETS:
             state["drc_set"] = 'none'
         set_drc( state["drc_set"] )
-
-        if not state["xo_set"] in XO_SETS:
-            state["xo_set"] = ''
-        else:
-            set_xo( state["xo_set"] )
 
         # Source needs a little care
         last_source = state.get('source')
