@@ -232,7 +232,10 @@ if __name__ == "__main__":
 
     fs       = CONFIG["samplerate"]
 
-    for set_name, filters in drc_sets.items():
+    for set_name, filters_L_R in drc_sets.items():
 
-        plot_frequency_response(set_name, filters)
+        # IIR drc sets have 'L' and/or 'R' fields
+        # FIR drc sets does not (see GitHub doc)
+        if 'L' in filters_L_R or 'R' in filters_L_R:
+            plot_frequency_response(set_name, filters_L_R)
 
