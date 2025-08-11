@@ -33,8 +33,6 @@ try:
 except:
     pass
 
-CONFIG = {}
-
 
 def _init():
 
@@ -170,6 +168,7 @@ def _init():
     global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
+    CONFIG["mainfolder"] = MAINFOLDER
 
     #
     # Default values if omited parameters
@@ -239,6 +238,7 @@ def _init():
 
     # DEBUG
     #print('--- pAudio ----')
+    #print(CONFIG.keys())
     #print( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
 
 
