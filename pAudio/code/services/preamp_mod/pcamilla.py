@@ -103,33 +103,27 @@ def get_config():
 def _prepare_cam_config(pAudio_config):
     """
         1. Prepares a base CamillaDSP config
-        2. Translates pAudio configuration to the CamillaDSP config
+        2. Translates pAudio configuration to the CamillaDSP syntax
+
+        returns: the CamillaDSP config
     """
 
     def prepare_multiway_structure():
         """ The multiway N channel expander Mixer
         """
 
-        def do_xo_stuff(default_xo_set):
+        def do_xo_stuff():
             """ This is the LAST step into the PIPELINE.
             """
 
-            xo_filters = get_xo_filters_from_loudspeaker_folder()
-
-            if xo_filters:
-                print(f'{Fmt.BLUE}{Fmt.BOLD}Found loudspeaker XOVER filter PCMs: {xo_filters}{Fmt.END}')
-
-            else:
-                print(f'{Fmt.BOLD}{Fmt.BLINK}Loudspeaker xover PCMs NOT found{Fmt.END}')
-
+            xosets = list( pAudio_config["xo"].keys() )
+            print(f'{Fmt.BLUE}{Fmt.BOLD}XOVER sets: {xosets}{Fmt.END}')
 
             # xo filters
-            for xo_filter in xo_filters:
-
-                cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(  xo_filter,
-                                                                            pAudio_config["samplerate"],
-                                                                            LSPKFOLDER
-                                                                          )
+            for set_name, values in pAudio_config["xo"].items():
+                for way, params in values.items():
+                    filter_name = f'xo.{way}.{set_name}'
+                    cam_config["filters"][filter_name] = params
 
             # Auxiliary delay filters definition
             for _, pms in pAudio_config["outputs"].items():
@@ -139,33 +133,30 @@ def _prepare_cam_config(pAudio_config):
 
                 cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
-            # pipeline
-            if xo_filters:
+            # pipeline (will use the first configured xo set inside camilladsp_lspk.yml)
+            default_xo_set = next( iter( pAudio_config["xo"] ) )
 
-                xo_steps = make_xover_steps( pAudio_config["outputs"], default_xo_set = default_xo_set )
+            xo_steps = make_xover_steps( pAudio_config["outputs"], default_xo_set )
 
-                for xo_step in xo_steps:
-                    cam_config["pipeline"].append(xo_step)
+            for xo_step in xo_steps:
+                cam_config["pipeline"].append(xo_step)
 
 
         # Prepare the needed expander mixer ...
+
         m          = make_mixer_multi_way( pAudio_config["outputs"] )
         mixer_name = f'from2to{ len(m["mapping"]) }channels'
         cam_config["mixers"][mixer_name] = m
-        #
+
         print(f'{Fmt.GREEN}{mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
-        #
-        # ... and adding it to the pipeline
+
+        # Adding the mixer to the pipeline
         mwm_step = {'type': 'Mixer', 'name': mixer_name}
         cam_config["pipeline"].append(mwm_step)
 
-        # The final step in the pipeline: XO
-        do_xo_stuff( default_xo_set='mp' )
+        # Making the XO as the final steps in the pipeline
+        do_xo_stuff( )
 
-
-    # pAudio config DEBUG
-    #print('--- pAudio ----')
-    #print( yaml.dump(pAudio_config, default_flow_style=False, sort_keys=False, indent=2) )
 
     # From here `cam_config` will grow progressively
     cam_config = {}
@@ -182,7 +173,7 @@ def _prepare_cam_config(pAudio_config):
     if len(outputs_in_use) > 2:
         prepare_multiway_structure()
 
-    # Dither
+    # Dither (will apply to the lasts steps of the pipeline)
     base_config.append_dither(pAudio_config, cam_config)
 
     return cam_config
