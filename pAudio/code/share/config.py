@@ -3,13 +3,17 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+import  sys
 import  os
 import  yaml
 from    fmt         import Fmt
 
 UHOME = os.path.expanduser('~')
-
 MAINFOLDER          = f'{UHOME}/pAudio'
+sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod/pcamilla_mod')
+
+import do_makes
+
 
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
 LSPKFOLDER          = f''
@@ -102,7 +106,7 @@ def _init():
             def check_output_names():
                 """ Check L/R pairs
                 """
-                outputs = LSPK_CGF["outputs"]
+                outputs = LSPK_CONFIG["outputs"]
 
                 L_outs  = [ pms["name"] for o, pms in outputs.items()
                             if pms["name"] and pms["name"][-1]=='L' ]
@@ -114,7 +118,7 @@ def _init():
 
 
             # Outputs
-            for out, params in LSPK_CGF["outputs"].items():
+            for out, params in LSPK_CONFIG["outputs"].items():
 
                 # It is expected 4 fields
                 params = params.split() if params else []
@@ -135,34 +139,118 @@ def _init():
                                 'polarity': pol,
                                 'delay':    delay   }
 
-                LSPK_CGF["outputs"][out] = params
+                LSPK_CONFIG["outputs"][out] = params
 
 
             # Check L/R pairs
             check_output_names()
 
 
-        LSPK_CGF = {}
+        def populate_fir_xo(set_name):
+            """ FIR XO under camilladsp_lspk.yml 'xo:' section has only the name of a PCM set
+                This will replace that value with a complete filter set syntax
+            """
+
+            def get_xo_pcm_names_from_loudspeaker_folder():
+                """ looks for xo.xxxx.pcm files inside the loudspeaker folder
+                """
+                xo_files    = []
+                xo_filters  = []
+
+                LSPKFOLDER_FS = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
+
+                try:
+                    files = os.listdir(LSPKFOLDER_FS)
+                    files = [x for x in files if os.path.isfile(f'{LSPKFOLDER_FS}/{x}') ]
+                    xo_files = [x for x in files if x.startswith('xo.')
+                                                    and
+                                                    x.endswith('.pcm')]
+                except Exception as e:
+                    print(f'{Fmt.BOLD}get_xo_filters_from_loudspeaker_folder ERROR: {str(e)}{Fmt.END}')
+
+                for f in xo_files:
+                    xo_id = f.replace('xo.', '').replace('.pcm', '')
+                    xo_filters.append(xo_id)
+
+                # something like ['lo.lp.original', 'lo.mp.original', 'hi.mp.original', 'hi.lp.original']
+
+                return xo_filters
+
+
+            result = {}
+
+            pcm_names = get_xo_pcm_names_from_loudspeaker_folder()
+            # example: ['lo.original.mp', 'hi.original.mp', 'lo.original.lp', 'hi.original.lp']
+
+            pcm_names = [x for x in pcm_names if set_name in x]
+            # example: set_name 'original.mp' --> ['lo.original.mp', 'hi.original.mp']
+
+            for pcm_name in pcm_names:
+                way = pcm_name[:2]
+                result[way] = do_makes.make_xo_fir_filter(pcm_name, CONFIG["samplerate"], LSPKFOLDER)
+
+            return result
+
+
+        def populate_iir_xo(set_name, values):
+            """ IIR XO under camilladsp_lspk.yml 'xo:' section has only a few parameters. Example:
+
+                    set_name:   'myxo'
+
+                    values:
+                                lo:
+                                    type:   LR
+                                    order:  2
+                                    freq:   2000
+                                hi:
+                                    type:   LR
+                                    order:  2
+                                    freq:   2000
+
+                This will replace that values with a complete filter set syntax
+            """
+            result = {}
+
+            for way, params in values.items():
+                result[way] = do_makes.make_xo_iir_filter(way, params["type"], params["order"], params["freq"])
+
+            return result
+
+
+        LSPK_CONFIG = {}
 
         if os.path.isfile(LSPK_YML_PATH):
 
             try:
                 with open(LSPK_YML_PATH, 'r') as f:
-                    LSPK_CGF = yaml.safe_load( f.read() )
+                    LSPK_CONFIG = yaml.safe_load( f.read() )
                 print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/camilladsp_lspk.yml was found{Fmt.END}')
 
             except Exception as e:
                 print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/camilladsp_lspk.yml {str(e)}{Fmt.END}')
 
+
         # DEFAULT FULL RANGE LOUDSPEAKER OUTPUTs
-        if not LSPK_CGF.get("outputs"):
-            LSPK_CGF["outputs"] = {1: 'fr.L', 2: 'fr.R'}
+        if not LSPK_CONFIG.get("outputs"):
+            LSPK_CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
 
-
-        # Converting the Human Readable outputs section to a dictionary
+        # Converting the Human Readable 'outputs:' section to a dictionary
         reformat_outputs()
 
-        return LSPK_CGF
+        # Populate XO filters if any
+        if 'xo' in LSPK_CONFIG and LSPK_CONFIG.get('xo'):
+
+            for set_name, values in LSPK_CONFIG["xo"].items():
+
+                # FIR xo
+                if type(values) == str and values == 'fir':
+                    LSPK_CONFIG["xo"][set_name] = populate_fir_xo(set_name)
+
+                # IIR xo
+                else:
+                    LSPK_CONFIG["xo"][set_name] = populate_iir_xo(set_name, values)
+
+        return LSPK_CONFIG
 
 
     global CONFIG, LOUDSPEAKER, LSPKFOLDER
@@ -217,8 +305,13 @@ def _init():
     #print( yaml.dump(lspk_config, default_flow_style=False, sort_keys=False, indent=2) )
     #
 
-    # 1. Loudspeaker multiway outputs:
+    # 1. Loudspeaker multiway:
+
+    # 1.a. Sound card outputs:
     CONFIG["outputs"] = lspk_config["outputs"]
+
+    # 1.b. Loudspeaker XO
+    CONFIG["xo"] = lspk_config["xo"]
 
     # 2. Loudspeaker EQ:
     if not CONFIG.get('lspk_eq'):
@@ -229,12 +322,10 @@ def _init():
             CONFIG["lspk_eq"][fname] = fparams
 
     # 3. Loudspeaker DRC:
-    if not CONFIG.get('drc'):
-        CONFIG["drc"] = {}
-
     if lspk_config.get('drc'):
-        for fname, fparams in lspk_config["drc"].items():
-            CONFIG["drc"][fname] = fparams
+        CONFIG["drc"] = lspk_config["drc"]
+    else:
+        CONFIG["drc"] = {}
 
     # Dump to disk for maintenence
     pAudio_cfg_json_path = f'{LOGFOLDER}/.pAudio_cfg'
