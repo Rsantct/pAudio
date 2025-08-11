@@ -239,7 +239,7 @@ def make_mixer_multi_way(pAudio_outputs):
     return m
 
 
-def make_xover_steps(pAudio_outputs, default_filter_type = 'mp'):
+def make_xover_steps(pAudio_outputs, default_xo_set = 'mp'):
     """ Makes the Filter steps after the expander mixer of the pipeline
 
         Example for 2+1 way, with 'sw' way connected to the 6th output
@@ -298,7 +298,7 @@ def make_xover_steps(pAudio_outputs, default_filter_type = 'mp'):
                                     # jack `system:playback_N` ports numbering
                     'channels':     [out_idx - 1],
 
-                    'names':        [ f'xo.{way}.{default_filter_type}',
+                    'names':        [ f'xo.{way}.{default_xo_set}',
                                       f'delay.{way}.{ch}'
                                     ]
                 }
