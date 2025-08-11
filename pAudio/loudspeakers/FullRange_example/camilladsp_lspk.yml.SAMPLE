@@ -44,7 +44,13 @@ lspk_eq:
 # DRC filters are expected to be divided in set-names and then in L: and R: sections
 drc:
 
-    sofa:
+    # For FIR filters, just provide
+    #   some-set-name: fir
+    # then pAudio will populate the needed parameters by using this 'some-set-name',
+    # and searching for PCM files named like this under the loudspeaker folder
+    sofa:    fir
+
+    equilateral:
         L:
             1:
                 type: Biquad
