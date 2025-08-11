@@ -144,22 +144,6 @@ def diracs():
     return IRs
 
 
-def get_drc_sets():
-    """ find loudspeaker's drc_sets
-        *** OBSOLETE, see pAudio/code/share/common ***
-    """
-    files   = os.listdir(LSPKFOLDER)
-    coeffs  = [ x.replace('.pcm', '') for x in files if x[:4] == 'drc.']
-    drc_coeffs = [ x for x in coeffs if x[:4] == 'drc.'  ]
-    #print('drc_coeffs:', drc_coeffs) # debug
-    drc_sets = []
-    for drc_coeff in drc_coeffs:
-        drcSetName = drc_coeff[6:]
-        if drcSetName not in drc_sets:
-            drc_sets.append( drcSetName )
-    return drc_sets
-
-
 def get_coeff_atten(drc_set, ch):
     """ This works for Brutefir coeffs
     """
