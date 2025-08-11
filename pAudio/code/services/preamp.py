@@ -206,7 +206,7 @@ def init():
     TARGET_SETS = get_target_sets(fs=CONFIG["samplerate"])
 
     # XO sets
-    XO_SETS = get_xo_sets()
+    XO_SETS = list( CONFIG["xo"].keys() )
 
     # DRC sets
     DRC_SETS = ['none'] + list( CONFIG["drc"].keys() )
