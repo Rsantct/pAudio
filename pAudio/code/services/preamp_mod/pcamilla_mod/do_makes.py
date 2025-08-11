@@ -31,7 +31,7 @@ def make_drc_fir_filter(channel, drc_set, fs, lspkfolder):
     return f
 
 
-def make_xo_filter(xo_filter, fs, lspkfolder):
+def make_xo_fir_filter(xo_filter, fs, lspkfolder):
 
     fir_path = f'{lspkfolder}/{fs}/xo.{xo_filter}.pcm'
 
@@ -41,6 +41,45 @@ def make_xo_filter(xo_filter, fs, lspkfolder):
                 "filename": fir_path,
                 "format":   'FLOAT32LE',
                 "type":     'Raw'
+            }
+        }
+
+    return f
+
+
+def make_xo_iir_filter(way_type='hi', subtype='LR', order=2, freq=2000, freq2=0):
+    """
+        way_type:   lo | hi | mi *
+        subtype:    LinkwitzRiley | Butterworth
+        freq:       (Hz)
+        order:      (even if LinkwitzRiley)
+
+        (*) Bandpass (mi) is PENDING
+    """
+
+    subtype = subtype.lower()
+
+    if 'lr' in subtype or 'linkw' in subtype:
+        subtype = 'LinkwitzRiley'
+
+        # check order is even for LR
+        if order % 2:
+            raise Exception('LinkwitzRiley order MUST be even')
+
+    elif 'but' in subtype:
+        subtype = 'Butterworth'
+
+    if way_type == 'hi':
+        subtype += 'Highpass'
+
+    elif way_type == 'lo':
+        subtype += 'Lowpass'
+
+    f = {   'type':         'BiquadCombo',
+            'parameters': {
+                'type':     subtype,
+                'order':    order,
+                'freq':     freq
             }
         }
 
