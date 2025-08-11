@@ -110,7 +110,7 @@ def _prepare_cam_config(pAudio_config):
         """ The multiway N channel expander Mixer
         """
 
-        def do_xo_stuff():
+        def do_xo_stuff(default_xo_set):
             """ This is the LAST step into the PIPELINE.
             """
 
@@ -142,7 +142,7 @@ def _prepare_cam_config(pAudio_config):
             # pipeline
             if xo_filters:
 
-                xo_steps = make_xover_steps( pAudio_config["outputs"] )
+                xo_steps = make_xover_steps( pAudio_config["outputs"], default_xo_set = default_xo_set )
 
                 for xo_step in xo_steps:
                     cam_config["pipeline"].append(xo_step)
@@ -160,7 +160,7 @@ def _prepare_cam_config(pAudio_config):
         cam_config["pipeline"].append(mwm_step)
 
         # The final step in the pipeline: XO
-        do_xo_stuff()
+        do_xo_stuff( default_xo_set='mp' )
 
 
     # pAudio config DEBUG
