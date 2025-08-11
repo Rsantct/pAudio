@@ -204,7 +204,7 @@ def plot_frequency_response(set_name, filters_L_R):
         ax_mag.legend( facecolor=FACECOLOR, loc='lower right')
         png_path = f'{IMGFOLDER}/drc_{set_name}.png'
         plt.savefig( png_path, facecolor=FACECOLOR )
-        print(f'(src_iif2png) saved: {png_path})')
+        print(f'(drc_iif2png) saved: {png_path})')
 
         if VERBOSE:
             plt.show()
@@ -228,7 +228,7 @@ if __name__ == "__main__":
 
     sp.Popen(f'mkdir -p {IMGFOLDER}', shell=True)
 
-    drc_sets = get_drc_sets()
+    drc_sets = CONFIG["drc"]
 
     fs       = CONFIG["samplerate"]
 
