@@ -544,28 +544,34 @@ def set_balance(dB):
 
 
 def set_xo(xo_set):
-    """ xo_set:     mp | lp
+    """ example "prueba" or "sofa.mp"
     """
 
     cfg = CC.config.active()
 
-    # Pipeline outputs
-    ppln = cfg["pipeline"]
+    # The pipeline is a LIST of steps
+    for step_index, step in enumerate( cfg["pipeline"] ):
 
-    # Update xo Filter steps
-    for step in ppln:
+        # Example of XOVER step:
+        #
+        #   - bypassed: null
+        #   channels:
+        #   - 2
+        #   description: xover.lo.L
+        #   names:
+        #   - xo.lo.original.mp
+        #   - delay.lo.L
+        #   type: Filter
 
-        if step["type"] == 'Filter':
+        if step.get('description') and step.get('description')[:5] == 'xover':
 
-            names = [n for n in step["names"]]
+            # Step names is a LIST of filter names
+            for fname_index, fname in enumerate( step["names"] ):
 
-            # The xo filter is located in the 1st position
-            if 'xo.' in names[0]:
+                if fname[:2] == 'xo':
+                    new_fname  = fname[:6] + xo_set
 
-                if step["names"][0][-3:] in ('.mp', '.lp'):
-
-                    step["names"][0] = step["names"][0].replace('.lp', f'.{xo_set}') \
-                                                       .replace('.mp', f'.{xo_set}')
+                    cfg["pipeline"][step_index]["names"][fname_index] = new_fname
 
     try:
         set_config_sync(cfg)
