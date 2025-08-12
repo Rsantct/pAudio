@@ -273,9 +273,6 @@ def _init():
     else:
         CONFIG["sources"]["none"] = {}
 
-    if not 'drcs_offset' in CONFIG:
-        CONFIG["drcs_offset"] = 0.0
-
     if not 'ref_level_gain_offset' in CONFIG:
         CONFIG["ref_level_gain_offset"] = 0.0
 
@@ -297,7 +294,7 @@ def _init():
     LSPK_YML_PATH = f'{LSPKFOLDER}/lspk.yml'
 
 
-    # MERGING the specific LOUDSPEAKER YAML configuration
+    # MERGING the specific LOUDSPEAKER configuration
     lspk_config = get_lspk_config()
     #
     # DEBUG
@@ -310,25 +307,21 @@ def _init():
     # 1.a. Sound card outputs:
     CONFIG["outputs"] = lspk_config["outputs"]
 
-    # 1.b. Loudspeaker XO
+    # 1.b. Loudspeaker XO:
+    CONFIG["xo"] = {}
     if lspk_config.get('xo'):
         CONFIG["xo"] = lspk_config["xo"]
-    else:
-        CONFIG["xo"] = {}
 
     # 2. Loudspeaker EQ:
-    if not CONFIG.get('lspk_eq'):
-        CONFIG["lspk_eq"] = {}
-
+    CONFIG["lspk_eq"] = {}
     if lspk_config.get('lspk_eq'):
-        for fname, fparams in lspk_config["lspk_eq"].items():
-            CONFIG["lspk_eq"][fname] = fparams
+        CONFIG["lspk_eq"] = lspk_config["lspk_eq"]
+    CONFIG["lspk_eq_safe_gain"] = lspk_config.get('lspk_eq_safe_gain', 0.0)
 
     # 3. Loudspeaker DRC:
+    CONFIG["drc"] = {}
     if lspk_config.get('drc'):
         CONFIG["drc"] = lspk_config["drc"]
-    else:
-        CONFIG["drc"] = {}
 
     # Dump to disk for maintenence
     pAudio_cfg_json_path = f'{LOGFOLDER}/.pAudio_cfg'
