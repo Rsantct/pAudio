@@ -288,16 +288,14 @@ if __name__ == '__main__':
 
             freqs, magdB = get_spectrum( IR["imp"], FS )
 
+            atten = 0.0
+
             if DSP_IN_USE == 'brutefir':
                 atten = get_coeff_atten( IR["drc_set"], IR["channel"] )
 
             if DSP_IN_USE == 'camilladsp':
-                if drc_set == 'none':
-                    atten = 0.0
-                else:
-                    atten = CONFIG["drcs_offset"]
-            else:
-                atten = 0.0
+                if drc_set in CONFIG["drc"]:
+                    atten = CONFIG["drc"][drc_set].get('gain_offset')
 
             magdB -= atten
 
