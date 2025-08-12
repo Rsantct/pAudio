@@ -242,7 +242,6 @@ def init():
     state["fs"]             = CONFIG["samplerate"]
     state["polarity"]       = '++'
 
-
     # State input and output devices
     #
     if CONFIG.get('jack'):
@@ -392,7 +391,12 @@ def set_drc(drcID):
         res = f'must be in: { DRC_SETS }'
 
     else:
-        res = DSP.set_drc(drcID)
+        if drcID == 'none':
+            gain_offset = 0.0
+        else:
+            gain_offset = CONFIG["drc"][drcID].get('gain_offset', 0.0)
+
+        res = DSP.set_drc(drcID, gain_offset)
 
     return res
 
@@ -524,7 +528,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
              + candidate["lu_offset"]                       \
              - CONFIG["ref_level_gain_offset"]              \
              - abs(candidate["balance"]) / 2.0              \
-             - CONFIG["drcs_offset"]
+             - DSP.get_config()["filters"]["drc_gain_offset"]["parameters"]["gain"]
 
         if not candidate["tone_defeat"]:
 
@@ -802,9 +806,6 @@ def do(cmd, args, add):
 
         case 'get_cdsp_pipeline':
             result = DSP.get_config()["pipeline"]
-
-        case 'get_cdsp_drc_gain':
-            result = DSP.get_drc_gain()
 
         case _:
             result = 'unknown command'
