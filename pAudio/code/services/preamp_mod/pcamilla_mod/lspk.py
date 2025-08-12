@@ -64,20 +64,29 @@ def update_lspk(pAudio_config, cam_config):
 
         # FIR have only the drc-set-name as values, so we need
         # to REPLACE it with the whole parameters for both channels.
-        if values == 'fir':
+        if values.get('type', '') == 'fir':
 
             fs = pAudio_config["samplerate"]
             lspkfolder = f'{pAudio_config["mainfolder"]}/loudspeakers/{pAudio_config["loudspeaker"]}'
 
-            values = {'L': {}, 'R': {}}
+            # Keep gain_offset and prepare channels syntax
+            values = {'L': {}, 'R': {}, 'gain_offset': values.get('gain_offset', 0.0)}
+
             values["L"]["1"] = make_drc_fir_filter('L', set_name, fs, lspkfolder)
             values["R"]["1"] = make_drc_fir_filter('R', set_name, fs, lspkfolder)
+
             pAudio_config["drc"][set_name] = values
 
         # Now FIR or IIR must have a regular complete filter syntax
         if 'L' in values or 'R' in values:
 
-            for ch, filters in values.items():
+            for param, filters in values.items():
+
+                # skip 'gain_offset'
+                if not param in ('L', 'R'):
+                    continue
+                else:
+                    ch = param
 
                 for filter_id, filter_params in filters.items():
 
@@ -118,7 +127,13 @@ def update_lspk(pAudio_config, cam_config):
 
         first_drc_set = next( iter( drc_sets.keys() ) )
 
-        for ch in pAudio_config["drc"][first_drc_set]:
+        for param in pAudio_config["drc"][first_drc_set]:
+
+            # skip 'gain_offset'
+            if not param in ('L', 'R'):
+                continue
+            else:
+                ch = param
 
             for f in pAudio_config["drc"][first_drc_set][ch]:
 
