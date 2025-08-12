@@ -133,7 +133,7 @@ def _prepare_cam_config(pAudio_config):
 
                 cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
-            # pipeline (will use the first configured xo set inside camilladsp_lspk.yml)
+            # pipeline (will use the first configured xo set inside lspk.yml)
             default_xo_set = next( iter( pAudio_config["xo"] ) )
 
             xo_steps = make_xover_steps( pAudio_config["outputs"], default_xo_set )
