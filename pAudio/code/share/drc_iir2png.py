@@ -5,7 +5,7 @@
 
 """ This program makes PNG graphs for the drc sets found inside
 
-        <LSPKFOLDER>/camilladsp_lspk.yml
+        <LSPKFOLDER>/lspk.yml
 
     PNG files are saved for the control web page to be displayed
 """
