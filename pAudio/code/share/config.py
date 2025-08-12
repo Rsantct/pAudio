@@ -42,7 +42,7 @@ def _init():
 
     def get_lspk_config():
         """
-            - try to load a loudspeaker's CamillaDSP YAML file
+            - try to load a loudspeaker's YAML file
 
             - if outputs: section is NOT defined, defaults to an stereo ones
 
@@ -147,7 +147,7 @@ def _init():
 
 
         def populate_fir_xo(set_name):
-            """ FIR XO under camilladsp_lspk.yml 'xo:' section has only the name of a PCM set
+            """ FIR XO under lspk.yml 'xo:' section has only the name of a PCM set
                 This will replace that value with a complete filter set syntax
             """
 
@@ -193,7 +193,7 @@ def _init():
 
 
         def populate_iir_xo(set_name, values):
-            """ IIR XO under camilladsp_lspk.yml 'xo:' section has only a few parameters. Example:
+            """ IIR XO under lspk.yml 'xo:' section has only a few parameters. Example:
 
                     set_name:   'myxo'
 
@@ -224,10 +224,10 @@ def _init():
             try:
                 with open(LSPK_YML_PATH, 'r') as f:
                     LSPK_CONFIG = yaml.safe_load( f.read() )
-                print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/camilladsp_lspk.yml was found{Fmt.END}')
+                print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/lspk.yml was found{Fmt.END}')
 
             except Exception as e:
-                print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/camilladsp_lspk.yml {str(e)}{Fmt.END}')
+                print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
 
 
         # DEFAULT FULL RANGE LOUDSPEAKER OUTPUTs
@@ -294,14 +294,14 @@ def _init():
     if not os.path.isdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}'):
         os.mkdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}')
 
-    LSPK_YML_PATH = f'{LSPKFOLDER}/camilladsp_lspk.yml'
+    LSPK_YML_PATH = f'{LSPKFOLDER}/lspk.yml'
 
 
     # MERGING the specific LOUDSPEAKER YAML configuration
     lspk_config = get_lspk_config()
     #
     # DEBUG
-    #print('--- camilladsp_lspk.yml ----')
+    #print('--- lspk.yml ----')
     #print( yaml.dump(lspk_config, default_flow_style=False, sort_keys=False, indent=2) )
     #
 
