@@ -3,9 +3,9 @@
 
 # Full Range example
 
-Filters can be set into **`camilladsp_lspk.yml`**, whit a logical syntax, see example file.
+Filters can be set into **`lspk.yml`**, whit a logical syntax, see example file.
 
-Sections in `camilladsp_lspk.yml`:
+Sections in `lspk.yml`:
 
     safe_gain:      usually negative gain to compensate for loudspeaker filtering,
                     for example a bass extension eq
