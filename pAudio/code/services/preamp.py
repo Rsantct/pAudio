@@ -70,13 +70,11 @@ def init():
 
 
     def resume_audio():
-
         # Only multiway
         if XO_SETS:
             if not state["xo_set"] in XO_SETS:
-                state["xo_set"] = 'mp'
-            else:
-                set_xo( state["xo_set"] )
+                state["xo_set"] = XO_SETS[0]
+            set_xo( state["xo_set"] )
 
 
         # All multiway and full-range
@@ -129,7 +127,7 @@ def init():
             else:
                 state["source"] = ''
 
-            save_json_file(state, PREAMP_STATE_PATH)
+        save_json_file(state, PREAMP_STATE_PATH)
 
 
     def prepare_coreaudio_init_devices():
