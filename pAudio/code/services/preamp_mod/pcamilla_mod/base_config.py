@@ -87,8 +87,21 @@ def prepare_base_config(pAudio_config, cam_config):
                         'parameters': {'bits': 16, 'type': 'Shibata441'},
                     },
 
-        # DRC gain
-        'drc_gain': {   'type': 'Gain',
+        # lspk EQ safe gain
+        'lspk_eq_safe_gain': {
+                        'description': 'gain compensation for lspk EQ',
+                        'type': 'Gain',
+                        'parameters': {
+                                'gain':     0.0,
+                                'inverted': False,
+                                'mute':     False
+                        }
+                    },
+
+        # lspk DRC gain offset
+        'drc_gain_offset': {
+                        'description': 'gain offset for DRC in use (only for DRC-FIR)',
+                        'type': 'Gain',
                         'parameters': {
                                 'gain':     0.0,
                                 'inverted': False,
@@ -137,12 +150,12 @@ def prepare_base_config(pAudio_config, cam_config):
             {   'description':  'preamp.L',
                 'channels':     [0],
                 'type':         'Filter',
-                'names':        ['preamp_eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                'names':        ['preamp_eq', 'lspk_eq_safe_gain', 'drc_gain_offset', 'lu_offset', 'bal_pol_L']
             },
             {   'description':  'preamp.R',
                 'channels':     [1],
                 'type':         'Filter',
-                'names':        ['preamp_eq', 'drc_gain', 'lu_offset', 'bal_pol_R']
+                'names':        ['preamp_eq', 'lspk_eq_safe_gain', 'drc_gain_offset', 'lu_offset', 'bal_pol_R']
             }
         ]
 
