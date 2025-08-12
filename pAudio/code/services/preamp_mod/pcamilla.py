@@ -339,12 +339,6 @@ def reload_eq():
     toggle_last_eq()
 
 
-# Getting AUDIO
-
-def get_drc_gain():
-    return json.dumps( CC.config.active()["filters"]["drc_gain"] )
-
-
 # Setting AUDIO, allways **MUST** return some string, usually 'done'
 
 # SOURCE SELECTOR function
@@ -583,7 +577,7 @@ def set_xo(xo_set):
     return result
 
 
-def set_drc(drc_id):
+def set_drc(drc_id, gain_offset=0.0):
     """
         It is supposed to receive a validated drc_id one OR 'none'
 
@@ -616,17 +610,10 @@ def set_drc(drc_id):
 
             cfg["pipeline"][i]["names"] = new_names
 
-    set_config_sync(cfg)
+    # Adjust the global drc_gain_offset for this drc-set
+    cfg["filters"]["drc_gain_offset"]["parameters"]["gain"] = gain_offset
 
-    return 'done'
-
-
-def set_drc_gain(dB):
-
-    cfg = CC.config.active()
-
-    cfg["filters"]["drc_gain"]["parameters"]["gain"] = dB
-
+    # Upload the config to runtime
     set_config_sync(cfg)
 
     return 'done'
