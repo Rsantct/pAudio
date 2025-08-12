@@ -311,7 +311,10 @@ def _init():
     CONFIG["outputs"] = lspk_config["outputs"]
 
     # 1.b. Loudspeaker XO
-    CONFIG["xo"] = lspk_config["xo"]
+    if lspk_config.get('xo'):
+        CONFIG["xo"] = lspk_config["xo"]
+    else:
+        CONFIG["xo"] = {}
 
     # 2. Loudspeaker EQ:
     if not CONFIG.get('lspk_eq'):
