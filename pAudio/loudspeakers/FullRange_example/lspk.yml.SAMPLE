@@ -44,12 +44,14 @@ lspk_eq:
 # DRC filters are expected to be divided in set-names and then in L: and R: sections
 drc:
 
-    # For FIR filters, just provide
-    #   some-set-name: fir
-    # then pAudio will populate the needed parameters by using this 'some-set-name',
+    # FIR filters syntax. Just provide 'type' and 'gain_offset' as below example.
+    # Then pAudio will populate the needed parameters by using this <set-name>
     # and searching for PCM files named like this under the loudspeaker folder
-    sofa:    fir
+    sofa:
+        type:           fir
+        gain_offset:    -0.5
 
+    # IIR filters syntax:
     equilateral:
         L:
             1:
