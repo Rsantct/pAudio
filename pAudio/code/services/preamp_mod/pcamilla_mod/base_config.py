@@ -67,65 +67,23 @@ def prepare_base_config(pAudio_config, cam_config):
         cam_config["filters"] =    {
 
         # Balance and Polarity
-        'bal_pol_L':    {  'type': 'Gain',
-                            'parameters': {
-                                'gain':     0.0,
-                                'inverted': False,
-                                'mute':     False
-                            }
-                        },
-        'bal_pol_R':    {  'type': 'Gain',
-                            'parameters': {
-                                'gain':     0.0,
-                                'inverted': False,
-                                'mute':     False
-                            }
-                        },
+        'bal_pol_L':            make_gain_filter(0.0, 'Balance and Polarity Left'),
+        'bal_pol_R':            make_gain_filter(0.0, 'Balance and Polarity Right'),
 
         # Dither
-        'dither':   {   'type': 'Dither',
-                        'parameters': {'bits': 16, 'type': 'Shibata441'},
-                    },
+        'dither':               make_dither_filter('Shibata441', 16),
 
         # lspk EQ safe gain
-        'lspk_eq_safe_gain': {
-                        'description': 'gain compensation for lspk EQ',
-                        'type': 'Gain',
-                        'parameters': {
-                                'gain':     0.0,
-                                'inverted': False,
-                                'mute':     False
-                        }
-                    },
+        'lspk_eq_safe_gain':    make_gain_filter(0.0, 'gain compensation for lspk EQ'),
 
         # lspk DRC gain offset
-        'drc_gain_offset': {
-                        'description': 'gain offset for DRC in use (only for DRC-FIR)',
-                        'type': 'Gain',
-                        'parameters': {
-                                'gain':     0.0,
-                                'inverted': False,
-                                'mute':     False
-                        }
-                    },
+        'drc_gain_offset':      make_gain_filter(0.0, 'gain offset for DRC in use (only for DRC-FIR)'),
 
-        # LU OFFSET (compensation for Loudness War)
-        'lu_offset': {  'type': 'Gain',
-                        'parameters': {
-                                'gain':      0.0,
-                                'inverted': False,
-                                'mute':     False
-                        }
-                    },
+        # LU OFFSET
+        'lu_offset':            make_gain_filter(0.0, 'LU OFFSET (compensation for Loudness War)'),
 
         # Preamp EQ (tones anf loudnes curves)
-        'preamp_eq':    {   'type': 'Conv',
-                            'parameters': {
-                                'filename': f'{EQFOLDER}/eq_flat.pcm',
-                                'format': 'FLOAT32LE',
-                                'type': 'Raw'
-                            }
-                    }
+        'preamp_eq':            make_fir_filter( f'{EQFOLDER}/eq_flat.pcm' )
         }
 
 
