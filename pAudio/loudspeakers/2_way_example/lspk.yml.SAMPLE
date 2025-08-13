@@ -14,15 +14,28 @@ xo:
     # by using this 'some-set-name' and searching for PCM files named like this
     # under the loudspeaker folder. Example:
 
-    original.mp:   fir      # this assumes proper .pcm files named as follow:
-                            #   xo.lo.original.mp.pcm
-                            #   xo.hi.original.mp.pcm
 
-    original.lp:   fir
+    rePhaseTest.mp:        # this assumes proper .pcm files named
+                           # 'xo.lo.rePhaseTest.mp.pcm' and 'xo.hi.rePhaseTest.mp.pcm'
+                           # (the free suffix .mp would indicate a minimum phase FIR)
+        lo:
+            type:   fir
+        hi:
+            type:   fir
+            gain:   -6.4    # GAIN for a FIR is optional when needed
+
+    rePhaseTest.lp:        # this assumes proper .pcm files named
+                           # 'xo.lo.rePhaseTest.lp.pcm' and 'xo.hi.rePhaseTest.lp.pcm'
+                           # (the free suffix .mp would indicate a linear phase FIR)
+        lo:
+            type:   fir
+        hi:
+            type:   fir
+            gain:   -6.4
 
     # For IIR XO sets, provide each way (lo, hi) in separate sections, with its the 3 basic parameters. Example:
     
-    prueba:
+    iirTest:
         lo:
             type:   LR      # LinkwitzRelay or Butterworth
             order:  2       # must be even for LinkwitzRelay
@@ -33,9 +46,9 @@ xo:
             freq:   2000
 
 #
-# The OUTPUTS section to map towards te SOUND CARD PHISICAL OUTPUTS
+# The OUTPUTS section to map towards hte SOUND CARD PHISICAL OUTPUTS
 #
-# (i) output index starts with `1` like jack `system:playback_N` ports numbering
+# (i) output index starts with `1` (to follow jack `system:playback_N` ports numbering)
 #
 outputs:
 
