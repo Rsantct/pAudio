@@ -1,13 +1,10 @@
-# Safe gain to avoid clipping when applying filters below.
-# This is not a CamillaDSP native parameter but will affect the processor gain.
-safe_gain: -8
-
+# See FullRange example for more info on DRC
 drc:
-
-    # See fullrange example for DRC FIR and/or IIR
     cabecero: fir
 
-
+#
+# XO sets can be IIR or FIR
+#
 xo:
 
     # For FIR XO sets, just provide one field as follow:
@@ -22,10 +19,11 @@ xo:
 
     original.lp:   fir
 
-    # For IIR XO sets, provide each way (lo, hi) and 3 parameters. Example:
+    # For IIR XO sets, provide each way (lo, hi) in separate sections, with its the 3 basic parameters. Example:
+    
     prueba:
         lo:
-            type:   LR      # or Butterworth
+            type:   LR      # LinkwitzRelay or Butterworth
             order:  2       # must be even for LinkwitzRelay
             freq:   2000    # Hz
         hi:
@@ -33,8 +31,11 @@ xo:
             order:  2
             freq:   2000
 
-
+#
+# The OUTPUTS section to map towards te SOUND CARD PHISICAL OUTPUTS
+#
 # (i) output index starts with `1` like jack `system:playback_N` ports numbering
+#
 outputs:
 
     #           name         Gain dB    Polarity +/-    Delay ms
