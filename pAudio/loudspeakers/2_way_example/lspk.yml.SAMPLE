@@ -1,6 +1,7 @@
 # See FullRange example for more info on DRC
 drc:
-    cabecero: fir
+    cabecero:
+        type:    fir
 
 #
 # XO sets can be IIR or FIR
