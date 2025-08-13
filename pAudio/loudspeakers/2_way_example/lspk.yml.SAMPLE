@@ -8,14 +8,12 @@ drc:
 #
 xo:
 
-    # For FIR XO sets, just provide one field as follow:
-    #   some-set-name: fir
-    # then pAudio will populate the needed parameters for each way (hi, lo, ...)
-    # by using this 'some-set-name' and searching for PCM files named like this
+    # For FIR XO sets, just provide 'type: fir' and optionally a 'gain: (dB)' fields.
+    # Then pAudio will populate the needed parameters for each way (hi, lo, ...)
+    # by using the set name and searching for PCM files named like that.
     # under the loudspeaker folder. Example:
 
-
-    rePhaseTest.mp:        # this assumes proper .pcm files named
+    rePhaseTest.mp:        # This assumes proper .pcm files named
                            # 'xo.lo.rePhaseTest.mp.pcm' and 'xo.hi.rePhaseTest.mp.pcm'
                            # (the free suffix .mp would indicate a minimum phase FIR)
         lo:
@@ -24,9 +22,8 @@ xo:
             type:   fir
             gain:   -6.4    # GAIN for a FIR is optional when needed
 
-    rePhaseTest.lp:        # this assumes proper .pcm files named
-                           # 'xo.lo.rePhaseTest.lp.pcm' and 'xo.hi.rePhaseTest.lp.pcm'
-                           # (the free suffix .mp would indicate a linear phase FIR)
+    rePhaseTest.lp:         # (.lp would indicate a linear phase FIR)
+                           
         lo:
             type:   fir
         hi:
