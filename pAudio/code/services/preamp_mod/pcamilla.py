@@ -133,6 +133,10 @@ def _prepare_cam_config(pAudio_config):
 
                 cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
+            # Auxiliary gain filters definitios
+            for xo_id, gain in pAudio_config["xo_gains"].items():
+                cam_config["filters"][f'xo.{xo_id}_gain'] = make_gain_filter(gain, f'gain of xo.{xo_id}')
+
             # pipeline (will use the first configured xo set inside lspk.yml)
             default_xo_set = next( iter( pAudio_config["xo"] ) )
 
@@ -292,7 +296,7 @@ def init_camilladsp(pAudio_config):
 
     # Loading configuration
     try:
-        print(f'Trying to load configuration and run.')
+        print(f'Trying to load configuration and run. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
         CC.config.set_active(cfg_init)
 
         if check_cdsp_running(timeout=5):
@@ -553,8 +557,9 @@ def set_xo(xo_set):
         #   - 2
         #   description: xover.lo.L
         #   names:
-        #   - xo.lo.original.mp
-        #   - delay.lo.L
+        #   - xo.lo.original.mp         <--- the xo-filter itself
+        #   - xo.lo.original.mp_gain    <--- there is a _gain auxiliary filter for each xo-filter
+        #   - delay.lo.L                <--- also a delay
         #   type: Filter
 
         if step.get('description') and step.get('description')[:5] == 'xover':
@@ -563,7 +568,11 @@ def set_xo(xo_set):
             for fname_index, fname in enumerate( step["names"] ):
 
                 if fname[:2] == 'xo':
-                    new_fname  = fname[:6] + xo_set
+
+                    if fname[-5:] == '_gain':
+                        new_fname = fname[:6] + xo_set + '_gain'
+                    else:
+                        new_fname = fname[:6] + xo_set
 
                     cfg["pipeline"][step_index]["names"][fname_index] = new_fname
 
