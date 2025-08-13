@@ -28,23 +28,7 @@ def make_dither_filter(d_type, bits):
     return f
 
 
-def make_drc_fir_filter(channel, drc_set, fs, lspkfolder):
-
-    fir_path = f'{lspkfolder}/{fs}/drc.{channel}.{drc_set}.pcm'
-
-    f = {
-            "type": 'Conv',
-            "parameters": {
-                "filename": fir_path,
-                "format":   'FLOAT32LE',
-                "type":     'Raw'
-            }
-        }
-
-    return f
-
-
-def make_xo_fir_filter(fir_path):
+def make_fir_filter(fir_path):
 
     f = {
             "type": 'Conv',
