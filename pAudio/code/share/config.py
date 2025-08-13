@@ -146,77 +146,6 @@ def _init():
             check_output_names()
 
 
-        def populate_fir_xo(set_name):
-            """ FIR XO under lspk.yml 'xo:' section has only the name of a PCM set
-                This will replace that value with a complete filter set syntax
-            """
-
-            def get_xo_pcm_names_from_loudspeaker_folder():
-                """ looks for xo.xxxx.pcm files inside the loudspeaker folder
-                """
-                xo_files    = []
-                xo_filters  = []
-
-                LSPKFOLDER_FS = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
-
-                try:
-                    files = os.listdir(LSPKFOLDER_FS)
-                    files = [x for x in files if os.path.isfile(f'{LSPKFOLDER_FS}/{x}') ]
-                    xo_files = [x for x in files if x.startswith('xo.')
-                                                    and
-                                                    x.endswith('.pcm')]
-                except Exception as e:
-                    print(f'{Fmt.BOLD}get_xo_filters_from_loudspeaker_folder ERROR: {str(e)}{Fmt.END}')
-
-                for f in xo_files:
-                    xo_id = f.replace('xo.', '').replace('.pcm', '')
-                    xo_filters.append(xo_id)
-
-                # something like ['lo.lp.original', 'lo.mp.original', 'hi.mp.original', 'hi.lp.original']
-
-                return xo_filters
-
-
-            result = {}
-
-            pcm_names = get_xo_pcm_names_from_loudspeaker_folder()
-            # example: ['lo.original.mp', 'hi.original.mp', 'lo.original.lp', 'hi.original.lp']
-
-            pcm_names = [x for x in pcm_names if set_name in x]
-            # example: set_name 'original.mp' --> ['lo.original.mp', 'hi.original.mp']
-
-            for pcm_name in pcm_names:
-                way = pcm_name[:2]
-                result[way] = do_makes.make_xo_fir_filter(pcm_name, CONFIG["samplerate"], LSPKFOLDER)
-
-            return result
-
-
-        def populate_iir_xo(set_name, values):
-            """ IIR XO under lspk.yml 'xo:' section has only a few parameters. Example:
-
-                    set_name:   'myxo'
-
-                    values:
-                                lo:
-                                    type:   LR
-                                    order:  2
-                                    freq:   2000
-                                hi:
-                                    type:   LR
-                                    order:  2
-                                    freq:   2000
-
-                This will replace that values with a complete filter set syntax
-            """
-            result = {}
-
-            for way, params in values.items():
-                result[way] = do_makes.make_xo_iir_filter(way, params["type"], params["order"], params["freq"])
-
-            return result
-
-
         LSPK_CONFIG = {}
 
         if os.path.isfile(LSPK_YML_PATH):
@@ -240,15 +169,27 @@ def _init():
         # Populate XO filters if any
         if 'xo' in LSPK_CONFIG and LSPK_CONFIG.get('xo'):
 
-            for set_name, values in LSPK_CONFIG["xo"].items():
+            # Also will generate an auxiliary CamillaDSP filter definition
+            # for gain on each xo-set-name-way
+            LSPK_CONFIG["xo_gains"] = {}
 
-                # FIR xo
-                if type(values) == str and values == 'fir':
-                    LSPK_CONFIG["xo"][set_name] = populate_fir_xo(set_name)
+            for set_name, ways in LSPK_CONFIG["xo"].items():
 
-                # IIR xo
-                else:
-                    LSPK_CONFIG["xo"][set_name] = populate_iir_xo(set_name, values)
+                for way, params in ways.items():
+
+                    # FIR
+                    if params.get('type') == 'fir':
+                        fir_path = f'{LSPKFOLDER}/{CONFIG["samplerate"]}/xo.{way}.{set_name}.pcm'
+                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_xo_fir_filter(fir_path)
+
+                    # IIR
+                    else:
+                        ftype, order, freq = params["type"], params["order"], params["freq"]
+                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_xo_iir_filter(way, ftype, order, freq)
+
+                    gain = params.get('gain', 0.0)
+                    LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = gain
+
 
         return LSPK_CONFIG
 
@@ -311,6 +252,8 @@ def _init():
     CONFIG["xo"] = {}
     if lspk_config.get('xo'):
         CONFIG["xo"] = lspk_config["xo"]
+    if lspk_config.get('xo_gains'):
+        CONFIG["xo_gains"] = lspk_config["xo_gains"]
 
     # 2. Loudspeaker EQ:
     CONFIG["lspk_eq"] = {}
