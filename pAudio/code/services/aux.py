@@ -108,7 +108,7 @@ def manage_lu_monitor(commandphrase):
             f.write(commandphrase)
         return 'ordered'
     except Exception as e:
-        return f'ERROR writing FIFO \`{LDCTRL_PATH}\`: {str(e)}'
+        return f'ERROR writing FIFO `{LDCTRL_PATH}`: {str(e)}'
 
 
 # Entry function
@@ -123,7 +123,7 @@ def do(cmd, args, add):
 
         # LU_monitor_enabled is a legacy option, now it is always enabled.
         case 'get_web_config':
-            result = {  'main_selector':        'inputs',
+            result = {  'main_selector':        'sources',
                         'LU_monitor_enabled':   True
             }
 
@@ -139,7 +139,7 @@ def do(cmd, args, add):
             result = manage_lu_monitor('reset')
 
         case 'set_loudness_monitor_scope' | 'set_lu_monitor_scope':
-            args = 'input' # FORCED to input
+            args = 'source' # FORCED to source
             result = manage_lu_monitor(f'scope={args}')
 
         case 'zita_j2n':

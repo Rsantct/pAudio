@@ -1,0 +1,59 @@
+# See FullRange example for more info on DRC
+drc:
+    cabecero:
+        type:    fir
+
+#
+# XO sets can be IIR or FIR
+#
+xo:
+
+    # For FIR XO sets, just provide 'type: fir' and optionally a 'gain: (dB)' fields.
+    # Then pAudio will populate the needed parameters for each way (hi, lo, ...)
+    # by using the set name and searching for PCM files named like that.
+    # under the loudspeaker folder. Example:
+
+    rePhaseTest.mp:        # This assumes proper .pcm files named
+                           # 'xo.lo.rePhaseTest.mp.pcm' and 'xo.hi.rePhaseTest.mp.pcm'
+                           # (the free suffix .mp would indicate a minimum phase FIR)
+        lo:
+            type:   fir
+        hi:
+            type:   fir
+            gain:   -6.4    # GAIN for a FIR is optional when needed
+
+    rePhaseTest.lp:         # (.lp would indicate a linear phase FIR)
+                           
+        lo:
+            type:   fir
+        hi:
+            type:   fir
+            gain:   -6.4
+
+    # For IIR XO sets, provide each way (lo, hi) in separate sections, with its the 3 basic parameters. Example:
+    
+    iirTest:
+        lo:
+            type:   LR      # LinkwitzRelay or Butterworth
+            order:  2       # must be even for LinkwitzRelay
+            freq:   2000    # Hz
+        hi:
+            type:   LR
+            order:  2
+            freq:   2000
+
+#
+# The OUTPUTS section to map towards hte SOUND CARD PHISICAL OUTPUTS
+#
+# (i) output index starts with `1` (to follow jack `system:playback_N` ports numbering)
+#
+outputs:
+
+    #           name         Gain dB    Polarity +/-    Delay ms
+    1:
+    2:
+    3:          lo.L          0.0       +               0.0
+    4:          lo.R          0.0       +               0.0
+    5:          hi.L         -7.0       +               0.0
+    6:          hi.R         -7.0       +               0.0
+    

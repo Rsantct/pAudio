@@ -80,9 +80,9 @@ def get_remote_selected_source(addr, port=9990, timeout=0.5):
 
         remote_state  = json.loads(tmp)
 
-        # former pe.audio.sys project: 'source' was 'input'
         remote_source = remote_state.get('source', '')
         if not remote_source:
+            # former pe.audio.sys project: 'source' was 'input'
             remote_source = remote_state.get('input', '')
 
     except Exception as e:

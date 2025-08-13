@@ -3,13 +3,17 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+import  sys
 import  os
 import  yaml
 from    fmt         import Fmt
 
 UHOME = os.path.expanduser('~')
-
 MAINFOLDER          = f'{UHOME}/pAudio'
+sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod/pcamilla_mod')
+
+import do_makes
+
 
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
 LSPKFOLDER          = f''
@@ -33,14 +37,12 @@ try:
 except:
     pass
 
-CONFIG = {}
-
 
 def _init():
 
     def get_lspk_config():
         """
-            - try to load a loudspeaker's CamillaDSP YAML file
+            - try to load a loudspeaker's YAML file
 
             - if outputs: section is NOT defined, defaults to an stereo ones
 
@@ -104,7 +106,7 @@ def _init():
             def check_output_names():
                 """ Check L/R pairs
                 """
-                outputs = LSPK_CGF["outputs"]
+                outputs = LSPK_CONFIG["outputs"]
 
                 L_outs  = [ pms["name"] for o, pms in outputs.items()
                             if pms["name"] and pms["name"][-1]=='L' ]
@@ -116,7 +118,7 @@ def _init():
 
 
             # Outputs
-            for out, params in LSPK_CGF["outputs"].items():
+            for out, params in LSPK_CONFIG["outputs"].items():
 
                 # It is expected 4 fields
                 params = params.split() if params else []
@@ -137,106 +139,65 @@ def _init():
                                 'polarity': pol,
                                 'delay':    delay   }
 
-                LSPK_CGF["outputs"][out] = params
+                LSPK_CONFIG["outputs"][out] = params
 
 
             # Check L/R pairs
             check_output_names()
 
 
-        LSPK_CGF = {}
+        LSPK_CONFIG = {}
 
         if os.path.isfile(LSPK_YML_PATH):
 
             try:
                 with open(LSPK_YML_PATH, 'r') as f:
-                    LSPK_CGF = yaml.safe_load( f.read() )
-                print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/camilladsp_lspk.yml was found{Fmt.END}')
+                    LSPK_CONFIG = yaml.safe_load( f.read() )
+                print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/lspk.yml was found{Fmt.END}')
 
             except Exception as e:
-                print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/camilladsp_lspk.yml {str(e)}{Fmt.END}')
+                print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
+
 
         # DEFAULT FULL RANGE LOUDSPEAKER OUTPUTs
-        if not LSPK_CGF.get("outputs"):
-            LSPK_CGF["outputs"] = {1: 'fr.L', 2: 'fr.R'}
+        if not LSPK_CONFIG.get("outputs"):
+            LSPK_CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
 
-
-        # Converting the Human Readable outputs section to a dictionary
+        # Converting the Human Readable 'outputs:' section to a dictionary
         reformat_outputs()
 
-        return LSPK_CGF
+        # Populate XO filters if any
+        if 'xo' in LSPK_CONFIG and LSPK_CONFIG.get('xo'):
+
+            # Also will generate an auxiliary CamillaDSP filter definition
+            # for gain on each xo-set-name-way
+            LSPK_CONFIG["xo_gains"] = {}
+
+            for set_name, ways in LSPK_CONFIG["xo"].items():
+
+                for way, params in ways.items():
+
+                    # FIR
+                    if params.get('type') == 'fir':
+                        fir_path = f'{LSPKFOLDER}/{CONFIG["samplerate"]}/xo.{way}.{set_name}.pcm'
+                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_fir_filter(fir_path)
+
+                    # IIR
+                    else:
+                        ftype, order, freq = params["type"], params["order"], params["freq"]
+                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_xo_iir_filter(way, ftype, order, freq)
+
+                    gain = params.get('gain', 0.0)
+                    LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = gain
 
 
-    def reformat_PEQ():
-        """ PEQa are given in NON standard YML, having 3 fields. Example:
-
-            PEQ:
-                L:
-                    #   freq    gain    Q
-                    1:  123     -2.0    1.0
-                    2:  456     -3.0    0.5
-                R:
-                    ...
-
-            Here will convert the Human Readable fields into a dictionary.
-        """
-
-        def check_peq_params(params):
-
-            freq, gain, q = params
-
-            freq = float(freq)
-            gain = float(gain)
-            q    = float(q)
-
-            if freq < 20.0 or freq > 20e3:
-                raise Exception('Freq must be 20 ~ 20000 (Hz)')
-
-            if gain < -20 or gain > 6:
-                raise Exception('Gain must be in -20.0 ~ +6.0 (dB)')
-
-            if q < 0.1 or q > 10:
-                raise Exception('Q must be in 0.1 ~ 10')
-
-            return freq, gain, q
-
-
-        # Filling the empty keys
-        if not 'PEQ' in CONFIG or not CONFIG["PEQ"]:
-            CONFIG["PEQ"] = {'L': {}, 'R': {}}
-        if not 'L' in CONFIG["PEQ"]:
-            CONFIG["PEQ"]["L"] = {}
-        if not 'R' in CONFIG["PEQ"]:
-            CONFIG["PEQ"]["R"] = {}
-
-        # PEQ parameters
-        for ch in CONFIG["PEQ"]:
-
-            if not ch in ('L', 'R'):
-                raise Exception('PEQ channel must be `L` or `R`')
-
-            if not CONFIG["PEQ"][ch]:
-                CONFIG["PEQ"][ch] = {}
-
-            for peq, params in CONFIG["PEQ"][ch].items():
-
-                # It is expected 3 fields
-                params = params.split()
-                if len(params) != 3:
-                    raise Exception(f'Bad PEQ #{peq}')
-
-                # Redo in dictionary form
-                freq, gain, q = check_peq_params(params)
-                params = {  'freq':     freq,
-                            'gain':     gain,
-                            'q':        q       }
-
-                CONFIG["PEQ"][ch][peq] = params
+        return LSPK_CONFIG
 
 
     global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
+    CONFIG["mainfolder"] = MAINFOLDER
 
     #
     # Default values if omited parameters
@@ -248,13 +209,10 @@ def _init():
     if not CONFIG.get("plugins"):
         CONFIG["plugins"] = []
 
-    if not 'inputs' in CONFIG:
-        CONFIG["inputs"] = {'system-wide':{}}
+    if not 'sources' in CONFIG:
+        CONFIG["sources"] = {'system-wide':{}}
     else:
-        CONFIG["inputs"]["none"] = {}
-
-    if not 'drcs_offset' in CONFIG:
-        CONFIG["drcs_offset"] = 0.0
+        CONFIG["sources"]["none"] = {}
 
     if not 'ref_level_gain_offset' in CONFIG:
         CONFIG["ref_level_gain_offset"] = 0.0
@@ -274,34 +232,48 @@ def _init():
     if not os.path.isdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}'):
         os.mkdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}')
 
-    LSPK_YML_PATH = f'{LSPKFOLDER}/camilladsp_lspk.yml'
+    LSPK_YML_PATH = f'{LSPKFOLDER}/lspk.yml'
 
 
-    # Converting the Human Readable PEQ section under CONFIG to a dictionary
-    # **PENDING**
-    #reformat_PEQ()
-
-
-    # MERGING the specific LOUDSPEAKER YAML configuration
+    # MERGING the specific LOUDSPEAKER configuration
     lspk_config = get_lspk_config()
     #
     # DEBUG
-    #print('--- lspk_yaml ----')
+    #print('--- lspk.yml ----')
     #print( yaml.dump(lspk_config, default_flow_style=False, sort_keys=False, indent=2) )
     #
-    # 1. Loudspeaker multiway outputs:
-    CONFIG["outputs"] = lspk_config["outputs"]
-    #
-    # 2. Loudspeaker IIR_EQ:
-    if not CONFIG.get('iir_eq'):
-        CONFIG["iir_eq"] = {}
-    if lspk_config.get('iir_eq'):
-        for fname, fparams in lspk_config["iir_eq"].items():
-            CONFIG["iir_eq"][fname] = fparams
 
+    # 1. Loudspeaker multiway:
+
+    # 1.a. Sound card outputs:
+    CONFIG["outputs"] = lspk_config["outputs"]
+
+    # 1.b. Loudspeaker XO:
+    CONFIG["xo"] = {}
+    if lspk_config.get('xo'):
+        CONFIG["xo"] = lspk_config["xo"]
+    if lspk_config.get('xo_gains'):
+        CONFIG["xo_gains"] = lspk_config["xo_gains"]
+
+    # 2. Loudspeaker EQ:
+    CONFIG["lspk_eq"] = {}
+    if lspk_config.get('lspk_eq'):
+        CONFIG["lspk_eq"] = lspk_config["lspk_eq"]
+    CONFIG["lspk_eq_safe_gain"] = lspk_config.get('lspk_eq_safe_gain', 0.0)
+
+    # 3. Loudspeaker DRC:
+    CONFIG["drc"] = {}
+    if lspk_config.get('drc'):
+        CONFIG["drc"] = lspk_config["drc"]
+
+    # Dump to disk for maintenence
+    pAudio_cfg_json_path = f'{LOGFOLDER}/.pAudio_cfg'
+    with open(pAudio_cfg_json_path, 'w') as f:
+        f.write( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
 
     # DEBUG
     #print('--- pAudio ----')
+    #print(CONFIG.keys())
     #print( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
 
 

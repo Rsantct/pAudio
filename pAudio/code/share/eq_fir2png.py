@@ -5,6 +5,7 @@
 
 """
     Dumps the EQ FIR in use to a .png file
+    (EQ FIR includes loudness, target and tone curves)
 """
 
 import  numpy as np
@@ -61,7 +62,7 @@ def get_spectrum(imp, fs):
     try:
         N = fft.next_fast_len(N)
     except:
-        print(f'(eqfir2png) fft.next_fast_len not availble on this scipy version')
+        print(f'(eq_fir2png) fft.next_fast_len not availble on this scipy version')
 
     # Semispectrum (whole=False -->  w to Nyquist)
     w, h = signal.freqz(imp, worN=N, whole=False)
@@ -82,7 +83,7 @@ def init():
     except FileExistsError:
         pass
     except:
-        print(f'(eqfir2png) unexpected error whith mkdir "{IMGFOLDER}"')
+        print(f'(eq_fir2png) unexpected error whith mkdir "{IMGFOLDER}"')
 
 
 def fir2png(firpath=EQFIR_PATH):
@@ -121,5 +122,5 @@ init()
 if __name__ == '__main__':
 
     fir2png(EQFIR_PATH)
-    print( f'(eqfir2png) saved: \'{EQPNG_PATH}\' ' )
+    print( f'(eq_fir2png) saved: \'{EQPNG_PATH}\' ' )
 

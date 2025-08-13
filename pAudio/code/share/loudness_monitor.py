@@ -27,14 +27,44 @@ from common import  CONFIG, LDMON_PATH, LDCTRL_PATH
 from common import  read_json_file
 
 
+# AUXILIAR for Coreaudio multi capture device syntax (see doc)
+def get_coreaudio_capture_device():
+    """ See pAudio doc for multi capture device syntax
+    """
+
+    result = ''
+
+
+    with open(PREAMP_STATE_PATH, 'r') as f:
+        state = json.loads( f.read() )
+
+
+    if CONFIG["coreaudio"]["devices"]["capture"].get('device'):
+
+        result = CONFIG["coreaudio"]["devices"]["capture"]["device"]
+
+    else:
+
+        in_devices = CONFIG["coreaudio"]["devices"].get('capture')
+
+        result = in_devices[ state.get('source') ] .get('device')
+
+    return result
+
+
 if CONFIG.get('coreaudio'):
-    AUDIO_SOURCE = CONFIG["coreaudio"]["devices"]["capture"]["device"]
+    AUDIO_SOURCE = get_coreaudio_capture_device()
 
 elif CONFIG.get('jack'):
     AUDIO_SOURCE = 'pre_in_loop'
 
 else:
     print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
+    sys.exit()
+
+
+if not AUDIO_SOURCE:
+    print(f'(loudness_monitor.py) ERROR getting a device to listen from. Exiting.')
     sys.exit()
 
 
@@ -78,14 +108,14 @@ def control_fifo_read_loop(fname, meter):
                 elif f_data[:6] == 'scope=':
                     new_scope = f_data[6:]
                     # validate
-                    if new_scope in ('album', 'track', 'input'):
+                    if new_scope in ('album', 'track', 'source'):
                         scope = new_scope
                         save2disk()
 
 
 class My_files_event_handler(FileSystemEventHandler):
     """ A file changes handler that will reset the meter when:
-        - input preamp changes
+        - source of preamp changes
         - playing metadata album or track changes versus the scope value
     """
 
@@ -99,9 +129,9 @@ class My_files_event_handler(FileSystemEventHandler):
 
         path = event.src_path
 
-        # Check if preamp input has changed, then RESET
+        # Check if preamp source has changed, then RESET
         if PREAMP_STATE_PATH in path:
-            new_source = read_state_from_disk()['input']
+            new_source = read_state_from_disk().get('source')
             if source != new_source:
                 source = new_source
                 self.meter.reset()
@@ -125,22 +155,22 @@ class My_files_event_handler(FileSystemEventHandler):
 
 def get_configured_scope():
     """ The configured scope ('album', 'title', '') to reset the measured LU-I.
-        If void '', preamp input changes events will still reset the measure.
+        If void '', preamp source changes events will still reset the measure.
     """
     if 'LU_reset_scope' in CONFIG:
             scope = CONFIG['LU_reset_scope']
             # If left blank:
             if not scope:
-                scope = 'input'
+                scope = 'source'
     else:
         # Defaults to album if not configured
-        scope = 'input'
+        scope = 'source'
 
     # We accept 'track' to mean 'title'
     if scope == 'track':
         scope = 'title'
     # Check if it is a valid value
-    if not ( scope in ('album', 'title', 'input') ):
+    if not ( scope in ('album', 'title', 'source') ):
         raise Exception(f'(loudness_monitor) LU_reset_scope \'{scope}\' not valid')
     return scope
 
@@ -208,11 +238,11 @@ if __name__ == '__main__':
     # Prepare LDMON_PATH file on disk
     prepare_ldmon_path()
 
-    # Initialize the scope of the measurements (input, album or track)
+    # Initialize the scope of the measurements (source, album or track)
     scope = get_configured_scope()
 
     # Initialize current preamp source
-    source = read_json_file(PREAMP_STATE_PATH)['source']
+    source = read_json_file(PREAMP_STATE_PATH).get('source')
 
     # Starts a LU_meter instance with relevant parameters:
     # M_threshold = 10.0   To avoid stress saving values to disk, because this

@@ -4,6 +4,19 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 
+def make_gain_filter(gain, description=''):
+    res =   {
+                'description': description,
+                'type': 'Gain',
+                'parameters': {
+                        'gain':     0.0,
+                        'inverted': False,
+                        'mute':     False
+                }
+            }
+    return res
+
+
 def make_dither_filter(d_type, bits):
     f= {
         'type': 'Dither',
@@ -15,9 +28,7 @@ def make_dither_filter(d_type, bits):
     return f
 
 
-def make_drc_filter(channel, drc_set, fs, lspkfolder):
-
-    fir_path = f'{lspkfolder}/{fs}/drc.{channel}.{drc_set}.pcm'
+def make_fir_filter(fir_path):
 
     f = {
             "type": 'Conv',
@@ -31,16 +42,39 @@ def make_drc_filter(channel, drc_set, fs, lspkfolder):
     return f
 
 
-def make_xo_filter(xo_filter, fs, lspkfolder):
+def make_xo_iir_filter(way_type='hi', subtype='LR', order=2, freq=2000, freq2=0):
+    """
+        way_type:   lo | hi | mi *
+        subtype:    LinkwitzRiley | Butterworth
+        freq:       (Hz)
+        order:      (even if LinkwitzRiley)
 
-    fir_path = f'{lspkfolder}/{fs}/xo.{xo_filter}.pcm'
+        (*) Bandpass (mi) is PENDING
+    """
 
-    f = {
-            "type": 'Conv',
-            "parameters": {
-                "filename": fir_path,
-                "format":   'FLOAT32LE',
-                "type":     'Raw'
+    subtype = subtype.lower()
+
+    if 'lr' in subtype or 'linkw' in subtype:
+        subtype = 'LinkwitzRiley'
+
+        # check order is even for LR
+        if order % 2:
+            raise Exception('LinkwitzRiley order MUST be even')
+
+    elif 'but' in subtype:
+        subtype = 'Butterworth'
+
+    if way_type == 'hi':
+        subtype += 'Highpass'
+
+    elif way_type == 'lo':
+        subtype += 'Lowpass'
+
+    f = {   'type':         'BiquadCombo',
+            'parameters': {
+                'type':     subtype,
+                'order':    order,
+                'freq':     freq
             }
         }
 
@@ -239,7 +273,7 @@ def make_mixer_multi_way(pAudio_outputs):
     return m
 
 
-def make_xover_steps(pAudio_outputs, default_filter_type = 'mp'):
+def make_xover_steps(pAudio_outputs, xo_filtername):
     """ Makes the Filter steps after the expander mixer of the pipeline
 
         Example for 2+1 way, with 'sw' way connected to the 6th output
@@ -248,30 +282,35 @@ def make_xover_steps(pAudio_outputs, default_filter_type = 'mp'):
             channel: 0
             names:
               - lo.mp
+              - lo.mp_gain
               - delay.lo.L
 
           - type: Filter
             channel: 1
             names:
               - lo.mp
+              - lo.mp_gain
               - delay.lo.R
 
           - type: Filter
             channel: 2
             names:
               - hi.mp
+              - hi.mp_gain
               - delay.hi.L
 
           - type: Filter
             channel: 3
             names:
               - hi.mp
+              - hi.mp_gain
               - delay.hi.R
 
           - type: Filter
             channel: 5
             names:
               - sw
+              - sw_gain
               - delay.sw
     """
 
@@ -298,7 +337,8 @@ def make_xover_steps(pAudio_outputs, default_filter_type = 'mp'):
                                     # jack `system:playback_N` ports numbering
                     'channels':     [out_idx - 1],
 
-                    'names':        [ f'xo.{way}.{default_filter_type}',
+                    'names':        [ f'xo.{way}.{xo_filtername}',
+                                      f'xo.{way}.{xo_filtername}_gain',
                                       f'delay.{way}.{ch}'
                                     ]
                 }

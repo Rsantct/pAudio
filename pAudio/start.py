@@ -11,7 +11,7 @@
             -v      verbose in attached terminal
 """
 #
-# A helper command to check which things are running:
+# A helper command to check what things are running:
 #
 # pgrep -fla camilla; pgrep -fla node; pgrep -fla "server.py"; pgrep -fla 'plugins'
 #
@@ -31,7 +31,7 @@ from    common  import *
 # import Jack stuff ONLY with LINUX
 if sys.platform == 'linux' and CONFIG.get('jack'):
     import  jack_mod
-    from    sources import SOURCES
+    from    jack_sources import SOURCES
 
 
 def get_srv_addr_port():

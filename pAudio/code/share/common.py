@@ -92,30 +92,6 @@ def send_cmd( cmd, sender='', verbose=False, timeout=3,
     return ans
 
 
-def get_DSP_in_use():
-    """ The DSP in use is set inside preamp.py
-    """
-    with open(f'{CODEFOLDER}/services/preamp.py', 'r') as f:
-        tmp = f.readlines()
-    import_lines = [line for line in tmp if 'import ' in line]
-    import_DSP_line = str([line for line in import_lines if 'DSP' in line])
-    res = 'unknown'
-    if 'camilla' in import_DSP_line:
-        res = 'camilladsp'
-    elif 'brutefir' in import_DSP_line:
-        res = 'brutefir'
-    return res
-
-
-def get_bit_depth(fmt):
-    """ retrieves the bit depth from a given audio sample format,
-        e.g. FLOAT32LE, S24LE, ...
-    """
-    digits = [x for x in fmt if x.isdigit()]
-    bd = ''.join(digits)
-    return int(bd)
-
-
 def read_json_file(fpath, timeout=1):
     """ Some json files cannot be ready to read in first pAudio run,
         so let's retry
@@ -327,46 +303,6 @@ def list_remove_by_pattern(l, p):
     return l
 
 
-def get_xo_filters_from_loudspeaker_folder():
-    """ looks for xo.xxxx.pcm files inside the loudspeaker folder
-    """
-    xo_files    = []
-    xo_filters  = []
-
-    LSPKFOLDER_FS = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
-
-    try:
-        files = os.listdir(LSPKFOLDER_FS)
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER_FS}/{x}') ]
-        xo_files = [x for x in files if x.startswith('xo.')
-                                        and
-                                        x.endswith('.pcm')]
-    except Exception as e:
-        print(f'{Fmt.BOLD}get_xo_filters_from_loudspeaker_folder ERROR: {str(e)}{Fmt.END}')
-
-    for f in xo_files:
-        xo_id = f.replace('xo.', '').replace('.pcm', '')
-        xo_filters.append(xo_id)
-
-    return xo_filters
-
-
-def get_xo_sets_from_loudspeaker_folder():
-    """ xo.WW.FF.pcm files can exist on two flavours:
-
-            FF = mp: minimum phase filter
-            FF = lp: linear phase filter
-    """
-    xo_filters = get_xo_filters_from_loudspeaker_folder()
-
-    xo_sets = [ x.replace('lo.', '')
-                 .replace('mi.', '')
-                 .replace('hi.', '')
-                 .replace('sw.', '') for x in xo_filters ]
-
-    return list(set(xo_sets))
-
-
 def get_loudspeaker_ways():
     """ Read loudspeaker ways as per the outputs configuration
     """
@@ -382,37 +318,6 @@ def get_loudspeaker_ways():
             lws.append('sw')
 
     return list(set(lws))
-
-
-def get_drc_sets_from_loudspeaker_folder():
-    """ looks for drc.Channel.DrcId.pcm files inside the loudspeaker folder
-    """
-    drc_files = []
-    drc_sets_candidate  = {}
-    drc_sets = []
-
-    try:
-        files = os.listdir(f'{LSPKFOLDER}')
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
-        drc_files = [x for x in files if x.startswith('drc.') ]
-    except:
-        pass
-
-    for f in drc_files:
-        chID  = f.split('.')[1]
-        drcID = '.'.join(f.split('.')[2:]).replace('.pcm', '')
-        if not drcID in drc_sets_candidate:
-            drc_sets_candidate[drcID] = [chID]
-        else:
-            if not chID in drc_sets_candidate[drcID]:
-                drc_sets_candidate[drcID].append(chID)
-
-    for k in drc_sets_candidate:
-        channels = drc_sets_candidate[k]
-        if sorted(channels) == ['L', 'R']:
-            drc_sets.append(k)
-
-    return sorted(drc_sets)
 
 
 def get_target_sets(fs=44100):
@@ -452,7 +357,7 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=60):
+def wait4server(timeout=30):
 
     period = .5
     tries  = int(timeout / period)
@@ -778,7 +683,7 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
     zitacmd   = f'zita-n2j --jname {zitajname} --buff {buff_size} {get_my_ip()} {udp_port}'
 
     # Assign ALIAS to ports to be able to switch by using
-    # the IP port name of a remoteXXXX input in config.yml
+    # the IP port name of a remoteXXXX source in config.yml
     #
     with open(f'{LOGFOLDER}/{zitajname}.log', 'w') as zitalog:
 

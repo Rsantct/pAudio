@@ -1,10 +1,30 @@
-## Full Range example
-
-All pcm files are fake ones, just to illustrate `.pcm` files naming
+**THIS IS A DRAFT, PENDING TO REVIEW**
 
 
-### Optional: full range EQ
+# Full Range example
 
-If you want to apply some FIR to fine EQ your full range loudspeaker, yo can prepare and add here a file named `xo.fr.pcm`.
+Filters can be set into **`lspk.yml`**, whit a logical syntax, see example file.
 
-If this file is omitted, no loudspeaker filtering will be applied
+Sections in `lspk.yml`:
+
+    safe_gain:      usually negative gain to compensate for loudspeaker filtering,
+                    for example a bass extension eq
+
+    lspk_eq:    filters intended to EQ the loudspeaker itself
+
+    drc:        sets of filters per channel for DRC (Digital Room Correction)
+
+
+Filters can be both IIR or FIR types, with the proper CamillaDSP syntax.
+
+## IIR filtering
+
+Filter data is defined verbosely with CamillaDSP syntax.
+
+
+## FIR filtering
+
+Filter data is defined verbosely with CamillaDSP syntax. Also the correspondig coefficient PCM files must exist under their corresponding SAMPLERATE folder.
+
+The PCM files provided here are fake ones, just to illustrate `.pcm` files naming
+

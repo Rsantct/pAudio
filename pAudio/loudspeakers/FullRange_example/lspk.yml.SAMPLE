@@ -1,0 +1,93 @@
+# Safe gain to avoid clipping when applying 'lspk_eq' filters below.
+# This is not a CamillaDSP native parameter but will affect the processor gain.
+lspk_eq_safe_gain: -8
+
+# IIR filters in sections 'lspk_eq:' and 'drc:'
+#     - Must follow the CamillaDSP `filters:` syntax
+#     - May be placed in L: or R: sections to apply on that channel
+#
+# FIR filters have a simplified syntax, see example below.
+
+lspk_eq:
+
+    bass_extension:
+        type: Biquad
+        parameters:
+            type:           LinkwitzTransform
+            freq_act:       65
+            q_act:          1.0
+            freq_target:    40
+            q_target:       0.707
+
+    eq_1:
+        type: Biquad
+        parameters:
+            type: Peaking
+            freq: 1000.0
+            gain: -2.0
+            q: 2.0
+
+    eq_2:
+        type: Biquad
+        parameters:
+            type: Peaking
+            freq: 2288.0
+            gain: 3.5
+            q: 1.612
+    eq_3:
+        type: Biquad
+        parameters:
+            type: Peaking
+            freq: 4100.0
+            gain: 1.5
+            q: 3.0
+
+# DRC filters are expected to be divided in set-names and then in L: and R: sections
+drc:
+
+    # FIR filters syntax. Just provide 'type' and 'gain_offset' as below example.
+    # Then pAudio will populate the needed parameters by using this <set-name>
+    # and searching for PCM files named like this under the loudspeaker folder
+    sofa:
+        type:           fir
+        gain_offset:    -0.5
+
+    # IIR filters syntax:
+    equilateral:
+        L:
+            1:
+                type: Biquad
+                parameters:
+                    type: Peaking
+                    freq: 53.8
+                    gain: -2.0
+                    q: 4.645
+            2:
+                type: Biquad
+                parameters:
+                    type: Peaking
+                    freq: 101.0
+                    gain: -6.0
+                    q: 2.253
+            3:
+                type: Biquad
+                parameters:
+                    type: Peaking
+                    freq: 243.0
+                    gain: -1.5
+                    q: 2.0
+        R:
+            1:
+                type: Biquad
+                parameters:
+                    type: Peaking
+                    freq: 79.5
+                    gain: -4.4
+                    q: 2.563
+            2:
+                type: Biquad
+                parameters:
+                    type: Peaking
+                    freq: 212.0
+                    gain: -3.0
+                    q: 3.21

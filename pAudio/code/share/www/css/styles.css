@@ -54,7 +54,7 @@
     td#SoloInfo         { width: 7%; border: none; font-size:0.6em;}
     td#PolarityInfo     { width: 7%; border: none; font-size:0.6em;}
 
-    td#input            { width:  85%; text-align: right; border: none;}
+    td#source           { width:  85%; text-align: right; border: none;}
 
 
     td#treble           { width:50%; border: 1px solid grey; border-radius: 10px/10px; }

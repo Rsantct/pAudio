@@ -6,7 +6,7 @@
 """
     Dumps all DRC sets tp png images under to www/images/<LOUDSPEAKER>
 
-    usage:      drcfir2png.py [--quiet]
+    usage:      drc_fir2png.py [--quiet]
 
     NOTICE: Even if short lenght IR are used for DRC, thus low resolution
             in low freq correction, the correction curve will be
@@ -44,6 +44,44 @@ DB_TICKS    = [-18, -12, -6, 0, 6]
 DB_LABELS   = ['-18', '-12', '-6', '0', '6']
 
 
+def get_drc_fir_sets():
+    """ looks for drc FIR files inside the loudspeaker folder.
+    """
+    drc_files = []
+    drc_sets_candidate  = {}
+    drc_sets = []
+
+    pcms_folder = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
+
+    try:
+        files = os.listdir(pcms_folder)
+        files = [x for x in files if os.path.isfile(f'{pcms_folder}/{x}') ]
+        drc_files = [x for x in files if x.startswith('drc.') ]
+
+    except:
+        pass
+
+    for f in drc_files:
+        chID  = f.split('.')[1]
+        drcID = '.'.join(f.split('.')[2:]).replace('.pcm', '')
+
+        if not drcID in drc_sets_candidate:
+            drc_sets_candidate[drcID] = [chID]
+
+        else:
+            if not chID in drc_sets_candidate[drcID]:
+                drc_sets_candidate[drcID].append(chID)
+
+    for k in drc_sets_candidate:
+
+        channels = drc_sets_candidate[k]
+
+        if sorted(channels) == ['L', 'R']:
+            drc_sets.append(k)
+
+    return sorted(drc_sets)
+
+
 def get_spectrum(imp, fs):
 
     fNyq = fs / 2.0
@@ -55,7 +93,7 @@ def get_spectrum(imp, fs):
     try:
         N = fft.next_fast_len(N)
     except:
-        print(f'(drcfir2png) fft.next_fast_len not availble on this scipy version')
+        print(f'(drc_fir2png) fft.next_fast_len not availble on this scipy version')
 
     # Semispectrum (whole=False -->  w to Nyquist)
     w, h = signal.freqz(imp, worN=N, whole=False)
@@ -80,7 +118,8 @@ def read_pcms(drc_set):
 
     fnames = []
     for ch in ('L', 'R'):
-        fnames.append(f'{LSPKFOLDER}/drc.{ch}.{drc_set}.pcm')
+        fnames.append(f'{LSPKFOLDER}/{FS}/drc.{ch}.{drc_set}.pcm')
+
     IRs = []
     for fname in fnames:
         imp = readPCM32(fname)
@@ -103,22 +142,6 @@ def diracs():
                      'channel': ch
                      } )
     return IRs
-
-
-def get_drc_sets():
-    """ find loudspeaker's drc_sets
-        *** OBSOLETE, see pAudio/code/share/common ***
-    """
-    files   = os.listdir(LSPKFOLDER)
-    coeffs  = [ x.replace('.pcm', '') for x in files if x[:4] == 'drc.']
-    drc_coeffs = [ x for x in coeffs if x[:4] == 'drc.'  ]
-    #print('drc_coeffs:', drc_coeffs) # debug
-    drc_sets = []
-    for drc_coeff in drc_coeffs:
-        drcSetName = drc_coeff[6:]
-        if drcSetName not in drc_sets:
-            drc_sets.append( drcSetName )
-    return drc_sets
 
 
 def get_coeff_atten(drc_set, ch):
@@ -161,11 +184,11 @@ def png_is_outdated(drc_set):
             png_ctime = os.path.getctime(png_path)
             if (png_ctime - pcm_ctime) < 0:
                 if verbose:
-                    print(f'(drcfir2png) found old PNG file for "{drc_set}"')
+                    print(f'(drc_fir2png) found old PNG file for "{drc_set}"')
                 return True
         except:
             if verbose:
-                print(f'(drcfir2png) PNG file for "{drc_set}" not found')
+                print(f'(drc_fir2png) PNG file for "{drc_set}" not found')
             return True
 
     return False
@@ -177,20 +200,32 @@ def prepare_IMGFOLDER():
     except FileExistsError:
         pass
     except:
-        print(f'drcfir2png unexpected error when mkdir "{IMGFOLDER}"')
+        print(f'drc_fir2png unexpected error when mkdir "{IMGFOLDER}"')
+
+
+def get_DSP_in_use():
+    """ The DSP in use is set inside preamp.py
+    """
+    with open(f'{CODEFOLDER}/services/preamp.py', 'r') as f:
+        tmp = f.readlines()
+    import_lines = [line for line in tmp if 'import ' in line]
+    import_DSP_line = str([line for line in import_lines if 'DSP' in line])
+    res = 'unknown'
+    if 'camilla' in import_DSP_line:
+        res = 'camilladsp'
+    elif 'brutefir' in import_DSP_line:
+        res = 'brutefir'
+    return res
 
 
 if __name__ == '__main__':
 
     DSP_IN_USE = get_DSP_in_use()
 
-    BF_DRC_COEFFS = []
     if DSP_IN_USE == 'brutefir':
         # Reading drc coeffs inside brutefir_config in order to get coeff attenuation
         bf_coeffs = bf_get_config()["coeffs"]
         BF_DRC_COEFFS = [x for x in bf_coeffs if x["name"].startswith('drc')]
-
-
 
     # Read command line (quiet mode or help)
     verbose = True
@@ -208,10 +243,10 @@ if __name__ == '__main__':
     # Get sample rate
     FS = CONFIG["samplerate"]
     if verbose:
-        print( f'(drcfir2png) using sample rate: {FS}' )
+        print( f'(drc_fir2png) using sample rate: {FS}' )
 
     # Get DRC sets names
-    drc_sets = get_drc_sets_from_loudspeaker_folder()
+    drc_sets = get_drc_fir_sets()
 
     # Do plot png files from pcm files
     drc_sets.append('none')
@@ -220,11 +255,11 @@ if __name__ == '__main__':
         # Check for outdated PNG file
         if not png_is_outdated(drc_set):
             if verbose:
-                print(f'(drcfir2png) found PNG file for {LOUDSPEAKER}: {drc_set}')
+                print(f'(drc_fir2png) found PNG file for {LOUDSPEAKER}: {drc_set}')
             continue
         else:
             if verbose:
-                print(f'(drcfir2png) processing PNG file for {LOUDSPEAKER}: {drc_set}')
+                print(f'(drc_fir2png) processing PNG file for {LOUDSPEAKER}: {drc_set}')
 
         fig, ax = plt.subplots()
         fig.set_figwidth( 5 )   # 5 inches at 100dpi => 500px wide
@@ -253,16 +288,14 @@ if __name__ == '__main__':
 
             freqs, magdB = get_spectrum( IR["imp"], FS )
 
+            atten = 0.0
+
             if DSP_IN_USE == 'brutefir':
                 atten = get_coeff_atten( IR["drc_set"], IR["channel"] )
 
             if DSP_IN_USE == 'camilladsp':
-                if drc_set == 'none':
-                    atten = 0.0
-                else:
-                    atten = CONFIG["drcs_offset"]
-            else:
-                atten = 0.0
+                if drc_set in CONFIG["drc"]:
+                    atten = CONFIG["drc"][drc_set].get('gain_offset', 0.0)
 
             magdB -= atten
 
@@ -277,5 +310,5 @@ if __name__ == '__main__':
         fpng = f'{IMGFOLDER}/drc_{drc_set}.png'
         plt.savefig( fpng, facecolor=WEBCOLOR )
         if verbose:
-            print( f'(drcfir2png) saved: \'{fpng}\' ' )
+            print( f'(drc_fir2png) saved: \'{fpng}\' ' )
         #plt.show()

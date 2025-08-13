@@ -4,10 +4,11 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 """
-    The Main pAudio module.
+    The Main pAudio module, its main funtions are:
 
-    - Loads the preamp module
-    - Processing commands entry point: do()
+        - Loads the preamp module
+        - Processing commands entry point: do()
+        - Prepare png graph files of the loudspeaker's DRC
 
 """
 
@@ -34,13 +35,13 @@ print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
 def _init():
-    run_drcfir2png()
 
+    # Prepare DRC FIR graphs
+    cmd = f'python3 {CODEFOLDER}/share/drc_fir2png.py'
+    sp.Popen(cmd, shell=True)
 
-def run_drcfir2png():
-    """ Prepare DRC FIR graphs
-    """
-    cmd = f'python3 {CODEFOLDER}/share/drcfir2png.py'
+    # Prepare DRC IIR graphs
+    cmd = f'python3 {CODEFOLDER}/share/drc_iir2png.py'
     sp.Popen(cmd, shell=True)
 
 
