@@ -10,6 +10,10 @@ XOVER
 - **delay**
 - **polarity**
 
-are set in _human readable_ format in the `outputs:` section inside the `lspk.yml` file.
+are set in _human readable_ format in the **`outputs:`** section inside the `lspk.yml` file.
 
 XOVER can use both types of filters: FIR and/or IIR, see the **`lskp.yml`** SAMPLE file.
+
+XOVER FIR filters can have a `gain:` parameter if needed to balance ways.
+
+The gain column in `outputs:` is mainly to compensate for the amplifier and driver efficiency chain.
