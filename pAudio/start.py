@@ -31,7 +31,7 @@ from    common  import *
 # import Jack stuff ONLY with LINUX
 if sys.platform == 'linux' and CONFIG.get('jack'):
     import  jack_mod
-    from    sources import SOURCES
+    from    jack_sources import SOURCES
 
 
 def get_srv_addr_port():
