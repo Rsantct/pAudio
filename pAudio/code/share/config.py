@@ -180,7 +180,7 @@ def _init():
                     # FIR
                     if params.get('type') == 'fir':
                         fir_path = f'{LSPKFOLDER}/{CONFIG["samplerate"]}/xo.{way}.{set_name}.pcm'
-                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_xo_fir_filter(fir_path)
+                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_fir_filter(fir_path)
 
                     # IIR
                     else:
