@@ -72,8 +72,9 @@ def update_lspk(pAudio_config, cam_config):
             # Keep gain_offset and prepare channels syntax
             values = {'L': {}, 'R': {}, 'gain_offset': values.get('gain_offset', 0.0)}
 
-            values["L"]["1"] = make_drc_fir_filter('L', set_name, fs, lspkfolder)
-            values["R"]["1"] = make_drc_fir_filter('R', set_name, fs, lspkfolder)
+            for ch in 'L', 'R':
+                fir_path = f'{lspkfolder}/{fs}/drc.{ch}.{set_name}.pcm'
+                values[ch]["1"] = make_fir_filter(fir_path)
 
             pAudio_config["drc"][set_name] = values
 
