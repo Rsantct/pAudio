@@ -1,11 +1,12 @@
-# Safe gain to avoid clipping when applying filters below.
+# Safe gain to avoid clipping when applying 'lspk_eq' filters below.
 # This is not a CamillaDSP native parameter but will affect the processor gain.
-safe_gain: -8
+lspk_eq_safe_gain: -8
 
-
-# Filters here:
+# IIR filters in sections 'lspk_eq:' and 'drc:'
 #     - Must follow the CamillaDSP `filters:` syntax
 #     - May be placed in L: or R: sections to apply on that channel
+#
+# FIR filters have a simplified syntax, see example below.
 
 lspk_eq:
 
