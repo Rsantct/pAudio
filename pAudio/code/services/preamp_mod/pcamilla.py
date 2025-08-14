@@ -278,6 +278,10 @@ def init_camilladsp(pAudio_config):
     # Stop if any process running
     sp.call('pkill -KILL camilladsp'.split())
 
+
+    # restore Sound Card settings
+    restore_sound_card()
+
     # Starting CamillaDSP (MUTED)
     print(f'{Fmt.BLUE}Logging CamillaDSP to log/camilladsp.log ...{Fmt.END}')
     cdsp_cmd = f'camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
