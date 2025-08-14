@@ -18,6 +18,37 @@ from    config import *
 USER = getuser()
 
 
+def restore_sound_card():
+    """
+        This assumes that you have set your alsamixer levels and saved them to:
+            ~/pAudio/alsactl.<YOUR_ALSA_CARD_NAME>
+    """
+
+    pa_config_path = f'{UHOME}/pAudio/config.yml'
+
+    with open(pa_config_path, 'r') as f:
+        pa_config = yaml.safe_load( f.read() )
+
+    if not pa_config.get('jack'):
+        return
+
+    alsa_device = pa_config["jack"]["device"]
+    # example: hw:UDJ6,0
+
+    alsa_name = alsa_device.split(',')[0].split(':')[-1]
+
+    alsactl_path =  f'{UHOME}/pAudio/alsactl.{alsa_name}'
+
+    cmd = f'alsactl --file {alsactl_path} restore {alsa_name}'
+
+    if os.path.isfile(alsactl_path):
+        print(f'{Fmt.BLUE}Restoring: {alsactl_path}{Fmt.END}')
+        sp.call(cmd, shell=True)
+
+    else:
+        print(f'{Fmt.RED}File not found: {alsactl_path}{Fmt.END}')
+
+
 def wait4ports( pattern, timeout=10 ):
     """ Waits for jack ports with name *pattern* to be available.
         Default timeout 10 s
