@@ -153,6 +153,18 @@ def _init():
                 Here will convert the Human Readable fields into a dictionary.
             """
 
+            def make_paudio_output(o_name, gain=0.0, polarity='+', delay=0.0):
+
+                res = {
+                    'name':         o_name,
+                    'gain':         gain,
+                    'polarity':     polarity,
+                    'delay':        delay
+                }
+
+                return res
+
+
             def check_output_params(out, params):
 
                 out_name, gain, pol, delay = params
@@ -197,6 +209,15 @@ def _init():
                     raise Exception('Number of outputs for L and R does not match')
 
 
+
+            if not LSPK_CONFIG.get("outputs"):
+                # Default to full range
+                LSPK_CONFIG["outputs"] = {}
+                LSPK_CONFIG["outputs"][1] = make_paudio_output( 'fr.L' )
+                LSPK_CONFIG["outputs"][2] = make_paudio_output( 'fr.R' )
+                return
+
+
             # Outputs
             for out, params in LSPK_CONFIG["outputs"].items():
 
@@ -206,21 +227,14 @@ def _init():
 
                 # Redo in dictionary form
                 if not any(params):
-                    params = {  'name':     '',
-                                'gain':     0.0,
-                                'polarity': '+',
-                                'delay':    0.0     }
+                    params = make_paudio_output('')
 
                 else:
                     _, p = check_output_params(out, params)
                     name, gain, pol, delay = p
-                    params = {  'name':     name,
-                                'gain':     gain,
-                                'polarity': pol,
-                                'delay':    delay   }
+                    params = make_paudio_output(name, gain, pol, delay)
 
                 LSPK_CONFIG["outputs"][out] = params
-
 
             # Check L/R pairs
             check_output_names()
@@ -235,13 +249,7 @@ def _init():
         populate_drc_filters()
 
         # Converting the Human Readable 'outputs:' section to a dictionary
-        if LSPK_CONFIG.get("outputs"):
-            reformat_outputs()
-        else:
-            # Default to full range
-            LSPK_CONFIG["outputs"] = {}
-            LSPK_CONFIG["outputs"][1] = make_paudio_output( 'fr.L' )
-            LSPK_CONFIG["outputs"][2] = make_paudio_output( 'fr.R' )
+        reformat_outputs()
 
         return LSPK_CONFIG
 
