@@ -56,7 +56,7 @@ def _init():
 
                 try:
                     with open(LSPK_YML_PATH, 'r') as f:
-                        tmp = yaml.safe_load( f.read() )
+                        res = yaml.safe_load( f.read() )
                         print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/lspk.yml was found{Fmt.END}')
 
                 except Exception as e:
@@ -117,12 +117,12 @@ def _init():
                     # FIR
                     if params.get('type') == 'fir':
                         fir_path = f'{LSPKFOLDER}/{CONFIG["samplerate"]}/xo.{way}.{set_name}.pcm'
-                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_fir_filter(fir_path)
+                        LSPK_CONFIG["xo"][set_name][way] = make_fir_filter(fir_path)
 
                     # IIR
                     else:
                         ftype, order, freq = params["type"], params["order"], params["freq"]
-                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_xo_iir_filter(way, ftype, order, freq)
+                        LSPK_CONFIG["xo"][set_name][way] = make_xo_iir_filter(way, ftype, order, freq)
 
                     gain = params.get('gain', 0.0)
                     LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = gain
@@ -207,7 +207,6 @@ def _init():
 
                 if len(L_outs) != len(R_outs):
                     raise Exception('Number of outputs for L and R does not match')
-
 
 
             if not LSPK_CONFIG.get("outputs"):
