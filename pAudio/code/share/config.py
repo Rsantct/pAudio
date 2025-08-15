@@ -146,31 +146,14 @@ def _init():
             check_output_names()
 
 
-        LSPK_CONFIG = {}
+        def populate_xo():
+            """ XO items in lspk.yml comes in a human readable format,
+                here we complete a CamillaDSP syntax for them.
 
-        if os.path.isfile(LSPK_YML_PATH):
+                Also will prepare an auxiliary CamillaDSP filter definition
+                for gain on each xo-set-name-way
+            """
 
-            try:
-                with open(LSPK_YML_PATH, 'r') as f:
-                    LSPK_CONFIG = yaml.safe_load( f.read() )
-                print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/lspk.yml was found{Fmt.END}')
-
-            except Exception as e:
-                print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
-
-
-        # DEFAULT FULL RANGE LOUDSPEAKER OUTPUTs
-        if not LSPK_CONFIG.get("outputs"):
-            LSPK_CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
-
-        # Converting the Human Readable 'outputs:' section to a dictionary
-        reformat_outputs()
-
-        # Populate XO filters if any
-        if 'xo' in LSPK_CONFIG and LSPK_CONFIG.get('xo'):
-
-            # Also will generate an auxiliary CamillaDSP filter definition
-            # for gain on each xo-set-name-way
             LSPK_CONFIG["xo_gains"] = {}
 
             for set_name, ways in LSPK_CONFIG["xo"].items():
@@ -190,6 +173,35 @@ def _init():
                     gain = params.get('gain', 0.0)
                     LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = gain
 
+
+        LSPK_CONFIG = {}
+
+        # Load lspk.yml
+        if os.path.isfile(LSPK_YML_PATH):
+
+            try:
+                with open(LSPK_YML_PATH, 'r') as f:
+                    LSPK_CONFIG = yaml.safe_load( f.read() )
+                print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/lspk.yml was found{Fmt.END}')
+
+            except Exception as e:
+                print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
+
+        # Populate loudspeaker EQ
+
+        # Populate XO filters
+        if 'xo' in LSPK_CONFIG and LSPK_CONFIG.get('xo'):
+            populate_xo()
+
+        # Populate DRC filters
+
+        # Loudspeaker outputs
+        if LSPK_CONFIG.get("outputs"):
+            # Converting the Human Readable 'outputs:' section to a dictionary
+            reformat_outputs()
+        else:
+            # Default to full range
+            LSPK_CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
 
         return LSPK_CONFIG
 
