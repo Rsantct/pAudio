@@ -6,14 +6,11 @@
 import  sys
 import  os
 import  yaml
-from    fmt         import Fmt
+from    fmt                     import Fmt
+from    pcamilla_mod.do_makes   import *
 
 UHOME = os.path.expanduser('~')
 MAINFOLDER          = f'{UHOME}/pAudio'
-sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod/pcamilla_mod')
-
-import do_makes
-
 
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
 LSPKFOLDER          = f''
@@ -42,11 +39,94 @@ def _init():
 
     def get_lspk_config():
         """
-            - try to load a loudspeaker's YAML file
+            - Read the loudspeaker's YAML file
 
-            - if outputs: section is NOT defined, defaults to an stereo ones
+            - Some sections can have simplified filter definitions,
+              here will populate a complete CamillaDSP filter syntax
+
+            - If outputs: section is NOT defined, defaults to an stereo ones
 
         """
+
+        def load_lspk_config():
+
+            res = {}
+
+            if os.path.isfile(LSPK_YML_PATH):
+
+                try:
+                    with open(LSPK_YML_PATH, 'r') as f:
+                        tmp = yaml.safe_load( f.read() )
+                        print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/lspk.yml was found{Fmt.END}')
+
+                except Exception as e:
+                    print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
+
+            return res
+
+
+        def populate_lspk_eq_filters():
+            """ currently lspk_eq filters are assumed to be in CamillaDSP format
+            """
+            pass
+
+
+        def populate_drc_filters():
+            """ - FIR have only the drc-set-name as values, so we need
+                  to REPLACE it with the whole parameters for both channels.
+
+                - IIR is assumed to have a regular complete filter syntax,
+                  so nothing is done
+            """
+
+            for set_name, values in LSPK_CONFIG.get('drc', {}).items():
+
+                if values.get('type', '') == 'fir':
+
+                    fs = CONFIG["samplerate"]
+
+                    # Keep gain_offset and prepare channels syntax
+                    values = {'L': {}, 'R': {}, 'gain_offset': values.get('gain_offset', 0.0)}
+
+                    for ch in 'L', 'R':
+
+                        fir_path = f'{LSPKFOLDER}/{fs}/drc.{ch}.{set_name}.pcm'
+
+                        values[ch]["1"] = make_fir_filter(fir_path)
+
+                    LSPK_CONFIG["drc"][set_name] = values
+
+
+        def populate_xo_filters():
+            """ XO items in lspk.yml comes in a human readable format,
+                here we complete a CamillaDSP syntax for them.
+
+                Also will prepare an auxiliary CamillaDSP filter definition
+                for gain on each xo-set-name-way
+            """
+
+            if not 'xo' in LSPK_CONFIG or not LSPK_CONFIG.get('xo'):
+                return
+
+            LSPK_CONFIG["xo_gains"] = {}
+
+            for set_name, ways in LSPK_CONFIG["xo"].items():
+
+                for way, params in ways.items():
+
+                    # FIR
+                    if params.get('type') == 'fir':
+                        fir_path = f'{LSPKFOLDER}/{CONFIG["samplerate"]}/xo.{way}.{set_name}.pcm'
+                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_fir_filter(fir_path)
+
+                    # IIR
+                    else:
+                        ftype, order, freq = params["type"], params["order"], params["freq"]
+                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_xo_iir_filter(way, ftype, order, freq)
+
+                    gain = params.get('gain', 0.0)
+                    LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = gain
+
 
         def reformat_outputs():
             """
@@ -146,62 +226,22 @@ def _init():
             check_output_names()
 
 
-        def populate_xo():
-            """ XO items in lspk.yml comes in a human readable format,
-                here we complete a CamillaDSP syntax for them.
-
-                Also will prepare an auxiliary CamillaDSP filter definition
-                for gain on each xo-set-name-way
-            """
-
-            LSPK_CONFIG["xo_gains"] = {}
-
-            for set_name, ways in LSPK_CONFIG["xo"].items():
-
-                for way, params in ways.items():
-
-                    # FIR
-                    if params.get('type') == 'fir':
-                        fir_path = f'{LSPKFOLDER}/{CONFIG["samplerate"]}/xo.{way}.{set_name}.pcm'
-                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_fir_filter(fir_path)
-
-                    # IIR
-                    else:
-                        ftype, order, freq = params["type"], params["order"], params["freq"]
-                        LSPK_CONFIG["xo"][set_name][way] = do_makes.make_xo_iir_filter(way, ftype, order, freq)
-
-                    gain = params.get('gain', 0.0)
-                    LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = gain
-
-
-        LSPK_CONFIG = {}
-
         # Load lspk.yml
-        if os.path.isfile(LSPK_YML_PATH):
+        LSPK_CONFIG = load_lspk_config()
 
-            try:
-                with open(LSPK_YML_PATH, 'r') as f:
-                    LSPK_CONFIG = yaml.safe_load( f.read() )
-                print(f'{Fmt.BLUE}Loudspeaker {CONFIG["loudspeaker"]}/lspk.yml was found{Fmt.END}')
+        # Complete filter syntax from the simplified syntax in lspk.yml
+        populate_lspk_eq_filters()
+        populate_xo_filters()
+        populate_drc_filters()
 
-            except Exception as e:
-                print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
-
-        # Populate loudspeaker EQ
-
-        # Populate XO filters
-        if 'xo' in LSPK_CONFIG and LSPK_CONFIG.get('xo'):
-            populate_xo()
-
-        # Populate DRC filters
-
-        # Loudspeaker outputs
+        # Converting the Human Readable 'outputs:' section to a dictionary
         if LSPK_CONFIG.get("outputs"):
-            # Converting the Human Readable 'outputs:' section to a dictionary
             reformat_outputs()
         else:
             # Default to full range
-            LSPK_CONFIG["outputs"] = {1: 'fr.L', 2: 'fr.R'}
+            LSPK_CONFIG["outputs"] = {}
+            LSPK_CONFIG["outputs"][1] = make_paudio_output( 'fr.L' )
+            LSPK_CONFIG["outputs"][2] = make_paudio_output( 'fr.R' )
 
         return LSPK_CONFIG
 
