@@ -63,7 +63,7 @@ def update_lspk(pAudio_config, cam_config):
 
         for param, filters in values.items():
 
-            # skip 'gain_offset'
+            # skip any other parameters (i.e. gains)
             if not param in ('L', 'R'):
                 continue
             else:
@@ -110,7 +110,7 @@ def update_lspk(pAudio_config, cam_config):
 
         for param in pAudio_config["drc"][first_drc_set]:
 
-            # skip 'gain_offset'
+            # skip any other parameters (i.e. gains)
             if not param in ('L', 'R'):
                 continue
             else:
