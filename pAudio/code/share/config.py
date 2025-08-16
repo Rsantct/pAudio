@@ -76,25 +76,46 @@ def _init():
                   to REPLACE it with the whole parameters for both channels.
 
                 - IIR is assumed to have a regular complete filter syntax,
-                  so nothing is done
+                  usually imported from Room Equalizer Wizard aka REW,
+                  so nothing is done but gains fields.
+
+                Also will prepare an auxiliary CamillaDSP filter definition
+                for gain on each xo-set-name-way
             """
+
+            if not 'drc' in LSPK_CONFIG or not LSPK_CONFIG.get('drc'):
+                return
+
+            LSPK_CONFIG["drc_gains"] = {}
 
             for set_name, values in LSPK_CONFIG.get('drc', {}).items():
 
+                # FIR
                 if values.get('type', '') == 'fir':
 
                     fs = CONFIG["samplerate"]
 
-                    # Keep gain_offset and prepare channels syntax
-                    values = {'L': {}, 'R': {}, 'gain_offset': values.get('gain_offset', 0.0)}
+                    # prepare channels syntax and save gains
+                    channels = { 'L': {}, 'R': {} }
 
-                    for ch in 'L', 'R':
+                    for ch in channels.keys():
 
                         fir_path = f'{LSPKFOLDER}/{fs}/drc.{ch}.{set_name}.pcm'
 
-                        values[ch]["1"] = make_fir_filter(fir_path)
+                        channels[ch]["1"] = make_fir_filter(fir_path)
 
-                    LSPK_CONFIG["drc"][set_name] = values
+                    LSPK_CONFIG["drc"][set_name] = channels
+
+                # IIR
+                else:
+                    pass
+
+                flat_gain = values.get('flat_gain',   0.0)
+                posit_gain = values.get('posit_gain',   0.0)
+
+                LSPK_CONFIG["drc_gains"][set_name] = { 'flat_gain':     values.pop('flat_gain',  0.0),
+                                                       'posit_gain':    values.pop('posit_gain', 0.0)
+                                                     }
 
 
         def populate_xo_filters():
@@ -324,6 +345,8 @@ def _init():
     CONFIG["drc"] = {}
     if lspk_config.get('drc'):
         CONFIG["drc"] = lspk_config["drc"]
+    if lspk_config.get('drc_gains'):
+        CONFIG["drc_gains"] = lspk_config["drc_gains"]
 
     # Dump to disk for maintenence
     pAudio_cfg_json_path = f'{LOGFOLDER}/.pAudio_cfg'
