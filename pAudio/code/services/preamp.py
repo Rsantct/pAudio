@@ -392,11 +392,11 @@ def set_drc(drcID):
 
     else:
         if drcID == 'none':
-            gain_offset = 0.0
+            flat_gain = 0.0
         else:
-            gain_offset = CONFIG["drc"][drcID].get('gain_offset', 0.0)
+            flat_gain = CONFIG["drc_gains"][drcID].get('flat_gain', 0.0)
 
-        res = DSP.set_drc(drcID, gain_offset)
+        res = DSP.set_drc(drcID, flat_gain)
 
     return res
 
@@ -528,7 +528,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
              + candidate["lu_offset"]                       \
              - CONFIG["ref_level_gain_offset"]              \
              - abs(candidate["balance"]) / 2.0              \
-             - DSP.get_config()["filters"]["drc_gain_offset"]["parameters"]["gain"]
+             - DSP.get_config()["filters"]["flat_gain_drc"]["parameters"]["gain"]
 
         if not candidate["tone_defeat"]:
 
