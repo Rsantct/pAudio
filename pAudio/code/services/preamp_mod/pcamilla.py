@@ -135,7 +135,8 @@ def _prepare_cam_config(pAudio_config):
 
             # Auxiliary gain filters definitions
             for xo_id, gains in pAudio_config["xo_gains"].items():
-                flat_gain = gains.get('flat_gain', 0.0)
+                # apply negative to compensate the flat_region offset
+                flat_gain = - gains.get('flat_gain', 0.0)
                 cam_config["filters"][f'xo.{xo_id}_gain'] = make_gain_filter(flat_gain, f'gain for xo.{xo_id}')
 
             # pipeline (will use the first configured xo set inside lspk.yml)
@@ -632,6 +633,7 @@ def set_drc(drc_id, flat_gain=0.0):
             cfg["pipeline"][i]["names"] = new_names
 
     # Adjust the global flat_gain_drc for this drc-set
+    # Apply negative to compensate the flat_region offset
     cfg["filters"]["flat_gain_drc"]["parameters"]["gain"] = -flat_gain
 
     # Upload the config to runtime
