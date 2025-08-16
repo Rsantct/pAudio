@@ -526,6 +526,34 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
     def calc_headroom():
 
+        def get_positive_gains():
+            """ Used filters positive gains
+            """
+
+            # EQ
+            lspk_eq_posit_gain = CONFIG.get('lspk_eq_posit_gain', 0.0)
+
+            # DRC
+            if candidate["drc_set"] == 'none':
+                drc_posit_gain = 0.0
+            else:
+                drc_posit_gain = CONFIG["drc_gains"][ candidate["drc_set"] ]["posit_gain"]
+
+            # XO: we need to find out the greater one involved in the xo_set
+            xo_posit_gains = [0.0]
+
+            if CONFIG.get('xo_gains'):
+
+                for filter_name, gains in CONFIG["xo_gains"].items():
+
+                    set_name = filter_name[3:]
+
+                    if set_name == candidate["xo_set"]:
+                        xo_posit_gains.append( gains.get('posit_gain', 0.0) )
+
+            return  lspk_eq_posit_gain + drc_posit_gain + max( xo_posit_gains )
+
+
         candidate = state.copy()
 
         if cmd == 'target':
@@ -533,27 +561,13 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         else:
             candidate[cmd] = dB
 
-        # Used filters positive gains:
-
-        # - EQ:
-
-        # - DRC:
-        drc_posit_gain = CONFIG["drc_gains"][ candidate["drc_set"] ]["posit_gain"]
-
-        # - XO: we need to find the greater one involved in the xo_set
-        xo_posit_gains = []
-        for filter_name, gains in CONFIG["xo_gains"].items():
-            set_name = filter_name[3:]
-            if set_name == candidate["xo_set"]:
-                xo_posit_gains.append( gains.get('posit_gain', 0.0) )
-
 
         hr = - candidate["level"]                   \
              + candidate["lu_offset"]               \
              - CONFIG["ref_level_gain_offset"]      \
              - abs(candidate["balance"]) / 2.0      \
-             - drc_posit_gain                       \
-             - max( xo_posit_gains )
+             - get_positive_gains()
+
 
         if not candidate["tone_defeat"]:
 
