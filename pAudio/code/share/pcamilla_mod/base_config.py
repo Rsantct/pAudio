@@ -73,11 +73,10 @@ def prepare_base_config(pAudio_config, cam_config):
         # Dither
         'dither':               make_dither_filter('Shibata441', 16),
 
-        # lspk EQ safe gain
-        'lspk_eq_safe_gain':    make_gain_filter(0.0, 'gain compensation for lspk EQ'),
-
-        # lspk DRC gain offset
+        # DRC gain offset
         'flat_gain_drc':      make_gain_filter(0.0, 'gain offset for DRC in use'),
+
+        # XO will be done later if so.
 
         # LU OFFSET
         'lu_offset':            make_gain_filter(0.0, 'LU OFFSET (compensation for Loudness War)'),
@@ -108,12 +107,12 @@ def prepare_base_config(pAudio_config, cam_config):
             {   'description':  'preamp.L',
                 'channels':     [0],
                 'type':         'Filter',
-                'names':        ['preamp_eq', 'lspk_eq_safe_gain', 'flat_gain_drc', 'lu_offset', 'bal_pol_L']
+                'names':        ['preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_L']
             },
             {   'description':  'preamp.R',
                 'channels':     [1],
                 'type':         'Filter',
-                'names':        ['preamp_eq', 'lspk_eq_safe_gain', 'flat_gain_drc', 'lu_offset', 'bal_pol_R']
+                'names':        ['preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_R']
             }
         ]
 
