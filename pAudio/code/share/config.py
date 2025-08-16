@@ -110,9 +110,6 @@ def _init():
                 else:
                     pass
 
-                flat_gain = values.get('flat_gain',   0.0)
-                posit_gain = values.get('posit_gain',   0.0)
-
                 LSPK_CONFIG["drc_gains"][set_name] = { 'flat_gain':     values.pop('flat_gain',  0.0),
                                                        'posit_gain':    values.pop('posit_gain', 0.0)
                                                      }
@@ -145,8 +142,9 @@ def _init():
                         ftype, order, freq = params["type"], params["order"], params["freq"]
                         LSPK_CONFIG["xo"][set_name][way] = make_xo_iir_filter(way, ftype, order, freq)
 
-                    gain = params.get('gain', 0.0)
-                    LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = gain
+                    LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = { 'flat_gain':     params.pop('flat_gain',  0.0),
+                                                                     'posit_gain':    params.pop('posit_gain', 0.0)
+                                                                    }
 
 
         def reformat_outputs():
@@ -330,21 +328,27 @@ def _init():
 
     # 1.b. Loudspeaker XO:
     CONFIG["xo"] = {}
+
     if lspk_config.get('xo'):
         CONFIG["xo"] = lspk_config["xo"]
+
     if lspk_config.get('xo_gains'):
         CONFIG["xo_gains"] = lspk_config["xo_gains"]
 
     # 2. Loudspeaker EQ:
     CONFIG["lspk_eq"] = {}
+
     if lspk_config.get('lspk_eq'):
         CONFIG["lspk_eq"] = lspk_config["lspk_eq"]
+
     CONFIG["lspk_eq_safe_gain"] = lspk_config.get('lspk_eq_safe_gain', 0.0)
 
     # 3. Loudspeaker DRC:
     CONFIG["drc"] = {}
+
     if lspk_config.get('drc'):
         CONFIG["drc"] = lspk_config["drc"]
+
     if lspk_config.get('drc_gains'):
         CONFIG["drc_gains"] = lspk_config["drc_gains"]
 
