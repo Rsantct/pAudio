@@ -590,7 +590,7 @@ def set_xo(xo_set):
     return result
 
 
-def set_drc(drc_id, gain_offset=0.0):
+def set_drc(drc_id, flat_gain=0.0):
     """
         It is supposed to receive a validated drc_id one OR 'none'
 
@@ -623,8 +623,8 @@ def set_drc(drc_id, gain_offset=0.0):
 
             cfg["pipeline"][i]["names"] = new_names
 
-    # Adjust the global drc_gain_offset for this drc-set
-    cfg["filters"]["drc_gain_offset"]["parameters"]["gain"] = gain_offset
+    # Adjust the global flat_gain_drc for this drc-set
+    cfg["filters"]["flat_gain_drc"]["parameters"]["gain"] = flat_gain
 
     # Upload the config to runtime
     set_config_sync(cfg)
