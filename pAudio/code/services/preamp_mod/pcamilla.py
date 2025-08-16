@@ -133,9 +133,10 @@ def _prepare_cam_config(pAudio_config):
 
                 cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
-            # Auxiliary gain filters definitios
-            for xo_id, gain in pAudio_config["xo_gains"].items():
-                cam_config["filters"][f'xo.{xo_id}_gain'] = make_gain_filter(gain, f'gain of xo.{xo_id}')
+            # Auxiliary gain filters definitions
+            for xo_id, gains in pAudio_config["xo_gains"].items():
+                flat_gain = gains.get('flat_gain', 0.0)
+                cam_config["filters"][f'xo.{xo_id}_gain'] = make_gain_filter(flat_gain, f'gain for xo.{xo_id}')
 
             # pipeline (will use the first configured xo set inside lspk.yml)
             default_xo_set = next( iter( pAudio_config["xo"] ) )
@@ -545,8 +546,13 @@ def set_balance(dB):
     return "done"
 
 
-def set_xo(xo_set):
-    """ example "prueba" or "sofa.mp"
+def set_xo(xo_set, flat_gains={}):
+    """ example:
+
+            xo_set:     'sofa.mp'
+
+            flat_gains: {'lo.sofa.mp': -8.7,
+                         'hi.sofa.mp': -2.1}
     """
 
     cfg = CC.config.active()
@@ -573,8 +579,10 @@ def set_xo(xo_set):
 
                 if fname[:2] == 'xo':
 
+                    # the gain filter name
                     if fname[-5:] == '_gain':
                         new_fname = fname[:6] + xo_set + '_gain'
+                    # the xo filter name itself
                     else:
                         new_fname = fname[:6] + xo_set
 
@@ -624,7 +632,7 @@ def set_drc(drc_id, flat_gain=0.0):
             cfg["pipeline"][i]["names"] = new_names
 
     # Adjust the global flat_gain_drc for this drc-set
-    cfg["filters"]["flat_gain_drc"]["parameters"]["gain"] = flat_gain
+    cfg["filters"]["flat_gain_drc"]["parameters"]["gain"] = -flat_gain
 
     # Upload the config to runtime
     set_config_sync(cfg)
