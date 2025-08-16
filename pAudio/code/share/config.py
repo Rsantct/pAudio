@@ -341,7 +341,7 @@ def _init():
     if lspk_config.get('lspk_eq'):
         CONFIG["lspk_eq"] = lspk_config["lspk_eq"]
 
-    CONFIG["lspk_eq_safe_gain"] = lspk_config.get('lspk_eq_safe_gain', 0.0)
+    CONFIG["lspk_eq_posit_gain"] = lspk_config.get('lspk_eq_posit_gain', 0.0)
 
     # 3. Loudspeaker DRC:
     CONFIG["drc"] = {}
