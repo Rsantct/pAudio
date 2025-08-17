@@ -3,8 +3,8 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
-""" An auxiliary service to remotely restart pAudio,
-    and switch on/off the system.
+""" A stand alone auxiliary service to remotely restart pAudio,
+    and switch on/off tasks.
 
     This module is loaded by 'server.py', usually at pAudio's PORT + 1
 """
@@ -29,21 +29,21 @@ print ( f"{Fmt.BLUE}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 def restart_paudio(mode):
 
-    if not mode in ('start', 'stop'):
-        return 'must be restart_paudio  start|stop'
-
-    sp.Popen(f'{MAINFOLDER}/start.py {mode}', shell=True)
-
-    return 'ordered'
-
-
-def manage_onoff(mode):
-
     if not mode in ('start', 'stop', 'toggle', 'state'):
         return 'Needs `start|stop|toggle`'
 
     if mode == 'state':
         return process_is_running('camilladsp')
+
+    elif mode == 'toggle':
+
+        curr = process_is_running('camilladsp')
+
+        if curr:
+            sp.Popen(f'{UHOME}/bin/paudio_restart.sh stop',  shell=True)
+        else:
+            sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
+
     else:
         sp.Popen(f'{MAINFOLDER}/start.py {mode}', shell=True)
         return 'ordered'
@@ -54,11 +54,15 @@ def do( cmdphrase):
 
     result = 'bad command'
 
+    cmd = arg = ''
+
     try:
-        cmd = cmdphrase.split()[0]
-        arg = cmdphrase.split()[-1]
+        chunks = cmdphrase.split()
+        cmd = chunks[0]
+        if chunks[1:]:
+            arg = chunks[1]
     except:
-        cmd = arg = ''
+        pass
 
     match cmd:
 
@@ -66,7 +70,7 @@ def do( cmdphrase):
             result = restart_paudio( arg )
 
         case 'amp_switch':
-            result = manage_onoff( arg )
+            result = amp_switch( arg )
 
 
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
