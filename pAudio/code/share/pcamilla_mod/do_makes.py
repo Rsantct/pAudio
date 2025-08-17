@@ -9,7 +9,7 @@ def make_gain_filter(gain, description=''):
                 'description': description,
                 'type': 'Gain',
                 'parameters': {
-                        'gain':     0.0,
+                        'gain':     gain,
                         'inverted': False,
                         'mute':     False
                 }

@@ -229,13 +229,17 @@ if __name__ == "__main__":
     sp.Popen(f'mkdir -p {IMGFOLDER}', shell=True)
 
     drc_sets = CONFIG["drc"]
-
     fs       = CONFIG["samplerate"]
 
     for set_name, filters_L_R in drc_sets.items():
 
-        # IIR drc sets have 'L' and/or 'R' fields
-        # FIR drc sets does not (see GitHub doc)
-        if 'L' in filters_L_R or 'R' in filters_L_R:
+        # skip FIR type
+        is_fir = False
+        for ch, filters in filters_L_R.items():
+            for f, params in filters.items():
+                if params.get('type', '') == 'Conv':
+                    is_fir = True
+
+        if not is_fir:
             plot_frequency_response(set_name, filters_L_R)
 

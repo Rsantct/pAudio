@@ -3,7 +3,6 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
-from .do_makes import *
 
 Fmt = None
 
@@ -62,38 +61,19 @@ def update_lspk(pAudio_config, cam_config):
     # 3.b. DRC filters
     for set_name, values in pAudio_config.get('drc', {}).items():
 
-        # FIR have only the drc-set-name as values, so we need
-        # to REPLACE it with the whole parameters for both channels.
-        if values.get('type', '') == 'fir':
+        for param, filters in values.items():
 
-            fs = pAudio_config["samplerate"]
-            lspkfolder = f'{pAudio_config["mainfolder"]}/loudspeakers/{pAudio_config["loudspeaker"]}'
+            # skip any other parameters (i.e. gains)
+            if not param in ('L', 'R'):
+                continue
+            else:
+                ch = param
 
-            # Keep gain_offset and prepare channels syntax
-            values = {'L': {}, 'R': {}, 'gain_offset': values.get('gain_offset', 0.0)}
+            for filter_id, filter_params in filters.items():
 
-            for ch in 'L', 'R':
-                fir_path = f'{lspkfolder}/{fs}/drc.{ch}.{set_name}.pcm'
-                values[ch]["1"] = make_fir_filter(fir_path)
+                filter_id = f'drc_{set_name}_{filter_id}_{ch}'
 
-            pAudio_config["drc"][set_name] = values
-
-        # Now FIR or IIR must have a regular complete filter syntax
-        if 'L' in values or 'R' in values:
-
-            for param, filters in values.items():
-
-                # skip 'gain_offset'
-                if not param in ('L', 'R'):
-                    continue
-                else:
-                    ch = param
-
-                for filter_id, filter_params in filters.items():
-
-                    filter_id = f'drc_{set_name}_{filter_id}_{ch}'
-
-                    cam_config["filters"][filter_id] = filter_params
+                cam_config["filters"][filter_id] = filter_params
 
 
     # 4. Append to pipeline
@@ -130,7 +110,7 @@ def update_lspk(pAudio_config, cam_config):
 
         for param in pAudio_config["drc"][first_drc_set]:
 
-            # skip 'gain_offset'
+            # skip any other parameters (i.e. gains)
             if not param in ('L', 'R'):
                 continue
             else:

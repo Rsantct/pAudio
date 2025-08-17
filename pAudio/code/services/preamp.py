@@ -392,11 +392,11 @@ def set_drc(drcID):
 
     else:
         if drcID == 'none':
-            gain_offset = 0.0
+            flat_gain = 0.0
         else:
-            gain_offset = CONFIG["drc"][drcID].get('gain_offset', 0.0)
+            flat_gain = CONFIG["drc_gains"][drcID].get('flat_gain', 0.0)
 
-        res = DSP.set_drc(drcID, gain_offset)
+        res = DSP.set_drc(drcID, flat_gain)
 
     return res
 
@@ -410,7 +410,16 @@ def set_xo(xoID):
         res = f'must be in: {XO_SETS}'
 
     else:
-        res = DSP.set_xo(xoID)
+
+        flat_gains = {}
+
+        for x, gains in CONFIG["xo_gains"].items():
+
+            # set slice
+            if x[3:] == xoID:
+                flat_gains[x] = gains["flat_gain"]
+
+        res = DSP.set_xo(xoID, flat_gains)
 
     return res
 
@@ -517,6 +526,34 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
     def calc_headroom():
 
+        def get_positive_gains():
+            """ Used filters positive gains
+            """
+
+            # EQ
+            lspk_eq_posit_gain = CONFIG.get('lspk_eq_posit_gain', 0.0)
+
+            # DRC
+            if candidate["drc_set"] == 'none':
+                drc_posit_gain = 0.0
+            else:
+                drc_posit_gain = CONFIG["drc_gains"][ candidate["drc_set"] ]["posit_gain"]
+
+            # XO: we need to find out the greater one involved in the xo_set
+            xo_posit_gains = [0.0]
+
+            if CONFIG.get('xo_gains'):
+
+                for filter_name, gains in CONFIG["xo_gains"].items():
+
+                    set_name = filter_name[3:]
+
+                    if set_name == candidate["xo_set"]:
+                        xo_posit_gains.append( gains.get('posit_gain', 0.0) )
+
+            return  lspk_eq_posit_gain + drc_posit_gain + max( xo_posit_gains )
+
+
         candidate = state.copy()
 
         if cmd == 'target':
@@ -524,11 +561,13 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         else:
             candidate[cmd] = dB
 
-        hr = - candidate["level"]                           \
-             + candidate["lu_offset"]                       \
-             - CONFIG["ref_level_gain_offset"]              \
-             - abs(candidate["balance"]) / 2.0              \
-             - DSP.get_config()["filters"]["drc_gain_offset"]["parameters"]["gain"]
+
+        hr = - candidate["level"]                   \
+             + candidate["lu_offset"]               \
+             - CONFIG["ref_level_gain_offset"]      \
+             - abs(candidate["balance"]) / 2.0      \
+             - get_positive_gains()
+
 
         if not candidate["tone_defeat"]:
 

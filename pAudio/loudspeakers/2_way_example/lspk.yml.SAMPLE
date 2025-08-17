@@ -8,27 +8,22 @@ drc:
 #
 xo:
 
-    # For FIR XO sets, just provide 'type: fir' and optionally a 'gain: (dB)' fields.
+    # For FIR XO sets, just provide 'type: fir' and optionally 'flat_gain and or 'posit_gain'.
     # Then pAudio will populate the needed parameters for each way (hi, lo, ...)
     # by using the set name and searching for PCM files named like that.
     # under the loudspeaker folder. Example:
 
     rePhaseTest.mp:        # This assumes proper .pcm files named
                            # 'xo.lo.rePhaseTest.mp.pcm' and 'xo.hi.rePhaseTest.mp.pcm'
-                           # (the free suffix .mp would indicate a minimum phase FIR)
+                           # (the free suffix .mp would indicate a minimum phase FIR, but has no effect)
         lo:
             type:   fir
+            flat_gain:   -8.7
+            posit_gain:   8.7
         hi:
-            type:   fir
-            gain:   -6.4    # GAIN for a FIR is optional when needed
+            flat_gain:   -2.1
+            posit_gain:   2.1
 
-    rePhaseTest.lp:         # (.lp would indicate a linear phase FIR)
-                           
-        lo:
-            type:   fir
-        hi:
-            type:   fir
-            gain:   -6.4
 
     # For IIR XO sets, provide each way (lo, hi) in separate sections, with its the 3 basic parameters. Example:
     
@@ -43,7 +38,7 @@ xo:
             freq:   2000
 
 #
-# The OUTPUTS section to map towards hte SOUND CARD PHISICAL OUTPUTS
+# The OUTPUTS section to map towards the SOUND CARD PHISICAL OUTPUTS
 #
 # (i) output index starts with `1` (to follow jack `system:playback_N` ports numbering)
 #
