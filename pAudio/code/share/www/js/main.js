@@ -286,12 +286,20 @@ function init(){
         try{
             web_config      = JSON.parse( control_cmd('aux get_web_config') );
             mFnames         = web_config.user_macros;
-            if (web_config.show_graphs==false){
-                document.getElementById( "button_toggleEQgraphs").style.display = "none";
-            }
         }catch(e){
             console.log('response error to \'aux get_web_config\'', e.message);
         }
+
+        if (web_config.show_graphs==false){
+            document.getElementById("button_toggleEQgraphs").style.display = "none";
+        }
+
+        if ( web_config["onoff"].includes('amp') ){
+            document.getElementById("OnOffButton").title = "Amplifier ON/OFF";
+        }else if ( web_config["onoff"].includes('udio') ){
+            document.getElementById("OnOffButton").title = "pAudio ON/OFF";
+        }
+
     }
 
 
@@ -1047,9 +1055,18 @@ function ck_peaudiosys_restart() {
 
 
 function omd_onoff(mode) {
-    const ays = window.confirm('Are you sure to toggle pAudio?');
+
+    let msg = ('Are you sure to ' + mode.toUpperCase() + ' pAudio?');
+    let cmd = 'restart_paudio'
+
+    if ( web_config["onoff"].includes('amp') ){
+                msg = 'Are you sure to ' + mode.toUpperCase() + ' the AMPLIFIER?'
+        cmd = 'amp_switch'
+    }
+
+    ays = window.confirm( msg );
     if (ays){
-        const ans = control_cmd( 'amp_switch ' + mode );
+        control_cmd( cmd + ' ' + mode );
     }
 }
 
