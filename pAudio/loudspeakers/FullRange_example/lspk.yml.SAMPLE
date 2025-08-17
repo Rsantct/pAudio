@@ -1,12 +1,9 @@
-# Safe gain to avoid clipping when applying 'lspk_eq' filters below.
-# This is not a CamillaDSP native parameter but will affect the processor gain.
-lspk_eq_safe_gain: -8
 
-# IIR filters in sections 'lspk_eq:' and 'drc:'
-#     - Must follow the CamillaDSP `filters:` syntax
-#     - May be placed in L: or R: sections to apply on that channel
-#
-# FIR filters have a simplified syntax, see example below.
+# Filters below must follow the CamillaDSP `filters:` syntax, except 'fir' filters
+
+# Declare here the total positive gain when applying 'lspk_eq' filters below, if any.
+# Example for the below LinkwitzTransform bass extension.
+lspk_eq_posit_gain: 8.0
 
 lspk_eq:
 
@@ -42,18 +39,25 @@ lspk_eq:
             gain: 1.5
             q: 3.0
 
-# DRC filters are expected to be divided in set-names and then in L: and R: sections
+
+
+# DRC filtering set names
 drc:
 
-    # FIR filters syntax. Just provide 'type' and 'gain_offset' as below example.
+    # FIR filters syntax. Just provide 'type' and optionally
+    # 'flat_gain' and/or 'posit_gain' (if any) as below example.
     # Then pAudio will populate the needed parameters by using this <set-name>
     # and searching for PCM files named like this under the loudspeaker folder
     sofa:
-        type:           fir
-        gain_offset:    -0.5
+        type:       fir
+        flat_gain:  -3.0
+        posit_gain: +1.5
 
-    # IIR filters syntax:
+    # filters values have no sense, just as examples
     equilateral:
+
+        posit_gain: +1.5
+        
         L:
             1:
                 type: Biquad
@@ -73,15 +77,15 @@ drc:
                 type: Biquad
                 parameters:
                     type: Peaking
-                    freq: 243.0
-                    gain: -1.5
+                    freq: 950.0
+                    gain: +1.5
                     q: 2.0
         R:
             1:
                 type: Biquad
                 parameters:
                     type: Peaking
-                    freq: 79.5
+                    freq: 54.5
                     gain: -4.4
                     q: 2.563
             2:
