@@ -53,7 +53,7 @@ drc:
         flat_gain:  -3.0
         posit_gain: +1.5
 
-    # filters values have no sense, just as examples
+    # IIR values have no sense, just as examples
     equilateral:
 
         posit_gain: +1.5
