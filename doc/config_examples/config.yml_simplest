@@ -19,3 +19,9 @@ output:
 
 
 loudspeaker: MyLoudspeaker
+
+
+web_behavior:
+
+    # set 'pAudio' (if using as a desktop app) or 'amplifier' (if available in a dedicated machine)
+    onoff: pAudio
