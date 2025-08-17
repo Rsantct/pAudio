@@ -8,6 +8,8 @@ Listen to **Mac Desktop sound** (Spotify, Safari web browser, Music, ...) throug
 
     Settings ---> Sound Output --> BlackHole 2Ch
 
+pAudio does this automatically on startup, also restores your previous Sound Output when stopped.
+
 #### pAudio:
     
     pAudio/config.yml
