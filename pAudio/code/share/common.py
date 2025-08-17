@@ -18,6 +18,105 @@ from    config import *
 USER = getuser()
 
 
+def read_amp_state_file():
+
+    try:
+        with open(AMP_STATE_PATH, 'r') as f:
+            tmp = f.read().strip()
+
+            if tmp.lower() in ('on', '1'):
+                return 'on'
+            elif tmp.lower() in ('off', '0'):
+                return 'off'
+            else:
+                print(f'{Fmt.MAGENTA}(miscel.py) amp file weird state value: {tmp}{Fmt.END}' )
+                return tmp
+
+    except Exception as e:
+        print(f'{Fmt.MAGENTA}(miscel.py) error reading amp state file: {str(e)}{Fmt.END}' )
+        return ''
+
+
+def amp_switch(mode):
+
+    def get_state():
+        """ returns: on | off
+
+            NOT IN USE  -->  read_amp_state_file()
+        """
+
+        try:
+            res = sp.check_output(AMP_CMD, shell=True).decode().strip().lower()
+
+        except Exception as e:
+            print(f'amp_switch ERROR: {str(e)}')
+
+        if res in (1, '1', 'on'):
+            res = 'on'
+        else:
+            res = 'off'
+
+        return res
+
+
+    def set_state(new):
+        """
+            $ ampli.sh 1
+            BITFT_1=0
+            BITFT_2=0
+            1
+        """
+
+        if new == None:
+            return 'must be: on | off'
+
+        if new:
+
+            try:
+                res = sp.check_output(f'{AMP_CMD} {new}', shell=True).decode().strip().lower()
+                # (**) see docstring
+                res = res.strip().split()[-1]
+
+            except Exception as e:
+                print(f'amp_switch ERROR: {str(e)}')
+
+        if res in (1, '1', 'on'):
+            res = 'on'
+        else:
+            res = 'off'
+
+        return res
+
+
+    AMP_CMD = CONFIG.get('amplifier_switch_cmd', '~/bin/ampli.sh')
+
+    res = 'NAK'
+
+    if not mode:
+        mode = 'state'
+
+    match mode:
+
+        case 'state':
+            res = read_amp_state_file()
+
+        case 'on':
+            res = set_state('on')
+
+        case 'off':
+            res = set_state('off')
+
+        case 'toggle':
+            curr = get_state()
+            new = {'on':'off', 'off':'on'}[curr]
+            res = set_state(new)
+
+        case _:
+            pass
+
+    return res
+
+
 def restore_sound_card():
     """
         This assumes that you have set your alsamixer levels and saved them to:
