@@ -1,11 +1,11 @@
-**THIS IS A DRAFT, PENDING TO REVIEW**
-
-
 # Full Range example
 
-Filters can be set into **`lspk.yml`**, whit a logical syntax, see example file.
+Filters can be set into **`lspk.yml`**, whit a logical syntax.
 
-Filters can be both IIR or FIR types, with a proper CamillaDSP syntax.
+Filters can be both IIR or FIR types, see the example `lspk.yml` file.
+
+- `flat_gain`  helps to indicate the flat region gain of a FIR filter having some offset.
+- `posit_gain` is mean to calculate the gain chain headroom.
 
 ## IIR filtering
 
