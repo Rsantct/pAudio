@@ -27,7 +27,7 @@ def init():
 
 
     AUXINFO = {
-        "amp":              "on",
+        "amp":              amp_switch('state'),
         "loudness_monitor": read_json_file(LDMON_PATH),
         "last_macro":       "",
         "warning":          "",
@@ -86,9 +86,15 @@ def zita_j2n(args):
 
 
 def save_aux_info():
-    """ this must be threaded """
+    """ this must be threaded
+    """
+
     def dosave():
         save_json_file(AUXINFO, AUXINFO_PATH)
+
+    # Dynamic updates
+    AUXINFO['amp'] = read_amp_state_file()
+
     job = threading.Thread(target=dosave,)
     job.start()
 
@@ -111,6 +117,20 @@ def manage_lu_monitor(commandphrase):
         return f'ERROR writing FIFO `{LDCTRL_PATH}`: {str(e)}'
 
 
+def get_web_config():
+
+
+    result = {  'main_selector':        'sources',
+                'LU_monitor_enabled':   True,
+                'onoff':                'pAudio'
+    }
+
+    for item, value in CONFIG.get('web_behavior', {}).items():
+        result[item] = value
+
+    return result
+
+
 # Entry function
 def do(cmd, args, add):
 
@@ -123,9 +143,7 @@ def do(cmd, args, add):
 
         # LU_monitor_enabled is a legacy option, now it is always enabled.
         case 'get_web_config':
-            result = {  'main_selector':        'sources',
-                        'LU_monitor_enabled':   True
-            }
+            result = get_web_config()
 
         case 'get_lu_monitor':
             result = read_json_file(LDMON_PATH)
