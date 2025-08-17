@@ -1,4 +1,4 @@
-# MacOS: advanced audio sources
+# MacOS advanced: audio sources
 
 ## - Basic setup
 
