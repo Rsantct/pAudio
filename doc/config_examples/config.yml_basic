@@ -1,5 +1,5 @@
 #
-# This is the simplest config :-)
+# This a simple config :-)
 # Please see doc/ and doc/config_examples for more features
 #
 
@@ -20,7 +20,20 @@ output:
 
 loudspeaker: MyLoudspeaker
 
+####
+# To force audio settings on startup
+on_init:
+    level:
+    lu_offset:          9.0
+    equal_loudness:     true
+    balance:            0.0
+    bass:               0
+    treble:             0
+    tone_defeat:        false
+    target:             +3.0-1.0
+    drc_set:            
 
+####
 # Optional web page settings
 web_config:
 
