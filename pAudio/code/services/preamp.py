@@ -210,31 +210,38 @@ def init():
     DRC_SETS = ['none'] + list( CONFIG["drc"].keys() )
 
     # Optional user config settings having precedence over the saved state:
-    for prop in 'level', 'balance', 'bass', 'treble', 'tone_defeat',  \
-                'lu_offset', 'equal_loudness', 'target', 'drc_set':
+    for prop, value in CONFIG.get('on_init', {}).items():
 
-        if prop in CONFIG:
+        valid_props = ('level', 'balance', 'bass', 'treble', 'tone_defeat',
+                       'lu_offset', 'equal_loudness', 'target', 'drc_set' )
 
-            # Some validation
-            match prop:
+        if not prop in valid_props:
+            print(f'{Fmt.BOLD}config.yml on_init NOT valid: `{prop}`{Fmt.END}')
+            continue
 
-                case 'target':
+        if not value:
+            continue
 
-                    if CONFIG["target"] in TARGET_SETS + ['none']:
-                        state["target"] = CONFIG["target"]
-                    else:
-                        print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
+        # Some validation
+        match prop:
 
-                case 'drc_set':
+            case 'target':
 
-                    if CONFIG["drc_set"] in DRC_SETS or CONFIG["drc_set"] == 'none':
-                        state["drc_set"] = CONFIG["drc_set"]
-                    else:
-                        print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+                if value in TARGET_SETS + ['none']:
+                    state["target"] = value
+                else:
+                    print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
 
-                case _:
+            case 'drc_set':
 
-                    state[prop] = CONFIG[prop]
+                if value in DRC_SETS or value == 'none':
+                    state["drc_set"] = value
+                else:
+                    print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+
+            case _:
+
+                state[prop] = value
 
 
     # Forced init settings
