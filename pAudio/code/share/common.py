@@ -4,6 +4,7 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 import  subprocess as sp
+import  psutil
 import  threading
 import  socket
 from    time import sleep, strftime
@@ -18,26 +19,25 @@ from    config import *
 USER = getuser()
 
 
-def read_amp_state_file():
-
-    try:
-        with open(AMP_STATE_PATH, 'r') as f:
-            tmp = f.read().strip()
-
-            if tmp.lower() in ('on', '1'):
-                return 'on'
-            elif tmp.lower() in ('off', '0'):
-                return 'off'
-            else:
-                print(f'{Fmt.MAGENTA}(miscel.py) amp file weird state value: {tmp}{Fmt.END}' )
-                return tmp
-
-    except Exception as e:
-        print(f'{Fmt.MAGENTA}(miscel.py) error reading amp state file: {str(e)}{Fmt.END}' )
-        return ''
-
-
 def amp_switch(mode):
+
+    def read_amp_state_file():
+
+        try:
+            with open(AMP_STATE_PATH, 'r') as f:
+                tmp = f.read().strip()
+
+                if tmp.lower() in ('on', '1'):
+                    return 'on'
+                elif tmp.lower() in ('off', '0'):
+                    return 'off'
+                else:
+                    print(f'{Fmt.MAGENTA}(miscel.py) amp file weird state value: {tmp}{Fmt.END}' )
+                    return tmp
+
+        except Exception as e:
+            print(f'{Fmt.MAGENTA}(miscel.py) error reading amp state file: {str(e)}{Fmt.END}' )
+            return ''
 
     def get_state():
         """ returns: on | off
@@ -473,17 +473,18 @@ def get_target_sets(fs=44100):
 
 
 def process_is_running(pattern):
-    """ check for a system process to be running by a given pattern
-        (bool)
+    """ psutil is faster than pgrep in a shell
     """
-    try:
-        # do NOT use shell=True because pgrep ...  will appear it self.
-        plist = sp.check_output(['pgrep', '-fla', pattern]).decode().split('\n')
-    except:
-        return False
-    for p in plist:
-        if pattern in p:
-            return True
+    for proc in psutil.process_iter(attrs=["pid", "cmdline"]):
+        try:
+            cmdline_list = proc.info["cmdline"]
+            if not cmdline_list:
+                continue
+            cmdline = " ".join(cmdline_list)
+            if pattern in cmdline:
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
     return False
 
 
