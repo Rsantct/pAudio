@@ -42,7 +42,7 @@ var state               = {};       // The preamp-convolver state
 
 var player_info         = {};
 
-var aux_info            = { 'amp': 'n/a',
+var aux_info            = { 'onoff': '',
                             'loudness_monitor': {'LU_I': 0, 'LU_M': 0, 'scope': 'track' },
                             'last_macro': '',
                             'warning': ''
@@ -592,7 +592,7 @@ function page_update() {
             console.log('response error to \'aux info\'', e.message);
             // Backup method to retrieve the amplifier state:
             try{
-                aux_info.amp = control_cmd('amp_switch state');
+                aux_info.onoff = control_cmd('amp_switch state');
             }catch(e){
                 server_available = false;
             }
@@ -601,14 +601,18 @@ function page_update() {
 
 
     function aux_info_refresh(){
-        if ( aux_info.amp == 'off' || aux_info.amp == 'on' ) {
-            document.getElementById("OnOffButton").innerText = aux_info.amp.toUpperCase();
+
+        if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
+            document.getElementById("OnOffButton").innerText = aux_info.onoff.toUpperCase();
             document.getElementById("OnOffButton").style.display = 'block';
+
         }else{
             document.getElementById("OnOffButton").style.display = 'none';
         }
+
         if ( ! aux_info.last_macro ){
             clear_macro_buttons_highlight();
+
         }else{
             const x = aux_info.last_macro;
             const mName = x.slice(x.indexOf('_') + 1, x.length);
