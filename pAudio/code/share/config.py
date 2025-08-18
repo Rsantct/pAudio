@@ -28,6 +28,7 @@ LDMON_PATH          = f'{MAINFOLDER}/.loudness_monitor'
 AUXINFO_PATH        = f'{MAINFOLDER}/.aux_info'
 PLAYER_META_PATH    = f'{MAINFOLDER}/.player_metadata'
 
+AMP_STATE_PATH      = f'{UHOME}/.amplifier'
 
 try:
     os.mkdir(LOGFOLDER)

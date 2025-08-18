@@ -23,17 +23,50 @@ def init():
         preamp.py will alert there for eq_graph changes
     """
 
-    global AUXINFO
+    global AUXINFO, ONOFF_MODE
+
+    ONOFF_MODE = 'pAudio'
+
+    if CONFIG.get('web_config'):
+        if 'amp' in CONFIG["web_config"].get('onoff', ''):
+            ONOFF_MODE = 'amplifier'
 
 
     AUXINFO = {
-        "amp":              "on",
         "loudness_monitor": read_json_file(LDMON_PATH),
         "last_macro":       "",
         "warning":          "",
         "new_eq_graph":     False
     }
+
     save_aux_info()
+
+
+def save_aux_info():
+    """ this must be threaded
+    """
+
+    def dosave():
+        save_json_file(AUXINFO, AUXINFO_PATH)
+
+    # Dynamic updates
+    if ONOFF_MODE == 'amplifier':
+
+        AUXINFO['onoff'] = amp_switch('state')
+
+    elif ONOFF_MODE == 'pAudio':
+
+        if process_is_running('paudio '):
+            AUXINFO['onoff'] = 'on'
+        else:
+            AUXINFO['onoff'] = 'off'
+
+    else:
+        AUXINFO['onoff'] = '-'
+
+
+    job = threading.Thread(target=dosave,)
+    job.start()
 
 
 def zita_j2n(args):
@@ -85,14 +118,6 @@ def zita_j2n(args):
     return result
 
 
-def save_aux_info():
-    """ this must be threaded """
-    def dosave():
-        save_json_file(AUXINFO, AUXINFO_PATH)
-    job = threading.Thread(target=dosave,)
-    job.start()
-
-
 def manage_lu_monitor(commandphrase):
     """ Manages the loudness_monitor.py daemon through by its fifo
     """
@@ -111,6 +136,20 @@ def manage_lu_monitor(commandphrase):
         return f'ERROR writing FIFO `{LDCTRL_PATH}`: {str(e)}'
 
 
+def get_web_config():
+
+
+    result = {  'main_selector':        'sources',
+                'LU_monitor_enabled':   True,
+                'onoff':                'pAudio'
+    }
+
+    for item, value in CONFIG.get('web_config', {}).items():
+        result[item] = value
+
+    return result
+
+
 # Entry function
 def do(cmd, args, add):
 
@@ -123,9 +162,7 @@ def do(cmd, args, add):
 
         # LU_monitor_enabled is a legacy option, now it is always enabled.
         case 'get_web_config':
-            result = {  'main_selector':        'sources',
-                        'LU_monitor_enabled':   True
-            }
+            result = get_web_config()
 
         case 'get_lu_monitor':
             result = read_json_file(LDMON_PATH)

@@ -42,7 +42,7 @@ var state               = {};       // The preamp-convolver state
 
 var player_info         = {};
 
-var aux_info            = { 'amp': 'n/a',
+var aux_info            = { 'onoff': '',
                             'loudness_monitor': {'LU_I': 0, 'LU_M': 0, 'scope': 'track' },
                             'last_macro': '',
                             'warning': ''
@@ -286,12 +286,20 @@ function init(){
         try{
             web_config      = JSON.parse( control_cmd('aux get_web_config') );
             mFnames         = web_config.user_macros;
-            if (web_config.show_graphs==false){
-                document.getElementById( "button_toggleEQgraphs").style.display = "none";
-            }
         }catch(e){
             console.log('response error to \'aux get_web_config\'', e.message);
         }
+
+        if (web_config.show_graphs==false){
+            document.getElementById("button_toggleEQgraphs").style.display = "none";
+        }
+
+        if ( web_config["onoff"].includes('amp') ){
+            document.getElementById("OnOffButton").title = "Amplifier ON/OFF";
+        }else if ( web_config["onoff"].includes('udio') ){
+            document.getElementById("OnOffButton").title = "pAudio ON/OFF";
+        }
+
     }
 
 
@@ -584,7 +592,7 @@ function page_update() {
             console.log('response error to \'aux info\'', e.message);
             // Backup method to retrieve the amplifier state:
             try{
-                aux_info.amp = control_cmd('amp_switch state');
+                aux_info.onoff = control_cmd('amp_switch state');
             }catch(e){
                 server_available = false;
             }
@@ -593,14 +601,18 @@ function page_update() {
 
 
     function aux_info_refresh(){
-        if ( aux_info.amp == 'off' || aux_info.amp == 'on' ) {
-            document.getElementById("OnOffButton").innerText = aux_info.amp.toUpperCase();
+
+        if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
+            document.getElementById("OnOffButton").innerText = aux_info.onoff.toUpperCase();
             document.getElementById("OnOffButton").style.display = 'block';
+
         }else{
             document.getElementById("OnOffButton").style.display = 'none';
         }
+
         if ( ! aux_info.last_macro ){
             clear_macro_buttons_highlight();
+
         }else{
             const x = aux_info.last_macro;
             const mName = x.slice(x.indexOf('_') + 1, x.length);
@@ -1047,9 +1059,18 @@ function ck_peaudiosys_restart() {
 
 
 function omd_onoff(mode) {
-    const ays = window.confirm('Are you sure to toggle pAudio?');
+
+    let msg = ('Are you sure to ' + mode.toUpperCase() + ' pAudio?');
+    let cmd = 'restart_paudio'
+
+    if ( web_config["onoff"].includes('amp') ){
+                msg = 'Are you sure to ' + mode.toUpperCase() + ' the AMPLIFIER?'
+        cmd = 'amp_switch'
+    }
+
+    ays = window.confirm( msg );
     if (ays){
-        const ans = control_cmd( 'amp_switch ' + mode );
+        control_cmd( cmd + ' ' + mode );
     }
 }
 

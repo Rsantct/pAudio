@@ -4,6 +4,7 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 import  subprocess as sp
+import  psutil
 import  threading
 import  socket
 from    time import sleep, strftime
@@ -16,6 +17,104 @@ from    getpass import getuser
 from    config import *
 
 USER = getuser()
+
+
+def amp_switch(mode):
+
+    def read_amp_state_file():
+
+        try:
+            with open(AMP_STATE_PATH, 'r') as f:
+                tmp = f.read().strip()
+
+                if tmp.lower() in ('on', '1'):
+                    return 'on'
+                elif tmp.lower() in ('off', '0'):
+                    return 'off'
+                else:
+                    print(f'{Fmt.MAGENTA}(miscel.py) amp file weird state value: {tmp}{Fmt.END}' )
+                    return tmp
+
+        except Exception as e:
+            print(f'{Fmt.MAGENTA}(miscel.py) error reading amp state file: {str(e)}{Fmt.END}' )
+            return ''
+
+    def get_state():
+        """ returns: on | off
+
+            NOT IN USE  -->  read_amp_state_file()
+        """
+
+        try:
+            res = sp.check_output(AMP_CMD, shell=True).decode().strip().lower()
+
+        except Exception as e:
+            print(f'amp_switch ERROR: {str(e)}')
+
+        if res in (1, '1', 'on'):
+            res = 'on'
+        else:
+            res = 'off'
+
+        return res
+
+
+    def set_state(new):
+        """
+            $ ampli.sh 1
+            BITFT_1=0
+            BITFT_2=0
+            1
+        """
+
+        if new == None:
+            return 'must be: on | off'
+
+        if new:
+
+            try:
+                res = sp.check_output(f'{AMP_CMD} {new}', shell=True).decode().strip().lower()
+                # (**) see docstring
+                res = res.strip().split()[-1]
+
+            except Exception as e:
+                print(f'amp_switch ERROR: {str(e)}')
+
+        if res in (1, '1', 'on'):
+            res = 'on'
+        else:
+            res = 'off'
+
+        return res
+
+
+    AMP_CMD = CONFIG.get('amplifier_switch_cmd', '~/bin/ampli.sh')
+
+    res = 'NAK'
+
+    if not mode:
+        mode = 'state'
+
+    match mode:
+
+        case 'state':
+            res = read_amp_state_file()
+
+        case 'on':
+            res = set_state('on')
+
+        case 'off':
+            res = set_state('off')
+
+        case 'toggle':
+            curr = get_state()
+            new = {'on':'off', 'off':'on'}[curr]
+            res = set_state(new)
+
+        case _:
+            pass
+
+    return res
 
 
 def restore_sound_card():
@@ -374,17 +473,18 @@ def get_target_sets(fs=44100):
 
 
 def process_is_running(pattern):
-    """ check for a system process to be running by a given pattern
-        (bool)
+    """ psutil is faster than pgrep in a shell
     """
-    try:
-        # do NOT use shell=True because pgrep ...  will appear it self.
-        plist = sp.check_output(['pgrep', '-fla', pattern]).decode().split('\n')
-    except:
-        return False
-    for p in plist:
-        if pattern in p:
-            return True
+    for proc in psutil.process_iter(attrs=["pid", "cmdline"]):
+        try:
+            cmdline_list = proc.info["cmdline"]
+            if not cmdline_list:
+                continue
+            cmdline = " ".join(cmdline_list)
+            if pattern in cmdline:
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
     return False
 
 
