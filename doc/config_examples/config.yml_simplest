@@ -21,7 +21,9 @@ output:
 loudspeaker: MyLoudspeaker
 
 
-web_behavior:
+# Optional web page settings
+web_config:
 
-    # set 'pAudio' (if using as a desktop app) or 'amplifier' (if available in a dedicated machine)
+    # set 'pAudio' (if using as a desktop app) or 'amplifier' (if a switch is available in a dedicated machine)
+    # Default to 'pAudio' if not configured.
     onoff: pAudio
