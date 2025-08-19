@@ -28,8 +28,8 @@ from services import players
 # COMMAND LOG FILE
 LOGFNAME = f'{LOGFOLDER}/paudio_cmd.log'
 
-if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
-    print ( f"{Fmt.RED}(paudio_) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
+if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 20e6:
+    print ( f"{Fmt.RED}(paudio_) log file exceeds ~ 20 MB '{LOGFNAME}'{Fmt.END}" )
 
 print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
@@ -66,10 +66,11 @@ def do(cmd_phrase):
             # This should never occur because preamp is the defaulted as prefix
             result = 'unknown service'
 
-    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd_phrase}; {result}'
-
-    with open(LOGFNAME, 'a') as FLOG:
-            FLOG.write(f'{logline}\n')
+    # LOG
+    if cmd != 'state':
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd_phrase}; {result}'
+        with open(LOGFNAME, 'a') as FLOG:
+                FLOG.write(f'{logline}\n')
 
     if type(result) != str:
         try:

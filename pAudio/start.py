@@ -53,10 +53,10 @@ def prepare_jack_stuff():
     """ execute JACK with the convenient loops
     """
 
-    jloops = ['pre_in_loop']
+    jloops_list = ['pre_in_loop']
 
     if any('mpd' in p for p in CONFIG["plugins"]):
-        jloops.append('mpd_loop')
+        jloops_list.append('mpd_loop')
 
 
     fs       = CONFIG["samplerate"]
@@ -67,7 +67,7 @@ def prepare_jack_stuff():
 
     if not jack_mod.run_jackd(  alsa_dev=alsa_dev,
                                 fs=fs, period=period, nperiods=nperiods,
-                                jloop_list=jloops, dither=dither):
+                                jloops_list=jloops_list, dither=dither):
 
         print(f'{Fmt.BOLD}(start) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
@@ -151,7 +151,7 @@ def run_plugins(mode='start'):
             sp.Popen(f'{PLUGINSFOLDER}/{plugin} stop', shell=True)
 
 
-def load_loudness_monitor_daemon(mode='start'):
+def manage_loudness_monitor_daemon(mode='start'):
 
     if mode == 'stop':
 
@@ -161,7 +161,7 @@ def load_loudness_monitor_daemon(mode='start'):
         print(f'{Fmt.GRAY}(start) Stopping loudness_monitor.py{Fmt.END}')
 
         tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py stop'
-        sp.Popen(tmp, shell=True)
+        sp.call(tmp, shell=True)
 
     else:
         print(f'{Fmt.GRAY}(start) Running loudness_monitor.py in background ...{Fmt.END}')
@@ -257,10 +257,10 @@ def stop_zita_link():
 
 def stop():
 
-    print('(start) Stopping pAudio...')
+    print(f'{Fmt.GRAY}{Fmt.BOLD}(start) Stopping pAudio{Fmt.END}')
 
     # The loudness_monitor daemon
-    load_loudness_monitor_daemon(mode='stop')
+    manage_loudness_monitor_daemon(mode='stop')
 
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
@@ -273,6 +273,7 @@ def stop():
 
         # Stop Zita_Link
         stop_zita_link()
+        sleep(.25)
 
         # Stop Jack
         sp.call('pkill -KILL jackd', shell=True)
@@ -340,7 +341,7 @@ def start():
 
 
     # The loudness_monitor daemon
-    load_loudness_monitor_daemon()
+    manage_loudness_monitor_daemon()
 
     # Plugins (stand-alone processes)
     run_plugins()
@@ -370,16 +371,22 @@ if __name__ == "__main__":
 
         case 'start':
             stop()
+            print(f'{Fmt.GRAY}{Fmt.BOLD}wait a bit to start pAudio... .. .{Fmt.END}')
+            sleep(3)
+            if sys.platform == 'darwin':
+                restore_playback_device_settings()
             start()
 
         case 'stop':
             stop()
-            restore_playback_device_settings()
+            if sys.platform == 'darwin':
+                restore_playback_device_settings()
 
         case 'toggle':
             if process_is_running(pattern='pAudio/code'):
                 stop()
-                restore_playback_device_settings()
+                if sys.platform == 'darwin':
+                    restore_playback_device_settings()
             else:
                 start()
 
