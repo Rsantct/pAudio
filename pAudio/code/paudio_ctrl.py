@@ -29,24 +29,22 @@ print ( f"{Fmt.BLUE}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 def restart_paudio(mode):
 
-    if not mode in ('start', 'stop', 'toggle', 'state'):
-        return 'Needs `start|stop|toggle`'
+    if not mode:
+        mode = 'state'
+
+    if not mode in ('start', 'stop', 'state'):
+        return 'Needs `start| stop | state`'
 
     if mode == 'state':
         return process_is_running('camilladsp')
 
-    elif mode == 'toggle':
+    elif mode == 'start':
+        sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
+        return 'Please wait a minute ...'
 
-        curr = process_is_running('camilladsp')
-
-        if curr:
-            sp.Popen(f'{UHOME}/bin/paudio_restart.sh stop',  shell=True)
-        else:
-            sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
-
-    else:
-        sp.Popen(f'{MAINFOLDER}/start.py {mode}', shell=True)
-        return 'ordered'
+    elif mode == 'stop':
+        sp.Popen(f'{UHOME}/bin/paudio_restart.sh stop',  shell=True)
+        return 'Please wait a few ...'
 
 
 # Interface function for this module
