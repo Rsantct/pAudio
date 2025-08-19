@@ -1052,8 +1052,25 @@ function ck_play_url() {
 //////// HANDLERS: AUX 'onmousedown' 'onclick' 'oninput' ////////
 
 function ck_peaudiosys_restart() {
-    control_cmd('restart_peaudiosys');
-    ck_display_advanced('off');
+
+    const curr = control_cmd('restart_paudio state');
+
+    let msg = 'Are you sure to START pAudio?';
+    let mode = 'start'
+    if (curr == 'true') {
+        msg = 'Are you sure to STOP pAudio?';
+        mode = 'stop'
+    }
+
+    if ( ! confirm(msg) ){
+        return
+    }
+
+    ans = control_cmd('restart_paudio ' + mode);
+
+    alert(ans);
+
+    //ck_display_advanced('off');
     page_update();
 }
 
