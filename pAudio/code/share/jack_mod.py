@@ -26,10 +26,12 @@ def _jcli_activate(cli_name = 'jack_mod'):
         print('(jack_mod) cannot activate jack.Client `{cli_name}`')
 
 
-def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloop_list=[], dither=False):
+def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops_list=[], dither=False):
     """ Run JACK in a separate process,
         including jack_loops
     """
+
+    print(f'{Fmt.BLUE}(jack_mod) Trying to run JACK ...{Fmt.END}')
 
     if dither:
         dither = 'shaped'
@@ -46,13 +48,12 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloop_list=[], dit
 
     sp.Popen(jack_cmd, shell=True)
 
-    if wait4jackports('system', timeout=5):
+    if wait4jackports('system', timeout=10):
 
-        if jloop_list:
-            run_jloops(jloop_list)
+        run_jloops(jloops_list)
 
-        tmp = 'dither:shaped' if dither else ''
-        print(f'{Fmt.BLUE}(jack_mod) JACK fs:{fs} period:{period} n:{nperiods} {tmp}{Fmt.END}')
+        dit = 'dither:shaped' if dither else ''
+        print(f'{Fmt.BLUE}(jack_mod) JACK fs:{fs} period:{period} n:{nperiods} {dit}{Fmt.END}')
         return True
 
     else:
@@ -68,12 +69,15 @@ def _jack_loop(clientname, nports=2):
         CREDITS:  https://jackclient-python.readthedocs.io/en/0.4.5/examples.html
     """
 
+    print( f'{Fmt.CYAN}(jack_loop) trying to run: {clientname} with {nports} ports ...{Fmt.END}' )
+
+
     # The jack module instance for our looping ports
     client = jack.Client(name=clientname, no_start_server=True)
 
     if client.status.name_not_unique:
         client.close()
-        print( f'(jack_loop) \'{clientname}\' already exists in JACK, nothing done.' )
+        print( f'{Fmt.CYAN}{Fmt.RED}(jack_loop) \'{clientname}\' already exists in JACK, nothing done.{Fmt.END}' )
         return
 
     # Will use the multiprocessing.Event mechanism to keep this alive
@@ -90,11 +94,12 @@ def _jack_loop(clientname, nports=2):
     # If jack shutdowns, will trigger on 'event' so that the below 'whith client' will break.
     @client.set_shutdown_callback
     def shutdown(status, reason):
-        print('(jack_loop) JACK shutdown!')
-        print('(jack_loop) JACK status:', status)
-        print('(jack_loop) JACK reason:', reason)
+        print(f'{Fmt.GRAY}(jack_loop) JACK shutdown!{Fmt.END}')
+        print(f'{Fmt.GRAY}(jack_loop) JACK status:{Fmt.END}', status)
+        print(f'{Fmt.GRAY}(jack_loop) JACK reason:{Fmt.END}', reason)
         # This triggers an event so that the below 'with client' will terminate
         event.set()
+
 
     # Create the ports
     for n in range( nports ):
@@ -108,18 +113,19 @@ def _jack_loop(clientname, nports=2):
         # This tells the JACK server that we are ready to roll.
         # Our above process() callback will start running now.
 
-        print( f'(jack_loop) running {clientname}' )
+        print( f'{Fmt.CYAN}(jack_loop) running {clientname}{Fmt.END}' )
         try:
             event.wait()
         except KeyboardInterrupt:
-            print('\n(jack_loop) Interrupted by user')
+            print(f'\n{Fmt.CYAN}(jack_loop) Interrupted by user{Fmt.END}')
         except:
-            print('\n(jack_loop)  Terminated')
+            print(f'\n{Fmt.CYAN}(jack_loop) Terminated{Fmt.END}')
 
 
 def run_jloops(loop_names=[]):
     """ Preparing the loops
     """
+    print(f'{Fmt.CYAN}(jack_mod) Please wait for JACK LOOPS: {loop_names}{Fmt.END}')
     for loop_name in loop_names:
         jloop = mp.Process( target=_jack_loop, args=(loop_name, 2) )
         jloop.start()
@@ -257,8 +263,3 @@ def clear_preamp():
         for client in JCLI.get_all_connections(preamp_port):
             connect( client, preamp_port, mode='off' )
 
-
-try:
-    _jcli_activate()
-except:
-    pass
