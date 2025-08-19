@@ -50,8 +50,6 @@ def do(cmd_phrase):
     prefix, cmd, args, add = read_cmd_phrase(cmd_phrase)
     result    = ''
 
-    print(1111, prefix, '|', cmd, '|', args, '|', add)
-
     match prefix:
 
         case 'preamp':
