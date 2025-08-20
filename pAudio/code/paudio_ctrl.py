@@ -32,13 +32,13 @@ def restart_paudio(mode):
     if not mode:
         mode = 'state'
 
-    if not mode in ('start', 'stop', 'state'):
+    if not mode in ('start', 'restart', 'stop', 'state'):
         return 'Needs `start| stop | state`'
 
     if mode == 'state':
         return process_is_running('camilladsp')
 
-    elif mode == 'start':
+    elif 'start' in mode:
         sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
         return 'Please wait a minute ...'
 
