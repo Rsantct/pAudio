@@ -46,3 +46,6 @@ web_config:
     # Set 'toggle' for stop and restart pAudio (in a desktop), or 'restart' to allways restart it (in a dedicated machine)
     # Default to 'toggle' if not configured.
     monkey_button:  toggle
+
+    # HELP button language: en(glish) | sp(panish) | cat(alan)
+    help_lang:      en
