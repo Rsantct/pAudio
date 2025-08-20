@@ -1053,10 +1053,26 @@ function ck_play_url() {
 
 function ck_peaudiosys_restart() {
 
-    const curr = control_cmd('restart_paudio state');
+    // RESTART mode
+    if (web_config["monkey_button"].includes('start')){
 
+        if ( confirm('Are you sure to RESTART pAudio?') ){
+
+            ans = control_cmd('restart_paudio restart');
+            alert(ans);
+            ck_display_advanced('off');
+            page_update();
+        }
+
+        return;
+    }
+
+    // START / STOP mode (toggle)
     let msg = 'Are you sure to START pAudio?';
     let mode = 'start'
+
+    const curr = control_cmd('restart_paudio state');
+
     if (curr == 'true') {
         msg = 'Are you sure to STOP pAudio?';
         mode = 'stop'
@@ -1070,7 +1086,7 @@ function ck_peaudiosys_restart() {
 
     alert(ans);
 
-    //ck_display_advanced('off');
+    ck_display_advanced('off');
     page_update();
 }
 
