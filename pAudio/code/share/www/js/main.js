@@ -18,7 +18,9 @@ const URL_PREFIX = '/';
 const AUTO_UPDATE_INTERVAL = 1000;      // Auto-update interval millisec
 
 const HELP_EN = `
-The volume MUST be controlled here. [LC] Loudness Contour compensation allows a tonal balanced low volume listenting experience.
+The volume MUST be controlled here.
+
+[LC] Loudness Contour compensation allows a tonal balanced low volume listenting experience.
 
 [0.0] dB means the normal "loud SPL" for your listening position, say around 75~80 dBSPL.
 
@@ -38,7 +40,9 @@ Some LU_offset settings:
 `
 
 const HELP_CAT = `
-El volum HA DE ser controlat aquí. [LC] La compensació de contorn de sonoritat permet una experiència d'escolta de baix volum amb un equilibri tonal.
+El volum HA DE ser controlat aquí.
+
+[LC] 'Loudness Contour'. La compensació de contorn de sonoritat permet una experiència d'escolta de baix volum amb un equilibri tonal.
 
 [0.0] dB significa el "SPL fort" normal per a la vostra posició d'escolta, per exemple, al voltant de 75~80 dBSPL.
 
@@ -58,7 +62,11 @@ Alguns paràmetres de LU_offset:
 `
 
 const HELP_SP = `
-El volumen DEBE controlarse aquí. La compensación del contorno de sonoridad [LC] permite una experiencia auditiva a bajo volumen con equilibrio tonal.
+El volumen DEBE controlarse aquí.
+
+La compensación del contorno de sonoridad
+
+[LC] 'Loudness Contour' permite una experiencia auditiva a bajo volumen con equilibrio tonal.
 
 [0.0] dB significa el "SPL alto" normal para su posición de escucha, aproximadamente entre 75 y 80 dB SPL.
 
