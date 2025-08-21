@@ -50,7 +50,11 @@ Open a a terminal and run:
 
 ## Python modules
 
-NOTE: needs Python >= 3.10
+NOTE: run the command `python` in a terminal and check if **Python version is >= 3.10**
+
+If you need to install a recent Python, use Homebrew:
+
+    brew install python3
 
 [pip](https://pip.pypa.io/en/stable/) is the standard Python package manager.
 
