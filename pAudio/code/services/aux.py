@@ -9,7 +9,9 @@
 
 import os
 import sys
-import jack
+
+if sys.platform.lower() == 'linux' and CONFIG.get('jack'):
+    import  jack
 
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
@@ -141,8 +143,7 @@ def get_web_config():
 
     result = {  'main_selector':        'sources',
                 'LU_monitor_enabled':   True,
-                'onoff':                'pAudio',
-                'monkey_button':        'toggle'
+                'onoff':                'pAudio'
     }
 
     for item, value in CONFIG.get('web_config', {}).items():
