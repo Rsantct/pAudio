@@ -17,8 +17,8 @@
 
 In order to automatically switch the Mac system-wide audio playback to the pAudio BlackHole input, and restore later, you may want to install a couple of additional tools:
 
-- [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster)
-- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx)
+- [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster) This is comes as a ZIP file. Copy to /usr/local/bin/ or just to $HOME/bin/
+- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx) This installs via homebrew
 
 ## CamillaDSP
 
