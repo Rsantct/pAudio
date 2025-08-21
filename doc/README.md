@@ -8,6 +8,11 @@
 
 - [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools (this includes the [git](https://git-scm.com) tool).
 
+    ```
+    xcode-select --install
+    ```
+  
+
 ## Other recommended audio software
 
 In order to automatically switch the Mac system-wide audio playback to the pAudio BlackHole input, and restore later, you may want to install a couple of additional tools:
