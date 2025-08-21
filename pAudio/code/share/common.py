@@ -720,10 +720,10 @@ def restore_playback_device_settings():
             dev = ''
 
         if dev:
-            print("(start.py) Restoring previous Default Playback Device")
+            print("(restore_playback_device_settings) Restoring previous Default Playback Device")
             sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
         else:
-            print("(start.py) Cannot read `.previous_default_device`")
+            print("(restore_playback_device_settings) Cannot read `.previous_default_device`")
 
         # Restore volume
         try:
@@ -733,7 +733,7 @@ def restore_playback_device_settings():
             vol = ''
 
         if vol:
-            print("(start.py) Restoring previous Playback Device Volume")
+            print("(restore_playback_device_settings) Restoring previous Playback Device Volume")
             sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
         else:
             print(f"{Fmt.GRAY}(start.py) Cannot read `.previous_default_device_volume`{Fmt.END}")
