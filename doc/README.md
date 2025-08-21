@@ -8,12 +8,17 @@
 
 - [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools (this includes the [git](https://git-scm.com) tool).
 
+    ```
+    xcode-select --install
+    ```
+  
+
 ## Other recommended audio software
 
 In order to automatically switch the Mac system-wide audio playback to the pAudio BlackHole input, and restore later, you may want to install a couple of additional tools:
 
-- [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster)
-- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx)
+- [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster) This is comes as a ZIP file. Copy to /usr/local/bin/ or just to $HOME/bin/
+- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx) This installs via homebrew
 
 ## CamillaDSP
 
@@ -45,7 +50,11 @@ Open a a terminal and run:
 
 ## Python modules
 
-NOTE: needs Python >= 3.10
+NOTE: run the command `python` in a terminal and check if **Python version is >= 3.10**
+
+If you need to install a recent Python, use Homebrew:
+
+    brew install python3
 
 [pip](https://pip.pypa.io/en/stable/) is the standard Python package manager.
 

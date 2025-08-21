@@ -141,7 +141,8 @@ def get_web_config():
 
     result = {  'main_selector':        'sources',
                 'LU_monitor_enabled':   True,
-                'onoff':                'pAudio'
+                'onoff':                'pAudio',
+                'monkey_button':        'toggle'
     }
 
     for item, value in CONFIG.get('web_config', {}).items():

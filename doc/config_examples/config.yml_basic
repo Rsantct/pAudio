@@ -47,3 +47,5 @@ web_config:
     # Default to 'toggle' if not configured.
     monkey_button:  toggle
 
+    # HELP button language: en(glish) | sp(panish) | cat(alan)
+    help_lang:      en

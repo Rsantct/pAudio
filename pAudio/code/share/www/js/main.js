@@ -17,8 +17,10 @@
 const URL_PREFIX = '/';
 const AUTO_UPDATE_INTERVAL = 1000;      // Auto-update interval millisec
 
-const USER_ALERT = `
-The volume MUST be controlled here. [LC] Loudness Contour compensation allows a tonal balanced low volume listenting experience.
+const HELP_EN = `
+The volume MUST be controlled here.
+
+[LC] Loudness Contour compensation allows a tonal balanced low volume listenting experience.
 
 [0.0] dB means the normal "loud SPL" for your listening position, say around 75~80 dBSPL.
 
@@ -36,6 +38,54 @@ Some LU_offset settings:
 - 12 dB: most pop music CD
 - 15 dB: ultra compressed music, usually in pop
 `
+
+const HELP_CAT = `
+El volum HA DE ser controlat aquí.
+
+[LC] 'Loudness Contour'. La compensació de contorn de sonoritat permet una experiència d'escolta de baix volum amb un equilibri tonal.
+
+[0.0] dB significa el "SPL fort" normal per a la vostra posició d'escolta, per exemple, al voltant de 75~80 dBSPL.
+
+COMPROVEU que el vostre DAC i AMPLIFICADOR funcionin a "volum complet" per assolir el vostre "SPL fort" objectiu.
+
+Si el vostre programa de música és alt (la majoria de CD ho són), utilitzeu el control lliscant LU_offset per compensar.
+
+LU_monitor indica aproximadament quant volum d'excés té el vostre programa de música.
+
+Alguns paràmetres de LU_offset:
+
+- 0 dB: enregistraments molt poc freqüents. El segell BIS Records és una bona referència.
+- 6 dB: un bon CD masteritzat
+- 9 dB: la majoria de CD, fins i tot en música clàssica
+- 12 dB: la majoria de CD de música pop
+- 15 dB: música ultracomprimida, normalment en música pop
+`
+
+const HELP_SP = `
+El volumen DEBE controlarse aquí.
+
+La compensación del contorno de sonoridad
+
+[LC] 'Loudness Contour' permite una experiencia auditiva a bajo volumen con equilibrio tonal.
+
+[0.0] dB significa el "SPL alto" normal para su posición de escucha, aproximadamente entre 75 y 80 dB SPL.
+
+COMPRUEBE que su DAC y amplificador funcionen a "máximo volumen" para alcanzar el "SPL alto" objetivo.
+
+Si su programa de música tiene un volumen alto (la mayoría de los CD lo tienen), utilice el control deslizante LU_offset para compensar.
+
+LU_monitor indica aproximadamente el exceso de volumen de su programa de música.
+
+Algunos ajustes de LU_offset:
+
+- 0 dB: grabaciones muy poco frecuentes. El sello BIS Records es una buena referencia.
+- 6 dB: un CD masterizado de calidad
+- 9 dB: la mayoría de los CD, incluso de música clásica
+- 12 dB: la mayoría de los CD de música pop
+- 15 dB: música ultracomprimida, generalmente de música pop
+`
+
+
 
 //////// GLOBAL VARIABLES ////////
 var state               = {};       // The preamp-convolver state
@@ -258,11 +308,6 @@ function manage_main_cside(){
 
 function init(){
 
-    function init_alert(){
-        window.alert(USER_ALERT)
-    }
-
-
     function download_drc_graphs(){
         if (web_config.show_graphs==false){
             return;
@@ -401,10 +446,6 @@ function init(){
 
     // SCHEDULES THE PAGE_UPDATE (only runtime variable items)
     setInterval( page_update, AUTO_UPDATE_INTERVAL );
-
-    // Alert user
-    setTimeout(init_alert, 2000)
-
 }
 
 
@@ -1051,12 +1092,46 @@ function ck_play_url() {
 
 //////// HANDLERS: AUX 'onmousedown' 'onclick' 'oninput' ////////
 
-function ck_peaudiosys_restart() {
+function ck_help() {
+
+    let lang = web_config["help_lang"]
+    if (!lang){ lang = 'en' }
+
+    let msg = HELP_EN;
+
+    if ( lang.toLowerCase().includes('sp') ){
+        msg = HELP_SP
+    }
+    if ( lang.toLowerCase().includes('cat') ){
+        msg = HELP_CAT
+    }
+
+    window.alert(msg);
+}
+
+
+function ck_paudio_restart() {
+
+    // RESTART mode
+    if (web_config["monkey_button"].includes('start')){
+
+        if ( confirm('Are you sure to RESTART pAudio?') ){
+
+            ans = control_cmd('restart_paudio restart');
+            alert(ans);
+            ck_display_advanced('off');
+            page_update();
+        }
+
+        return;
+    }
+
+    // START / STOP mode (toggle)
+    let msg = 'Are you sure to START pAudio?';
+    let mode = 'start'
 
     const curr = control_cmd('restart_paudio state');
 
-    let msg = 'Are you sure to START pAudio?';
-    let mode = 'start'
     if (curr == 'true') {
         msg = 'Are you sure to STOP pAudio?';
         mode = 'stop'
@@ -1070,7 +1145,7 @@ function ck_peaudiosys_restart() {
 
     alert(ans);
 
-    //ck_display_advanced('off');
+    ck_display_advanced('off');
     page_update();
 }
 
@@ -1156,7 +1231,8 @@ function ck_display_advanced(mode) {
     if ( show_advanced == true ) {
         document.getElementById( "div_advanced_controls").style.display = "block";
         document.getElementById( "level_buttons13").style.display = "table-cell";
-        document.getElementById( "main_lside").style.display = "table-cell";
+        document.getElementById( "but_restart").style.display = "inline-block";
+        document.getElementById( "but_help").style.display = "none";
         document.getElementById( "SoloInfo").style.display = "table-cell";
         document.getElementById( "PolarityInfo").style.display = "table-cell";
         document.getElementById( "buttAOD").style.display = "inline-block";
@@ -1166,7 +1242,8 @@ function ck_display_advanced(mode) {
     else {
         document.getElementById( "div_advanced_controls").style.display = "none";
         document.getElementById( "level_buttons13").style.display = "none";
-        document.getElementById( "main_lside").style.display = "none";
+        document.getElementById( "but_restart").style.display = "none";
+        document.getElementById( "but_help").style.display = "inline-block";
         document.getElementById( "SoloInfo").style.display = "none";
         document.getElementById( "PolarityInfo").style.display = "none";
         if ( state.extra_delay === 0 ) {
