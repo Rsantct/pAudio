@@ -84,7 +84,12 @@ see `Linux.md`
 
 You need to download or clone this repo, unzip, then copy the **`pAudio`** folder to your home directory.
 
-**The easy way:** just run the commands below:
+Check if you can run the `wget` tool in your terminal. If necessary, do install it:
+
+    brew install wget
+
+
+**The easy way:** just run the commands below (YOU NEED `wget` as indicated above):
 
     mkdir -p ~/bin
     wget -O ~/bin/paudio_update.sh https://raw.githubusercontent.com/Rsantct/pAudio/master/bin/paudio_update.sh
