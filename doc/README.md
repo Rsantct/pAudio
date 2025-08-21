@@ -52,7 +52,7 @@ Open a a terminal and run:
 
 NOTE: run the command `python` in a terminal and check if **Python version is >= 3.10**
 
-If you need to install a recent Python, use Homebrew:
+If you need to install a recent Python, use Homebrew (**):
 
     brew install python3
 
@@ -64,14 +64,24 @@ Upgrade `pip`:
 
 If the above command fails, you'll need to [install pip](https://pip.pypa.io/en/stable/installation/#supported-methods), then retry in order to upgrade `setuptools`.
 
-Install standard Python modules:
+(**) UPDATE Python version >= 3.13 on MacOS via Homebrew
 
-    pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
+Like for Linux Debian users, to install additional Python packages you'll need to prepare a Python Virtual Environment for your user (by inheriting the system Python packages)
 
+    $ python3 -m venv --system-site-packages ~/.env
+    $ source ~/.env/bin/activate
+    (.env) $ 
+    
+        HERE YOU CAN INSTALL NORMALLY the standard Python modules and the CamillaDSP module,
+        while you are inside the activated virtual environment:
+    
+    (.env) $ pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
+    (.env) $ pip3 install git+https://github.com/HEnquist/pycamilladsp.git
+    
+         You can now deactivate the Python Env BUT it is not necessary
 
-Install the CamillaDSP python module:
-
-    pip3 install git+https://github.com/HEnquist/pycamilladsp.git
+    (.env) $ deactivate
+    $
 
 
 # Install on Linux
@@ -84,7 +94,12 @@ see `Linux.md`
 
 You need to download or clone this repo, unzip, then copy the **`pAudio`** folder to your home directory.
 
-**The easy way:** just run the commands below:
+Check in a terminal if you can run the **`wget`** tool. If necessary, do install it:
+
+    brew install wget
+
+
+**The easy way to install:** just run the commands below (YOU NEED `wget` as indicated above):
 
     mkdir -p ~/bin
     wget -O ~/bin/paudio_update.sh https://raw.githubusercontent.com/Rsantct/pAudio/master/bin/paudio_update.sh
