@@ -369,11 +369,11 @@ def semiblackmanharris(m):
 
 def blackmanharris(m):
     """
-       (alias de signal.window.blackmanharris)
+       (alias de signal.windows.blackmanharris)
 
     %% Obtiene una ventana Blackman-Harris de longitud m.
     """
-    return signal.window.blackmanharris(m)
+    return signal.windows.blackmanharris(m)
 
 
 def minphsp(sp):
