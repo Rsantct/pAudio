@@ -747,7 +747,7 @@ def restore_playback_device_settings():
             with open(f'{MAINFOLDER}/.previous_default_device_volume', 'r') as f:
                 vol = f.read().strip()
         except:
-            vol = ''
+            vol = '50'
 
         if vol:
             print("(restore_playback_device_settings) Restoring previous Playback Device Volume")
