@@ -57,4 +57,5 @@ if [[ $(uname) == "Darwin" ]]; then
 
 fi
 
+echo
 echo "Done, bye!"
