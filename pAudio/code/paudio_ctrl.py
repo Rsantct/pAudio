@@ -36,7 +36,7 @@ def restart_paudio(mode):
         return 'Needs `start| stop | state`'
 
     if mode == 'state':
-        return process_is_running('camilladsp')
+        return process_is_running('server.py paudio ')
 
     elif 'start' in mode:
         sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
