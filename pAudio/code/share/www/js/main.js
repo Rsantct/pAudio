@@ -329,10 +329,10 @@ function init(){
 
     function get_web_config(){
         try{
-            web_config      = JSON.parse( control_cmd('aux get_web_config') );
+            web_config      = JSON.parse( control_cmd('get_web_config') );
             mFnames         = web_config.user_macros;
         }catch(e){
-            console.log('response error to \'aux get_web_config\'', e.message);
+            console.log('response error to \'get_web_config\'', e.message);
         }
 
         if (web_config.show_graphs==false){
@@ -626,22 +626,15 @@ function page_update() {
     }
 
 
-    function aux_info_get(){
+    function aux_info_refresh(){
+
         try{
             aux_info = JSON.parse( control_cmd('aux info') );
         }catch(e){
             console.log('response error to \'aux info\'', e.message);
-            // Backup method to retrieve the amplifier state:
-            try{
-                aux_info.onoff = control_cmd('amp_switch state');
-            }catch(e){
-                server_available = false;
-            }
+            aux_info.onoff = '--';
+            server_available = false;
         }
-    }
-
-
-    function aux_info_refresh(){
 
         if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
             document.getElementById("OnOffButton").innerText = aux_info.onoff.toUpperCase();
@@ -822,7 +815,6 @@ function page_update() {
     }
 
     //// AUX STUFF
-    aux_info_get();
     aux_info_refresh();
 
     // PREAMP STUFF

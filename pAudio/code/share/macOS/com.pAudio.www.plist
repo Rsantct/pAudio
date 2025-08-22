@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.pAudio.www</string>
+
+    <!-- using a shell to have a full user environment -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-l</string>
+        <string>-c</string>
+        <string>exec /opt/homebrew/bin/node $HOME/pAudio/code/share/www/nodejs_www_server/www-server.js</string>
+    </array>
+
+    <!-- run on sesion init -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- do not restart if the program is terminated -->
+    <key>KeepAlive</key>
+    <false/>
+
+    <!-- DEBUG (while testing)
+    <key>StandardOutPath</key>
+    <string>/tmp/pAudio.www.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/pAudio.www.err</string>
+    -->
+
+</dict>
+</plist>

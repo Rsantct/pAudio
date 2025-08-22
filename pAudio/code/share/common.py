@@ -19,6 +19,22 @@ from    config import *
 USER = getuser()
 
 
+def get_web_config():
+
+    # LU_monitor_enabled is a legacy option, now it is always enabled.
+
+    result = {  'main_selector':        'sources',
+                'LU_monitor_enabled':   True,
+                'onoff':                'pAudio',
+                'monkey_button':        'toggle'
+    }
+
+    for item, value in CONFIG.get('web_config', {}).items():
+        result[item] = value
+
+    return result
+
+
 def amp_switch(mode):
 
     def read_amp_state_file():
@@ -32,12 +48,13 @@ def amp_switch(mode):
                 elif tmp.lower() in ('off', '0'):
                     return 'off'
                 else:
-                    print(f'{Fmt.MAGENTA}(miscel.py) amp file weird state value: {tmp}{Fmt.END}' )
+                    print(f'{Fmt.MAGENTA}(common.amp_switch) amp file weird state value: {tmp}{Fmt.END}' )
                     return tmp
 
         except Exception as e:
-            print(f'{Fmt.MAGENTA}(miscel.py) error reading amp state file: {str(e)}{Fmt.END}' )
+            print(f'{Fmt.MAGENTA}(common.amp_switch) error reading amp state file: {str(e)}{Fmt.END}' )
             return ''
+
 
     def get_state():
         """ returns: on | off
@@ -49,7 +66,7 @@ def amp_switch(mode):
             res = sp.check_output(AMP_CMD, shell=True).decode().strip().lower()
 
         except Exception as e:
-            print(f'amp_switch ERROR: {str(e)}')
+            print(f'(common.amp_switch) get_state ERROR: {str(e)}')
 
         if res in (1, '1', 'on'):
             res = 'on'
@@ -78,7 +95,7 @@ def amp_switch(mode):
                 res = res.strip().split()[-1]
 
             except Exception as e:
-                print(f'amp_switch ERROR: {str(e)}')
+                print(f'(common.amp_switch) set_state ERROR: {str(e)}')
 
         if res in (1, '1', 'on'):
             res = 'on'
@@ -720,20 +737,20 @@ def restore_playback_device_settings():
             dev = ''
 
         if dev:
-            print("(start.py) Restoring previous Default Playback Device")
+            print("(restore_playback_device_settings) Restoring previous Default Playback Device")
             sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
         else:
-            print("(start.py) Cannot read `.previous_default_device`")
+            print("(restore_playback_device_settings) Cannot read `.previous_default_device`")
 
         # Restore volume
         try:
             with open(f'{MAINFOLDER}/.previous_default_device_volume', 'r') as f:
                 vol = f.read().strip()
         except:
-            vol = ''
+            vol = '50'
 
         if vol:
-            print("(start.py) Restoring previous Playback Device Volume")
+            print("(restore_playback_device_settings) Restoring previous Playback Device Volume")
             sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
         else:
             print(f"{Fmt.GRAY}(start.py) Cannot read `.previous_default_device_volume`{Fmt.END}")
