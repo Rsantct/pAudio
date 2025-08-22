@@ -297,7 +297,7 @@ def init_camilladsp(pAudio_config):
         print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
     else:
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
-        return str(e)
+        return
 
 
     # Loading configuration
