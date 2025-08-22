@@ -362,16 +362,18 @@ def semiblackmanharris(m):
     %% m = Número de muestras.
     """
     # generamos la ventana con tamaño 2*m
-    w = signal.blackmanharris(2*m)
+    w = blackmanharris(2*m)
     # devolvemos la mitad derecha
     return w[m:]
 
 
 def blackmanharris(m):
     """
+       (alias de signal.window.blackmanharris)
+
     %% Obtiene una ventana Blackman-Harris de longitud m.
     """
-    return signal.blackmanharris(m)
+    return signal.window.blackmanharris(m)
 
 
 def minphsp(sp):
@@ -415,8 +417,8 @@ def wholespmp(ssp):
         raise ValueError("wholespmp: Spectrum length must be odd")
 
     # Códido DSD en Octave:
-	# nsp = flipud( conj( ssp(2:m-1) ) );
-	# wsp = [ssp; nsp];
+    # nsp = flipud( conj( ssp(2:m-1) ) );
+    # wsp = [ssp; nsp];
 
     nsp = np.flipud( np.conj( ssp[1:m-1] ) )  # freqs negativas
     wsp = np.concatenate([ssp, nsp])          # y ensamblamos
@@ -446,8 +448,8 @@ def wholesplp(ssp):
         raise ValueError("wholesplp: Spectrum length must be odd")
 
     # Códido DSD en Octave:
- 	# nsp = flipud( ssp(2:m-1) );
-	# wsp = [ssp; nsp];
+    # nsp = flipud( ssp(2:m-1) );
+    # wsp = [ssp; nsp];
 
     nsp = np.flipud( ssp[1:m-1] )         # freqs negativas
     wsp = np.concatenate([ssp, nsp])    # y ensamblamos
@@ -468,10 +470,10 @@ def lininterp(freq, mag, m, fs):
     # --- Código original Octave DSD ---
     # NOTAs: 'maglin' es el nuevo vector de magnitudes.
     #        La función de DSD solo devuelve las magnitudes, aquí tb las frecuencias.
-	# fnew = (0:m/2)' * fs / m; % column vector
-	# maglin = interp1(frec, mag, fnew, "spline");  # Se usa una spline
-	# maglin( fnew < freq(1)   ) = mag(1);          # Se rellena en los extremos
-	# maglin( fnew > freq(end) ) = mag(end);        # replicando los extremos originales
+    # fnew = (0:m/2)' * fs / m; % column vector
+    # maglin = interp1(frec, mag, fnew, "spline");  # Se usa una spline
+    # maglin( fnew < freq(1)   ) = mag(1);          # Se rellena en los extremos
+    # maglin( fnew > freq(end) ) = mag(end);        # replicando los extremos originales
 
     if not freq.ndim == 1:
         raise ValueError("'freq' must be a column vector")
