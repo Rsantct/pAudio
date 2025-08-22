@@ -39,6 +39,7 @@ def amp_switch(mode):
             print(f'{Fmt.MAGENTA}(common.amp_switch) error reading amp state file: {str(e)}{Fmt.END}' )
             return ''
 
+
     def get_state():
         """ returns: on | off
 
