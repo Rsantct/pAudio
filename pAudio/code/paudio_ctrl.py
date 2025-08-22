@@ -70,6 +70,9 @@ def do( cmdphrase):
         case 'amp_switch':
             result = amp_switch( arg )
 
+        case 'get_web_config':
+            result = get_web_config()
+
 
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
 
