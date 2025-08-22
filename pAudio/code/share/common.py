@@ -32,11 +32,11 @@ def amp_switch(mode):
                 elif tmp.lower() in ('off', '0'):
                     return 'off'
                 else:
-                    print(f'{Fmt.MAGENTA}(miscel.py) amp file weird state value: {tmp}{Fmt.END}' )
+                    print(f'{Fmt.MAGENTA}(common.amp_switch) amp file weird state value: {tmp}{Fmt.END}' )
                     return tmp
 
         except Exception as e:
-            print(f'{Fmt.MAGENTA}(miscel.py) error reading amp state file: {str(e)}{Fmt.END}' )
+            print(f'{Fmt.MAGENTA}(common.amp_switch) error reading amp state file: {str(e)}{Fmt.END}' )
             return ''
 
     def get_state():
@@ -49,7 +49,7 @@ def amp_switch(mode):
             res = sp.check_output(AMP_CMD, shell=True).decode().strip().lower()
 
         except Exception as e:
-            print(f'amp_switch ERROR: {str(e)}')
+            print(f'(common.amp_switch) get_state ERROR: {str(e)}')
 
         if res in (1, '1', 'on'):
             res = 'on'
@@ -78,7 +78,7 @@ def amp_switch(mode):
                 res = res.strip().split()[-1]
 
             except Exception as e:
-                print(f'amp_switch ERROR: {str(e)}')
+                print(f'(common.amp_switch) set_state ERROR: {str(e)}')
 
         if res in (1, '1', 'on'):
             res = 'on'
