@@ -19,6 +19,22 @@ from    config import *
 USER = getuser()
 
 
+def get_web_config():
+
+    # LU_monitor_enabled is a legacy option, now it is always enabled.
+
+    result = {  'main_selector':        'sources',
+                'LU_monitor_enabled':   True,
+                'onoff':                'pAudio',
+                'monkey_button':        'toggle'
+    }
+
+    for item, value in CONFIG.get('web_config', {}).items():
+        result[item] = value
+
+    return result
+
+
 def amp_switch(mode):
 
     def read_amp_state_file():
