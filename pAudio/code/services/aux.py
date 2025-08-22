@@ -10,14 +10,14 @@
 import os
 import sys
 
-if sys.platform.lower() == 'linux' and CONFIG.get('jack'):
-    import  jack
-
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from common import *
+
+if sys.platform.lower() == 'linux' and CONFIG.get('jack'):
+    import  jack
 
 
 def init():
