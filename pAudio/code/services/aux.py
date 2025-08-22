@@ -138,20 +138,6 @@ def manage_lu_monitor(commandphrase):
         return f'ERROR writing FIFO `{LDCTRL_PATH}`: {str(e)}'
 
 
-def get_web_config():
-
-
-    result = {  'main_selector':        'sources',
-                'LU_monitor_enabled':   True,
-                'onoff':                'pAudio'
-    }
-
-    for item, value in CONFIG.get('web_config', {}).items():
-        result[item] = value
-
-    return result
-
-
 # Entry function
 def do(cmd, args, add):
 
@@ -161,10 +147,6 @@ def do(cmd, args, add):
 
         case 'echo' | 'hello':
             result = 'ACK'
-
-        # LU_monitor_enabled is a legacy option, now it is always enabled.
-        case 'get_web_config':
-            result = get_web_config()
 
         case 'get_lu_monitor':
             result = read_json_file(LDMON_PATH)
