@@ -105,7 +105,7 @@ var web_config          = { 'main_selector':      'sources',
                             'user_macros':        []
 };
 
-var drc_sets            = JSON.parse( control_cmd( 'get_drc_sets' ) );
+var drc_sets            = get_drc_sets();
 
 var mFnames             = web_config.user_macros; // Macro file names
 
@@ -329,10 +329,10 @@ function init(){
 
     function get_web_config(){
         try{
-            web_config      = JSON.parse( control_cmd('get_web_config') );
+            web_config      = JSON.parse( control_cmd('ctrl get_web_config') );
             mFnames         = web_config.user_macros;
         }catch(e){
-            console.log('response error to \'get_web_config\'', e.message);
+            console.log('response error to \'ctrl get_web_config\'', e.message);
         }
 
         if (web_config.show_graphs==false){
@@ -629,9 +629,9 @@ function page_update() {
     function aux_info_refresh(){
 
         try{
-            aux_info = JSON.parse( control_cmd('aux info') );
+            aux_info = JSON.parse( control_cmd('ctrl aux_info') );
         }catch(e){
-            console.log('response error to \'aux info\'', e.message);
+            console.log('response error to \'ctrl aux_info\'', e.message);
             aux_info.onoff = '--';
             server_available = false;
         }
@@ -886,7 +886,7 @@ function oc_main_select(itemName){
         // alternative behavior managing macros
         }else{
             mName = find_macroName(itemName);
-            control_cmd( 'aux run_macro ' + mName );
+            control_cmd( 'ctrl run_macro ' + mName );
         }
     }
     setTimeout( tmp, 200, itemName );  // 'itemName' is given as argument for 'tmp'
@@ -919,7 +919,7 @@ function oc_target_select(xoName){
 
 
 function oc_LU_scope_select(scope){
-    control_cmd('aux set_loudness_monitor_scope ' + scope);
+    control_cmd('ctrl set_loudness_monitor_scope ' + scope);
     clear_highlighteds();
     document.getElementById('LUscopeSelector').style.color = "white";
 }
@@ -1077,7 +1077,7 @@ function oc_play_track_number(N) {
 function ck_play_url() {
     var url = prompt('Enter url to play:');
     if ( url.slice(0,5) == 'http:' || url.slice(0,6) == 'https:' ) {
-        control_cmd( 'aux play_url ' + url );
+        control_cmd( 'ctrl play_url ' + url );
     }
 }
 
@@ -1109,7 +1109,7 @@ function ck_paudio_restart() {
 
         if ( confirm('Are you sure to RESTART pAudio?') ){
 
-            ans = control_cmd('restart_paudio restart');
+            ans = control_cmd('ctrl restart_paudio restart');
             alert(ans);
             ck_display_advanced('off');
             page_update();
@@ -1122,7 +1122,7 @@ function ck_paudio_restart() {
     let msg = 'Are you sure to START pAudio?';
     let mode = 'start'
 
-    const curr = control_cmd('restart_paudio state');
+    const curr = control_cmd('ctrl restart_paudio state');
 
     if (curr == 'true') {
         msg = 'Are you sure to STOP pAudio?';
@@ -1133,23 +1133,24 @@ function ck_paudio_restart() {
         return
     }
 
-    ans = control_cmd('restart_paudio ' + mode);
+    ans = control_cmd('ctrl restart_paudio ' + mode);
 
     alert(ans);
 
     ck_display_advanced('off');
-    page_update();
+
+    setInterval( init, 15000 );
 }
 
 
 function omd_onoff(mode) {
 
     let msg = ('Are you sure to ' + mode.toUpperCase() + ' pAudio?');
-    let cmd = 'restart_paudio'
+    let cmd = 'ctrl restart_paudio'
 
     if ( web_config["onoff"].includes('amp') ){
                 msg = 'Are you sure to ' + mode.toUpperCase() + ' the AMPLIFIER?'
-        cmd = 'amp_switch'
+        cmd = 'ctrl amp_switch'
     }
 
     ays = window.confirm( msg );
@@ -1168,9 +1169,10 @@ function highlight_macro_button(id){
     document.getElementById(id).className = 'macro_button_highlighted';
 }
 
+
 function oc_run_macro(mFname){
 
-    control_cmd( 'aux run_macro ' + mFname );
+    control_cmd( 'ctrl run_macro ' + mFname );
 
     const mName = mFname.slice(mFname.indexOf('_') + 1, mFname.length);
 
@@ -1313,6 +1315,20 @@ function control_cmd( cmd ) {
         server_available = false;
         return '';
     }
+}
+
+
+function get_drc_sets() {
+
+    let res = [];
+
+    try {
+        res = JSON.parse( control_cmd( 'get_drc_sets' ) );
+    }catch(e){
+        console.log(e)
+    }
+
+    return res
 }
 
 
