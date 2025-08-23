@@ -53,14 +53,15 @@ def amp_switch(mode):
 
         except Exception as e:
             print(f'{Fmt.MAGENTA}(common.amp_switch) error reading amp state file: {str(e)}{Fmt.END}' )
-            return ''
+            return '--'
 
 
     def get_state():
-        """ returns: on | off
-
-            NOT IN USE  -->  read_amp_state_file()
         """
+            (i) NOT IN USE  -->  read_amp_state_file()
+        """
+
+        return read_amp_state_file()
 
         try:
             res = sp.check_output(AMP_CMD, shell=True).decode().strip().lower()
@@ -365,8 +366,7 @@ def read_cmd_phrase(cmd_phrase):
         Command phrase SYNTAX must start with an appropriate prefix:
 
             preamp  command  arg1 ... [add]
-            players command  arg1 ...
-            aux     command  arg1 ...
+            player  command  arg1 ...
 
         The `add` option for relative level, bass, treble, ...
 
@@ -390,7 +390,7 @@ def read_cmd_phrase(cmd_phrase):
         chunks = ['preamp', 'state']
 
     # If not prefix, will treat as a preamp command kind of
-    if not chunks[0] in ('preamp', 'player', 'aux'):
+    if not chunks[0] in ('preamp', 'player', 'ctrl'):
         chunks.insert(0, 'preamp')
 
     pfx = chunks[0]
@@ -401,13 +401,6 @@ def read_cmd_phrase(cmd_phrase):
     if chunks[2:]:
         # <argstring> can be compound
         argstring = ' '.join( chunks[2:] )
-
-    # Debug
-    if False:
-        print('pfx', pfx)
-        print('cmd', cmd)
-        print('arg', argstring)
-        print('add', add)
 
     return pfx, cmd, argstring, add
 
@@ -505,14 +498,14 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=30):
+def wait4server(timeout=30, port=CONFIG["paudio_port"]):
 
     period = .5
     tries  = int(timeout / period)
 
     while tries:
         try:
-            sp.check_output(f'echo aux hello | nc localhost {CONFIG["paudio_port"]}', shell=True)
+            sp.check_output(f'echo "hello" | nc localhost {port}', shell=True)
             break
         except:
             tries -= 1

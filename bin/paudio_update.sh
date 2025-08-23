@@ -43,13 +43,12 @@ cp ~/pAudio/config.yml.BAK ~/pAudio/config.yml 1>/dev/null 2>&1
 
 # Stop any paudio backend
 pkill -f "server.py paudio "        1>/dev/null 2>&1
-pkill -f "server.py paudio_ctrl"    1>/dev/null 2>&1
 
 echo
 
 if [[ $(uname) == "Darwin" ]]; then
 
-    read -p "Do you want to add to your macOS session? (y/N): " ans
+    read -p "Do you want to add [pAudio] to your macOS session? (y/N): " ans
     if [[ $ans == *"y"*  || $ans == *"Y"* ]];then
         cp pAudio/code/share/macOS/com.pAudio.* ~/Library/LaunchAgents/
         echo "pAudio plist files copied to "$HOME"/Library/LaunchAgents/"
