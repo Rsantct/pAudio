@@ -49,7 +49,7 @@ echo
 
 if [[ $(uname) == "Darwin" ]]; then
 
-    read -p "Do you want to add to your macOS session? (y/N): " ans
+    read -p "Do you want to add [pAudio] to your macOS session? (y/N): " ans
     if [[ $ans == *"y"*  || $ans == *"Y"* ]];then
         cp pAudio/code/share/macOS/com.pAudio.* ~/Library/LaunchAgents/
         echo "pAudio plist files copied to "$HOME"/Library/LaunchAgents/"
