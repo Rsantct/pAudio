@@ -21,7 +21,6 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 
 from common   import *
 from services import preamp
-from services import aux
 from services import players
 
 
@@ -55,12 +54,9 @@ def do(cmd_phrase):
         case 'preamp':
             result = preamp.do(cmd, args, add)
 
-        case 'aux':
-            result = aux.do(cmd, args, add)
-
         # PENDING
         case 'player':
-            result = 'WIP players'
+            result = 'player service is WIP'
 
         case _:
             # This should never occur because preamp is the defaulted as prefix
