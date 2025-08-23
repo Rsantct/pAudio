@@ -49,7 +49,7 @@ def init():
             from the `capture:` section in config.yml
         """
         # default source
-        result = 'system-wide'
+        result = 'Desktop'
 
         # 1. Read the 'normal' section, previously populated
         #    even if the 'alternative' syntax was used
@@ -442,8 +442,8 @@ def set_source(sname):
     # COREAUDIO
     if CONFIG.get('coreaudio'):
 
-        # 'system-wide' is used when there are no alternative capture devices in config.yml
-        if sname == 'system-wide':
+        # 'Desktop' is used when there are no alternative capture devices in config.yml
+        if sname == 'Desktop':
             return 'no change available'
 
         res = DSP.set_capture( SOURCES[sname] )

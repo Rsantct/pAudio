@@ -289,8 +289,12 @@ def _init():
         CONFIG["plugins"] = []
 
     if not 'sources' in CONFIG:
-        CONFIG["sources"] = {'system-wide':{}}
+        if CONFIG.get('jack'):
+            CONFIG["sources"] = {'system-wide':{}}
+        else:
+            CONFIG["sources"] = {'Desktop':{}}
     else:
+        # add a none source
         CONFIG["sources"]["none"] = {}
 
     if not 'ref_level_gain_offset' in CONFIG:
