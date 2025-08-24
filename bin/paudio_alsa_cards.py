@@ -166,8 +166,12 @@ def get_sound_cards():
 
     cards = []
 
-    with open("/proc/asound/cards", "r") as f:
-        lines = f.readlines()
+    if os.path.isdir('/proc/asound/'):
+        with open("/proc/asound/cards", "r") as f:
+            lines = f.readlines()
+    else:
+        print(f'ALSA not found, exiting')
+        sys.exit()
 
     for l in lines:
         if "[" in l:
@@ -365,6 +369,10 @@ if __name__ == "__main__":
         else:
             pattern = opc
 
+
+    if os.uname().sysname != 'Linux':
+        print('This is for Linux with ALSA')
+        sys.exit()
 
     cards = get_sound_cards()
 
