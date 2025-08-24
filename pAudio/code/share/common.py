@@ -240,7 +240,7 @@ def send_cmd( cmd, sender='', verbose=False, timeout=3,
     return ans
 
 
-def read_json_file(fpath, timeout=1):
+def read_json_file(fpath, timeout=1, quiet=False):
     """ Some json files cannot be ready to read in first pAudio run,
         so let's retry
     """
@@ -249,19 +249,22 @@ def read_json_file(fpath, timeout=1):
     period = 0.25
     tries = int(timeout / period)
     while tries:
+
         try:
             with open(fpath, 'r') as f:
                 d = json.loads(f.read())
             break
+
         except:
             tries -= 1
             sleep(period)
 
-    if not tries:
-        print(f'{Fmt.RED}(!) Cannot read `{fpath}`{Fmt.END}')
+    if not quiet:
+        if not tries:
+            print(f'{Fmt.RED}(!) Cannot read `{fpath}`{Fmt.END}')
 
-    if not d:
-        print(f'{Fmt.RED}(i) Void JSON in `{fpath}`{Fmt.END}')
+        if not d:
+            print(f'{Fmt.RED}(i) Void JSON in `{fpath}`{Fmt.END}')
 
     return d
 

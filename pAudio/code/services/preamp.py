@@ -33,15 +33,18 @@ elif sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
     import  coreaudio_sources
 
 
-PREAMP_STATE_PATH  = f'{MAINFOLDER}/.preamp_state'
-
-#
 # Main variable (preamplifier state)
-#
-state = read_json_file(PREAMP_STATE_PATH)
+STATE = read_json_file(PREAMP_STATE_PATH, quiet=True)
+if not STATE:
+
+    print(f'{Fmt.BOLD}(preamp) state file not found, getting default.{Fmt.END}')
+    sp.call(f'cp {PREAMP_STATE_PATH}.sample {PREAMP_STATE_PATH}', shell=True)
+    STATE = read_json_file(PREAMP_STATE_PATH, quiet=True)
+
+    if not STATE:
+        raise Exception('ERROR loading preamp state, exiting.')
 
 
-# INIT
 def init():
 
     def get_coreaudio_source():
@@ -72,45 +75,45 @@ def init():
     def resume_audio():
         # Only multiway
         if XO_SETS:
-            if not state["xo_set"] in XO_SETS:
-                state["xo_set"] = XO_SETS[0]
-            set_xo( state["xo_set"] )
+            if not STATE["xo_set"] in XO_SETS:
+                STATE["xo_set"] = XO_SETS[0]
+            set_xo( STATE["xo_set"] )
 
 
         # All multiway and full-range
-        do_levels( 'level', dB=state["level"] )
+        do_levels( 'level', dB=STATE["level"] )
 
-        set_polarity( state["polarity"] )
+        set_polarity( STATE["polarity"] )
 
-        set_solo( state["solo"] )
+        set_solo( STATE["solo"] )
 
-        do_levels( 'balance', dB=state["balance"] )
+        do_levels( 'balance', dB=STATE["balance"] )
 
-        set_mute( state["muted"] )
+        set_mute( STATE["muted"] )
 
         # tones can be clamped when ordered out of range
-        res = do_levels( 'bass', dB=state["bass"] )
+        res = do_levels( 'bass', dB=STATE["bass"] )
         if res != 'done':
             print(f'{Fmt.BOLD}{res}{Fmt.END}')
-            state["bass"] = x2int(res.split()[-1])
+            STATE["bass"] = x2int(res.split()[-1])
 
-        res = do_levels( 'treble', dB=state["treble"] )
+        res = do_levels( 'treble', dB=STATE["treble"] )
         if res != 'done':
             print(f'{Fmt.BOLD}{res}{Fmt.END}')
-            state["treble"] = x2int(res.split()[-1])
+            STATE["treble"] = x2int(res.split()[-1])
 
-        do_levels( 'lu_offset', dB=state["lu_offset"] )
+        do_levels( 'lu_offset', dB=STATE["lu_offset"] )
 
-        do_levels( 'target', tID=state["target"] )
+        do_levels( 'target', tID=STATE["target"] )
 
-        set_loudness( mode=state["equal_loudness"] )
+        set_loudness( mode=STATE["equal_loudness"] )
 
-        if not state["drc_set"] in DRC_SETS or not state["drc_set"] in DRC_SETS:
-            state["drc_set"] = 'none'
-        set_drc( state["drc_set"] )
+        if not STATE["drc_set"] in DRC_SETS or not STATE["drc_set"] in DRC_SETS:
+            STATE["drc_set"] = 'none'
+        set_drc( STATE["drc_set"] )
 
         # Source needs a little care
-        last_source = state.get('source')
+        last_source = STATE.get('source')
 
         if last_source and last_source in SOURCES:
 
@@ -119,15 +122,15 @@ def init():
         else:
 
             if 'jack_sources' in sys.modules:
-                state["source"] = 'none'
+                STATE["source"] = 'none'
 
             elif 'coreaudio_sources' in sys.modules:
-                state["source"] = get_coreaudio_source()
+                STATE["source"] = get_coreaudio_source()
 
             else:
-                state["source"] = ''
+                STATE["source"] = ''
 
-        save_json_file(state, PREAMP_STATE_PATH)
+        save_json_file(STATE, PREAMP_STATE_PATH)
 
 
     def prepare_coreaudio_init_devices():
@@ -187,7 +190,8 @@ def init():
             CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
 
 
-    global state, CONFIG, SOURCES, TARGET_SETS, XO_SETS, DRC_SETS
+    global STATE, CONFIG, SOURCES, TARGET_SETS, XO_SETS, DRC_SETS
+
 
     # (i) SOURCES can be populated internally with known plugins,
     #     so the configured YAML should only contain user-defined sources.
@@ -228,26 +232,26 @@ def init():
             case 'target':
 
                 if value in TARGET_SETS + ['none']:
-                    state["target"] = value
+                    STATE["target"] = value
                 else:
                     print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
 
             case 'drc_set':
 
                 if value in DRC_SETS or value == 'none':
-                    state["drc_set"] = value
+                    STATE["drc_set"] = value
                 else:
                     print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
 
             case _:
 
-                state[prop] = value
+                STATE[prop] = value
 
 
     # Forced init settings
-    state["loudspeaker"]    = CONFIG["loudspeaker"]
-    state["fs"]             = CONFIG["samplerate"]
-    state["polarity"]       = '++'
+    STATE["loudspeaker"]    = CONFIG["loudspeaker"]
+    STATE["fs"]             = CONFIG["samplerate"]
+    STATE["polarity"]       = '++'
 
     # State input and output devices
     #
@@ -257,21 +261,21 @@ def init():
         jcli = jack.Client(name='tmp', no_start_server=True)
 
         if jcli.get_ports('system', is_physical=True, is_output=True):
-            state["input_dev"]  = CONFIG["jack"]["device"]
+            STATE["input_dev"]  = CONFIG["jack"]["device"]
         else:
-            state["input_dev"]  = ''
+            STATE["input_dev"]  = ''
 
         if jcli.get_ports('system', is_physical=True, is_input=True):
-            state["output_dev"]  = CONFIG["jack"]["device"]
+            STATE["output_dev"]  = CONFIG["jack"]["device"]
         else:
-            state["output_dev"]  = ''
+            STATE["output_dev"]  = ''
 
         # close the temporary jack.Client
         del jcli
 
 
-        state["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
-        state["jack_buffer_ms"]   = int(round(state["jack_buffer_size"] / state["fs"] * 1000))
+        STATE["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
+        STATE["jack_buffer_ms"]   = int(round(STATE["jack_buffer_size"] / STATE["fs"] * 1000))
 
 
     elif CONFIG.get('coreaudio'):
@@ -279,23 +283,23 @@ def init():
         # 1st we need to prepare Coreaudio capture section, see above funcion
         prepare_coreaudio_init_devices()
 
-        state["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
-        state["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
+        STATE["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
+        STATE["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
 
     else:
-        state["input_dev"]  = 'unknown'
-        state["output_dev"] = 'unknown'
+        STATE["input_dev"]  = 'unknown'
+        STATE["output_dev"] = 'unknown'
 
 
     if not CONFIG.get('jack'):
         try:
-            del state["jack_buffer_size"]
-            del state["jack_buffer_ms"]
+            del STATE["jack_buffer_size"]
+            del STATE["jack_buffer_ms"]
         except:
             pass
 
 
-    state["dsp_buffer_size"]    = 0
+    STATE["dsp_buffer_size"]    = 0
 
 
     # Preparing and running camillaDSP
@@ -303,8 +307,8 @@ def init():
 
     if run_cdsp == 'done':
 
-        state["dsp_buffer_size"] = DSP.CC.config.active()["devices"]["chunksize"]
-        state["dsp_buffer_ms"]   = int(round(state["dsp_buffer_size"] / state["fs"] * 1000))
+        STATE["dsp_buffer_size"] = DSP.CC.config.active()["devices"]["chunksize"]
+        STATE["dsp_buffer_ms"]   = int(round(STATE["dsp_buffer_size"] / STATE["fs"] * 1000))
 
         # Changing MacOS default playback device
         # (It will be restored when ordering `paudio.sh stop`)
@@ -316,7 +320,7 @@ def init():
         resume_audio()
 
         # Saving state with user settings mods
-        save_json_file(state, PREAMP_STATE_PATH)
+        save_json_file(STATE, PREAMP_STATE_PATH)
 
     else:
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
@@ -384,7 +388,7 @@ def set_polarity(mode):
     return DSP.set_polarity(mode)
 
 
-def set_loudness(mode, level=state["level"]):
+def set_loudness(mode, level=STATE["level"]):
     result = DSP.set_loudness(mode, level)
     return result
 
@@ -448,10 +452,10 @@ def set_source(sname):
 
         res = DSP.set_capture( SOURCES[sname] )
 
-        # Extra in coreaudio update state.input_dev
+        # Extra in coreaudio update STATE.input_dev
         config_yml         = yaml.safe_load( open(CONFIG_PATH, 'r') )
-        state["input_dev"] = config_yml["coreaudio"]["devices"]["capture"][sname]["device"]
-        save_json_file(state, PREAMP_STATE_PATH)
+        STATE["input_dev"] = config_yml["coreaudio"]["devices"]["capture"][sname]["device"]
+        save_json_file(STATE, PREAMP_STATE_PATH)
 
 
     # JACK
@@ -490,7 +494,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
     def set_level(dB):
         DSP.set_volume(dB + CONFIG["ref_level_gain_offset"] )
-        return set_loudness(mode=state["equal_loudness"], level=dB)
+        return set_loudness(mode=STATE["equal_loudness"], level=dB)
 
 
     def set_balance(dB):
@@ -502,14 +506,14 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
 
     def set_bass(dB):
-        if not state["tone_defeat"]:
+        if not STATE["tone_defeat"]:
             return DSP.set_bass(dB)
         else:
             return "done"
 
 
     def set_treble(dB):
-        if not state["tone_defeat"]:
+        if not STATE["tone_defeat"]:
             return DSP.set_treble(dB)
         else:
             return "done"
@@ -525,8 +529,8 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
             res.append( DSP.set_bass(   0.0 ) )
             res.append( DSP.set_treble( 0.0 ) )
         else:
-            res.append( DSP.set_bass(   state["bass"]   ) )
-            res.append( DSP.set_treble( state["treble"] ) )
+            res.append( DSP.set_bass(   STATE["bass"]   ) )
+            res.append( DSP.set_treble( STATE["treble"] ) )
         res = ' '.join( set(res) )
         return res
 
@@ -561,7 +565,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
             return  lspk_eq_posit_gain + drc_posit_gain + max( xo_posit_gains )
 
 
-        candidate = state.copy()
+        candidate = STATE.copy()
 
         if cmd == 'target':
             candidate['target'] = tID
@@ -594,7 +598,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
     # getting absolute values from relative command
     if add:
-        dB += state[cmd]
+        dB += STATE[cmd]
 
     clamped = ''
     tmax = CONFIG["tones_span_dB"]
@@ -644,15 +648,15 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
     if result == 'done':
 
         if cmd == 'target':
-            state['target'] = tID
+            STATE['target'] = tID
 
         elif cmd == 'tone_defeat':
-            state["tone_defeat"] = tone_defeat
+            STATE["tone_defeat"] = tone_defeat
 
         else:
-            state[cmd] = dB
+            STATE[cmd] = dB
 
-        state["gain_headroom"] = hr
+        STATE["gain_headroom"] = hr
 
         # dumps eq to png
         eq2png()
@@ -694,7 +698,7 @@ def do(cmd, args, add):
 
         # Query commands
         case 'state':
-            result = json.dumps(state)
+            result = json.dumps(STATE)
 
         case 'get_sources':
             result = json.dumps( list(SOURCES.keys()) )
@@ -712,10 +716,10 @@ def do(cmd, args, add):
 
         case 'set_source':
             new = args
-            if state.get("source") != new:
+            if STATE.get("source") != new:
                 result = set_source(new)
                 if result in ('done', 'ordered'):
-                    state["source"] = new
+                    STATE["source"] = new
 
         case 'mono':
 
@@ -734,64 +738,64 @@ def do(cmd, args, add):
                     result = DSP.set_midside(new)
 
                 case 'toggle':
-                    curr = state["midside"]
+                    curr = STATE["midside"]
                     new = {'off': 'mid', 'mid': 'off', 'side': 'off'}[curr]
                     result = DSP.set_midside(new)
 
             if result == 'done':
-                state["midside"] = new
+                STATE["midside"] = new
 
         case 'midside':
 
             new = args
 
-            if state["midside"] != new:
+            if STATE["midside"] != new:
                 result = DSP.set_midside(new)
 
                 if result == 'done':
-                    state["midside"] = new
+                    STATE["midside"] = new
 
         case 'solo':
 
             new = args.lower()
 
-            if not new in state["solo"]:
+            if not new in STATE["solo"]:
                 result = set_solo(new)
 
                 if result == 'done':
-                    state["solo"] = new
+                    STATE["solo"] = new
 
         case 'polarity':
 
             new = args
 
-            if state["polarity"] != new:
+            if STATE["polarity"] != new:
                 result = set_polarity(new)
 
                 if result == 'done':
-                    state["polarity"] = new
+                    STATE["polarity"] = new
 
         case 'mute':
 
-            curr =  state['muted']
+            curr =  STATE['muted']
             new = switch(args, curr)
 
             if type(new) == bool and new != curr:
                 result = set_mute(new)
 
             if result == 'done':
-                state['muted'] = new
+                STATE['muted'] = new
 
         case 'equal_loudness':
 
-            curr_mode =  state['equal_loudness']
+            curr_mode =  STATE['equal_loudness']
             new_mode = switch(args, curr_mode)
 
             if type(new_mode) == bool and new_mode != curr_mode:
                 result = set_loudness(mode=new_mode)
 
             if result == 'done':
-                state['equal_loudness'] = new_mode
+                STATE['equal_loudness'] = new_mode
                 # dumps eq to png
                 eq2png()
 
@@ -799,24 +803,24 @@ def do(cmd, args, add):
 
             new = args
 
-            if state["drc_set"] != new:
+            if STATE["drc_set"] != new:
                 result = set_drc(new)
 
                 if result == 'done':
-                    state["drc_set"] = new
+                    STATE["drc_set"] = new
 
         case 'set_xo':
 
             new = args
 
-            if state["xo_set"] != new:
+            if STATE["xo_set"] != new:
                 result = set_xo(new)
 
                 if result == 'done':
-                    state["xo_set"] = new
+                    STATE["xo_set"] = new
 
         # Level related commands
-        # NOTICE that state will be updated by do_levels()
+        # NOTICE that STATE will be updated by do_levels()
         case 'level' | 'lu_offset' | 'bass' | 'treble' | 'balance':
 
             try:
@@ -831,12 +835,12 @@ def do(cmd, args, add):
             newt = args
 
             if newt in TARGET_SETS + ['none']:
-                if state["target"] != newt:
+                if STATE["target"] != newt:
                     result = do_levels('target', tID=newt)
 
         case 'tone_defeat':
 
-            curr =  state['tone_defeat']
+            curr =  STATE['tone_defeat']
             new = switch(args, curr)
 
             if type(new) == bool and new != curr:
@@ -857,7 +861,7 @@ def do(cmd, args, add):
             result = 'unknown command'
 
     if dosave:
-        save_json_file(state, PREAMP_STATE_PATH)
+        save_json_file(STATE, PREAMP_STATE_PATH)
 
     if type(result) != str:
         try:

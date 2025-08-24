@@ -23,6 +23,7 @@ CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
 LOGFOLDER           = f'{MAINFOLDER}/log'
 PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
 
+PREAMP_STATE_PATH   = f'{MAINFOLDER}/.preamp_state'
 LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
 LDMON_PATH          = f'{MAINFOLDER}/.loudness_monitor'
 AUXINFO_PATH        = f'{MAINFOLDER}/.aux_info'

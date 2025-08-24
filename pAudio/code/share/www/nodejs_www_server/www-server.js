@@ -198,7 +198,7 @@ function onHttpReq( httpReq, httpRes ){
 
         // The browser's clientside javascript will request some stamp
         // after the filename, e.g. images/brutefir_eq.png?554766166
-        fpath = docRoot + httpReq.url;
+        fpath = docRoot + decodeURIComponent(httpReq.url);
         fpath = fpath.split('?').slice(0, 1)[0]
 
         http_serve_file(fpath);
