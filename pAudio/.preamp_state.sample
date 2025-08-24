@@ -1,5 +1,5 @@
 {
-    "loudspeaker":      "NoName",
+    "loudspeaker":      "",
     "fs":               44100,
     "source":           "none",
     "level":            -20.0,
