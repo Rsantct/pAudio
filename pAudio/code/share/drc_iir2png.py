@@ -25,6 +25,15 @@ IMGFOLDER = f'{MAINFOLDER}/code/share/www/images/{LOUDSPEAKER}'
 VERBOSE   = False
 
 
+def prepare_IMGFOLDER():
+    try:
+        os.mkdir(IMGFOLDER)
+    except FileExistsError:
+        pass
+    except:
+        print(f'drc_fir2png unexpected error when mkdir "{IMGFOLDER}"')
+
+
 def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
     """ Currently only Biquad filters of type
         - 'Peaking'
@@ -204,7 +213,7 @@ def plot_frequency_response(set_name, filters_L_R):
         ax_mag.legend( facecolor=FACECOLOR, loc='lower right')
         png_path = f'{IMGFOLDER}/drc_{set_name}.png'
         plt.savefig( png_path, facecolor=FACECOLOR )
-        print(f'(drc_iif2png) saved: {png_path})')
+        print(f'(drc_iif2png) saved: {png_path}')
 
         if VERBOSE:
             plt.show()
@@ -226,7 +235,8 @@ if __name__ == "__main__":
             sys.exit()
 
 
-    sp.Popen(f'mkdir -p {IMGFOLDER}', shell=True)
+    # Prepare loudspeaker image folder
+    prepare_IMGFOLDER()
 
     drc_sets = CONFIG["drc"]
     fs       = CONFIG["samplerate"]
@@ -242,4 +252,7 @@ if __name__ == "__main__":
 
         if not is_fir:
             plot_frequency_response(set_name, filters_L_R)
+
+    plot_frequency_response('none', filters_L_R={})
+
 
