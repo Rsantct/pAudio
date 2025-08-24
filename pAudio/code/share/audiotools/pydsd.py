@@ -1,5 +1,4 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
     %%%%%%%%%%%%%%%%%%%%%%%%%%%  DSD  %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Traslación a python/scipy de funciones del paquete DSD  %%
@@ -451,7 +450,7 @@ def wholesplp(ssp):
     # nsp = flipud( ssp(2:m-1) );
     # wsp = [ssp; nsp];
 
-    nsp = np.flipud( ssp[1:m-1] )         # freqs negativas
+    nsp = np.flipud( ssp[1:m-1] )       # freqs negativas
     wsp = np.concatenate([ssp, nsp])    # y ensamblamos
     return wsp
 
