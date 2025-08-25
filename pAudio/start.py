@@ -265,18 +265,20 @@ def stop():
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
 
-    # CamillaDSP
-    sp.call('pkill -KILL camilladsp', shell=True)
+    if not only_server:
 
-    # Jack audio server (jloops will also die)
-    if sys.platform == 'linux' and CONFIG.get('jack'):
+        # CamillaDSP
+        sp.call('pkill -KILL camilladsp', shell=True)
 
-        # Stop Zita_Link
-        stop_zita_link()
-        sleep(.25)
+        # Jack audio server (jloops will also die)
+        if sys.platform == 'linux' and CONFIG.get('jack'):
 
-        # Stop Jack
-        sp.call('pkill -KILL jackd', shell=True)
+            # Stop Zita_Link
+            stop_zita_link()
+            sleep(.25)
+
+            # Stop Jack
+            sp.call('pkill -KILL jackd', shell=True)
 
     # server.py (be careful with trailing space in command line below)
     sp.call('pkill -KILL -f "server.py paudio "', shell=True)
@@ -298,15 +300,6 @@ def start():
     else:
         print(f'{Fmt.GREEN}(start) paudio_ctrl server is already running.{Fmt.END}')
 
-    # Jack audio server
-    if sys.platform == 'linux' and CONFIG.get('jack'):
-
-        # Jack
-        prepare_jack_stuff()
-
-        # remote sources
-        start_zita_link()
-
     # Node.js control web page
     if not process_is_running('www-server'):
         node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
@@ -317,8 +310,27 @@ def start():
         print(f'{Fmt.GREEN}(start) pAudio web server is already running.{Fmt.END}')
 
 
-    # Run the pAudio main server to listen for commands
-    # This INCLUDES running CamillaDSP
+    if not only_server:
+        # Jack audio server
+        if sys.platform == 'linux' and CONFIG.get('jack'):
+
+            # Jack
+            prepare_jack_stuff()
+
+            # remote sources
+            start_zita_link()
+
+
+    # Special flag file for 'paudio.py'.
+    with open(f'{MAINFOLDER}/.paudio_flags', 'w') as f:
+        if only_server:
+            paudio_flags = {'run_camilladsp': False}
+        else:
+            paudio_flags = {'run_camilladsp': True}
+        f.write( json.dumps(paudio_flags) )
+
+    # Run the pAudio main server 'paudio.py' to listen for commands
+    # This INCLUDES running CamillaDSP with a proper configuration.
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {ADDR} {PORT}'
 
     if verbose:
@@ -335,22 +347,24 @@ def start():
         return
 
 
-    # Rewire CamillaDSP ONLY with JACK
-    if sys.platform == 'linux' and CONFIG.get('jack'):
-        rewire_dsp()
+    if not only_server:
 
+        # Rewire CamillaDSP ONLY with JACK
+        if sys.platform == 'linux' and CONFIG.get('jack'):
+            rewire_dsp()
 
-    # The loudness_monitor daemon
-    manage_loudness_monitor_daemon()
+        # The loudness_monitor daemon
+        manage_loudness_monitor_daemon()
 
-    # Plugins (stand-alone processes)
-    run_plugins()
+        # Plugins (stand-alone processes)
+        run_plugins()
 
 
 if __name__ == "__main__":
 
-    verbose = False
-    mode = ''
+    verbose     = False
+    only_server = False
+    mode        = ''
 
     for opc in sys.argv[1:]:
 
@@ -365,6 +379,10 @@ if __name__ == "__main__":
 
         elif '-v' in opc:
             verbose = True
+
+
+        elif '-s' in opc:
+            only_server = True
 
 
     match mode:
