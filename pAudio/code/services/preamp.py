@@ -47,6 +47,21 @@ if not STATE:
 
 def init():
 
+    def get_paudio_flags():
+        """ Special flag file for 'paudio.py'
+        """
+
+        res = {}
+
+        try:
+            with open(f'{MAINFOLDER}/.paudio_flags', 'r') as f:
+                res = json.loads( f.read() )
+        except:
+            print(f'{Fmt.RED}(preamp) problems reading paudio_flags{Fmt.END}')
+
+        return res
+
+
     def get_coreaudio_source():
         """ This retrieves the source name in coreaudio,
             from the `capture:` section in config.yml
@@ -303,9 +318,15 @@ def init():
 
 
     # Preparing and running camillaDSP
-    run_cdsp = DSP.init_camilladsp( pAudio_config=CONFIG )
+    if get_paudio_flags().get('run_camilladsp'):
+        cdsp_state = DSP.init_camilladsp( pAudio_config=CONFIG )
 
-    if run_cdsp == 'done':
+    else:
+        cdsp_state = 'pending'
+        if DSP._connect_to_camilla():
+            cdsp_state = 'running'
+
+    if cdsp_state == 'running':
 
         STATE["dsp_buffer_size"] = DSP.CC.config.active()["devices"]["chunksize"]
         STATE["dsp_buffer_ms"]   = int(round(STATE["dsp_buffer_size"] / STATE["fs"] * 1000))

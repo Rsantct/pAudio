@@ -313,7 +313,7 @@ def init_camilladsp(pAudio_config):
                     return f'problems with Camilla DSP CPAL ports'
 
             # ALL IS OK
-            return 'done'
+            return 'running'
 
         else:
             return f'Cannot start `camilladsp` process, see `pAudio/log`'

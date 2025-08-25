@@ -30,12 +30,23 @@ function do_start {
         export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
     fi
 
-    if [[ $1 == *"-v"* ]]; then
+    VERBOSE=''
+    if [[ $1 == *"-v"* || $2 == *"-v"* ]]; then
+        VERBOSE='-v'
+    fi
+
+    ONLY_SERVER=''
+    if [[ $1 == *"-s"* || $2 == *"-s"* ]]; then
+        ONLY_SERVER='-s'
+    fi
+
+    if [[ $VERBOSE == '-v' ]]; then
         echo "Starting pAudio in VERBOSE MODE"
-        python3 $HOME/pAudio/start.py start -v &
+        python3 $HOME/pAudio/start.py start $VERBOSE $ONLY_SERVER &
     else
         echo "Starting pAudio in background."
-        python3 $HOME/pAudio/start.py start 1>/dev/null 2>&1 &
+        python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
+                                            2> $HOME/pAudio/log/start.err &
     fi
 }
 
@@ -44,10 +55,12 @@ if [[ $1 == 'stop' ]]; then
     do_stop
 
 elif [[ ! $1 || $1 == *'start' ]]; then
-    do_start $2
+    do_start $2 $3
 
 else
     echo
-    echo "USAGE:   paudio_restart.sh  [ start |  stop ]"
+    echo "USAGE:   paudio_restart.sh  [ stop |  start [-v] [-s] ]"
+    echo "              -v   verbose mode"
+    echo "              -s   only server (skip audio backend)"
     echo
 fi
