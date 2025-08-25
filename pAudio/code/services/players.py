@@ -39,9 +39,9 @@ def init():
 
 
 # Entry function
-def do(cmd, args, add):
+def do(cmd, args):
 
-    result  = 'void'
+    result  = 'WIP'
 
     return result
 
