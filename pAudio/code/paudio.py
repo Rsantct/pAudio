@@ -56,7 +56,7 @@ def do(cmd_phrase):
 
         # PENDING
         case 'player':
-            result = 'player service is WIP'
+            result = players.do(cmd, args)
 
         case _:
             # This should never occur because preamp is the defaulted as prefix
