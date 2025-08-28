@@ -19,6 +19,20 @@ from    config import *
 USER = getuser()
 
 
+METATEMPLATE = {
+    'player':       '',
+    'state':        '',
+    'time_pos':     '-',
+    'time_tot':     '-',
+    'bitrate':      '-',
+    'artist':       '-',
+    'album':        '-',
+    'title':        '-',
+    'track_num':    '-',
+    'track_uri':    '',
+    'tracks_tot':   '-'
+}
+
 def get_web_config():
 
     # LU_monitor_enabled is a legacy option, now it is always enabled.
@@ -841,4 +855,84 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
 
         except Exception as e:
             print(f'(common) ERROR: {e}, you may want run it for a remote source?')
+
+
+def time_sec2mmss(s, mode=':'):
+    """ Format a given float (seconds)
+
+        to      "MM:SS"
+        or to   "MMmSSs"    if mode != ':'
+
+        (string)
+    """
+
+    if type(s) != float or type(s) != int:
+        try:
+            s = float(s)
+        except:
+            s = 0.0
+
+    m = int(s // 60)
+    s = int(s % 60)
+
+    if mode == ':':
+        return f'{str(m).rjust(2,"0")}:{str(s).rjust(2,"0")}'
+
+    else:
+        return f'{str(m).rjust(2,"0")}m{str(s).rjust(2,"0")}s'
+
+
+def time_sec2hhmmss(x):
+    """ Format a given float (seconds) to "hh:mm:ss"
+        (string)
+    """
+
+    if type(x) != float or type(x) != int:
+        try:
+            x = float(x)
+        except:
+            x = 0.0
+
+    h = int( x / 3600 )         # hours
+    x = int( round(x % 3600) )  # updating x to reamining seconds
+    m = int( x / 60 )           # minutes from the new x
+    s = int( round(x % 60) )    # and seconds
+    return f'{h:0>2}:{m:0>2}:{s:0>2}'
+
+
+def time_msec2mmsscc(msec=0, string=''):
+    """ Convert milliseconds <--> string MM:SS.CC
+
+        Give me only one parameter: number or string
+    """
+
+    if msec and string:
+        return 'Error converting msec'
+
+
+    elif msec:
+
+        if type(msec) != float or type(msec) != int:
+            try:
+                msec = float(msec)
+            except:
+                msec = 0.0
+
+        sec  = msec / 1e3
+        mm   = f'{sec // 60:.0f}'.zfill(2)
+        ss   = f'{sec %  60:.2f}'.zfill(5)
+
+        return f'{mm}:{ss}'
+
+
+    elif string:
+
+        mm   = int( string.split(':')[0] )
+        sscc =      string.split(':')[1]
+        ss   = int( sscc.split('.')[0]   )
+        cc   = int( sscc.split('.')[1]   )
+
+        millisec = mm * 60 * 1000 + ss * 1000 + cc * 10
+
+        return millisec
 
