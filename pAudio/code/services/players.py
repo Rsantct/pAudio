@@ -21,14 +21,16 @@ if 'linux' in sys.platform:
     pass
 
 elif 'darwin' in sys.platform:
-    from .players_mod import players_macos
+
+    from .players_mod import macos
+    players_of_interest=['Spotify', 'Music']
 
 
 def macos_loop():
 
     while True:
 
-        m = players_macos.get_player_info()
+        m = macos.get_player_info( players_of_interest )
 
         save_json_file(m, PLAYER_META_PATH, timeout=0.5)
 
@@ -95,7 +97,7 @@ def playback_change(mode):
                 {mode}
             end tell
         '''
-        players_macos._run_applescript(pbk_script)
+        macos._run_applescript(pbk_script)
         return 'ordered'
 
     else:
