@@ -28,7 +28,7 @@ def _time_sec2hhmmss(x):
 
 
 VOID_PLAYER_INFO = {
-    "app":          "--",
+    "app":          "",
     "state":        "stop",
     "track":        "",
     "artist":       "",
@@ -235,9 +235,12 @@ _PLAYERS = {
 }
 
 
-def _run_applescript(who, script):
+def _run_applescript(script='', who=''):
     """ devuelve una cadena JSON o None
     """
+
+    if not script:
+        return None
 
     tmp = sp_run(
         ["osascript", "-e", script],
@@ -274,8 +277,8 @@ def _info2paudio_metadata(info):
             time_tot = _time_sec2hhmmss( info.get('duration') )
 
 
-    res = { "player":       info.get('app'),
-            "state":        info.get('state'),
+    res = { "player":       info.get('app', ''),
+            "state":        info.get('state', 'stop'),
             "time_pos":     _time_sec2hhmmss( info.get('elapsed') ),
             "time_tot":     time_tot,
             "bitrate":      fs,
@@ -306,7 +309,7 @@ def get_player_info( players_of_interest=['Spotify', 'Music'] ):
         if players_of_interest and not player in players_of_interest:
             continue
 
-        player_info = _run_applescript(player, script)
+        player_info = _run_applescript(script, who=player)
 
         if player_info:
 
