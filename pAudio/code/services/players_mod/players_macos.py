@@ -290,13 +290,21 @@ def _info2paudio_metadata(info):
     return res
 
 
-def get_player_info():
+def get_player_info( players_of_interest=['Spotify', 'Music'] ):
+    """ players_of_interest:    list of players to be queried
+                                so that the response will be faster
+
+                                void to query all in _PLAYERS
+    """
 
     player_info  = {}
 
     players_info = []
 
     for player, script in _PLAYERS.items():
+
+        if players_of_interest and not player in players_of_interest:
+            continue
 
         player_info = _run_applescript(player, script)
 
@@ -326,4 +334,4 @@ def get_player_info():
 
 if __name__ == "__main__":
 
-    print( json.dumps(get_player_info()) )
+    print( json.dumps( get_player_info() ) )
