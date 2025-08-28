@@ -123,7 +123,7 @@ _PLAYERS = {
         end if
     ''',
 
-    # Resto de players solo nos interesan si están playing,
+    # En el resto de players solo nos interesa si están playing,
     # no nos interesa si están paused ya que no los usamos como una gramola
 
     "QuickTime Player": '''
