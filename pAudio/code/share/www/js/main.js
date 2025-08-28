@@ -483,21 +483,23 @@ function page_update() {
 
         function player_controls_update(playerState) {
 
-            if        ( playerState == 'stop' ) {
+            if        ( playerState.includes('stop') ) {
                 document.getElementById("buttonStop").style.background  = "rgb(185, 185, 185)";
                 document.getElementById("buttonStop").style.color       = "white";
                 document.getElementById("buttonPause").style.background = "rgb(100, 100, 100)";
                 document.getElementById("buttonPause").style.color      = "lightgray";
                 document.getElementById("buttonPlay").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonPlay").style.color       = "lightgray";
-            } else if ( playerState == 'pause' ){
+
+            } else if ( playerState.includes('pause') ){
                 document.getElementById("buttonStop").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonStop").style.color       = "lightgray";
                 document.getElementById("buttonPause").style.background = "rgb(185, 185, 185)";
                 document.getElementById("buttonPause").style.color      = "white";
                 document.getElementById("buttonPlay").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonPlay").style.color       = "lightgray";
-            } else if ( playerState == 'play' ) {
+
+            } else if ( playerState.includes('play') ) {
                 document.getElementById("buttonStop").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonStop").style.color       = "lightgray";
                 document.getElementById("buttonPause").style.background = "rgb(100, 100, 100)";
@@ -577,7 +579,6 @@ function page_update() {
             }
             mySel.add(option);
         }
-
 
 
         player_controls_update(     player_info.state       );
@@ -796,24 +797,6 @@ function page_update() {
     }
 
 
-    function show_peq_info() {
-
-        if ( aux_info.peq_set != 'none'){
-
-            document.getElementById("buttonPEQ").innerHTML = "PEQ: " + aux_info.peq_set;
-
-            if (allAreTrue(aux_info.peq_bypassed)){
-                document.getElementById("buttonPEQ").style.color = "grey";
-            }else{
-                document.getElementById("buttonPEQ").style.color = "white";
-            }
-
-        }else {
-            document.getElementById("buttonPEQ").style.color = "grey";
-            document.getElementById("buttonPEQ").innerHTML = "(no peq)";
-        }
-    }
-
     //// AUX STUFF
     aux_info_refresh();
 
@@ -837,19 +820,15 @@ function page_update() {
 
     state_refresh();
 
-
     //// PLAYER STUFF
-    //player_get();
-    //player_refresh();
+    player_get();
+    player_refresh();
     //
     LU_refresh();
     //
     graphs_update();
     //
     manage_main_cside();
-    //
-    //show_peq_info();
-
 }
 
 
