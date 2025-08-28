@@ -483,21 +483,23 @@ function page_update() {
 
         function player_controls_update(playerState) {
 
-            if        ( playerState == 'stop' ) {
+            if        ( playerState.includes('stop') ) {
                 document.getElementById("buttonStop").style.background  = "rgb(185, 185, 185)";
                 document.getElementById("buttonStop").style.color       = "white";
                 document.getElementById("buttonPause").style.background = "rgb(100, 100, 100)";
                 document.getElementById("buttonPause").style.color      = "lightgray";
                 document.getElementById("buttonPlay").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonPlay").style.color       = "lightgray";
-            } else if ( playerState == 'pause' ){
+
+            } else if ( playerState.includes('pause') ){
                 document.getElementById("buttonStop").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonStop").style.color       = "lightgray";
                 document.getElementById("buttonPause").style.background = "rgb(185, 185, 185)";
                 document.getElementById("buttonPause").style.color      = "white";
                 document.getElementById("buttonPlay").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonPlay").style.color       = "lightgray";
-            } else if ( playerState == 'play' ) {
+
+            } else if ( playerState.includes('play') ) {
                 document.getElementById("buttonStop").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonStop").style.color       = "lightgray";
                 document.getElementById("buttonPause").style.background = "rgb(100, 100, 100)";
@@ -577,7 +579,6 @@ function page_update() {
             }
             mySel.add(option);
         }
-
 
 
         player_controls_update(     player_info.state       );
