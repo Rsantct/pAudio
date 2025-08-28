@@ -74,6 +74,22 @@ def playback_change(mode):
 
     elif 'darwin' in sys.platform:
 
+        #   Para UN player determinado
+        #       tell application "Spotify"
+        #           play            -- Reanuda
+        #           pause           -- Pausa
+        #           playpause       -- Alterna
+        #           next track      -- Siguiente
+        #           previous track  -- Anterior
+        #       end tell
+        #
+        #   Para simular las Teclas Multimedia para el player de turno
+        #       tell application "System Events"
+        #           key code 16 -- Play/Pause
+        #           key code 17 -- Next
+        #           key code 15 -- Previous
+        #       end tell
+
         pbk_script = f'''
             tell application "{player}"
                 {mode}
