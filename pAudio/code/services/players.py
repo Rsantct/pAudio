@@ -42,7 +42,7 @@ def init():
     if 'darwin' in sys.platform:
 
         job = threading.Thread(target=macos_loop).start()
-        print('listening to desktop players ...')
+        print(f'{Fmt.BLUE}(players) Listening to desktop players ...{Fmt.END}')
 
 
 def get_all_info():
