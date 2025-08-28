@@ -50,6 +50,7 @@ def get_all_info():
     m = read_json_file(PLAYER_META_PATH)
 
     res = {
+        'player':           m.get('player', ''),
         'state':            m.get('state'),
         'random_mode':      'n/a',
         'discid':           '',
@@ -59,6 +60,33 @@ def get_all_info():
     return res
 
 
+def playback_change(mode):
+
+    player = get_all_info().get('player')
+
+    if mode == 'pause':
+        mode = 'playpause'
+
+
+    if 'linux' in sys.platform:
+
+        return 'WIP'
+
+    elif 'darwin' in sys.platform:
+
+        pbk_script = f'''
+            tell application "{player}"
+                {mode}
+            end tell
+        '''
+        players_macos._run_applescript(pbk_script)
+        return 'ordered'
+
+    else:
+
+        return 'NAK'
+
+
 # Entry function
 def do(cmd, args):
 
@@ -66,6 +94,9 @@ def do(cmd, args):
 
         case 'get_all_info':
             resu = get_all_info()
+
+        case 'play' | 'pause' | 'stop':
+            resu = playback_change(mode=cmd)
 
         case _:
             resu ='NAK'
