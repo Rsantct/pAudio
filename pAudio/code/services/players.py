@@ -25,9 +25,13 @@ elif 'darwin' in sys.platform:
 
 
 def macos_loop():
+
     while True:
+
         m = players_macos.get_player_info()
+
         save_json_file(m, PLAYER_META_PATH, timeout=0.5)
+
         sleep(1)
 
 
@@ -36,6 +40,7 @@ def init():
     save_json_file(METATEMPLATE, PLAYER_META_PATH, timeout=0.5)
 
     if 'darwin' in sys.platform:
+
         job = threading.Thread(target=macos_loop).start()
         print('listening to desktop players ...')
 
