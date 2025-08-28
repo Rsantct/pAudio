@@ -5,9 +5,10 @@
 
 """
     Players subsystem.
-    A DUMMY MODULE BY NOW
 """
 
+import time
+import threading
 import os
 import sys
 UHOME       = os.path.expanduser('~')
@@ -16,34 +17,55 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common      import *
 
+if 'linux' in sys.platform:
+    pass
 
-METATEMPLATE = {
-                'player':       '',
-                'time_pos':     '-',
-                'time_tot':     '-',
-                'bitrate':      '-',
-                'artist':       '-',
-                'album':        '-',
-                'title':        '-',
-                'track_num':    '-',
-                'tracks_tot':   '-' }
+elif 'darwin' in sys.platform:
+    from .players_mod import players_macos
 
 
-def meta2disk(metadata):
-    with open(PLAYER_META_PATH, 'w') as f:
-        f.write( json.dumps(metadata) )
+def macos_loop():
+    while True:
+        m = players_macos.get_player_info()
+        save_json_file(m, PLAYER_META_PATH, timeout=0.5)
+        sleep(1)
 
 
 def init():
-    meta2disk(METATEMPLATE)
+
+    save_json_file(METATEMPLATE, PLAYER_META_PATH, timeout=0.5)
+
+    if 'darwin' in sys.platform:
+        job = threading.Thread(target=macos_loop).start()
+        print('listening to desktop players ...')
+
+
+def get_all_info():
+
+    m = read_json_file(PLAYER_META_PATH)
+
+    res = {
+        'state':            m.get('state'),
+        'random_mode':      'n/a',
+        'discid':           '',
+        'metadata':         m
+    }
+
+    return res
 
 
 # Entry function
 def do(cmd, args):
 
-    result  = 'WIP'
+    match cmd:
 
-    return result
+        case 'get_all_info':
+            resu = get_all_info()
+
+        case _:
+            resu ='NAK'
+
+    return resu
 
 
 init()
