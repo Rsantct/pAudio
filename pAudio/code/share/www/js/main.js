@@ -796,24 +796,6 @@ function page_update() {
     }
 
 
-    function show_peq_info() {
-
-        if ( aux_info.peq_set != 'none'){
-
-            document.getElementById("buttonPEQ").innerHTML = "PEQ: " + aux_info.peq_set;
-
-            if (allAreTrue(aux_info.peq_bypassed)){
-                document.getElementById("buttonPEQ").style.color = "grey";
-            }else{
-                document.getElementById("buttonPEQ").style.color = "white";
-            }
-
-        }else {
-            document.getElementById("buttonPEQ").style.color = "grey";
-            document.getElementById("buttonPEQ").innerHTML = "(no peq)";
-        }
-    }
-
     //// AUX STUFF
     aux_info_refresh();
 
@@ -837,19 +819,15 @@ function page_update() {
 
     state_refresh();
 
-
     //// PLAYER STUFF
-    //player_get();
-    //player_refresh();
+    player_get();
+    player_refresh();
     //
     LU_refresh();
     //
     graphs_update();
     //
     manage_main_cside();
-    //
-    //show_peq_info();
-
 }
 
 
