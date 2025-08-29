@@ -33,6 +33,7 @@ METATEMPLATE = {
     'tracks_tot':   '-'
 }
 
+
 def get_web_config():
 
     # LU_monitor_enabled is a legacy option, now it is always enabled.
@@ -499,6 +500,22 @@ def get_target_sets(fs=44100):
     return sorted(sets)
 
 
+def get_pid_cmdline(process_name=''):
+    """ gets all the pid and cmdline of the given process name
+    """
+
+    pids = []
+
+    for proc in psutil.process_iter():
+        try:
+            if proc.name() == process_name:
+                pids.append( {'pid': proc.pid, 'cmdline': proc.cmdline() } )
+        except:
+            pass
+
+    return pids
+
+
 def process_is_running(pattern):
     """ psutil is faster than pgrep in a shell
     """
@@ -515,7 +532,7 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=30, port=CONFIG["paudio_port"]):
+def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
 
     period = .5
     tries  = int(timeout / period)
