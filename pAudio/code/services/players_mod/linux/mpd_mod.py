@@ -38,6 +38,7 @@ CLI.idletimeout = 1 # timeout for fetching the result of the idle command is han
 def _init():
     MPD_PORT = read_mpd_config()["port"]
 
+
 def read_mpd_config(mpd_config_path=''):
     """ mpd clients CANNOT access to MPD.config(),
         so them needs to rely in reading the mpd config file
@@ -560,7 +561,9 @@ def mpd_get_meta( md=METATEMPLATE.copy() ):
 
     return md
 
+
 _init()
+
 
 if __name__ == "__main__":
 
