@@ -26,18 +26,18 @@ elif 'darwin' in sys.platform:
     players_of_interest=['Spotify', 'Music']
 
 
-def macos_loop():
-
-    while True:
-
-        m = macos.get_player_info( players_of_interest )
-
-        save_json_file(m, PLAYER_META_PATH, timeout=0.5)
-
-        sleep(1)
-
-
 def init():
+
+    def macos_loop():
+
+        while True:
+
+            metadata = macos.get_player_info( players_of_interest )
+
+            save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
+
+            sleep(1)
+
 
     save_json_file(METATEMPLATE, PLAYER_META_PATH, timeout=0.5)
 
