@@ -76,24 +76,6 @@ def _iterate_spotify_info():
         print("\n")
 
 
-def _time_sec2hhmmss(x):
-    """ Format a given float (seconds) to "hh:mm:ss"
-        (string)
-    """
-
-    if type(x) != float or type(x) != int:
-        try:
-            x = float(x)
-        except:
-            x = 0.0
-
-    h = int( x / 3600 )         # hours
-    x = int( round(x % 3600) )  # updating x to reamining seconds
-    m = int( x / 60 )           # minutes from the new x
-    s = int( round(x % 60) )    # and seconds
-    return f'{h:0>2}:{m:0>2}:{s:0>2}'
-
-
 def get_spotify_info():
 
     spotify = BUS.get("org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2")
