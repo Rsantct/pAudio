@@ -41,7 +41,7 @@ chmod +x ~/pAudio/start*
 # Restore config
 cp ~/pAudio/config.yml.BAK ~/pAudio/config.yml 1>/dev/null 2>&1
 
-# Stop any paudio backend
+# Stop any audio backend
 pkill -f "server.py paudio "        1>/dev/null 2>&1
 pkill -f "camilladsp"               1>/dev/null 2>&1
 
