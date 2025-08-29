@@ -3,28 +3,16 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
-from   subprocess import run as sp_run
+from   subprocess   import run as sp_run
+from   time         import sleep
 import json
 import os
 import sys
 
+UHOME = os.path.expanduser("~")
+sys.path.append(f'{UHOME}/pAudio/code/share')
 
-def _time_sec2hhmmss(x):
-    """ Format a given float (seconds) to "hh:mm:ss"
-        (string)
-    """
-
-    if type(x) != float or type(x) != int:
-        try:
-            x = float(x)
-        except:
-            x = 0.0
-
-    h = int( x / 3600 )         # hours
-    x = int( round(x % 3600) )  # updating x to reamining seconds
-    m = int( x / 60 )           # minutes from the new x
-    s = int( round(x % 60) )    # and seconds
-    return f'{h:0>2}:{m:0>2}:{s:0>2}'
+from common import  save_json_file, time_sec2hhmmss, PLAYER_META_PATH
 
 
 VOID_PLAYER_INFO = {
@@ -36,7 +24,6 @@ VOID_PLAYER_INFO = {
     "elapsed":      0,
     "duration":     0
 }
-
 
 # Diccionario de reproductores y su AppleScript, en ORDEN PREFERIDO
 _PLAYERS = {
@@ -235,6 +222,17 @@ _PLAYERS = {
 }
 
 
+def loop_get_player_info(players_of_interest):
+
+    while True:
+
+        metadata = get_player_info( players_of_interest )
+
+        save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
+
+        sleep(1)
+
+
 def _run_applescript(script='', who=''):
     """ devuelve una cadena JSON o None
     """
@@ -270,16 +268,16 @@ def _info2paudio_metadata(info):
 
         case 'Spotify':
             fs = '44100'
-            time_tot = _time_sec2hhmmss( info.get('duration') / 1000 )
+            time_tot = time_sec2hhmmss( info.get('duration') / 1000 )
 
         case _:
             fs = ''
-            time_tot = _time_sec2hhmmss( info.get('duration') )
+            time_tot = time_sec2hhmmss( info.get('duration') )
 
 
     res = { "player":       info.get('app', ''),
             "state":        info.get('state', 'stop'),
-            "time_pos":     _time_sec2hhmmss( info.get('elapsed') ),
+            "time_pos":     time_sec2hhmmss( info.get('elapsed') ),
             "time_tot":     time_tot,
             "bitrate":      fs,
             "artist":       info.get('artist'),
