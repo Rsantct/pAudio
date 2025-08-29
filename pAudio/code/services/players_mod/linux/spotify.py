@@ -13,32 +13,17 @@ import sys
 from   pydbus import SessionBus
 from   time import sleep
 
+UHOME = os.path.expanduser("~")
+sys.path.append(f'{UHOME}/pAudio/code/share')
+
+from common import  time_sec2hhmmss, Fmt
+
 BUS = SessionBus()
 
 
 # for testing
 def _iterate_spotify_info():
     """ solo para ver lo que hay
-    """
-
-    spotify_path = "/org/mpris/MediaPlayer2"
-    spotify_name = "org.mpris.MediaPlayer2.spotify"
-
-    # Obtenemos el objeto completo
-    spotify_obj = BUS.get(spotify_name, spotify_path)
-
-    # Obtenemos la interfaz de propiedades
-    props = bus.get(spotify_name, spotify_path)["org.freedesktop.DBus.Properties"]
-
-    # Interfaces a inspeccionar
-    interfaces = ["org.mpris.MediaPlayer2", "org.mpris.MediaPlayer2.Player"]
-
-    for iface in interfaces:
-        print(f"=== Propiedades de {iface} ===")
-        all_props = props.GetAll(iface)
-        for key, value in all_props.items():
-            print(f"{key}: {value}")
-        print("\n")
 
     #   === Propiedades de org.mpris.MediaPlayer2.Player ===
     #   PlaybackStatus: Playing | Paused
@@ -68,6 +53,27 @@ def _iterate_spotify_info():
     #   CanPause: True
     #   CanSeek: True
     #   CanControl: True
+
+    """
+
+    spotify_path = "/org/mpris/MediaPlayer2"
+    spotify_name = "org.mpris.MediaPlayer2.spotify"
+
+    # Obtenemos el objeto completo
+    spotify_obj = BUS.get(spotify_name, spotify_path)
+
+    # Obtenemos la interfaz de propiedades
+    props = bus.get(spotify_name, spotify_path)["org.freedesktop.DBus.Properties"]
+
+    # Interfaces a inspeccionar
+    interfaces = ["org.mpris.MediaPlayer2", "org.mpris.MediaPlayer2.Player"]
+
+    for iface in interfaces:
+        print(f"=== Propiedades de {iface} ===")
+        all_props = props.GetAll(iface)
+        for key, value in all_props.items():
+            print(f"{key}: {value}")
+        print("\n")
 
 
 def _time_sec2hhmmss(x):
