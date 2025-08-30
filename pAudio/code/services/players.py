@@ -18,12 +18,15 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 from    common      import *
 
 if 'linux' in sys.platform:
-    pass
+
+    from .players_mod import linux
+    linux.PLAYERS_OF_INTEREST=['Spotify', 'MPD']
+
 
 elif 'darwin' in sys.platform:
 
     from .players_mod import macos
-    players_of_interest=['Spotify', 'Music']
+    macos.PLAYERS_OF_INTEREST=['Spotify', 'Music']
 
 
 def init():
@@ -33,7 +36,7 @@ def init():
     if 'darwin' in sys.platform:
 
         # LOOP to get MacOS player info
-        job = threading.Thread(target=macos.loop_get_player_info, args=(players_of_interest,) )
+        job = threading.Thread( target=macos.loop_get_player_info )
         job.start()
         print(f'{Fmt.BLUE}(players) Listening to desktop players ...{Fmt.END}')
 
