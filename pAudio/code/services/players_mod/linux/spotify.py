@@ -89,7 +89,7 @@ def get_spotify_info():
         "time_pos":     time_sec2hhmmss( spotify.Position / 1e6 ),
         "time_tot":     time_sec2hhmmss( metadata.get("mpris:length") / 1e6 ),
         "bitrate":      '320 Kbps',
-        "artist":       metadata.get("xesam:albumArtist"),
+        "artist":       '',
         "album":        metadata.get("xesam:album"),
         "title":        metadata.get("xesam:title"),
         "track_num":    metadata.get("xesam:trackNumber"),
@@ -99,18 +99,26 @@ def get_spotify_info():
         "samplerate":   '44100'
     }
 
-    artist = info.get('artist')
+    # Example of albumArtist (set of tracks) vs artist (track):
+    #
+    # "albumArtist":  ['Keith Jarrett']
+    # "artist":       ['Samuel Barber'],
+    # "album":        "Samuel Barber: Piano Concerto, Op.38 / Béla Bartók: Piano Concerto No.3 / Keith Jarrett: Tokyo Encore (Live)",
+    # "url":          "https://open.spotify.com/track/0hbnr74QRhObmbn4FHjvnN",
+    #
+    # 'artist' changes from ['Samuel Barber'] to ['Béka Bartók']
+    # depending on the track throughout the album
+    # 'albumArtist' keeps ['Keith Jarret'] on all tracks
 
-    if type(artist) == list:
-        if len(artist) > 1:
-            info["artist"] = ', '.join(artist)
-        else:
-            info["artist"] = artist[0]
-    else:
-        try:
-            info["artist"] = str( info["artist"] )
-        except:
-            pass
+    # These are lists
+    albumArtist = metadata.get("xesam:albumArtist")
+    artist      = metadata.get("xesam:artist")
+
+    tmp = albumArtist + artist
+    artists = []
+    [artists.append(x) for x in tmp if x not in artists]
+
+    info["artist"] = ' - '.join(artists)
 
     return info
 
