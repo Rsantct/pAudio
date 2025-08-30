@@ -68,10 +68,9 @@ def playback_change(mode):
         return 'WIP'
 
     elif 'darwin' in sys.platform:
-        return macos.playback_change(mode)
+        return macos.playback_change(player, mode)
 
     else:
-
         return 'NAK'
 
 
