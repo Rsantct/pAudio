@@ -18,46 +18,38 @@ import mplayer
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  save_json_file, time_sec2hhmmss, \
-                    METATEMPLATE, PLAYER_META_PATH
-
-
-# List of players to be queried so that the response will be faster.
-# Set void to query all in _PLAYERS
-PLAYERS_OF_INTEREST=['Spotify', 'MPD']
-
-_PLAYERS = {
-    'Spotify':  spotify.get_spotify_info,
-    'MPD':      mpd_mod.mpd_get_meta
-}
+from common import  save_json_file, time_sec2hhmmss, read_json_file, \
+                    METATEMPLATE, PLAYER_META_PATH, PREAMP_STATE_PATH
 
 
 def loop_save_player_info(source=''):
 
     while True:
 
-        metadata = get_player_info(source)
+        metadata = get_player_info()
+
+        for t in 'time_pos', 'time_tot':
+            if metadata[t].startswith('00:'):
+                metadata[t] = metadata[t][3:]
 
         save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
 
         sleep(1)
 
 
-def get_player_info(source='none'):
-    """
+def get_player_info():
+    """ Get player metadata as per the current pAudio source
     """
 
     res = METATEMPLATE
+
+    source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
 
     if source.lower() == 'spotify':
         res = spotify.get_spotify_info()
 
     if source.lower() == 'mpd':
         res = mpd_mod.mpd_get_meta()
-
-    for t in 'time_pos', 'time_tot':
-        if res[t].startswith('00:'):
-            res[t] = res[t][3:]
 
     return res
 
