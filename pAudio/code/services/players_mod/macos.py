@@ -14,16 +14,9 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import  save_json_file, time_sec2hhmmss, PLAYER_META_PATH
 
-
-VOID_PLAYER_INFO = {
-    "app":          "",
-    "state":        "stop",
-    "track":        "",
-    "artist":       "",
-    "album":        "",
-    "elapsed":      0,
-    "duration":     0
-}
+# List of players to be queried so that the response will be faster.
+# Set void to query all in _PLAYERS
+PLAYERS_OF_INTEREST=['Spotify', 'Music']
 
 # Diccionario de reproductores y su AppleScript, en ORDEN PREFERIDO
 _PLAYERS = {
@@ -221,12 +214,21 @@ _PLAYERS = {
     '''
 }
 
+VOID_PLAYER_INFO = {
+    "app":          "",
+    "state":        "stop",
+    "track":        "",
+    "artist":       "",
+    "album":        "",
+    "elapsed":      0,
+    "duration":     0
+}
 
-def loop_get_player_info(players_of_interest):
+def loop_get_player_info():
 
     while True:
 
-        metadata = get_player_info( players_of_interest )
+        metadata = get_player_info()
 
         save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
 
@@ -291,11 +293,8 @@ def _info2paudio_metadata(info):
     return res
 
 
-def get_player_info( players_of_interest=['Spotify', 'Music'] ):
-    """ players_of_interest:    list of players to be queried
-                                so that the response will be faster
-
-                                void to query all in _PLAYERS
+def get_player_info():
+    """
     """
 
     player_info  = {}
@@ -304,7 +303,7 @@ def get_player_info( players_of_interest=['Spotify', 'Music'] ):
 
     for player, script in _PLAYERS.items():
 
-        if players_of_interest and not player in players_of_interest:
+        if PLAYERS_OF_INTEREST and not player in PLAYERS_OF_INTEREST:
             continue
 
         player_info = _run_applescript(script, who=player)
