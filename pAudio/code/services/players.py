@@ -11,34 +11,44 @@ import time
 import threading
 import os
 import sys
+
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common      import *
 
+
 if 'linux' in sys.platform:
 
-    from .players_mod import linux
+    from players_mod import linux
+
     linux.PLAYERS_OF_INTEREST=['Spotify', 'MPD']
 
 
 elif 'darwin' in sys.platform:
 
-    from .players_mod import macos
+    from players_mod import macos
+
     macos.PLAYERS_OF_INTEREST=['Spotify', 'Music']
 
 
 def init():
 
-    save_json_file(METATEMPLATE, PLAYER_META_PATH, timeout=0.5)
+    save_json_file(METATEMPLATE, PLAYER_META_PATH)
 
-    if 'darwin' in sys.platform:
+    # PENDING
+    source = 'spotify'
 
-        # LOOP to get MacOS player info
-        job = threading.Thread( target=macos.loop_get_player_info )
-        job.start()
-        print(f'{Fmt.BLUE}(players) Listening to desktop players ...{Fmt.END}')
+    # LOOP to save player info to file
+    if 'linux' in sys.platform:
+        job = threading.Thread( target=linux.loop_save_player_info, args=(source, ) )
+
+    elif 'darwin' in sys.platform:
+        job = threading.Thread( target=macos.loop_save_player_info, args=(source, ) )
+
+    print(f'{Fmt.BLUE}(players) Listening to playback status ...{Fmt.END}')
+    job.start()
 
 
 def get_all_info():
