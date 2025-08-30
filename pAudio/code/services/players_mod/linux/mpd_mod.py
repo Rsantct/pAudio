@@ -533,12 +533,6 @@ def mpd_get_meta( md=METATEMPLATE.copy() ):
         tmp_pos = time_sec2hhmmss( int( st["time"].split(':')[0] ))
         tmp_tot = time_sec2hhmmss( int( st["time"].split(':')[1] ))
 
-        if tmp_pos.startswith('00:'):
-            tmp_pos = tmp_pos[3:]
-
-        if tmp_tot.startswith('00:'):
-            tmp_tot = tmp_tot[3:]
-
         md["time_pos"] = tmp_pos
         md["time_tot"] = tmp_tot
 
