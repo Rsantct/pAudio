@@ -18,7 +18,6 @@ from    config import *
 
 USER = getuser()
 
-
 METATEMPLATE = {
     'player':       '',
     'state':        '',
