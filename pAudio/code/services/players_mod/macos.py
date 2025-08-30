@@ -232,6 +232,10 @@ def loop_save_player_info(source=''):
 
         metadata = get_player_info()
 
+        for t in 'time_pos', 'time_tot':
+            if metadata[t].startswith('00:'):
+                metadata[t] = metadata[t][3:]
+
         save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
 
         sleep(1)
