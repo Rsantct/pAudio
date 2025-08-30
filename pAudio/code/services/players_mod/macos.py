@@ -332,7 +332,8 @@ def get_player_info():
         return _info2paudio_metadata(VOID_PLAYER_INFO)
 
 
-def playback_change(mode):
+def playback_change(player, mode):
+    """
     #   Para UN player determinado
     #       tell application "Spotify"
     #           play            -- Reanuda
@@ -348,6 +349,7 @@ def playback_change(mode):
     #           key code 17 -- Next
     #           key code 15 -- Previous
     #       end tell
+    """
 
     pbk_script = f'''
         tell application "{player}"
