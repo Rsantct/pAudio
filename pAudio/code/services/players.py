@@ -15,37 +15,32 @@ import sys
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
+sys.path.append(os.path.join(os.path.dirname(__file__), "players_mod"))
 
 from    common      import *
 
-
 if 'linux' in sys.platform:
-
-    from players_mod import linux
-
-    linux.PLAYERS_OF_INTEREST=['Spotify', 'MPD']
-
+    import linux
 
 elif 'darwin' in sys.platform:
-
-    from players_mod import macos
-
+    import macos
     macos.PLAYERS_OF_INTEREST=['Spotify', 'Music']
 
 
-def init():
+def _init():
 
     save_json_file(METATEMPLATE, PLAYER_META_PATH)
 
-    # PENDING
-    source = 'spotify'
-
-    # LOOP to save player info to file
+    # MAIN LOOP to save player info to file
     if 'linux' in sys.platform:
-        job = threading.Thread( target=linux.loop_save_player_info, args=(source, ) )
+
+        linux.PLAYER = 'Spotify'
+
+        job = threading.Thread( target=linux.loop_save_player_info )
 
     elif 'darwin' in sys.platform:
-        job = threading.Thread( target=macos.loop_save_player_info, args=(source, ) )
+
+        job = threading.Thread( target=macos.loop_save_player_info )
 
     print(f'{Fmt.BLUE}(players) Listening to playback status ...{Fmt.END}')
     job.start()
@@ -101,4 +96,4 @@ def do(cmd, args):
     return resu
 
 
-init()
+_init()
