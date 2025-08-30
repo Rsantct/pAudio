@@ -224,7 +224,9 @@ VOID_PLAYER_INFO = {
     "duration":     0
 }
 
-def loop_get_player_info():
+def loop_save_player_info(source=''):
+    """ source management is PENDING
+    """
 
     while True:
 
