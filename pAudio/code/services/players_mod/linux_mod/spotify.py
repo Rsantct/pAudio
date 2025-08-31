@@ -78,15 +78,15 @@ def _iterate_spotify_info():
 
 def get_spotify_info():
 
-    spotify = BUS.get("org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2")
-    metadata = spotify.Metadata
+    spotibus = BUS.get("org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2")
+    metadata = spotibus.Metadata
 
     info = {
         "player":       "Spotify",
-        "state":        spotify.PlaybackStatus,
-        "loop_mode":    spotify.LoopStatus,
-        "shuffle":      spotify.Shuffle,
-        "time_pos":     time_sec2hhmmss( spotify.Position / 1e6 ),
+        "state":        spotibus.PlaybackStatus,
+        "loop_mode":    spotibus.LoopStatus,
+        "shuffle":      spotibus.Shuffle,
+        "time_pos":     time_sec2hhmmss( spotibus.Position / 1e6 ),
         "time_tot":     time_sec2hhmmss( metadata.get("mpris:length") / 1e6 ),
         "bitrate":      '320 Kbps',
         "artist":       '',
@@ -121,6 +121,74 @@ def get_spotify_info():
     info["artist"] = ' - '.join(artists)
 
     return info
+
+
+def spotify_control(cmd, arg=''):
+    """ Controls the Spotify Desktop player
+        input:  a command string
+        output: the resulting status string
+        (string)
+    """
+    result = 'not connected'
+
+    spotibus = BUS.get("org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2")
+
+
+    # try reconnecting if SessionBus was lost for some reason
+    try:
+        spotibus.CanControl
+    except:
+        spotibus_connect()
+    if not spotibus:
+        return result
+
+    try:
+        if   cmd == 'state':
+            pass
+
+        elif cmd == 'play':
+            spotibus.Play()
+
+        elif cmd == 'pause':
+            spotibus.Pause()
+
+        elif cmd == 'next':
+            spotibus.Next()
+
+        elif cmd == 'previous':
+            spotibus.Previous()
+
+        # MPRIS Shuffle is an only-readable property.
+        # (https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html)
+        elif cmd == 'random':
+
+            if arg in ('get', ''):
+                return spotibus.Shuffle
+
+            elif arg in ('on', 'off'):
+                set_shuffle(arg)
+                return spotibus.Shuffle
+
+            else:
+                return f'error with \'random {arg}\''
+
+        elif cmd == 'volume':
+
+            if arg:
+                spotibus.Volume = float(arg)
+
+            else:
+                return str( round(spotibus.Volume, 2) )
+
+
+        result = {  'Playing':  'play',
+                    'Paused':   'pause',
+                    'Stopped':  'stop' } [spotibus.PlaybackStatus]
+
+    except:
+        pass
+
+    return result
 
 
 if __name__ == "__main__":
