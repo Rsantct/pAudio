@@ -61,19 +61,24 @@ def get_all_info():
     return res
 
 
-def playback_change(mode):
+def playback_change(cmd):
 
-    player = get_all_info().get('player')
+    player = get_all_info().get('player', '')
 
-    if mode == 'pause':
-        mode = 'playpause'
+    if not player or player.lower == 'none':
+        return 'n/a'
 
 
     if 'linux' in sys.platform:
-        return 'WIP'
+
+        return linux.playback_change(player, cmd)
 
     elif 'darwin' in sys.platform:
-        return macos.playback_change(player, mode)
+
+        if cmd == 'pause':
+            cmd = 'playpause'
+
+        return macos.playback_change(player, cmd)
 
     else:
         return 'NAK'
@@ -88,7 +93,7 @@ def do(cmd, args):
             resu = get_all_info()
 
         case 'play' | 'pause' | 'stop':
-            resu = playback_change(mode=cmd)
+            resu = playback_change(cmd)
 
         case _:
             resu ='NAK'
