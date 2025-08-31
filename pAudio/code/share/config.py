@@ -39,6 +39,21 @@ except:
 
 def _init():
 
+    def complete_jack_params():
+
+        if not 'device' in CONFIG["jack"] or not CONFIG["jack"]["device"]:
+            print(f'{Fmt.BOLD}BAD Jack config{Fmt.END}')
+            sys.exit()
+
+        period   = CONFIG["jack"].get('period', 1024)
+        nperiods = CONFIG["jack"].get('nperiods', 2)
+        dither   = CONFIG["jack"].get('dither', False)
+
+        CONFIG["jack"]["period"]    = period
+        CONFIG["jack"]["nperiods"]  = nperiods
+        CONFIG["jack"]["dither"]    = dither
+
+
     def get_lspk_config():
         """
             - Read the loudspeaker's YAML file
@@ -279,9 +294,11 @@ def _init():
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
     CONFIG["mainfolder"] = MAINFOLDER
 
-    #
     # Default values if omited parameters
-    #
+
+    if "jack" in CONFIG:
+        complete_jack_params()
+
     if not "samplerate" in CONFIG:
         CONFIG["samplerate"] = 44100
         print(f'{Fmt.BOLD}\n!!! samplerate NOT configured, default to fs=44100\n{Fmt.END}')
