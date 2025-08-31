@@ -72,6 +72,15 @@ def prepare_jack_stuff():
         print(f'{Fmt.BOLD}(start) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
 
+    # **PipeWire** needs to detect this new Jack and connect to it
+    if process_is_running('pipewire'):
+        try:
+            sp.call( 'systemctl --user restart pipewire', shell=True)
+            print(f'{Fmt.BLUE}(start) Reloading PipeWire for jack-sink ...{Fmt.END}')
+
+        except Exception as e:
+            print(f'{Fmt.BOLD}(start) Problems restarting PipeWire: {str(e)}{Fmt.END}')
+
 
 def rewire_dsp():
     """ https://github.com/HEnquist/camilladsp?tab=readme-ov-file#jack
