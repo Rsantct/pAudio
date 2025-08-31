@@ -64,6 +64,27 @@ def get_player_info():
     return res
 
 
+def playback_change(player, cmd):
+    """ as per the current pAudio source
+    """
+
+    player = player.lower()
+
+    if player == 'spotify':
+        res = 'WIP'
+
+    elif player == 'mpd' or player == 'cd':
+        res = mpd_mod.mpd_control(cmd)
+
+    elif player == 'mplayer':
+        res = mplayer.mplayer_control(cmd)
+
+    else:
+        res = 'n/a'
+
+    return res
+
+
 if __name__ == "__main__":
 
     print( json.dumps( get_player_info() ) )
