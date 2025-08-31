@@ -24,12 +24,15 @@ jack:
     zita_buffer_ms:         150
 
 
-
-plugins:
-    - mpd.py
-
-
 loudspeaker: SeasFlat
 
 ref_level_gain_offset:  -3.0
 
+
+plugins:
+
+    - mpd.py
+
+    # With PipeWire, you need to restart Spotify to get it to work through the
+    # new instance of PipeWire that was triggered by Jack starting up in pAudio.
+    - spotify_desktop.py
