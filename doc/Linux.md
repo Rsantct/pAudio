@@ -13,7 +13,7 @@ The control web page needs:
 
     sudo apt install python3-numpy python3-scipy python3-matplotlib \
              python3-yaml python3-jack-client python3-watchdog \
-             python3-websocket xdotool
+             python3-websocket pydbus xdotool
 
 ### Python packages not provided by Debian:
 
