@@ -44,16 +44,26 @@ def get_player_info():
     res = METATEMPLATE
 
     source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
+    s = source.lower()
 
-    if source.lower() == 'spotify':
+    if s == 'spotify':
         res = spotify.get_spotify_info()
 
-    if source.lower() == 'mpd':
+    elif s == 'mpd' or s == 'cd':
         res = mpd_mod.mpd_get_meta()
+
+    elif 'tdt' in s or 'dvb' in s:
+        res = mplayer.mplayer_get_meta('dvb')
+
+    elif 'remote' in s:
+        res["player"] = source.upper()
+
+    else:
+        res["player"] = source.upper()
 
     return res
 
 
 if __name__ == "__main__":
 
-    print( json.dumps( get_player_info('spotify') ) )
+    print( json.dumps( get_player_info() ) )
