@@ -17,6 +17,8 @@ import sys
 import os
 from   subprocess import Popen, call
 
+UHOME = os.path.expanduser("~")
+
 
 def stop():
     try:
