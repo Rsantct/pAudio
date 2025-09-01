@@ -23,7 +23,7 @@ from common import  save_json_file, time_sec2hhmmss, read_json_file, \
                     player_from_source, Fmt
 
 
-def loop_save_player_info(source=''):
+def loop_save_player_info():
 
     while True:
 
