@@ -101,13 +101,7 @@ You can fine tune the resampling quality.
 
 If you came from a `pe.audio.sys/config/config.yml` based in PulseAudio, **YOU SHOULD NOT USE** the plugin **`pulseaudio-jack-sink.py`** anymore.
 
-## Spotify users
+## Desktop player App users
 
-After restarting **pAudio**, you'll need to restart the Spotfy Desktop App in order to reconnect to the new PipeWire-Jack instance.
-
-We also RECOMMEND **minimizing Spotify** to prevent the main Spotify window from loading many CPU-intensive widgets, especially on machines with modest CPUs.
-
-This is done when using **`plugins/spotify_desktop.py`**, Please install the following Debian package before using it:
-
-    apt install xdotool
+After restarting **pAudio**, you'll need to restart any desktop player App in order to reconnect to the new PipeWire-Jack instance. See the attached doc about that.
     
