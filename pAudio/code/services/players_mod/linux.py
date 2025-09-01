@@ -19,7 +19,8 @@ UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import  save_json_file, time_sec2hhmmss, read_json_file, \
-                    METATEMPLATE, PLAYER_META_PATH, PREAMP_STATE_PATH
+                    METATEMPLATE, PLAYER_META_PATH, PREAMP_STATE_PATH, \
+                    player_from_source, Fmt
 
 
 def loop_save_player_info(source=''):
@@ -43,23 +44,25 @@ def get_player_info():
 
     res = METATEMPLATE
 
-    source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
-    s = source.lower()
+    player = player_from_source()
 
-    if s == 'spotify':
-        res = spotify.get_spotify_info()
+    try:
 
-    elif s == 'mpd' or s == 'cd':
-        res = mpd_mod.mpd_get_meta()
+        if player == 'spotify':
+            res = spotify.get_spotify_info()
 
-    elif 'tdt' in s or 'dvb' in s:
-        res = mplayer.mplayer_get_meta('dvb')
+        elif player == 'mpd':
+            res = mpd_mod.mpd_get_meta()
 
-    elif 'remote' in s:
-        res["player"] = source.upper()
+        elif player == 'mplayer':
+            res = mplayer.mplayer_get_meta('dvb')
 
-    else:
-        res["player"] = source.upper()
+        else:
+            res["player"] = source.upper()
+
+    # This can happens if the player App is not ready at this moment
+    except Exception as e:
+        print(f'{Fmt.MAGENTA}(linux) ERROR getting metadata from {player}: {str(e)}{Fmt.END}')
 
     return res
 
