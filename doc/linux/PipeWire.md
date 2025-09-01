@@ -103,7 +103,7 @@ If you came from a `pe.audio.sys/config/config.yml` based in PulseAudio, **YOU S
 
 ## Spotify users
 
-After restarting **pAudios**, you'll need to restart the Spotfy Desktop App in order to reconnect to the new PipeWire-Jack instance.
+After restarting **pAudio**, you'll need to restart the Spotfy Desktop App in order to reconnect to the new PipeWire-Jack instance.
 
 We also RECOMMEND **minimizing Spotify** to prevent the main Spotify window from loading many CPU-intensive widgets, especially on machines with modest CPUs.
 
