@@ -5,7 +5,7 @@
 
 """
     Restart the Spotify Desktop App in order to link it to the proper
-    PipeWire-Jack sink after restarting the pAudio Jack process.
+    PipeWire-Jack sink instance after restarting the pAudio Jack process.
 
     We also RECOMMEND to minimize Spotify in order to stop
     Spotify main window to load lots of widgets with high CPU spense:
@@ -23,31 +23,41 @@ from    time        import sleep
 
 
 def check_Spotify_Desktop_process():
-    wait_sec = 15
-    while wait_sec:
+
+    tries = 5
+
+    while tries:
+
         tmp = check_output( 'pgrep -fli spotify | cut -d" " -f2',
                             shell=True).decode().split()
         if 'spotify' in tmp:
-            print('(spotify_monitor) found Spotify Desktop running')
             sleep(3)    # wait a while extra to ensure communication
             return True
-        wait_sec -= 1
+
+        tries -= 1
+
         sleep(1)
+
     return False
 
 
 def start():
 
     Popen('spotify 1>/dev/null 2>&1', shell=True)
-    # Safe wait to ensure we can minimize the app in order to stop
-    # Spotify main window to load lots of widgets...
-    sleep(10)
-    Popen('xdotool search --name Spotify windowminimize %@', shell=True)
 
+    if check_Spotify_Desktop_process():
 
-    if not check_Spotify_Desktop_process():
-        print('(spotify_monitor) Unable to detect Spotify Desktop running')
-        sys.exit()
+        print('(spotify_desktop) Spotify Desktop App is running ...')
+
+        # Safe wait to ensure we can minimize the app in order to stop
+        # Spotify main window to load lots of widgets...
+        sleep(5)
+
+        #Popen('xdotool search --name Spotify windowminimize %@', shell=True)
+        Popen('xdotool windowminimize $(xdotool search --onlyvisible --class spotify | head -n1)', shell=True)
+
+    else:
+        print('(spotify_desktop) Unable to detect Spotify Desktop running')
 
 
 def stop():
