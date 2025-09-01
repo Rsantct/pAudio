@@ -71,7 +71,7 @@ def playback_change(player, cmd):
     player = player.lower()
 
     if player == 'spotify':
-        res = 'WIP'
+        res = spotify.spotify_control(cmd)
 
     elif player == 'mpd' or player == 'cd':
         res = mpd_mod.mpd_control(cmd)
