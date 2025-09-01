@@ -592,15 +592,15 @@ function page_update() {
         }
 
         // Updates the playlist loader when source changed, keep hidden if empty.
-        if (last_source != state.source){
-            const plists = fill_in_playlists_selector();
-            if ( plists.length > 0 ) {
-                document.getElementById( "playlist_selector").style.display = "inline";
-            }else{
-                document.getElementById( "playlist_selector").style.display = "none";
-            }
-            last_source = state.source;
-        }
+        //if (last_source != state.source){
+        //    const plists = fill_in_playlists_selector();
+        //    if ( plists.length > 0 ) {
+        //        document.getElementById( "playlist_selector").style.display = "inline";
+        //    }else{
+        //        document.getElementById( "playlist_selector").style.display = "none";
+        //    }
+        //    last_source = state.source;
+        //}
 
         // Displays the track selector if source == 'cd'
         if ( state.source == "cd") {
