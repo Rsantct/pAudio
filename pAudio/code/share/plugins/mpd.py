@@ -15,16 +15,15 @@
 """
 import sys
 import os
-from subprocess import Popen, call
-
-UHOME = os.path.expanduser("~")
+from   subprocess import Popen, call
 
 
 def stop():
     try:
-        call( f'pkill -f "mpd {UHOME}/.mpdconf"', shell=True )
+        call( f'killall -KILL mpd', shell=True )
     except:
         pass
+
 
 def start():
     Popen( f'mpd {UHOME}/.mpdconf', shell=True )
