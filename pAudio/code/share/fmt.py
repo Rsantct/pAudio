@@ -63,6 +63,9 @@ class Fmt:
     107         background bright white
     """
 
+    BG_YELLOW       = '\033[43m'
+    BG_CYAN         = '\033[46m'
+
     BLACK           = '\033[30m'
     RED             = '\033[31m'
     GREEN           = '\033[32m'

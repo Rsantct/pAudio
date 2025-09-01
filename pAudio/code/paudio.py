@@ -4,10 +4,11 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 """
-    The Main pAudio module.
+    The Main pAudio module, its main funtions are:
 
-    - Loads the preamp module
-    - Processing commands entry point: do()
+        - Loads the preamp module
+        - Processing commands entry point: do()
+        - Prepare png graph files of the loudspeaker's DRC
 
 """
 
@@ -20,15 +21,14 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 
 from common   import *
 from services import preamp
-from services import aux
 from services import players
 
 
 # COMMAND LOG FILE
 LOGFNAME = f'{LOGFOLDER}/paudio_cmd.log'
 
-if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
-    print ( f"{Fmt.RED}(paudio_) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
+if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 20e6:
+    print ( f"{Fmt.RED}(paudio_) log file exceeds ~ 20 MB '{LOGFNAME}'{Fmt.END}" )
 
 print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
@@ -36,7 +36,11 @@ print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 def _init():
 
     # Prepare DRC FIR graphs
-    cmd = f'python3 {CODEFOLDER}/share/drcfir2png.py'
+    cmd = f'python3 {CODEFOLDER}/share/drc_fir2png.py'
+    sp.Popen(cmd, shell=True)
+
+    # Prepare DRC IIR graphs
+    cmd = f'python3 {CODEFOLDER}/share/drc_iir2png.py'
     sp.Popen(cmd, shell=True)
 
 
@@ -50,21 +54,19 @@ def do(cmd_phrase):
         case 'preamp':
             result = preamp.do(cmd, args, add)
 
-        case 'aux':
-            result = aux.do(cmd, args, add)
-
         # PENDING
         case 'player':
-            result = 'WIP players'
+            result = players.do(cmd, args)
 
         case _:
             # This should never occur because preamp is the defaulted as prefix
             result = 'unknown service'
 
-    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd_phrase}; {result}'
-
-    with open(LOGFNAME, 'a') as FLOG:
-            FLOG.write(f'{logline}\n')
+    # LOG
+    if cmd != 'state':
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd_phrase}; {result}'
+        with open(LOGFNAME, 'a') as FLOG:
+                FLOG.write(f'{logline}\n')
 
     if type(result) != str:
         try:

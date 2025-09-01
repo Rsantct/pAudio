@@ -1,0 +1,50 @@
+# Please see doc/ and doc/config_examples for more features
+
+coreaudio:
+
+    devices:
+
+        capture:
+
+            channels: 2
+            device: BlackHole 2ch
+            format: FLOAT32LE
+
+        playback:
+
+            channels: 2
+            device: Altavoces del MacBook Pro
+            format: FLOAT32LE
+
+
+loudspeaker: MyLoudspeaker
+
+####
+# To force audio settings on startup
+on_init:
+    level:
+    lu_offset:          9.0
+    equal_loudness:     true
+    balance:            0.0
+    bass:               0
+    treble:             0
+    tone_defeat:        false
+    target:             +3.0-1.0
+    drc_set:            
+
+####
+# Optional web page settings
+web_config:
+
+    # ON/OFF button
+    # Set 'pAudio' (if using as a desktop app) or 'amplifier' (if a switch is available in a dedicated machine)
+    # Default to 'pAudio' if not configured.
+    onoff: pAudio
+
+    # Monkey button
+    # Set 'toggle' for stop and restart pAudio (in a desktop), or 'restart' to allways restart it (in a dedicated machine)
+    # Default to 'toggle' if not configured.
+    monkey_button:  toggle
+
+    # HELP button language: en(glish) | sp(panish) | cat(alan)
+    help_lang:      en

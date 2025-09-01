@@ -67,52 +67,22 @@ def prepare_base_config(pAudio_config, cam_config):
         cam_config["filters"] =    {
 
         # Balance and Polarity
-        'bal_pol_L':    {  'type': 'Gain',
-                            'parameters': {
-                                'gain':     0.0,
-                                'inverted': False,
-                                'mute':     False
-                            }
-                        },
-        'bal_pol_R':    {  'type': 'Gain',
-                            'parameters': {
-                                'gain':     0.0,
-                                'inverted': False,
-                                'mute':     False
-                            }
-                        },
+        'bal_pol_L':            make_gain_filter(0.0, 'Balance and Polarity Left'),
+        'bal_pol_R':            make_gain_filter(0.0, 'Balance and Polarity Right'),
 
         # Dither
-        'dither':   {   'type': 'Dither',
-                        'parameters': {'bits': 16, 'type': 'Shibata441'},
-                    },
+        'dither':               make_dither_filter('Shibata441', 16),
 
-        # DRC gain
-        'drc_gain': {   'type': 'Gain',
-                        'parameters': {
-                                'gain':     0.0,
-                                'inverted': False,
-                                'mute':     False
-                        }
-                    },
+        # DRC gain offset
+        'flat_gain_drc':      make_gain_filter(0.0, 'gain offset for DRC in use'),
 
-        # LU OFFSET (compensation for Loudness War)
-        'lu_offset': {  'type': 'Gain',
-                        'parameters': {
-                                'gain':      0.0,
-                                'inverted': False,
-                                'mute':     False
-                        }
-                    },
+        # XO will be done later if so.
+
+        # LU OFFSET
+        'lu_offset':            make_gain_filter(0.0, 'LU OFFSET (compensation for Loudness War)'),
 
         # Preamp EQ (tones anf loudnes curves)
-        'preamp_eq':    {   'type': 'Conv',
-                            'parameters': {
-                                'filename': f'{EQFOLDER}/eq_flat.pcm',
-                                'format': 'FLOAT32LE',
-                                'type': 'Raw'
-                            }
-                    }
+        'preamp_eq':            make_fir_filter( f'{EQFOLDER}/eq_flat.pcm' )
         }
 
 
@@ -137,12 +107,12 @@ def prepare_base_config(pAudio_config, cam_config):
             {   'description':  'preamp.L',
                 'channels':     [0],
                 'type':         'Filter',
-                'names':        ['preamp_eq', 'drc_gain', 'lu_offset', 'bal_pol_L']
+                'names':        ['preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_L']
             },
             {   'description':  'preamp.R',
                 'channels':     [1],
                 'type':         'Filter',
-                'names':        ['preamp_eq', 'drc_gain', 'lu_offset', 'bal_pol_R']
+                'names':        ['preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_R']
             }
         ]
 
@@ -153,7 +123,7 @@ def prepare_base_config(pAudio_config, cam_config):
     prepare_pipeline()
 
 
-def update_dither(pAudio_config, cam_config):
+def append_dither(pAudio_config, cam_config):
     """ Adjust the dither filter as per the output sample format and samplerate
     """
 
@@ -169,7 +139,7 @@ def update_dither(pAudio_config, cam_config):
     if not( pAudio_config.get("coreaudio") and pAudio_config["coreaudio"]["devices"]["playback"].get("dither") ):
         return
 
-    # First of all we need to remove dither parameter.
+    # First of all we need to remove the pAudio dither parameter.
     # It was included in pAudio playback device because logical order,
     # but it is not a CamillaDSP devices parameter.
     del cam_config["devices"]["playback"]["dither"]

@@ -22,10 +22,10 @@ from    common import *
 
 from    pcamilla_mod.do_makes       import  *
 from    pcamilla_mod.do_clears      import  *
-import  pcamilla_mod.lspk_iir       as lspk_iir
+import  pcamilla_mod.lspk           as lspk
 import  pcamilla_mod.base_config    as base_config
 
-lspk_iir.Fmt         =  Fmt
+lspk.Fmt             =  Fmt
 base_config.Fmt      =  Fmt
 base_config.EQFOLDER =  EQFOLDER
 
@@ -103,7 +103,9 @@ def get_config():
 def _prepare_cam_config(pAudio_config):
     """
         1. Prepares a base CamillaDSP config
-        2. Translates pAudio configuration to the CamillaDSP config
+        2. Translates pAudio configuration to the CamillaDSP syntax
+
+        returns: the CamillaDSP config
     """
 
     def prepare_multiway_structure():
@@ -114,22 +116,14 @@ def _prepare_cam_config(pAudio_config):
             """ This is the LAST step into the PIPELINE.
             """
 
-            xo_filters = get_xo_filters_from_loudspeaker_folder()
-
-            if xo_filters:
-                print(f'{Fmt.BLUE}{Fmt.BOLD}Found loudspeaker XOVER filter PCMs: {xo_filters}{Fmt.END}')
-
-            else:
-                print(f'{Fmt.BOLD}{Fmt.BLINK}Loudspeaker xover PCMs NOT found{Fmt.END}')
-
+            xosets = list( pAudio_config["xo"].keys() )
+            print(f'{Fmt.BLUE}{Fmt.BOLD}XOVER sets: {xosets}{Fmt.END}')
 
             # xo filters
-            for xo_filter in xo_filters:
-
-                cam_config["filters"][f'xo.{xo_filter}'] = make_xo_filter(  xo_filter,
-                                                                            pAudio_config["samplerate"],
-                                                                            LSPKFOLDER
-                                                                          )
+            for set_name, values in pAudio_config["xo"].items():
+                for way, params in values.items():
+                    filter_name = f'xo.{way}.{set_name}'
+                    cam_config["filters"][filter_name] = params
 
             # Auxiliary delay filters definition
             for _, pms in pAudio_config["outputs"].items():
@@ -139,33 +133,36 @@ def _prepare_cam_config(pAudio_config):
 
                 cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
 
-            # pipeline
-            if xo_filters:
+            # Auxiliary gain filters definitions
+            for xo_id, gains in pAudio_config["xo_gains"].items():
+                # apply negative to compensate the flat_region offset
+                flat_gain = - gains.get('flat_gain', 0.0)
+                cam_config["filters"][f'xo.{xo_id}_gain'] = make_gain_filter(flat_gain, f'gain for xo.{xo_id}')
 
-                xo_steps = make_xover_steps( pAudio_config["outputs"] )
+            # pipeline (will use the first configured xo set inside lspk.yml)
+            default_xo_set = next( iter( pAudio_config["xo"] ) )
 
-                for xo_step in xo_steps:
-                    cam_config["pipeline"].append(xo_step)
+            xo_steps = make_xover_steps( pAudio_config["outputs"], default_xo_set )
+
+            for xo_step in xo_steps:
+                cam_config["pipeline"].append(xo_step)
 
 
         # Prepare the needed expander mixer ...
+
         m          = make_mixer_multi_way( pAudio_config["outputs"] )
         mixer_name = f'from2to{ len(m["mapping"]) }channels'
         cam_config["mixers"][mixer_name] = m
-        #
+
         print(f'{Fmt.GREEN}{mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
-        #
-        # ... and adding it to the pipeline
+
+        # Adding the mixer to the pipeline
         mwm_step = {'type': 'Mixer', 'name': mixer_name}
         cam_config["pipeline"].append(mwm_step)
 
-        # The final step in the pipeline: XO
-        do_xo_stuff()
+        # Making the XO as the final steps in the pipeline
+        do_xo_stuff( )
 
-
-    # pAudio config DEBUG
-    #print('--- pAudio ----')
-    #print( yaml.dump(pAudio_config, default_flow_style=False, sort_keys=False, indent=2) )
 
     # From here `cam_config` will grow progressively
     cam_config = {}
@@ -173,17 +170,17 @@ def _prepare_cam_config(pAudio_config):
     # CamillaDSP base config
     base_config.prepare_base_config(pAudio_config, cam_config)
 
-    # IIR EQ filters previously imported from the loudspeaker folder 'camilla_dsp.yml' file
-    if pAudio_config.get('iir_eq'):
-        lspk_iir.update_lspk_iir(pAudio_config, cam_config)
+    # EQ and DRC filters previously imported from the loudspeaker folder 'camilla_dsp.yml' file
+    if pAudio_config.get('lspk_eq') or pAudio_config.get('drc'):
+        lspk.update_lspk(pAudio_config, cam_config)
 
     # Multiway if more than 2 outputs
     outputs_in_use = [ x for x in pAudio_config["outputs"] if pAudio_config["outputs"][x].get('name') ]
     if len(outputs_in_use) > 2:
         prepare_multiway_structure()
 
-    # Dither
-    base_config.update_dither(pAudio_config, cam_config)
+    # Dither (will apply to the lasts steps of the pipeline)
+    base_config.append_dither(pAudio_config, cam_config)
 
     return cam_config
 
@@ -283,6 +280,10 @@ def init_camilladsp(pAudio_config):
     # Stop if any process running
     sp.call('pkill -KILL camilladsp'.split())
 
+
+    # restore Sound Card settings
+    restore_sound_card()
+
     # Starting CamillaDSP (MUTED)
     print(f'{Fmt.BLUE}Logging CamillaDSP to log/camilladsp.log ...{Fmt.END}')
     cdsp_cmd = f'camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
@@ -296,12 +297,12 @@ def init_camilladsp(pAudio_config):
         print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
     else:
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
-        return str(e)
+        return
 
 
     # Loading configuration
     try:
-        print(f'Trying to load configuration and run.')
+        print(f'Trying to load configuration and run. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
         CC.config.set_active(cfg_init)
 
         if check_cdsp_running(timeout=5):
@@ -312,7 +313,7 @@ def init_camilladsp(pAudio_config):
                     return f'problems with Camilla DSP CPAL ports'
 
             # ALL IS OK
-            return 'done'
+            return 'running'
 
         else:
             return f'Cannot start `camilladsp` process, see `pAudio/log`'
@@ -346,12 +347,6 @@ def reload_eq():
     set_config_sync(cfg)
 
     toggle_last_eq()
-
-
-# Getting AUDIO
-
-def get_drc_gain():
-    return json.dumps( CC.config.active()["filters"]["drc_gain"] )
 
 
 # Setting AUDIO, allways **MUST** return some string, usually 'done'
@@ -552,29 +547,47 @@ def set_balance(dB):
     return "done"
 
 
-def set_xo(xo_set):
-    """ xo_set:     mp | lp
+def set_xo(xo_set, flat_gains={}):
+    """ example:
+
+            xo_set:     'sofa.mp'
+
+            flat_gains: {'lo.sofa.mp': -8.7,
+                         'hi.sofa.mp': -2.1}
     """
 
     cfg = CC.config.active()
 
-    # Pipeline outputs
-    ppln = cfg["pipeline"]
+    # The pipeline is a LIST of steps
+    for step_index, step in enumerate( cfg["pipeline"] ):
 
-    # Update xo Filter steps
-    for step in ppln:
+        # Example of XOVER step:
+        #
+        #   - bypassed: null
+        #   channels:
+        #   - 2
+        #   description: xover.lo.L
+        #   names:
+        #   - xo.lo.original.mp         <--- the xo-filter itself
+        #   - xo.lo.original.mp_gain    <--- there is a _gain auxiliary filter for each xo-filter
+        #   - delay.lo.L                <--- also a delay
+        #   type: Filter
 
-        if step["type"] == 'Filter':
+        if step.get('description') and step.get('description')[:5] == 'xover':
 
-            names = [n for n in step["names"]]
+            # Step names is a LIST of filter names
+            for fname_index, fname in enumerate( step["names"] ):
 
-            # The xo filter is located in the 1st position
-            if 'xo.' in names[0]:
+                if fname[:2] == 'xo':
 
-                if step["names"][0][-3:] in ('.mp', '.lp'):
+                    # the gain filter name
+                    if fname[-5:] == '_gain':
+                        new_fname = fname[:6] + xo_set + '_gain'
+                    # the xo filter name itself
+                    else:
+                        new_fname = fname[:6] + xo_set
 
-                    step["names"][0] = step["names"][0].replace('.lp', f'.{xo_set}') \
-                                                       .replace('.mp', f'.{xo_set}')
+                    cfg["pipeline"][step_index]["names"][fname_index] = new_fname
 
     try:
         set_config_sync(cfg)
@@ -586,19 +599,44 @@ def set_xo(xo_set):
     return result
 
 
-def set_drc(drcID):
+def set_drc(drc_id, flat_gain=0.0):
+    """
+        It is supposed to receive a validated drc_id one OR 'none'
 
-    result = 'WIP'
+        If 'none' the program will flush any drc_xxxx
+        into the pipeline step `names` field
+    """
 
-    return result
+    # get all filters named drc_<drc_id>_xxx
+    cfg           = get_config()
+    fnames        = cfg.get('filters')
+    drc_fnames    = [ x for x in fnames if x[:4] == 'drc_' and x[-2:] in ('_L', '_R') ]
+    drc_id_fnames = [ x for x in drc_fnames if f'_{drc_id}_' in x ]
+    drc_id_fnames = sorted( drc_id_fnames )
 
+    # Iterate over the pipeline steps
+    for i, step in enumerate( cfg["pipeline"] ):
 
-def set_drc_gain(dB):
+        # filter DRC steps
+        if step.get('description') and  '(DRC ' in step.get('description', ''):
 
-    cfg = CC.config.active()
+            step_ch = step["channels"][0]
 
-    cfg["filters"]["drc_gain"]["parameters"]["gain"] = dB
+            # remove any 'drc_xxxx' in `names:` (will keep dither if so)
+            new_names = [ x for x in step["names"] if x[:4] != 'drc_' ]
 
+            # add the new drc filters in `names:`
+            for fname in drc_id_fnames:
+                if step_ch == 0 and fname[-2:] == '_L' or step_ch == 1 and fname[-2:] == '_R':
+                    new_names = [fname] + new_names
+
+            cfg["pipeline"][i]["names"] = new_names
+
+    # Adjust the global flat_gain_drc for this drc-set
+    # Apply negative to compensate the flat_region offset
+    cfg["filters"]["flat_gain_drc"]["parameters"]["gain"] = -flat_gain
+
+    # Upload the config to runtime
     set_config_sync(cfg)
 
     return 'done'

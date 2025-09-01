@@ -1,20 +1,20 @@
-**THIS IS A DRAFT, PENDING TO REVIEW**
-
-
 # Full Range example
 
+Filters can be set into **`lspk.yml`**, whit a logical syntax.
+
+Filters can be both IIR or FIR types, see the example `lspk.yml` file.
+
+- `flat_gain`  helps to indicate the flat region gain of a FIR filter having some offset.
+- `posit_gain` is mean to calculate the gain chain headroom.
 
 ## IIR filtering
 
-IIR filters ca be set into **`camilladsp_lspk.yml`**, whit a logical syntax, see example file.
+Filter data is defined verbosely with CamillaDSP syntax.
 
-## FIR filtering (PENDING)
 
-All pcm files are fake ones, just to illustrate `.pcm` files naming
+## FIR filtering
 
-### Optional: full range EQ
+Filter data is defined verbosely with CamillaDSP syntax. Also the correspondig coefficient PCM files must exist under their corresponding SAMPLERATE folder.
 
-If you want to apply some FIR to fine EQ your full range loudspeaker, yo can prepare and add here a file named `xo.fr.pcm`.
-
-If this file is omitted, no loudspeaker filtering will be applied
+The PCM files provided here are fake ones, just to illustrate `.pcm` files naming
 

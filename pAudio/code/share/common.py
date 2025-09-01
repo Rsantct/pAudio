@@ -4,6 +4,7 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 import  subprocess as sp
+import  psutil
 import  threading
 import  socket
 from    time import sleep, strftime
@@ -16,6 +17,167 @@ from    getpass import getuser
 from    config import *
 
 USER = getuser()
+
+METATEMPLATE = {
+    'player':       '',
+    'state':        '',
+    'time_pos':     '-',
+    'time_tot':     '-',
+    'bitrate':      '-',
+    'artist':       '-',
+    'album':        '-',
+    'title':        '-',
+    'track_num':    '-',
+    'track_uri':    '',
+    'tracks_tot':   '-'
+}
+
+
+def get_web_config():
+
+    # LU_monitor_enabled is a legacy option, now it is always enabled.
+
+    result = {  'main_selector':        'sources',
+                'LU_monitor_enabled':   True,
+                'onoff':                'pAudio',
+                'monkey_button':        'toggle'
+    }
+
+    for item, value in CONFIG.get('web_config', {}).items():
+        result[item] = value
+
+    return result
+
+
+def amp_switch(mode):
+
+    def read_amp_state_file():
+
+        try:
+            with open(AMP_STATE_PATH, 'r') as f:
+                tmp = f.read().strip()
+
+                if tmp.lower() in ('on', '1'):
+                    return 'on'
+                elif tmp.lower() in ('off', '0'):
+                    return 'off'
+                else:
+                    print(f'{Fmt.MAGENTA}(common.amp_switch) amp file weird state value: {tmp}{Fmt.END}' )
+                    return tmp
+
+        except Exception as e:
+            print(f'{Fmt.MAGENTA}(common.amp_switch) error reading amp state file: {str(e)}{Fmt.END}' )
+            return '--'
+
+
+    def get_state():
+        """
+            (i) NOT IN USE  -->  read_amp_state_file()
+        """
+
+        return read_amp_state_file()
+
+        try:
+            res = sp.check_output(AMP_CMD, shell=True).decode().strip().lower()
+
+        except Exception as e:
+            print(f'(common.amp_switch) get_state ERROR: {str(e)}')
+
+        if res in (1, '1', 'on'):
+            res = 'on'
+        else:
+            res = 'off'
+
+        return res
+
+
+    def set_state(new):
+        """
+            $ ampli.sh 1
+            BITFT_1=0
+            BITFT_2=0
+            1
+        """
+
+        if new == None:
+            return 'must be: on | off'
+
+        if new:
+
+            try:
+                res = sp.check_output(f'{AMP_CMD} {new}', shell=True).decode().strip().lower()
+                # (**) see docstring
+                res = res.strip().split()[-1]
+
+            except Exception as e:
+                print(f'(common.amp_switch) set_state ERROR: {str(e)}')
+
+        if res in (1, '1', 'on'):
+            res = 'on'
+        else:
+            res = 'off'
+
+        return res
+
+
+    AMP_CMD = CONFIG.get('amplifier_switch_cmd', '~/bin/ampli.sh')
+
+    res = 'NAK'
+
+    if not mode:
+        mode = 'state'
+
+    match mode:
+
+        case 'state':
+            res = read_amp_state_file()
+
+        case 'on':
+            res = set_state('on')
+
+        case 'off':
+            res = set_state('off')
+
+        case 'toggle':
+            curr = get_state()
+            new = {'on':'off', 'off':'on'}[curr]
+            res = set_state(new)
+
+        case _:
+            pass
+
+    return res
+
+
+def restore_sound_card():
+    """
+        This assumes that you have set your alsamixer levels and saved them to:
+            ~/pAudio/alsactl.<YOUR_ALSA_CARD_NAME>
+    """
+
+    pa_config_path = f'{UHOME}/pAudio/config.yml'
+
+    with open(pa_config_path, 'r') as f:
+        pa_config = yaml.safe_load( f.read() )
+
+    if not pa_config.get('jack'):
+        return
+
+    alsa_device = pa_config["jack"]["device"]
+    # example: hw:UDJ6,0
+
+    alsa_name = alsa_device.split(',')[0].split(':')[-1]
+
+    alsactl_path =  f'{UHOME}/pAudio/alsactl.{alsa_name}'
+
+    cmd = f'alsactl --file {alsactl_path} restore {alsa_name}'
+
+    if os.path.isfile(alsactl_path):
+        print(f'{Fmt.BLUE}Restoring: {alsactl_path}{Fmt.END}')
+        sp.call(cmd, shell=True)
+
+    else:
+        print(f'{Fmt.RED}File not found: {alsactl_path}{Fmt.END}')
 
 
 def wait4ports( pattern, timeout=10 ):
@@ -92,7 +254,7 @@ def send_cmd( cmd, sender='', verbose=False, timeout=3,
     return ans
 
 
-def read_json_file(fpath, timeout=1):
+def read_json_file(fpath, timeout=1, quiet=False):
     """ Some json files cannot be ready to read in first pAudio run,
         so let's retry
     """
@@ -101,19 +263,22 @@ def read_json_file(fpath, timeout=1):
     period = 0.25
     tries = int(timeout / period)
     while tries:
+
         try:
             with open(fpath, 'r') as f:
                 d = json.loads(f.read())
             break
+
         except:
             tries -= 1
             sleep(period)
 
-    if not tries:
-        print(f'{Fmt.RED}(!) Cannot read `{fpath}`{Fmt.END}')
+    if not quiet:
+        if not tries:
+            print(f'{Fmt.RED}(!) Cannot read `{fpath}`{Fmt.END}')
 
-    if not d:
-        print(f'{Fmt.RED}(i) Void JSON in `{fpath}`{Fmt.END}')
+        if not d:
+            print(f'{Fmt.RED}(i) Void JSON in `{fpath}`{Fmt.END}')
 
     return d
 
@@ -218,8 +383,7 @@ def read_cmd_phrase(cmd_phrase):
         Command phrase SYNTAX must start with an appropriate prefix:
 
             preamp  command  arg1 ... [add]
-            players command  arg1 ...
-            aux     command  arg1 ...
+            player  command  arg1 ...
 
         The `add` option for relative level, bass, treble, ...
 
@@ -243,7 +407,7 @@ def read_cmd_phrase(cmd_phrase):
         chunks = ['preamp', 'state']
 
     # If not prefix, will treat as a preamp command kind of
-    if not chunks[0] in ('preamp', 'player', 'aux'):
+    if not chunks[0] in ('preamp', 'player', 'ctrl'):
         chunks.insert(0, 'preamp')
 
     pfx = chunks[0]
@@ -254,13 +418,6 @@ def read_cmd_phrase(cmd_phrase):
     if chunks[2:]:
         # <argstring> can be compound
         argstring = ' '.join( chunks[2:] )
-
-    # Debug
-    if False:
-        print('pfx', pfx)
-        print('cmd', cmd)
-        print('arg', argstring)
-        print('add', add)
 
     return pfx, cmd, argstring, add
 
@@ -303,46 +460,6 @@ def list_remove_by_pattern(l, p):
     return l
 
 
-def get_xo_filters_from_loudspeaker_folder():
-    """ looks for xo.xxxx.pcm files inside the loudspeaker folder
-    """
-    xo_files    = []
-    xo_filters  = []
-
-    LSPKFOLDER_FS = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
-
-    try:
-        files = os.listdir(LSPKFOLDER_FS)
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER_FS}/{x}') ]
-        xo_files = [x for x in files if x.startswith('xo.')
-                                        and
-                                        x.endswith('.pcm')]
-    except Exception as e:
-        print(f'{Fmt.BOLD}get_xo_filters_from_loudspeaker_folder ERROR: {str(e)}{Fmt.END}')
-
-    for f in xo_files:
-        xo_id = f.replace('xo.', '').replace('.pcm', '')
-        xo_filters.append(xo_id)
-
-    return xo_filters
-
-
-def get_xo_sets_from_loudspeaker_folder():
-    """ xo.WW.FF.pcm files can exist on two flavours:
-
-            FF = mp: minimum phase filter
-            FF = lp: linear phase filter
-    """
-    xo_filters = get_xo_filters_from_loudspeaker_folder()
-
-    xo_sets = [ x.replace('lo.', '')
-                 .replace('mi.', '')
-                 .replace('hi.', '')
-                 .replace('sw.', '') for x in xo_filters ]
-
-    return list(set(xo_sets))
-
-
 def get_loudspeaker_ways():
     """ Read loudspeaker ways as per the outputs configuration
     """
@@ -358,57 +475,6 @@ def get_loudspeaker_ways():
             lws.append('sw')
 
     return list(set(lws))
-
-
-def get_DRC_SETS_from_loudspeaker_folder():
-    """ This reads camilladsp_lspk.yml
-    """
-    result = {}
-
-    lspk_cfg_path = f'{LSPKFOLDER}/camilladsp_lspk.yml'
-
-    try:
-
-        with open(lspk_cfg_path, 'r') as f:
-            lspk_cfg = yaml.safe_load( f.read() )
-            result = lspk_cfg.get('iir_eq', {}).get('drc', {})
-
-    except:
-        print(f'(get_DRC_SETS_from_loudspeaker_folder) cannot read {lspk_cfg_path}')
-
-    return result
-
-
-# PENDING ADAPTATION WITH FS FOLDER
-def get_drc_fir_sets_from_loudspeaker_folder():
-    """ looks for drc.Channel.DrcId.pcm files inside the loudspeaker folder
-    """
-    drc_files = []
-    drc_sets_candidate  = {}
-    drc_sets = []
-
-    try:
-        files = os.listdir(f'{LSPKFOLDER}')
-        files = [x for x in files if os.path.isfile(f'{LSPKFOLDER}/{x}') ]
-        drc_files = [x for x in files if x.startswith('drc.') ]
-    except:
-        pass
-
-    for f in drc_files:
-        chID  = f.split('.')[1]
-        drcID = '.'.join(f.split('.')[2:]).replace('.pcm', '')
-        if not drcID in drc_sets_candidate:
-            drc_sets_candidate[drcID] = [chID]
-        else:
-            if not chID in drc_sets_candidate[drcID]:
-                drc_sets_candidate[drcID].append(chID)
-
-    for k in drc_sets_candidate:
-        channels = drc_sets_candidate[k]
-        if sorted(channels) == ['L', 'R']:
-            drc_sets.append(k)
-
-    return sorted(drc_sets)
 
 
 def get_target_sets(fs=44100):
@@ -433,29 +499,46 @@ def get_target_sets(fs=44100):
     return sorted(sets)
 
 
-def process_is_running(pattern):
-    """ check for a system process to be running by a given pattern
-        (bool)
+def get_pid_cmdline(process_name=''):
+    """ gets all the pid and cmdline of the given process name
     """
-    try:
-        # do NOT use shell=True because pgrep ...  will appear it self.
-        plist = sp.check_output(['pgrep', '-fla', pattern]).decode().split('\n')
-    except:
-        return False
-    for p in plist:
-        if pattern in p:
-            return True
+
+    pids = []
+
+    for proc in psutil.process_iter():
+        try:
+            if proc.name() == process_name:
+                pids.append( {'pid': proc.pid, 'cmdline': proc.cmdline() } )
+        except:
+            pass
+
+    return pids
+
+
+def process_is_running(pattern):
+    """ psutil is faster than pgrep in a shell
+    """
+    for proc in psutil.process_iter(attrs=["pid", "cmdline"]):
+        try:
+            cmdline_list = proc.info["cmdline"]
+            if not cmdline_list:
+                continue
+            cmdline = " ".join(cmdline_list)
+            if pattern in cmdline:
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
     return False
 
 
-def wait4server(timeout=30):
+def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
 
     period = .5
     tries  = int(timeout / period)
 
     while tries:
         try:
-            sp.check_output(f'echo aux hello | nc localhost {CONFIG["paudio_port"]}', shell=True)
+            sp.check_output(f'echo "hello" | nc localhost {port}', shell=True)
             break
         except:
             tries -= 1
@@ -680,20 +763,20 @@ def restore_playback_device_settings():
             dev = ''
 
         if dev:
-            print("(start.py) Restoring previous Default Playback Device")
+            print("(restore_playback_device_settings) Restoring previous Default Playback Device")
             sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
         else:
-            print("(start.py) Cannot read `.previous_default_device`")
+            print("(restore_playback_device_settings) Cannot read `.previous_default_device`")
 
         # Restore volume
         try:
             with open(f'{MAINFOLDER}/.previous_default_device_volume', 'r') as f:
                 vol = f.read().strip()
         except:
-            vol = ''
+            vol = '50'
 
         if vol:
-            print("(start.py) Restoring previous Playback Device Volume")
+            print("(restore_playback_device_settings) Restoring previous Playback Device Volume")
             sp.call(f"osascript -e 'set volume output volume '{vol}", shell=True)
         else:
             print(f"{Fmt.GRAY}(start.py) Cannot read `.previous_default_device_volume`{Fmt.END}")
@@ -788,4 +871,84 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
 
         except Exception as e:
             print(f'(common) ERROR: {e}, you may want run it for a remote source?')
+
+
+def time_sec2mmss(s, mode=':'):
+    """ Format a given float (seconds)
+
+        to      "MM:SS"
+        or to   "MMmSSs"    if mode != ':'
+
+        (string)
+    """
+
+    if type(s) != float or type(s) != int:
+        try:
+            s = float(s)
+        except:
+            s = 0.0
+
+    m = int(s // 60)
+    s = int(s % 60)
+
+    if mode == ':':
+        return f'{str(m).rjust(2,"0")}:{str(s).rjust(2,"0")}'
+
+    else:
+        return f'{str(m).rjust(2,"0")}m{str(s).rjust(2,"0")}s'
+
+
+def time_sec2hhmmss(x):
+    """ Format a given float (seconds) to "hh:mm:ss"
+        (string)
+    """
+
+    if type(x) != float or type(x) != int:
+        try:
+            x = float(x)
+        except:
+            x = 0.0
+
+    h = int( x / 3600 )         # hours
+    x = int( round(x % 3600) )  # updating x to reamining seconds
+    m = int( x / 60 )           # minutes from the new x
+    s = int( round(x % 60) )    # and seconds
+    return f'{h:0>2}:{m:0>2}:{s:0>2}'
+
+
+def time_msec2mmsscc(msec=0, string=''):
+    """ Convert milliseconds <--> string MM:SS.CC
+
+        Give me only one parameter: number or string
+    """
+
+    if msec and string:
+        return 'Error converting msec'
+
+
+    elif msec:
+
+        if type(msec) != float or type(msec) != int:
+            try:
+                msec = float(msec)
+            except:
+                msec = 0.0
+
+        sec  = msec / 1e3
+        mm   = f'{sec // 60:.0f}'.zfill(2)
+        ss   = f'{sec %  60:.2f}'.zfill(5)
+
+        return f'{mm}:{ss}'
+
+
+    elif string:
+
+        mm   = int( string.split(':')[0] )
+        sscc =      string.split(':')[1]
+        ss   = int( sscc.split('.')[0]   )
+        cc   = int( sscc.split('.')[1]   )
+
+        millisec = mm * 60 * 1000 + ss * 1000 + cc * 10
+
+        return millisec
 

@@ -1,50 +1,38 @@
-#
-# This is the simplest config :-)
-# Please see doc/ and doc/config_examples for more features
-#
+paudio_addr:    0.0.0.0
+paudio_port:    9990
 
-# control server
-paudio_addr:    localhost
-paudio_port:    9980
+samplerate: 48000
 
-# Samplerate
-samplerate:         48000
-
-# Audio Backend
-audio_backend:      jack
-
-# Use if no Jack backend, otherwise set dither on Jack parameters
-dither_bits:
-
-# Special config for the JACK audio backend
+# JACK
 jack:
 
     device:         hw:UDJ6,0
     period:         1024
     nperiods:       2
-    dither_bits:    16
-
+    dither:         true
     sources:
+        analog:
+            jport:  system
 
-#coreaudio:
-#    devices:
-#        capture:
-#            channels: 2
-#            device: BlackHole 2ch
-#            format: FLOAT32LE
-#        playback:
-#            channels: 6
-#            device: MOTU UltraLite-mk5
-#            exclusive: false
-#            format: S24LE
-#        chunksize: 1024
+        remoteSalon:
+            remote_addr:        192.168.1.57
+            remote_delay:       0
+            remote_track_level: true
+
+    # Optional config for zita-njbridge based multiroom remote sources
+    zita_udp_base:          65000
+    zita_buffer_ms:         150
 
 
 loudspeaker: SeasFlat
 
-
-ref_level_gain_offset:  0.0
+ref_level_gain_offset:  -3.0
 
 
 plugins:
+
     - mpd.py
+
+    # With PipeWire, you need to restart Spotify to get it to work through the
+    # new instance of PipeWire that was triggered by Jack starting up in pAudio.
+    - spotify_desktop.py

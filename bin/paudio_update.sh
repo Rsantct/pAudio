@@ -37,8 +37,26 @@ cp -r ~/tmp/pAudio-$BRANCH/pAudio  ~/
 cp    ~/tmp/pAudio-$BRANCH/bin/*   ~/bin/
 chmod +x ~/bin/paudio*
 chmod +x ~/pAudio/start*
+chmod +x ~/pAudio/code/share/plugins/*
 
 # Restore config
 cp ~/pAudio/config.yml.BAK ~/pAudio/config.yml 1>/dev/null 2>&1
 
+# Stop any audio backend
+pkill -f "server.py paudio "        1>/dev/null 2>&1
+pkill -f "camilladsp"               1>/dev/null 2>&1
+
+echo
+
+if [[ $(uname) == "Darwin" ]]; then
+
+    read -p "Do you want to add [pAudio] to your macOS session? (y/N): " ans
+    if [[ $ans == *"y"*  || $ans == *"Y"* ]];then
+        cp pAudio/code/share/macOS/com.pAudio.* ~/Library/LaunchAgents/
+        echo "pAudio plist files copied to "$HOME"/Library/LaunchAgents/"
+    fi
+
+fi
+
+echo
 echo "Done, bye!"

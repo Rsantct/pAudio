@@ -31,7 +31,7 @@ from    common  import *
 # import Jack stuff ONLY with LINUX
 if sys.platform == 'linux' and CONFIG.get('jack'):
     import  jack_mod
-    from    sources import SOURCES
+    from    jack_sources import SOURCES
 
 
 def get_srv_addr_port():
@@ -53,10 +53,10 @@ def prepare_jack_stuff():
     """ execute JACK with the convenient loops
     """
 
-    jloops = ['pre_in_loop']
+    jloops_list = ['pre_in_loop']
 
     if any('mpd' in p for p in CONFIG["plugins"]):
-        jloops.append('mpd_loop')
+        jloops_list.append('mpd_loop')
 
 
     fs       = CONFIG["samplerate"]
@@ -67,10 +67,19 @@ def prepare_jack_stuff():
 
     if not jack_mod.run_jackd(  alsa_dev=alsa_dev,
                                 fs=fs, period=period, nperiods=nperiods,
-                                jloop_list=jloops, dither=dither):
+                                jloops_list=jloops_list, dither=dither):
 
         print(f'{Fmt.BOLD}(start) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
+
+    # **PipeWire** needs to detect this new Jack and connect to it
+    if process_is_running('pipewire'):
+        try:
+            sp.call( 'systemctl --user restart pipewire', shell=True)
+            print(f'{Fmt.BLUE}(start) Reloading PipeWire for jack-sink ...{Fmt.END}')
+
+        except Exception as e:
+            print(f'{Fmt.BOLD}(start) Problems restarting PipeWire: {str(e)}{Fmt.END}')
 
 
 def rewire_dsp():
@@ -151,7 +160,7 @@ def run_plugins(mode='start'):
             sp.Popen(f'{PLUGINSFOLDER}/{plugin} stop', shell=True)
 
 
-def load_loudness_monitor_daemon(mode='start'):
+def manage_loudness_monitor_daemon(mode='start'):
 
     if mode == 'stop':
 
@@ -161,7 +170,7 @@ def load_loudness_monitor_daemon(mode='start'):
         print(f'{Fmt.GRAY}(start) Stopping loudness_monitor.py{Fmt.END}')
 
         tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py stop'
-        sp.Popen(tmp, shell=True)
+        sp.call(tmp, shell=True)
 
     else:
         print(f'{Fmt.GRAY}(start) Running loudness_monitor.py in background ...{Fmt.END}')
@@ -257,25 +266,28 @@ def stop_zita_link():
 
 def stop():
 
-    print('(start) Stopping pAudio...')
+    print(f'{Fmt.GRAY}{Fmt.BOLD}(start) Stopping pAudio{Fmt.END}')
 
     # The loudness_monitor daemon
-    load_loudness_monitor_daemon(mode='stop')
+    manage_loudness_monitor_daemon(mode='stop')
 
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
 
-    # CamillaDSP
-    sp.call('pkill -KILL camilladsp', shell=True)
+    if not only_server:
 
-    # Jack audio server (jloops will also die)
-    if sys.platform == 'linux' and CONFIG.get('jack'):
+        # CamillaDSP
+        sp.call('pkill -KILL camilladsp', shell=True)
 
-        # Stop Zita_Link
-        stop_zita_link()
+        # Jack audio server (jloops will also die)
+        if sys.platform == 'linux' and CONFIG.get('jack'):
 
-        # Stop Jack
-        sp.call('pkill -KILL jackd', shell=True)
+            # Stop Zita_Link
+            stop_zita_link()
+            sleep(.25)
+
+            # Stop Jack
+            sp.call('pkill -KILL jackd', shell=True)
 
     # server.py (be careful with trailing space in command line below)
     sp.call('pkill -KILL -f "server.py paudio "', shell=True)
@@ -297,15 +309,6 @@ def start():
     else:
         print(f'{Fmt.GREEN}(start) paudio_ctrl server is already running.{Fmt.END}')
 
-    # Jack audio server
-    if sys.platform == 'linux' and CONFIG.get('jack'):
-
-        # Jack
-        prepare_jack_stuff()
-
-        # remote sources
-        start_zita_link()
-
     # Node.js control web page
     if not process_is_running('www-server'):
         node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
@@ -316,8 +319,27 @@ def start():
         print(f'{Fmt.GREEN}(start) pAudio web server is already running.{Fmt.END}')
 
 
-    # Run the pAudio main server to listen for commands
-    # This INCLUDES running CamillaDSP
+    if not only_server:
+        # Jack audio server
+        if sys.platform == 'linux' and CONFIG.get('jack'):
+
+            # Jack
+            prepare_jack_stuff()
+
+            # remote sources
+            start_zita_link()
+
+
+    # Special flag file for 'paudio.py'.
+    with open(f'{MAINFOLDER}/.paudio_flags', 'w') as f:
+        if only_server:
+            paudio_flags = {'run_camilladsp': False}
+        else:
+            paudio_flags = {'run_camilladsp': True}
+        f.write( json.dumps(paudio_flags) )
+
+    # Run the pAudio main server 'paudio.py' to listen for commands
+    # This INCLUDES running CamillaDSP with a proper configuration.
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {ADDR} {PORT}'
 
     if verbose:
@@ -334,22 +356,24 @@ def start():
         return
 
 
-    # Rewire CamillaDSP ONLY with JACK
-    if sys.platform == 'linux' and CONFIG.get('jack'):
-        rewire_dsp()
+    if not only_server:
 
+        # Rewire CamillaDSP ONLY with JACK
+        if sys.platform == 'linux' and CONFIG.get('jack'):
+            rewire_dsp()
 
-    # The loudness_monitor daemon
-    load_loudness_monitor_daemon()
+        # The loudness_monitor daemon
+        manage_loudness_monitor_daemon()
 
-    # Plugins (stand-alone processes)
-    run_plugins()
+        # Plugins (stand-alone processes)
+        run_plugins()
 
 
 if __name__ == "__main__":
 
-    verbose = False
-    mode = ''
+    verbose     = False
+    only_server = False
+    mode        = ''
 
     for opc in sys.argv[1:]:
 
@@ -366,20 +390,30 @@ if __name__ == "__main__":
             verbose = True
 
 
+        elif '-s' in opc:
+            only_server = True
+
+
     match mode:
 
         case 'start':
             stop()
+            print(f'{Fmt.GRAY}{Fmt.BOLD}wait a bit to start pAudio... .. .{Fmt.END}')
+            sleep(3)
+            if sys.platform == 'darwin':
+                restore_playback_device_settings()
             start()
 
         case 'stop':
             stop()
-            restore_playback_device_settings()
+            if sys.platform == 'darwin':
+                restore_playback_device_settings()
 
         case 'toggle':
             if process_is_running(pattern='pAudio/code'):
                 stop()
-                restore_playback_device_settings()
+                if sys.platform == 'darwin':
+                    restore_playback_device_settings()
             else:
                 start()
 

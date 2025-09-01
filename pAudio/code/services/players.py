@@ -5,45 +5,100 @@
 
 """
     Players subsystem.
-    A DUMMY MODULE BY NOW
 """
 
+import time
+import threading
 import os
 import sys
+
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
+sys.path.append(os.path.join(os.path.dirname(__file__), "players_mod"))
 
 from    common      import *
 
+if 'linux' in sys.platform:
+    import linux
 
-METATEMPLATE = {
-                'player':       '',
-                'time_pos':     '-',
-                'time_tot':     '-',
-                'bitrate':      '-',
-                'artist':       '-',
-                'album':        '-',
-                'title':        '-',
-                'track_num':    '-',
-                'tracks_tot':   '-' }
+elif 'darwin' in sys.platform:
+    import macos
+    macos.PLAYERS_OF_INTEREST=['Spotify', 'Music']
 
 
-def meta2disk(metadata):
-    with open(PLAYER_META_PATH, 'w') as f:
-        f.write( json.dumps(metadata) )
+def _init():
+
+    save_json_file(METATEMPLATE, PLAYER_META_PATH)
+
+    # MAIN LOOP to save player info to file
+    if 'linux' in sys.platform:
+
+        linux.PLAYER = 'Spotify'
+
+        job = threading.Thread( target=linux.loop_save_player_info )
+
+    elif 'darwin' in sys.platform:
+
+        job = threading.Thread( target=macos.loop_save_player_info )
+
+    print(f'{Fmt.BLUE}(players) Listening to playback status ...{Fmt.END}')
+    job.start()
 
 
-def init():
-    meta2disk(METATEMPLATE)
+def get_all_info():
+
+    m = read_json_file(PLAYER_META_PATH)
+
+    res = {
+        'player':           m.get('player', ''),
+        'state':            m.get('state'),
+        'random_mode':      'n/a',
+        'discid':           '',
+        'metadata':         m
+    }
+
+    return res
+
+
+def playback_change(cmd):
+
+    player = get_all_info().get('player', '')
+
+    if not player or player.lower == 'none':
+        return 'n/a'
+
+
+    if 'linux' in sys.platform:
+
+        return linux.playback_change(player, cmd)
+
+    elif 'darwin' in sys.platform:
+
+        if cmd == 'pause':
+            cmd = 'playpause'
+
+        return macos.playback_change(player, cmd)
+
+    else:
+        return 'NAK'
 
 
 # Entry function
-def do(cmd, args, add):
+def do(cmd, args):
 
-    result  = 'void'
+    match cmd:
 
-    return result
+        case 'get_all_info':
+            resu = get_all_info()
+
+        case 'play' | 'pause' | 'stop':
+            resu = playback_change(cmd)
+
+        case _:
+            resu ='NAK'
+
+    return resu
 
 
-init()
+_init()

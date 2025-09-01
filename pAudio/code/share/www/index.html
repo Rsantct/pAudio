@@ -46,9 +46,14 @@
     <div>
     <table id="main_title" >
         <tr>
-            <td id="main_lside" style="display:none">
-                <button title="(!) pAudio RESTART" style="font-size:0.7em"
-                        onclick="ck_peaudiosys_restart()"> &#128585;
+            <td id="main_lside">
+                <button id="but_restart" title="(!) pAudio RESTART"
+                        style="font-size:0.7em; width:32px; display:none"
+                        onclick="ck_paudio_restart()"> &#128585;
+                </button>
+                <button id="but_help" title="HELP"
+                        style="font-size:0.7em; width:32px"
+                        onclick="ck_help()"> &#9432;
                 </button>
             </td>
             <td id="main_cside">
@@ -67,7 +72,7 @@
             <!-- ON OFF -->
             <td id="OnOff"     rowspan="2">
                 <button type="button" id="OnOffButton"
-                        title="Amplifier ON/OFF" onmousedown="omd_onoff('toggle')">-</button>
+                        title="ON/OFF" onmousedown="omd_onoff('toggle')">-</button>
             </td>
 
             <!-- LEVEL display -->
@@ -204,7 +209,7 @@
       <tr>
         <td id="LU_meter_reset">
             <button type="button" id="buttonLoudMonReset" title="restart LU monitor measurement"
-                    onmousedown="control_cmd('aux reset_loudness_monitor')">
+                    onmousedown="control_cmd('ctrl reset_loudness_monitor')">
                     reset
             </button>
         </td>
@@ -222,7 +227,7 @@
 
 
     <!-- ADVANCED CONTROLS (hidden by default, can be displayed through by a button) -->
-    <div id="div_advanced_controls" style="display:block; font-size:0.75em;">
+    <div id="div_advanced_controls" style="display:none; font-size:0.75em;">
 
       <table>
         <tr>
@@ -281,7 +286,7 @@
     </div>
 
     <!-- PLAYING INFO -->
-    <div style="display:none;">
+    <div style="display:block;">
       <table id="player_info" >
         <tr>
             <td id="bitrate"></td>
@@ -299,7 +304,7 @@
     </div>
 
     <!-- PLAYBACK CONTROL and MACROS TOGGLE-->
-    <div style="display:none;">
+    <div style="display:block;">
       <table id="playback_control">
         <tr> <!-- row1 -->
             <td id="playback_control_11">

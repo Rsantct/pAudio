@@ -3,8 +3,8 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
-""" An auxiliary service to remotely restart pAudio,
-    and switch on/off the system.
+""" A stand alone auxiliary service to remotely restart pAudio,
+    and switch on/off tasks.
 
     This module is loaded by 'server.py', usually at pAudio's PORT + 1
 """
@@ -27,46 +27,182 @@ if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
 print ( f"{Fmt.BLUE}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
+def init():
+    """ The .aux_info file can be used by others, for example
+        preamp.py will alert there for eq_graph changes
+    """
+
+    global AUXINFO, ONOFF_MODE
+
+    ONOFF_MODE = 'pAudio'
+
+    if CONFIG.get('web_config'):
+        if 'amp' in CONFIG["web_config"].get('onoff', ''):
+            ONOFF_MODE = 'amplifier'
+
+
+    AUXINFO = {
+        "loudness_monitor": read_json_file(LDMON_PATH),
+        "last_macro":       "",
+        "warning":          "",
+        "new_eq_graph":     False
+    }
+
+    save_aux_info()
+
+
+def save_aux_info():
+    """ this must be threaded
+    """
+
+    def dosave():
+        save_json_file(AUXINFO, AUXINFO_PATH)
+
+    # Dynamic updates
+    if ONOFF_MODE == 'amplifier':
+
+        AUXINFO['onoff'] = amp_switch('state')
+
+    elif ONOFF_MODE == 'pAudio':
+
+        if process_is_running('paudio '):
+            AUXINFO['onoff'] = 'on'
+        else:
+            AUXINFO['onoff'] = 'off'
+
+    else:
+        AUXINFO['onoff'] = '-'
+
+
+    job = threading.Thread(target=dosave,)
+    job.start()
+
+
+def zita_j2n(args):
+    """ This internal function is always issued from a multiroom receiver.
+
+        Feeds the preamp audio to a zita-j2n port pointing to the receiver.
+
+        args: a json tuple string "(dest, udpport, do_stop)"
+    """
+
+    dest, udpport, do_stop = json.loads(args)
+
+    # BAD ADDRESS
+    if not is_IP(dest):
+        return 'bad address'
+
+    zitajname = f'zita_j2n_{ dest.split(".")[-1] }'
+
+    # STOP mode
+    if do_stop == 'stop':
+        zitapattern  = f'zita-j2n --jname {zitajname}'
+        sp.Popen( ['pkill', '-KILL', '-f',  zitapattern] )
+        return f'killing {zitajname}'
+
+    # NORMAL mode
+    jcli = jack.Client(name='zitatmp', no_start_server=True)
+
+    jports = jcli.get_ports()
+
+    result = ''
+
+    if not [x for x in jports if zitajname in x.name]:
+        zitacmd     = f'zita-j2n --jname {zitajname} {dest} {udpport}'
+        with open('/dev/null', 'w') as fnull:
+            sp.Popen( zitacmd.split(), stdout=fnull, stderr=fnull )
+
+    wait4ports(zitajname, timeout=3)
+
+    try:
+        jcli.connect( 'pre_in_loop:output_1', f'{zitajname}:in_1' )
+        jcli.connect( 'pre_in_loop:output_2', f'{zitajname}:in_2' )
+        result = 'done'
+
+    except Exception as e:
+        result = str(e)
+
+    jcli.close()
+
+    return result
+
+
+def manage_lu_monitor(commandphrase):
+    """ Manages the loudness_monitor.py daemon through by its fifo
+    """
+    #   As per LDCTRL_PATH is a namedpipe (FIFO), it is needed that
+    #   'loudness_monitor.py' was alive in order to release any write to it.
+    #   If not alive, any f.write() to LDCTRL_PATH will HANG UP
+    #   :-(
+    if not process_is_running('loudness_monitor.py'):
+        return 'ERROR loudness_monitor.py NOT running'
+
+    try:
+        with open(LDCTRL_PATH, 'w') as f:
+            f.write(commandphrase)
+        return 'ordered'
+    except Exception as e:
+        return f'ERROR writing FIFO `{LDCTRL_PATH}`: {str(e)}'
+
+
 def restart_paudio(mode):
 
-    if not mode in ('start', 'stop'):
-        return 'must be restart_paudio  start|stop'
-
-    sp.Popen(f'{MAINFOLDER}/start.py {mode}', shell=True)
-
-    return 'ordered'
-
-
-def manage_onoff(mode):
-
-    if not mode in ('start', 'stop', 'toggle', 'state'):
-        return 'Needs `start|stop|toggle`'
+    if not mode in ('start', 'restart', 'stop', 'state'):
+        return 'Needs `start| stop | state`'
 
     if mode == 'state':
-        return process_is_running('camilladsp')
-    else:
-        sp.Popen(f'{MAINFOLDER}/start.py {mode}', shell=True)
-        return 'ordered'
+        return process_is_running('server.py paudio ')
+
+    elif 'start' in mode:
+        sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
+        return 'Please wait a minute ...'
+
+    elif mode == 'stop':
+        sp.Popen(f'{UHOME}/bin/paudio_restart.sh stop',  shell=True)
+        return 'Please wait a few ...'
 
 
 # Interface function for this module
-def do( cmdphrase):
+def do( cmd_phrase):
 
     result = 'bad command'
 
-    try:
-        cmd = cmdphrase.split()[0]
-        arg = cmdphrase.split()[-1]
-    except:
-        cmd = arg = ''
+    prefix, cmd, args, _ = read_cmd_phrase(cmd_phrase)
+
+    if prefix != 'ctrl':
+        return result
 
     match cmd:
 
         case 'restart_paudio':
-            result = restart_paudio( arg )
+            result = restart_paudio( args )
 
         case 'amp_switch':
-            result = manage_onoff( arg )
+            result = amp_switch( args )
+
+        case 'get_web_config':
+            result = get_web_config()
+
+        case 'hello':
+            result = 'ACK'
+
+        case 'get_lu_monitor':
+            result = read_json_file(LDMON_PATH)
+
+        case 'aux_info':
+            AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
+            save_aux_info()
+            result = AUXINFO
+
+        case 'reset_loudness_monitor' | 'reset_lu_monitor':
+            result = manage_lu_monitor('reset')
+
+        case 'set_loudness_monitor_scope' | 'set_lu_monitor_scope':
+            args = 'source' # FORCED to source
+            result = manage_lu_monitor(f'scope={args}')
+
+        case 'zita_j2n':
+            result = zita_j2n(args)
 
 
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
@@ -78,3 +214,6 @@ def do( cmdphrase):
         result = json.dumps(result)
 
     return result
+
+
+init()

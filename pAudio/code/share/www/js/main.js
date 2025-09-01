@@ -17,8 +17,10 @@
 const URL_PREFIX = '/';
 const AUTO_UPDATE_INTERVAL = 1000;      // Auto-update interval millisec
 
-const USER_ALERT = `
-The volume MUST be controlled here. [LC] Loudness Contour compensation allows a tonal balanced low volume listenting experience.
+const HELP_EN = `
+The volume MUST be controlled here.
+
+[LC] Loudness Contour compensation allows a tonal balanced low volume listenting experience.
 
 [0.0] dB means the normal "loud SPL" for your listening position, say around 75~80 dBSPL.
 
@@ -37,12 +39,60 @@ Some LU_offset settings:
 - 15 dB: ultra compressed music, usually in pop
 `
 
+const HELP_CAT = `
+El volum HA DE ser controlat aquí.
+
+[LC] 'Loudness Contour'. La compensació de contorn de sonoritat permet una experiència d'escolta de baix volum amb un equilibri tonal.
+
+[0.0] dB significa el "SPL fort" normal per a la vostra posició d'escolta, per exemple, al voltant de 75~80 dBSPL.
+
+COMPROVEU que el vostre DAC i AMPLIFICADOR funcionin a "volum complet" per assolir el vostre "SPL fort" objectiu.
+
+Si el vostre programa de música és alt (la majoria de CD ho són), utilitzeu el control lliscant LU_offset per compensar.
+
+LU_monitor indica aproximadament quant volum d'excés té el vostre programa de música.
+
+Alguns paràmetres de LU_offset:
+
+- 0 dB: enregistraments molt poc freqüents. El segell BIS Records és una bona referència.
+- 6 dB: un bon CD masteritzat
+- 9 dB: la majoria de CD, fins i tot en música clàssica
+- 12 dB: la majoria de CD de música pop
+- 15 dB: música ultracomprimida, normalment en música pop
+`
+
+const HELP_SP = `
+El volumen DEBE controlarse aquí.
+
+La compensación del contorno de sonoridad
+
+[LC] 'Loudness Contour' permite una experiencia auditiva a bajo volumen con equilibrio tonal.
+
+[0.0] dB significa el "SPL alto" normal para su posición de escucha, aproximadamente entre 75 y 80 dB SPL.
+
+COMPRUEBE que su DAC y amplificador funcionen a "máximo volumen" para alcanzar el "SPL alto" objetivo.
+
+Si su programa de música tiene un volumen alto (la mayoría de los CD lo tienen), utilice el control deslizante LU_offset para compensar.
+
+LU_monitor indica aproximadamente el exceso de volumen de su programa de música.
+
+Algunos ajustes de LU_offset:
+
+- 0 dB: grabaciones muy poco frecuentes. El sello BIS Records es una buena referencia.
+- 6 dB: un CD masterizado de calidad
+- 9 dB: la mayoría de los CD, incluso de música clásica
+- 12 dB: la mayoría de los CD de música pop
+- 15 dB: música ultracomprimida, generalmente de música pop
+`
+
+
+
 //////// GLOBAL VARIABLES ////////
 var state               = {};       // The preamp-convolver state
 
 var player_info         = {};
 
-var aux_info            = { 'amp': 'n/a',
+var aux_info            = { 'onoff': '',
                             'loudness_monitor': {'LU_I': 0, 'LU_M': 0, 'scope': 'track' },
                             'last_macro': '',
                             'warning': ''
@@ -55,7 +105,7 @@ var web_config          = { 'main_selector':      'sources',
                             'user_macros':        []
 };
 
-var drc_sets            = JSON.parse( control_cmd( 'get_drc_sets' ) );
+var drc_sets            = get_drc_sets();
 
 var mFnames             = web_config.user_macros; // Macro file names
 
@@ -184,9 +234,6 @@ function fill_in_page_statics(){
             option.text = drc_sets[i];
             mySel.add(option);
         }
-        var option = document.createElement("option");
-        option.text = 'none';
-        mySel.add(option);
     }
 
     function fill_in_target_selector() {
@@ -261,11 +308,6 @@ function manage_main_cside(){
 
 function init(){
 
-    function init_alert(){
-        window.alert(USER_ALERT)
-    }
-
-
     function download_drc_graphs(){
         if (web_config.show_graphs==false){
             return;
@@ -287,14 +329,22 @@ function init(){
 
     function get_web_config(){
         try{
-            web_config      = JSON.parse( control_cmd('aux get_web_config') );
+            web_config      = JSON.parse( control_cmd('ctrl get_web_config') );
             mFnames         = web_config.user_macros;
-            if (web_config.show_graphs==false){
-                document.getElementById( "button_toggleEQgraphs").style.display = "none";
-            }
         }catch(e){
-            console.log('response error to \'aux get_web_config\'', e.message);
+            console.log('response error to \'ctrl get_web_config\'', e.message);
         }
+
+        if (web_config.show_graphs==false){
+            document.getElementById("button_toggleEQgraphs").style.display = "none";
+        }
+
+        if ( web_config["onoff"].includes('amp') ){
+            document.getElementById("OnOffButton").title = "Amplifier ON/OFF";
+        }else if ( web_config["onoff"].includes('udio') ){
+            document.getElementById("OnOffButton").title = "pAudio ON/OFF";
+        }
+
     }
 
 
@@ -396,10 +446,6 @@ function init(){
 
     // SCHEDULES THE PAGE_UPDATE (only runtime variable items)
     setInterval( page_update, AUTO_UPDATE_INTERVAL );
-
-    // Alert user
-    setTimeout(init_alert, 3000)
-
 }
 
 
@@ -437,21 +483,23 @@ function page_update() {
 
         function player_controls_update(playerState) {
 
-            if        ( playerState == 'stop' ) {
+            if        ( playerState.includes('stop') ) {
                 document.getElementById("buttonStop").style.background  = "rgb(185, 185, 185)";
                 document.getElementById("buttonStop").style.color       = "white";
                 document.getElementById("buttonPause").style.background = "rgb(100, 100, 100)";
                 document.getElementById("buttonPause").style.color      = "lightgray";
                 document.getElementById("buttonPlay").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonPlay").style.color       = "lightgray";
-            } else if ( playerState == 'pause' ){
+
+            } else if ( playerState.includes('pause') ){
                 document.getElementById("buttonStop").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonStop").style.color       = "lightgray";
                 document.getElementById("buttonPause").style.background = "rgb(185, 185, 185)";
                 document.getElementById("buttonPause").style.color      = "white";
                 document.getElementById("buttonPlay").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonPlay").style.color       = "lightgray";
-            } else if ( playerState == 'play' ) {
+
+            } else if ( playerState.includes('play') ) {
                 document.getElementById("buttonStop").style.background  = "rgb(100, 100, 100)";
                 document.getElementById("buttonStop").style.color       = "lightgray";
                 document.getElementById("buttonPause").style.background = "rgb(100, 100, 100)";
@@ -533,7 +581,6 @@ function page_update() {
         }
 
 
-
         player_controls_update(     player_info.state       );
         player_metadata_update(     player_info.metadata    );
         player_random_mode_update(  player_info.random_mode );
@@ -580,30 +627,27 @@ function page_update() {
     }
 
 
-    function aux_info_get(){
-        try{
-            aux_info = JSON.parse( control_cmd('aux info') );
-        }catch(e){
-            console.log('response error to \'aux info\'', e.message);
-            // Backup method to retrieve the amplifier state:
-            try{
-                aux_info.amp = control_cmd('amp_switch state');
-            }catch(e){
-                server_available = false;
-            }
-        }
-    }
-
-
     function aux_info_refresh(){
-        if ( aux_info.amp == 'off' || aux_info.amp == 'on' ) {
-            document.getElementById("OnOffButton").innerText = aux_info.amp.toUpperCase();
+
+        try{
+            aux_info = JSON.parse( control_cmd('ctrl aux_info') );
+        }catch(e){
+            console.log('response error to \'ctrl aux_info\'', e.message);
+            aux_info.onoff = '--';
+            server_available = false;
+        }
+
+        if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
+            document.getElementById("OnOffButton").innerText = aux_info.onoff.toUpperCase();
             document.getElementById("OnOffButton").style.display = 'block';
+
         }else{
             document.getElementById("OnOffButton").style.display = 'none';
         }
+
         if ( ! aux_info.last_macro ){
             clear_macro_buttons_highlight();
+
         }else{
             const x = aux_info.last_macro;
             const mName = x.slice(x.indexOf('_') + 1, x.length);
@@ -753,26 +797,7 @@ function page_update() {
     }
 
 
-    function show_peq_info() {
-
-        if ( aux_info.peq_set != 'none'){
-
-            document.getElementById("buttonPEQ").innerHTML = "PEQ: " + aux_info.peq_set;
-
-            if (allAreTrue(aux_info.peq_bypassed)){
-                document.getElementById("buttonPEQ").style.color = "grey";
-            }else{
-                document.getElementById("buttonPEQ").style.color = "white";
-            }
-
-        }else {
-            document.getElementById("buttonPEQ").style.color = "grey";
-            document.getElementById("buttonPEQ").innerHTML = "(no peq)";
-        }
-    }
-
     //// AUX STUFF
-    aux_info_get();
     aux_info_refresh();
 
     // PREAMP STUFF
@@ -795,19 +820,15 @@ function page_update() {
 
     state_refresh();
 
-
     //// PLAYER STUFF
-    //player_get();
-    //player_refresh();
+    player_get();
+    player_refresh();
     //
     LU_refresh();
     //
     graphs_update();
     //
     manage_main_cside();
-    //
-    //show_peq_info();
-
 }
 
 
@@ -844,7 +865,7 @@ function oc_main_select(itemName){
         // alternative behavior managing macros
         }else{
             mName = find_macroName(itemName);
-            control_cmd( 'aux run_macro ' + mName );
+            control_cmd( 'ctrl run_macro ' + mName );
         }
     }
     setTimeout( tmp, 200, itemName );  // 'itemName' is given as argument for 'tmp'
@@ -877,7 +898,7 @@ function oc_target_select(xoName){
 
 
 function oc_LU_scope_select(scope){
-    control_cmd('aux set_loudness_monitor_scope ' + scope);
+    control_cmd('ctrl set_loudness_monitor_scope ' + scope);
     clear_highlighteds();
     document.getElementById('LUscopeSelector').style.color = "white";
 }
@@ -1035,24 +1056,85 @@ function oc_play_track_number(N) {
 function ck_play_url() {
     var url = prompt('Enter url to play:');
     if ( url.slice(0,5) == 'http:' || url.slice(0,6) == 'https:' ) {
-        control_cmd( 'aux play_url ' + url );
+        control_cmd( 'ctrl play_url ' + url );
     }
 }
 
 
 //////// HANDLERS: AUX 'onmousedown' 'onclick' 'oninput' ////////
 
-function ck_peaudiosys_restart() {
-    control_cmd('restart_peaudiosys');
+function ck_help() {
+
+    let lang = web_config["help_lang"]
+    if (!lang){ lang = 'en' }
+
+    let msg = HELP_EN;
+
+    if ( lang.toLowerCase().includes('sp') ){
+        msg = HELP_SP
+    }
+    if ( lang.toLowerCase().includes('cat') ){
+        msg = HELP_CAT
+    }
+
+    window.alert(msg);
+}
+
+
+function ck_paudio_restart() {
+
+    // RESTART mode
+    if (web_config["monkey_button"].includes('start')){
+
+        if ( confirm('Are you sure to RESTART pAudio?') ){
+
+            ans = control_cmd('ctrl restart_paudio restart');
+            alert(ans);
+            ck_display_advanced('off');
+            page_update();
+        }
+
+        return;
+    }
+
+    // START / STOP mode (toggle)
+    let msg = 'Are you sure to START pAudio?';
+    let mode = 'start'
+
+    const curr = control_cmd('ctrl restart_paudio state');
+
+    if (curr == 'true') {
+        msg = 'Are you sure to STOP pAudio?';
+        mode = 'stop'
+    }
+
+    if ( ! confirm(msg) ){
+        return
+    }
+
+    ans = control_cmd('ctrl restart_paudio ' + mode);
+
+    alert(ans);
+
     ck_display_advanced('off');
-    page_update();
+
+    setInterval( init, 15000 );
 }
 
 
 function omd_onoff(mode) {
-    const ays = window.confirm('Are you sure to toggle pAudio?');
+
+    let msg = ('Are you sure to ' + mode.toUpperCase() + ' pAudio?');
+    let cmd = 'ctrl restart_paudio'
+
+    if ( web_config["onoff"].includes('amp') ){
+                msg = 'Are you sure to ' + mode.toUpperCase() + ' the AMPLIFIER?'
+        cmd = 'ctrl amp_switch'
+    }
+
+    ays = window.confirm( msg );
     if (ays){
-        const ans = control_cmd( 'amp_switch ' + mode );
+        control_cmd( cmd + ' ' + mode );
     }
 }
 
@@ -1066,9 +1148,10 @@ function highlight_macro_button(id){
     document.getElementById(id).className = 'macro_button_highlighted';
 }
 
+
 function oc_run_macro(mFname){
 
-    control_cmd( 'aux run_macro ' + mFname );
+    control_cmd( 'ctrl run_macro ' + mFname );
 
     const mName = mFname.slice(mFname.indexOf('_') + 1, mFname.length);
 
@@ -1121,7 +1204,8 @@ function ck_display_advanced(mode) {
     if ( show_advanced == true ) {
         document.getElementById( "div_advanced_controls").style.display = "block";
         document.getElementById( "level_buttons13").style.display = "table-cell";
-        document.getElementById( "main_lside").style.display = "table-cell";
+        document.getElementById( "but_restart").style.display = "inline-block";
+        document.getElementById( "but_help").style.display = "none";
         document.getElementById( "SoloInfo").style.display = "table-cell";
         document.getElementById( "PolarityInfo").style.display = "table-cell";
         document.getElementById( "buttAOD").style.display = "inline-block";
@@ -1131,7 +1215,8 @@ function ck_display_advanced(mode) {
     else {
         document.getElementById( "div_advanced_controls").style.display = "none";
         document.getElementById( "level_buttons13").style.display = "none";
-        document.getElementById( "main_lside").style.display = "none";
+        document.getElementById( "but_restart").style.display = "none";
+        document.getElementById( "but_help").style.display = "inline-block";
         document.getElementById( "SoloInfo").style.display = "none";
         document.getElementById( "PolarityInfo").style.display = "none";
         if ( state.extra_delay === 0 ) {
@@ -1209,6 +1294,20 @@ function control_cmd( cmd ) {
         server_available = false;
         return '';
     }
+}
+
+
+function get_drc_sets() {
+
+    let res = [];
+
+    try {
+        res = JSON.parse( control_cmd( 'get_drc_sets' ) );
+    }catch(e){
+        console.log(e)
+    }
+
+    return res
 }
 
 

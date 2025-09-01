@@ -1,0 +1,40 @@
+drc:
+    cabecero:
+        type:    fir
+
+xo:
+
+    fir_mp:
+        lo:
+            type:   fir
+        hi:
+            type:   fir
+            gain:   -6.4
+
+    fir_lp:
+        lo:
+            type:   fir
+        hi:
+            type:   fir
+            gain:   -6.4
+
+
+    iir_test:
+        lo:
+            type:   LR
+            order:  2
+            freq:   2000
+        hi:
+            type:   LR
+            order:  2
+            freq:   2000
+
+outputs:
+
+    #           name         Gain dB    Polarity +/-    Delay ms
+    1:
+    2:
+    3:          lo.L          0.0       +               0.0
+    4:          lo.R          0.0       +               0.0
+    5:          hi.L         -7.0       +               0.0
+    6:          hi.R         -7.0       +               0.0
