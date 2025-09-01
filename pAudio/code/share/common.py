@@ -33,6 +33,23 @@ METATEMPLATE = {
 }
 
 
+def player_from_source():
+
+    src = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
+    src = src.lower()
+
+    if src == 'spotify':
+        player = 'spotify'
+
+    elif 'mpd' in src or src == 'cd':
+        player = 'mpd'
+
+    elif 'tdt' in src or 'dvb' in src:
+        player = 'mplayer'
+
+    return player
+
+
 def get_web_config():
 
     # LU_monitor_enabled is a legacy option, now it is always enabled.
