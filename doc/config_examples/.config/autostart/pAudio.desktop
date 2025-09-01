@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Exec=/home/rafax/bin/paudio_restart.sh
+Exec=paudio_restart.sh
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
