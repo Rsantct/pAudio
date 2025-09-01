@@ -29,6 +29,10 @@ elif 'darwin' in sys.platform:
 
 def _init():
 
+    md = METATEMPLATE.copy()
+
+    md["player"] = player_from_source()
+
     save_json_file(METATEMPLATE, PLAYER_META_PATH)
 
     # MAIN LOOP to save player info to file
