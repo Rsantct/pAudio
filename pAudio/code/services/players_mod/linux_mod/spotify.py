@@ -181,9 +181,12 @@ def spotify_control(cmd, arg=''):
                 return str( round(spotibus.Volume, 2) )
 
 
+        # MPRIS needs some time to receive the async change from Spotify
+        sleep(0.5)
+        curr = spotibus.PlaybackStatus
         result = {  'Playing':  'play',
                     'Paused':   'pause',
-                    'Stopped':  'stop' } [spotibus.PlaybackStatus]
+                    'Stopped':  'stop' } [curr]
 
     except:
         pass
