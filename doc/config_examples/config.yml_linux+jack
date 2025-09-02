@@ -14,6 +14,9 @@ jack:
         analog:
             jport:  system
 
+        cd:
+            jport:  mpd_loop
+
         remoteSalon:
             remote_addr:        192.168.1.57
             remote_delay:       0
@@ -33,8 +36,10 @@ plugins:
 
     - DVB-T.py
 
+    - autoplay_cdda.py
+
+    - autoeject_cdda.py
+
     - mpd.py
 
-    # With PipeWire, you need to restart Spotify to get it to work through the
-    # new instance of PipeWire that was triggered by Jack starting up in pAudio.
-    - spotify_desktop.py
+    - spotify_desktop.py    # for more details see inside thep lugin docstring
