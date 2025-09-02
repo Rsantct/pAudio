@@ -35,11 +35,7 @@ ref_level_gain_offset:  -3.0
 plugins:
 
     - DVB-T.py
-
     - autoplay_cdda.py
-
     - autoeject_cdda.py
-
     - mpd.py
-
     - spotify_desktop.py    # for more details see inside thep lugin docstring
