@@ -10,24 +10,30 @@ from    fmt                     import Fmt
 from    pcamilla_mod.do_makes   import *
 
 UHOME = os.path.expanduser('~')
-MAINFOLDER          = f'{UHOME}/pAudio'
+MAINFOLDER              = f'{UHOME}/pAudio'
 
-LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
-LSPKFOLDER          = f''
-LOUDSPEAKER         = f''   # to be found later
-LSPK_YML_PATH       = f''   #
+LSPKSFOLDER             = f'{MAINFOLDER}/loudspeakers'
+LSPKFOLDER              = f''
+LOUDSPEAKER             = f''   # to be found later
+LSPK_YML_PATH           = f''   #
 
-EQFOLDER            = f'{MAINFOLDER}/eq'
-CODEFOLDER          = f'{MAINFOLDER}/code'
-CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
-LOGFOLDER           = f'{MAINFOLDER}/log'
-PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
+EQFOLDER                = f'{MAINFOLDER}/eq'
+CODEFOLDER              = f'{MAINFOLDER}/code'
+CONFIG_PATH             = f'{MAINFOLDER}/config.yml'
+LOGFOLDER               = f'{MAINFOLDER}/log'
+PLUGINSFOLDER           = f'{MAINFOLDER}/code/share/plugins'
 
-PREAMP_STATE_PATH   = f'{MAINFOLDER}/.preamp_state'
-LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
-LDMON_PATH          = f'{MAINFOLDER}/.loudness_monitor'
-AUXINFO_PATH        = f'{MAINFOLDER}/.aux_info'
-PLAYER_META_PATH    = f'{MAINFOLDER}/.player_metadata'
+PREAMP_STATE_PATH       = f'{MAINFOLDER}/.preamp_state'
+LDCTRL_PATH             = f'{MAINFOLDER}/.loudness_control'
+LDMON_PATH              = f'{MAINFOLDER}/.loudness_monitor'
+AUXINFO_PATH            = f'{MAINFOLDER}/.aux_info'
+PLAYER_META_PATH        = f'{MAINFOLDER}/.player_metadata'
+
+CDDA_MUSICBRAINZ_PATH   = f'{MAINFOLDER}/.cdda_musicbrainz'
+CDDA_META_PATH          = f'{MAINFOLDER}/.cdda_metadata'
+CDDA_META_TEMPLATE      = { 'discid': '', 'artist': '', 'album': '',
+                          'tracks': { }
+                          }
 
 AMP_STATE_PATH      = f'{UHOME}/.amplifier'
 
