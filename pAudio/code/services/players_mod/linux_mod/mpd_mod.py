@@ -463,12 +463,15 @@ def mpd_get_meta( md=METATEMPLATE.copy() ):
 
     try:
         st = CLI.status()
+        md["state"] = st.get('state', 'stop')
+
     except Exception as e:
-        print(f'{Fmt.RED}(mpd_mod.py) `status` no answer from MPD{Fmt.END}')
+        print(f'{Fmt.RED}(mpd_mod.py) ERROR getting state: {str(e)}{Fmt.END}')
         return md
 
     try:
         cs = CLI.currentsong()
+
     except Exception as e:
         print(f'{Fmt.RED}(mpd_mod.py) `currentsong` no answer from MPD{Fmt.END}')
         return md
@@ -562,7 +565,7 @@ _init()
 if __name__ == "__main__":
 
     if _ping_mpd():
-        print(f'Found MPD version {CLI.mpd_version}. Bye!')
+        print(f'Hello. Found MPD version {CLI.mpd_version}. Bye!')
 
     else:
         print('Cannot connect to MPD')
