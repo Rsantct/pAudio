@@ -10,14 +10,14 @@ import  sys
 import  mpd
 from    time        import sleep
 import  json
-import  shlex
 from    subprocess  import Popen, run
 
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  time_sec2hhmmss, time_sec2mmss, Fmt, \
-                    get_pid_cmdline, METATEMPLATE, MAINFOLDER
+from common import  time_sec2hhmmss, time_sec2mmss, read_mpd_config, \
+                    read_json_file, get_pid_cmdline, Fmt,            \
+                    METATEMPLATE, MAINFOLDER, CDDA_META_PATH
 
 
 MPD_PORT                = 6600
@@ -39,108 +39,12 @@ def _init():
     MPD_PORT = read_mpd_config()["port"]
 
 
-def read_mpd_config(mpd_config_path=''):
-    """ mpd clients CANNOT access to MPD.config(),
-        so them needs to rely in reading the mpd config file
-
-        If no `mpd_config_path` is given, then will look for
-        the one used by the running MPD process.
-    """
-
-    def get_running_mpd_config_path():
-
-        result = f'{UHOME}/.mpdconf'
-
-        # Example: [{'pid': 12430, 'cmdline': ['mpd', '/home/paudio/.mpdconf.local']}]
-        mpd_processes = get_pid_cmdline('mpd')
-
-        # If more tan one, raise an Exception
-        if len(mpd_processes) > 1:
-
-            msg = 'More than ONE `mpd` process is running'
-            print(f'{Fmt.BOLD}(mpd_mod) {msg}{Fmt.END}')
-            raise Exception(msg)
-
-        elif len(mpd_processes) == 1:
-
-            # mpd [options] [conf_file]: it is always the last parameter
-            if len( mpd_processes[0]['cmdline'] ) > 1:
-                result = mpd_processes[0]['cmdline'][-1]
-
-        else:
-            msg = 'mpd process NOT detected'
-            print(f'{Fmt.RED}(mpd_mod) {msg}{Fmt.END}')
-
-        return result
-
-
-    def strip(x):
-        """ removes " for config values
-        """
-
-        if type(x) != str:
-            return x
-
-        if x[0] == '"' and x[-1] == '"':
-            return x[1:-1]
-
-
-    config = {'port': 6600, 'playlist_directory': f'{UHOME}/.config/mpd/playlists'}
-
-
-    if not mpd_config_path:
-        mpd_config_path = get_running_mpd_config_path()
-
-
-    with open(mpd_config_path, 'r') as f:
-
-        lexer = shlex.shlex(f)
-        lexer.wordchars += ".-/" # Important for file paths etc.
-
-        section = None
-
-        while True:
-
-            try:
-                token = lexer.get_token()
-                if not token:
-                    break  # End of file
-                if token == '{':
-                    continue
-                if token == '}':
-                    section = None
-                    continue
-                next_token = lexer.get_token()
-                if next_token == '{':
-                    section = token
-                    config.setdefault(section, {})
-                    continue
-                if next_token:
-                    if next_token.lower() in ("yes", "true", "1"):
-                        next_token = True
-                    elif next_token.lower() in ("no", "false", "0"):
-                        next_token = False
-                    if section:
-                        config[section][token] = strip(next_token)
-                    else:
-                        config[token] = strip(next_token)
-
-            except ValueError:
-                print(f"Error parsing line {lexer.lineno}: {lexer.error_leader()}")
-                return {}
-
-            except EOFError: # shlex sometimes raises EOFError
-                break
-
-    return config
-
-
 def read_cdda_meta_from_disk():
     """ wrapper for reading the cdda metadata dict from disk
         (dictionary)
     """
 
-    result = read_json_from_file( CDDA_META_PATH )
+    result = read_json_file( CDDA_META_PATH )
 
     if not result:
         result = META_TEMPLATE.copy()
