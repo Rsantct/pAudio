@@ -31,6 +31,8 @@ ref_level_gain_offset:  -3.0
 
 plugins:
 
+    - DVB-T.py
+
     - mpd.py
 
     # With PipeWire, you need to restart Spotify to get it to work through the
