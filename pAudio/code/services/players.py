@@ -96,11 +96,8 @@ def do(cmd, args):
         case 'get_all_info':
             resu = get_all_info()
 
-        case 'play' | 'pause' | 'stop':
-            resu = playback_change(cmd)
-
         case _:
-            resu ='NAK'
+            resu = playback_change(cmd)
 
     return resu
 
