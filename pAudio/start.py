@@ -34,21 +34,6 @@ if sys.platform == 'linux' and CONFIG.get('jack'):
     from    jack_sources import SOURCES
 
 
-def get_srv_addr_port():
-
-    addr = "localhost"
-    port = 9980
-
-    try:
-        addr = CONFIG["paudio_addr"]
-        port = CONFIG["paudio_port"]
-    except:
-        print(f'{Fmt.GRAY}(start) pAudio addr/port not found in`config.yml`' + \
-              f' using defaults `{addr}:{port}`{Fmt.END}')
-
-    return addr, port
-
-
 def prepare_jack_stuff():
     """ execute JACK with the convenient loops
     """
@@ -298,12 +283,11 @@ def stop():
 
 def start():
 
-    ADDR, PORT = get_srv_addr_port()
-    CTRL_PORT  = PORT + 1
 
     # The stand-alone control server
     if not process_is_running('paudio_ctrl'):
-        srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio_ctrl {ADDR} {CTRL_PORT}'
+        CTRL_PORT = PAUDIO_PORT + 1
+        srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio_ctrl {PAUDIO_ADDR} {CTRL_PORT}'
         sp.Popen(srv_cmd, shell=True)
 
     else:
@@ -340,12 +324,12 @@ def start():
 
     # Run the pAudio main server 'paudio.py' to listen for commands
     # This INCLUDES running CamillaDSP with a proper configuration.
-    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {ADDR} {PORT}'
+    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {PAUDIO_ADDR} {PAUDIO_PORT}'
 
     if verbose:
         srv_cmd += ' -v'
     else:
-        srv_cmd += ' 1>/dev/null 2>&1'
+        srv_cmd += f' 1>{LOGFOLDER}/paudio.log 2>{LOGFOLDER}/paudio.err'
         print("(start) pAudio will run in background ...")
 
     sp.Popen(srv_cmd, shell=True)
