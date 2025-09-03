@@ -223,7 +223,7 @@ function onHttpReq( httpReq, httpRes ){
             let port = PA_PORT;
 
             // -------------------- (i) --------------------------------
-            // Diverting ctrl commands to paudio_ctrl server at :9991
+            // Diverting ctrl commands to paudio_ctrl server at :port+1
             // ---------------------------------------------------------
             if ( cmd_phrase.match(/ctrl\ /g) ){
                 port += 1;
