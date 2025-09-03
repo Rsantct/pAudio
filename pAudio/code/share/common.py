@@ -145,6 +145,9 @@ def player_from_source():
     elif 'tdt' in src or 'dvb' in src:
         player = 'mplayer'
 
+    else:
+        player = ''
+
     return player
 
 
