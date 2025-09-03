@@ -96,6 +96,19 @@ def do(cmd, args):
         case 'get_all_info':
             resu = get_all_info()
 
+        case 'eject':
+
+            if 'linux' in sys.platform:
+                sp.Popen(['eject'])
+                resu = 'ordered'
+
+            elif 'darwin' in sys.platform:
+                sp.Popen(['drutil', 'eject'])
+                resu = 'ordered'
+
+            else:
+                resu = 'n/a'
+
         case _:
             resu = playback_change(cmd)
 
