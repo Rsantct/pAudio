@@ -33,6 +33,27 @@ def clear_metadata():
     save_json_file(md, PLAYER_META_PATH)
 
 
+def do_eject():
+
+    try:
+        if 'linux' in sys.platform:
+            sp.Popen(['eject'])
+            resu = 'ordered'
+
+        elif 'darwin' in sys.platform:
+            sp.Popen(['drutil', 'eject'])
+            resu = 'ordered'
+
+        else:
+            resu = 'n/a'
+
+    except Exception as e:
+        print(f'(players) `eject` ERROR: {str(e)}')
+        resu = str(e)
+
+    return resu
+
+
 def _init():
 
     clear_metadata()
@@ -102,17 +123,7 @@ def do(cmd, args):
             resu = get_all_info()
 
         case 'eject':
-
-            if 'linux' in sys.platform:
-                sp.Popen(['eject'])
-                resu = 'ordered'
-
-            elif 'darwin' in sys.platform:
-                sp.Popen(['drutil', 'eject'])
-                resu = 'ordered'
-
-            else:
-                resu = 'n/a'
+            resu = do_eject()
 
         case _:
             resu = playback_change(cmd)
