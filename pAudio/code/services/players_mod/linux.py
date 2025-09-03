@@ -58,7 +58,7 @@ def get_player_info():
             res = mplayer.mplayer_get_meta('dvb')
 
         else:
-            res["player"] = source.upper()
+            res["player"] = player.upper() if player else ''
 
     # This can happens if the player App is not ready at this moment
     except Exception as e:
