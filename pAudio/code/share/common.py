@@ -320,14 +320,10 @@ def wait4ports( pattern, timeout=10 ):
         return False
 
 
-def send_cmd( cmd, sender='', verbose=False, timeout=3,
-              host='', port='' ):
-    """
-        Sends a command to a pAudio server partner.
+def send_cmd( cmd, sender='', verbose=False, timeout=3, host=PAUDIO_ADDR, port=PAUDIO_PORT ):
+    """ Sends a command to a pAudio server partner.
         Returns a string about the execution response or an error if so.
     """
-    if not host or not port:
-        return 'bad address:port'
 
     if not sender:
         sender = 'share.common'
@@ -693,6 +689,23 @@ def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
         return True
     else:
         return False
+
+
+def wait4source( wanted='', timeout=5 ):
+    """ wait until preamp state indicates the wanted source
+    """
+
+    tries = timeout
+
+    while tries:
+        current = read_state_from_disk().get('source')
+        if current == wanted:
+            print(f'(common) source has changed to: {wanted}')
+            return True
+        sleep(1)
+        tries -= 1
+
+    return False
 
 
 def wait4jackports( pattern, timeout=5 ):
