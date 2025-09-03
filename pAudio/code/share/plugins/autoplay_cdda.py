@@ -21,7 +21,7 @@ from    subprocess  import check_output, Popen, run
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from    common  import send_cmd, USER, CONFIG
+from    common  import send_cmd, USER, CONFIG, wait4source
 from    cdda    import dump_cdda_metadata
 
 
@@ -67,17 +67,19 @@ def load_CDDA():
         run('mpc repeat off'.split())
         run(f'mpc load cdda_{gethostname()}'.split())
 
-    send_cmd( 'player pause', sender=ME, verbose=True )
-    send_cmd( 'aux warning clear', sender=ME, verbose=True, timeout=1 )
-    send_cmd( 'aux warning set disc loading ...', sender=ME, verbose=True, timeout=1 )
-    send_cmd( 'aux warning expire 10', sender=ME, verbose=True, timeout=1 )
-    send_cmd( 'preamp input cd', sender=ME, verbose=True )
-    sleep(.5)
+    send_cmd( 'player pause' )
+    send_cmd( 'ctrl warning clear' )
+    send_cmd( 'ctrl warning set disc loading ...' )
+    send_cmd( 'ctrl warning expire 10' )
+
+    send_cmd( 'preamp source cd' )
 
     # (!) Ordering 'play' will BLOCK the server while
     #     waiting for the disc to be loaded
     if AUTO_PLAY:
-        send_cmd( 'player play', sender=ME, verbose=True )
+        sleep(3)
+        if wait4source('cd'):
+            send_cmd( 'player play' )
 
 
 def check_for_CDDA(d):
