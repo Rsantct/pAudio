@@ -37,6 +37,7 @@ CDDA_META_TEMPLATE      = { 'discid': '', 'artist': '', 'album': '',
 
 AMP_STATE_PATH      = f'{UHOME}/.amplifier'
 
+
 try:
     os.mkdir(LOGFOLDER)
 except:
@@ -44,6 +45,14 @@ except:
 
 
 def _init():
+
+    def get_pAudio_addr_port():
+
+        addr = CONFIG.get('paudio_addr', 'localhost')
+        port = CONFIG.get('paudio_port', 9990)
+
+        return addr, port
+
 
     def complete_jack_params():
 
@@ -295,10 +304,13 @@ def _init():
         return LSPK_CONFIG
 
 
-    global CONFIG, LOUDSPEAKER, LSPKFOLDER
+    global PAUDIO_ADDR, PAUDIO_PORT, CONFIG, LOUDSPEAKER, LSPKFOLDER
+
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
-    CONFIG["mainfolder"] = MAINFOLDER
+
+    CONFIG["mainfolder"]        = MAINFOLDER
+    PAUDIO_ADDR, PAUDIO_PORT    = get_pAudio_addr_port()
 
     # Default values if omited parameters
 
