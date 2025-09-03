@@ -35,6 +35,21 @@ print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 def _init():
 
+    global MY_PORT
+
+    def find_my_listening_port():
+        try:
+            tmp = sp.check_output( ['pgrep', '-fla', 'server.py paudio '],
+                                   shell=False ).decode().strip()
+            tmp = tmp.split()
+            for chunk in tmp[::-1]:
+                if chunk.isdigit():
+                    return int(chunk)
+        except:
+            return 0
+
+    MY_PORT = find_my_listening_port()
+
     # Prepare DRC FIR graphs
     cmd = f'python3 {CODEFOLDER}/share/drc_fir2png.py'
     sp.Popen(cmd, shell=True)
@@ -54,9 +69,12 @@ def do(cmd_phrase):
         case 'preamp':
             result = preamp.do(cmd, args, add)
 
-        # PENDING
         case 'player':
             result = players.do(cmd, args)
+
+        # forwarding to paudio_ctrl.py server
+        case 'ctrl':
+            result = send_cmd(cmd_phrase, timeout=1, host='localhost', port=MY_PORT+1)
 
         case _:
             # This should never occur because preamp is the defaulted as prefix
