@@ -219,6 +219,13 @@ def init():
     else:
         SOURCES = {}
 
+    CONFIG["sources"] = SOURCES
+
+    # Dump CONFIG to disk
+    with open(f'{MAINFOLDER}/.pAudio_cfg', 'w') as f:
+        #f.write( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
+        f.write( json.dumps(CONFIG) )
+
     # Target curve sets
     TARGET_SETS = get_target_sets(fs=CONFIG["samplerate"])
 
