@@ -232,9 +232,9 @@ def loop_save_player_info(source=''):
 
         metadata = get_player_info()
 
-        for t in 'time_pos', 'time_tot':
-            if metadata[t].startswith('00:'):
-                metadata[t] = metadata[t][3:]
+        for k in 'time_pos', 'time_tot':
+            if len(metadata.get(k, '')) > 5 and  metadata.get(k, '').startswith('00:'):
+                metadata[k] = metadata[k][3:]
 
         save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
 
@@ -338,7 +338,7 @@ def get_player_info():
         return _info2paudio_metadata(VOID_PLAYER_INFO)
 
 
-def playback_change(player, mode):
+def playback_control(player, mode):
     """
     #   Para UN player determinado
     #       tell application "Spotify"
