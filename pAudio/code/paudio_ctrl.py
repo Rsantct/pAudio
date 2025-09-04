@@ -35,7 +35,7 @@ def init():
     global AUXINFO, ONOFF_MODE
 
     # Reset paudio_ctrl.log
-    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; LOADING paudio_ctrl'
+    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
     with open(LOGFNAME, 'w') as FLOG:
             FLOG.write(f'{logline}\n')
 
