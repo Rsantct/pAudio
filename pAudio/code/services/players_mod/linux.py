@@ -14,6 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "linux_mod"))
 import spotify
 import mpd_mod
 import mplayer
+import remotes
 
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
@@ -29,9 +30,9 @@ def loop_save_player_info():
 
         metadata = get_player_info()
 
-        for t in 'time_pos', 'time_tot':
-            if metadata[t].startswith('00:'):
-                metadata[t] = metadata[t][3:]
+        for k in 'time_pos', 'time_tot':
+            if len(metadata.get(k, '')) > 5 and  metadata.get(k, '').startswith('00:'):
+                metadata[k] = metadata[k][3:]
 
         save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
 
@@ -57,8 +58,11 @@ def get_player_info():
         elif player == 'mplayer':
             res = mplayer.mplayer_get_meta('dvb')
 
+        elif player[:6] == 'remote':
+            res = remotes.get_meta(remoteID=player)
+
         else:
-            res["player"] = player.upper() if player else ''
+            res["player"] = player if player else ''
 
     # This can happens if the player App is not ready at this moment
     except Exception as e:
@@ -67,7 +71,7 @@ def get_player_info():
     return res
 
 
-def playback_change(player, cmd):
+def playback_control(player, cmd):
     """ as per the current pAudio source
     """
 
