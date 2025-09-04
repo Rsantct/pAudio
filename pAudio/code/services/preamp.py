@@ -718,8 +718,8 @@ def do(cmd, args, add):
     match cmd:
 
         # Query commands
-        case 'hello':
-            result = 'hi!'
+        case 'hello' | 'hi':
+            result = 'preamp'
 
         case 'state':
             result = json.dumps(STATE)
