@@ -74,23 +74,26 @@ def _init():
 
 
 def get_all_info():
+    """ A wrapper to get all playback related info at once,
+        useful for web control clients querying
+    """
 
-    m = read_json_file(PLAYER_META_PATH)
+    metadata = read_json_file(PLAYER_META_PATH)
 
     res = {
-        'player':           m.get('player', ''),
-        'state':            m.get('state'),
+        'player':           metadata.get('player', ''),
+        'state':            playback_control( 'state' ),
         'random_mode':      'n/a',
         'discid':           '',
-        'metadata':         m
+        'metadata':         metadata
     }
 
     return res
 
 
-def playback_change(cmd):
+def playback_control(cmd):
 
-    player = get_all_info().get('player', '')
+    player = read_json_file(PLAYER_META_PATH).get('player', '')
 
     if not player or player.lower == 'none':
         return 'n/a'
@@ -98,14 +101,14 @@ def playback_change(cmd):
 
     if 'linux' in sys.platform:
 
-        return linux.playback_change(player, cmd)
+        return linux.playback_control(player, cmd)
 
     elif 'darwin' in sys.platform:
 
         if cmd == 'pause':
             cmd = 'playpause'
 
-        return macos.playback_change(player, cmd)
+        return macos.playback_control(player, cmd)
 
     else:
         return 'NAK'
@@ -119,14 +122,14 @@ def do(cmd, args):
         case 'get_all_info':
             resu = get_all_info()
 
-        case 'clear_info':
-            resu = get_all_info()
+        case 'get_meta':
+            resu = read_json_file(PLAYER_META_PATH)
 
         case 'eject':
             resu = do_eject()
 
         case _:
-            resu = playback_change(cmd)
+            resu = playback_control(cmd)
 
     return resu
 
