@@ -23,15 +23,15 @@ USER = getuser()
 METATEMPLATE = {
     'player':       '',
     'state':        '',
-    'time_pos':     '-',
-    'time_tot':     '-',
-    'bitrate':      '-',
-    'artist':       '-',
-    'album':        '-',
-    'title':        '-',
-    'track_num':    '-',
+    'time_pos':     '',
+    'time_tot':     '',
+    'bitrate':      '',
+    'artist':       '',
+    'album':        '',
+    'title':        '',
+    'track_num':    '',
     'track_uri':    '',
-    'tracks_tot':   '-'
+    'tracks_tot':   ''
 }
 
 
@@ -133,17 +133,20 @@ def read_mpd_config(mpd_config_path=''):
 
 def player_from_source():
 
-    src = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
-    src = src.lower()
+    source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
+    lowsource = source.lower()
 
-    if src == 'spotify':
+    if lowsource == 'spotify':
         player = 'spotify'
 
-    elif 'mpd' in src or src == 'cd':
+    elif 'mpd' in lowsource or lowsource == 'cd':
         player = 'mpd'
 
-    elif 'tdt' in src or 'dvb' in src:
+    elif 'tdt' in lowsource or 'dvb' in lowsource:
         player = 'mplayer'
+
+    elif source[:6] == 'remote':
+        player = source
 
     else:
         player = ''
