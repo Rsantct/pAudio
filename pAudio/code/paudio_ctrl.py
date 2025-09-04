@@ -174,6 +174,14 @@ def do( cmd_phrase):
 
     match cmd:
 
+        case 'hello' | 'hi':
+            result = 'paudio_ctrl'
+
+        case 'aux_info':
+            AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
+            save_aux_info()
+            result = AUXINFO
+
         case 'restart_paudio':
             result = restart_paudio( args )
 
@@ -183,16 +191,8 @@ def do( cmd_phrase):
         case 'get_web_config':
             result = get_web_config()
 
-        case 'hello':
-            result = 'ACK'
-
         case 'get_lu_monitor':
             result = read_json_file(LDMON_PATH)
-
-        case 'aux_info':
-            AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
-            save_aux_info()
-            result = AUXINFO
 
         case 'reset_loudness_monitor' | 'reset_lu_monitor':
             result = manage_lu_monitor('reset')
