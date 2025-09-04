@@ -393,11 +393,6 @@ def _init():
     if lspk_config.get('drc_gains'):
         CONFIG["drc_gains"] = lspk_config["drc_gains"]
 
-    # Dump to disk for maintenence
-    pAudio_cfg_json_path = f'{LOGFOLDER}/.pAudio_cfg'
-    with open(pAudio_cfg_json_path, 'w') as f:
-        f.write( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
-
     # DEBUG
     #print('--- pAudio ----')
     #print(CONFIG.keys())
