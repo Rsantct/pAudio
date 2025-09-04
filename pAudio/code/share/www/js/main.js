@@ -1091,9 +1091,6 @@ function ck_paudio_restart() {
             ans = control_cmd('ctrl restart_paudio restart');
             alert(ans);
             ck_display_advanced('off');
-
-            // SCHEDULES THE PAGE_UPDATE (only runtime variable items)
-            setInterval( page_update, AUTO_UPDATE_INTERVAL );
         }
 
         return;
@@ -1119,8 +1116,6 @@ function ck_paudio_restart() {
     alert(ans);
 
     ck_display_advanced('off');
-
-    setInterval( init, 15000 );
 }
 
 
