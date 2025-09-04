@@ -34,6 +34,11 @@ def init():
 
     global AUXINFO, ONOFF_MODE
 
+    # Reset paudio_ctrl.log
+    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; LOADING paudio_ctrl'
+    with open(LOGFNAME, 'w') as FLOG:
+            FLOG.write(f'{logline}\n')
+
     ONOFF_MODE = 'pAudio'
 
     if CONFIG.get('web_config'):
@@ -49,6 +54,7 @@ def init():
     }
 
     save_aux_info()
+
 
 
 def save_aux_info():
