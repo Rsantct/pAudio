@@ -11,13 +11,15 @@ The control web page needs:
 
 ### Python packages from Debian:
 
-    sudo apt install python3-numpy python3-scipy python3-matplotlib \
-             python3-yaml python3-jack-client python3-watchdog \
-             python3-websocket
+    sudo apt install python3-venv python3-pip python3-dev python3-yaml python3-jack-client \
+         python3-mpd python3-pydbus python3-numpy python3-scipy python3-matplotlib libffi-dev \
+         python3-pyudev python3-libdiscid python3-musicbrainzngs libportaudio2 python3-watchdog \
+         python3-serial python3-m3u8 python3-psutil python3-websocket pydbus xdotool cdtool
+
 
 ### Python packages not provided by Debian:
 
-`sounddevice` and `pycamilladsp`
+`sounddevice`, `pycamilladsp`, `discid`
 
 You need to prepare a Python Virtual Environment for your user (by inheriting the system Python packages)
 
@@ -26,6 +28,7 @@ $ python3 -m venv --system-site-packages ~/.env
 $ source ~/.env/bin/activate
 (.env) $ pip3 install sounddevice
 (.env) $ pip3 install git+https://github.com/HEnquist/pycamilladsp.git
+(.env) $ pip3 install discid
 
 You can now deactivate the Python Env BUT it is not necessary
 
@@ -61,23 +64,6 @@ MORE INFO [here](https://github.com/HEnquist/camilladsp/tree/master?tab=readme-o
 
 ## Configure pAudio
 
-When using JACK you need to configure something like this, please see **`doc/config_examples`**
-
-
-    # Sound server
-    sound_server:       jack
-    jack:
-            device:     hw:0,0
-            period:     1024
-            nperiods:   2
-    
-    # Audio devices (these are for CamillaDSP to use JACK)
-    input:
-        device:         default
-        format:         FLOAT32LE
-    
-    output:
-        device:         default
-        format:         FLOAT32LE
+When using JACK, please see **`doc/config_examples`**
 
 MORE INFO [here](https://github.com/HEnquist/camilladsp/tree/master?tab=readme-ov-file#jack) 

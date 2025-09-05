@@ -34,6 +34,11 @@ def init():
 
     global AUXINFO, ONOFF_MODE
 
+    # Reset paudio_ctrl.log
+    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
+    with open(LOGFNAME, 'w') as FLOG:
+            FLOG.write(f'{logline}\n')
+
     ONOFF_MODE = 'pAudio'
 
     if CONFIG.get('web_config'):
@@ -49,6 +54,7 @@ def init():
     }
 
     save_aux_info()
+
 
 
 def save_aux_info():
@@ -174,6 +180,14 @@ def do( cmd_phrase):
 
     match cmd:
 
+        case 'hello' | 'hi':
+            result = 'paudio_ctrl'
+
+        case 'aux_info':
+            AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
+            save_aux_info()
+            result = AUXINFO
+
         case 'restart_paudio':
             result = restart_paudio( args )
 
@@ -183,16 +197,8 @@ def do( cmd_phrase):
         case 'get_web_config':
             result = get_web_config()
 
-        case 'hello':
-            result = 'ACK'
-
         case 'get_lu_monitor':
             result = read_json_file(LDMON_PATH)
-
-        case 'aux_info':
-            AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
-            save_aux_info()
-            result = AUXINFO
 
         case 'reset_loudness_monitor' | 'reset_lu_monitor':
             result = manage_lu_monitor('reset')

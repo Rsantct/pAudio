@@ -37,11 +37,12 @@ cp -r ~/tmp/pAudio-$BRANCH/pAudio  ~/
 cp    ~/tmp/pAudio-$BRANCH/bin/*   ~/bin/
 chmod +x ~/bin/paudio*
 chmod +x ~/pAudio/start*
+chmod +x ~/pAudio/code/share/plugins/*
 
 # Restore config
 cp ~/pAudio/config.yml.BAK ~/pAudio/config.yml 1>/dev/null 2>&1
 
-# Stop any paudio backend
+# Stop any audio backend
 pkill -f "server.py paudio "        1>/dev/null 2>&1
 pkill -f "camilladsp"               1>/dev/null 2>&1
 

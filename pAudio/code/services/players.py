@@ -11,79 +11,98 @@ import time
 import threading
 import os
 import sys
+
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
+sys.path.append(os.path.join(os.path.dirname(__file__), "players_mod"))
 
 from    common      import *
 
 if 'linux' in sys.platform:
-    pass
+    import linux
 
 elif 'darwin' in sys.platform:
-    from .players_mod import players_macos
+    import macos
+    macos.PLAYERS_OF_INTEREST=['Spotify', 'Music']
 
 
-def macos_loop():
-
-    while True:
-
-        m = players_macos.get_player_info()
-
-        save_json_file(m, PLAYER_META_PATH, timeout=0.5)
-
-        sleep(1)
+def clear_metadata():
+    md = METATEMPLATE.copy()
+    md["player"] = get_player_from_source()
+    save_json_file(md, PLAYER_META_PATH)
 
 
-def init():
+def do_eject():
 
-    save_json_file(METATEMPLATE, PLAYER_META_PATH, timeout=0.5)
+    try:
+        if 'linux' in sys.platform:
+            sp.Popen(['eject'])
+            resu = 'ordered'
 
-    if 'darwin' in sys.platform:
+        elif 'darwin' in sys.platform:
+            sp.Popen(['drutil', 'eject'])
+            resu = 'ordered'
 
-        job = threading.Thread(target=macos_loop).start()
-        print('listening to desktop players ...')
+        else:
+            resu = 'n/a'
+
+    except Exception as e:
+        print(f'(players) `eject` ERROR: {str(e)}')
+        resu = str(e)
+
+    return resu
+
+
+def _init():
+
+    clear_metadata()
+
+    # MAIN LOOP to save player info to file
+    if 'linux' in sys.platform:
+
+        job = threading.Thread( target=linux.loop_save_player_info )
+
+    elif 'darwin' in sys.platform:
+
+        job = threading.Thread( target=macos.loop_save_player_info )
+
+    print(f'{Fmt.BLUE}(players) Listening to playback status ...{Fmt.END}')
+    job.start()
 
 
 def get_all_info():
+    """ A wrapper to get all playback related info at once,
+        useful for web control clients querying
+    """
 
-    m = read_json_file(PLAYER_META_PATH)
+    metadata = read_json_file(PLAYER_META_PATH)
 
     res = {
-        'player':           m.get('player', ''),
-        'state':            m.get('state'),
+        'player':           metadata.get('player', ''),
+        'state':            playback_control( 'state' ),
         'random_mode':      'n/a',
         'discid':           '',
-        'metadata':         m
+        'metadata':         metadata
     }
 
     return res
 
 
-def playback_change(mode):
-
-    player = get_all_info().get('player')
-
-    if mode == 'pause':
-        mode = 'playpause'
-
+def playback_control(cmd):
 
     if 'linux' in sys.platform:
 
-        return 'WIP'
+        return linux.playback_control(cmd)
 
     elif 'darwin' in sys.platform:
 
-        pbk_script = f'''
-            tell application "{player}"
-                {mode}
-            end tell
-        '''
-        players_macos._run_applescript(pbk_script)
-        return 'ordered'
+        if cmd == 'pause':
+            cmd = 'playpause'
+
+        return macos.playback_control(cmd)
 
     else:
-
         return 'NAK'
 
 
@@ -95,13 +114,16 @@ def do(cmd, args):
         case 'get_all_info':
             resu = get_all_info()
 
-        case 'play' | 'pause' | 'stop':
-            resu = playback_change(mode=cmd)
+        case 'get_meta':
+            resu = read_json_file(PLAYER_META_PATH)
+
+        case 'eject':
+            resu = do_eject()
 
         case _:
-            resu ='NAK'
+            resu = playback_control(cmd)
 
     return resu
 
 
-init()
+_init()

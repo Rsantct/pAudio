@@ -7,31 +7,152 @@ import  subprocess as sp
 import  psutil
 import  threading
 import  socket
-from    time import sleep, strftime
+from    time        import sleep, strftime
+from    datetime    import datetime
 import  yaml
 import  json
-from    fmt import Fmt
+import  shlex
+from    fmt         import Fmt
 import  sys
 import  ipaddress
-from    getpass import getuser
-from    config import *
+from    getpass     import getuser
+from    config      import *
 
 USER = getuser()
-
 
 METATEMPLATE = {
     'player':       '',
     'state':        '',
-    'time_pos':     '-',
-    'time_tot':     '-',
-    'bitrate':      '-',
-    'artist':       '-',
-    'album':        '-',
-    'title':        '-',
-    'track_num':    '-',
+    'time_pos':     '',
+    'time_tot':     '',
+    'bitrate':      '',
+    'artist':       '',
+    'album':        '',
+    'title':        '',
+    'track_num':    '',
     'track_uri':    '',
-    'tracks_tot':   '-'
+    'tracks_tot':   ''
 }
+
+
+def read_mpd_config(mpd_config_path=''):
+    """ mpd clients CANNOT access to MPD.config(),
+        so them needs to rely in reading the mpd config file
+
+        If no `mpd_config_path` is given, then will look for
+        the one used by the running MPD process.
+    """
+
+    def get_running_mpd_config_path():
+
+        result = f'{UHOME}/.mpdconf'
+
+        # Example: [{'pid': 12430, 'cmdline': ['mpd', '/home/paudio/.mpdconf.local']}]
+        mpd_processes = get_pid_cmdline('mpd')
+
+        # If more tan one, raise an Exception
+        if len(mpd_processes) > 1:
+
+            msg = 'More than ONE `mpd` process is running'
+            print(f'{Fmt.BOLD}(mpd_mod) {msg}{Fmt.END}')
+            raise Exception(msg)
+
+        elif len(mpd_processes) == 1:
+
+            # mpd [options] [conf_file]: it is always the last parameter
+            if len( mpd_processes[0]['cmdline'] ) > 1:
+                result = mpd_processes[0]['cmdline'][-1]
+
+        else:
+            msg = 'mpd process NOT detected'
+            print(f'{Fmt.RED}(mpd_mod) {msg}{Fmt.END}')
+
+        return result
+
+
+    def remove_wrap_quotes(x):
+        """ removes " for config values
+        """
+
+        if type(x) != str:
+            return x
+
+        if x[0] == '"' and x[-1] == '"':
+            return x[1:-1]
+
+
+    config = {'port': 6600, 'playlist_directory': f'{UHOME}/.config/mpd/playlists'}
+
+
+    if not mpd_config_path:
+        mpd_config_path = get_running_mpd_config_path()
+
+
+    with open(mpd_config_path, 'r') as f:
+
+        lexer = shlex.shlex(f)
+        lexer.wordchars += ".-/" # Important for file paths etc.
+
+        section = None
+
+        while True:
+
+            try:
+                token = lexer.get_token()
+                if not token:
+                    break  # End of file
+                if token == '{':
+                    continue
+                if token == '}':
+                    section = None
+                    continue
+                next_token = lexer.get_token()
+                if next_token == '{':
+                    section = token
+                    config.setdefault(section, {})
+                    continue
+                if next_token:
+                    if next_token.lower() in ("yes", "true", "1"):
+                        next_token = True
+                    elif next_token.lower() in ("no", "false", "0"):
+                        next_token = False
+                    if section:
+                        config[section][token] = remove_wrap_quotes(next_token)
+                    else:
+                        config[token] = remove_wrap_quotes(next_token)
+
+            except ValueError:
+                print(f"Error parsing line {lexer.lineno}: {lexer.error_leader()}")
+                return {}
+
+            except EOFError: # shlex sometimes raises EOFError
+                break
+
+    return config
+
+
+def get_player_from_source():
+
+    source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
+    lowsource = source.lower()
+
+    if lowsource == 'spotify':
+        player = 'spotify'
+
+    elif 'mpd' in lowsource or lowsource == 'cd':
+        player = 'mpd'
+
+    elif 'tdt' in lowsource or 'dvb' in lowsource:
+        player = 'mplayer'
+
+    elif source[:6] == 'remote':
+        player = source
+
+    else:
+        player = ''
+
+    return player
+
 
 def get_web_config():
 
@@ -202,14 +323,10 @@ def wait4ports( pattern, timeout=10 ):
         return False
 
 
-def send_cmd( cmd, sender='', verbose=False, timeout=3,
-              host='', port='' ):
-    """
-        Sends a command to a pAudio server partner.
+def send_cmd( cmd, sender='', verbose=False, timeout=3, host=PAUDIO_ADDR, port=PAUDIO_PORT ):
+    """ Sends a command to a pAudio server partner.
         Returns a string about the execution response or an error if so.
     """
-    if not host or not port:
-        return 'bad address:port'
 
     if not sender:
         sender = 'share.common'
@@ -252,6 +369,33 @@ def send_cmd( cmd, sender='', verbose=False, timeout=3,
             print( f'{Fmt.RED}(send_cmd) ({sender}) {host}:{port} \'{ans}\' {Fmt.END}' )
 
     return ans
+
+
+def read_state_from_disk():
+    """ wrapper for reading the state dict
+        (dictionary)
+    """
+    return read_json_file(PREAMP_STATE_PATH)
+
+
+def read_metadata_from_disk():
+    """ wrapper for reading the playing metadata dict
+        (dictionary)
+    """
+    return read_json_file(PLAYER_META_PATH)
+
+
+def read_cdda_meta_from_disk():
+    """ wrapper for reading the cdda metadata dict from disk
+        (dictionary)
+    """
+
+    result = read_json_file( CDDA_META_PATH )
+
+    if not result:
+        result = CDDA_META_TEMPLATE.copy()
+
+    return result
 
 
 def read_json_file(fpath, timeout=1, quiet=False):
@@ -499,6 +643,22 @@ def get_target_sets(fs=44100):
     return sorted(sets)
 
 
+def get_pid_cmdline(process_name=''):
+    """ gets all the pid and cmdline of the given process name
+    """
+
+    pids = []
+
+    for proc in psutil.process_iter():
+        try:
+            if proc.name() == process_name:
+                pids.append( {'pid': proc.pid, 'cmdline': proc.cmdline() } )
+        except:
+            pass
+
+    return pids
+
+
 def process_is_running(pattern):
     """ psutil is faster than pgrep in a shell
     """
@@ -515,7 +675,7 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=30, port=CONFIG["paudio_port"]):
+def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
 
     period = .5
     tries  = int(timeout / period)
@@ -532,6 +692,23 @@ def wait4server(timeout=30, port=CONFIG["paudio_port"]):
         return True
     else:
         return False
+
+
+def wait4source( wanted='', timeout=5 ):
+    """ wait until preamp state indicates the wanted source
+    """
+
+    tries = timeout
+
+    while tries:
+        current = read_state_from_disk().get('source')
+        if current == wanted:
+            print(f'(common) source has changed to: {wanted}')
+            return True
+        sleep(1)
+        tries -= 1
+
+    return False
 
 
 def wait4jackports( pattern, timeout=5 ):
@@ -855,6 +1032,29 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
 
         except Exception as e:
             print(f'(common) ERROR: {e}, you may want run it for a remote source?')
+
+
+def get_timestamp():
+    """ the timestamp string, example: '2025-01-02T08:58:59'
+    """
+    return datetime.now().isoformat(timespec='seconds')
+
+
+def time_diff(t1, t2):
+    """ input:   <strings> 'MM:SS'
+        returns: <int>  the difference in seconds or <string> Error
+    """
+    try:
+        s1 = int(t1[:2]) * 60 + int(t1[-2:])
+    except Exception as e:
+        return str(e)
+
+    try:
+        s2 = int(t2[:2]) * 60 + int(t2[-2:])
+    except Exception as e:
+        return str(e)
+
+    return s2 - s1
 
 
 def time_sec2mmss(s, mode=':'):

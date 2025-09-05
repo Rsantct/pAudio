@@ -14,6 +14,9 @@ jack:
         analog:
             jport:  system
 
+        cd:
+            jport:  mpd_loop
+
         remoteSalon:
             remote_addr:        192.168.1.57
             remote_delay:       0
@@ -24,12 +27,15 @@ jack:
     zita_buffer_ms:         150
 
 
-
-plugins:
-    - mpd.py
-
-
 loudspeaker: SeasFlat
 
 ref_level_gain_offset:  -3.0
 
+
+plugins:
+
+    - DVB-T.py
+    - autoplay_cdda.py
+    - autoeject_cdda.py
+    - mpd.py
+    - spotify_desktop.py    # for more details see inside thep lugin docstring

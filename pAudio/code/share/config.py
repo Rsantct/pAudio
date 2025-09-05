@@ -10,26 +10,33 @@ from    fmt                     import Fmt
 from    pcamilla_mod.do_makes   import *
 
 UHOME = os.path.expanduser('~')
-MAINFOLDER          = f'{UHOME}/pAudio'
+MAINFOLDER              = f'{UHOME}/pAudio'
 
-LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
-LSPKFOLDER          = f''
-LOUDSPEAKER         = f''   # to be found later
-LSPK_YML_PATH       = f''   #
+LSPKSFOLDER             = f'{MAINFOLDER}/loudspeakers'
+LSPKFOLDER              = f''
+LOUDSPEAKER             = f''   # to be found later
+LSPK_YML_PATH           = f''   #
 
-EQFOLDER            = f'{MAINFOLDER}/eq'
-CODEFOLDER          = f'{MAINFOLDER}/code'
-CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
-LOGFOLDER           = f'{MAINFOLDER}/log'
-PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
+EQFOLDER                = f'{MAINFOLDER}/eq'
+CODEFOLDER              = f'{MAINFOLDER}/code'
+CONFIG_PATH             = f'{MAINFOLDER}/config.yml'
+LOGFOLDER               = f'{MAINFOLDER}/log'
+PLUGINSFOLDER           = f'{MAINFOLDER}/code/share/plugins'
 
-PREAMP_STATE_PATH   = f'{MAINFOLDER}/.preamp_state'
-LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
-LDMON_PATH          = f'{MAINFOLDER}/.loudness_monitor'
-AUXINFO_PATH        = f'{MAINFOLDER}/.aux_info'
-PLAYER_META_PATH    = f'{MAINFOLDER}/.player_metadata'
+PREAMP_STATE_PATH       = f'{MAINFOLDER}/.preamp_state'
+LDCTRL_PATH             = f'{MAINFOLDER}/.loudness_control'
+LDMON_PATH              = f'{MAINFOLDER}/.loudness_monitor'
+AUXINFO_PATH            = f'{MAINFOLDER}/.aux_info'
+PLAYER_META_PATH        = f'{MAINFOLDER}/.player_metadata'
+
+CDDA_MUSICBRAINZ_PATH   = f'{MAINFOLDER}/.cdda_musicbrainz'
+CDDA_META_PATH          = f'{MAINFOLDER}/.cdda_metadata'
+CDDA_META_TEMPLATE      = { 'discid': '', 'artist': '', 'album': '',
+                          'tracks': { }
+                          }
 
 AMP_STATE_PATH      = f'{UHOME}/.amplifier'
+
 
 try:
     os.mkdir(LOGFOLDER)
@@ -38,6 +45,29 @@ except:
 
 
 def _init():
+
+    def get_pAudio_addr_port():
+
+        addr = CONFIG.get('paudio_addr', 'localhost')
+        port = CONFIG.get('paudio_port', 9990)
+
+        return addr, port
+
+
+    def complete_jack_params():
+
+        if not 'device' in CONFIG["jack"] or not CONFIG["jack"]["device"]:
+            print(f'{Fmt.BOLD}BAD Jack config{Fmt.END}')
+            sys.exit()
+
+        period   = CONFIG["jack"].get('period', 1024)
+        nperiods = CONFIG["jack"].get('nperiods', 2)
+        dither   = CONFIG["jack"].get('dither', False)
+
+        CONFIG["jack"]["period"]    = period
+        CONFIG["jack"]["nperiods"]  = nperiods
+        CONFIG["jack"]["dither"]    = dither
+
 
     def get_lspk_config():
         """
@@ -274,14 +304,19 @@ def _init():
         return LSPK_CONFIG
 
 
-    global CONFIG, LOUDSPEAKER, LSPKFOLDER
+    global PAUDIO_ADDR, PAUDIO_PORT, CONFIG, LOUDSPEAKER, LSPKFOLDER
+
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
-    CONFIG["mainfolder"] = MAINFOLDER
 
-    #
+    CONFIG["mainfolder"]        = MAINFOLDER
+    PAUDIO_ADDR, PAUDIO_PORT    = get_pAudio_addr_port()
+
     # Default values if omited parameters
-    #
+
+    if "jack" in CONFIG:
+        complete_jack_params()
+
     if not "samplerate" in CONFIG:
         CONFIG["samplerate"] = 44100
         print(f'{Fmt.BOLD}\n!!! samplerate NOT configured, default to fs=44100\n{Fmt.END}')
@@ -357,11 +392,6 @@ def _init():
 
     if lspk_config.get('drc_gains'):
         CONFIG["drc_gains"] = lspk_config["drc_gains"]
-
-    # Dump to disk for maintenence
-    pAudio_cfg_json_path = f'{LOGFOLDER}/.pAudio_cfg'
-    with open(pAudio_cfg_json_path, 'w') as f:
-        f.write( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
 
     # DEBUG
     #print('--- pAudio ----')

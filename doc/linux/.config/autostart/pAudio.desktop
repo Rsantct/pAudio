@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=paudio_restart.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[es_ES]=pAudio
+Name=pAudio
+Comment[es_ES]=
+Comment=
