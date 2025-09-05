@@ -29,7 +29,7 @@ elif 'darwin' in sys.platform:
 
 def clear_metadata():
     md = METATEMPLATE.copy()
-    md["player"] = player_from_source()
+    md["player"] = get_player_from_source()
     save_json_file(md, PLAYER_META_PATH)
 
 
@@ -61,8 +61,6 @@ def _init():
     # MAIN LOOP to save player info to file
     if 'linux' in sys.platform:
 
-        linux.PLAYER = 'Spotify'
-
         job = threading.Thread( target=linux.loop_save_player_info )
 
     elif 'darwin' in sys.platform:
@@ -93,22 +91,16 @@ def get_all_info():
 
 def playback_control(cmd):
 
-    player = read_json_file(PLAYER_META_PATH).get('player', '')
-
-    if not player or player.lower == 'none':
-        return 'n/a'
-
-
     if 'linux' in sys.platform:
 
-        return linux.playback_control(player, cmd)
+        return linux.playback_control(cmd)
 
     elif 'darwin' in sys.platform:
 
         if cmd == 'pause':
             cmd = 'playpause'
 
-        return macos.playback_control(player, cmd)
+        return macos.playback_control(cmd)
 
     else:
         return 'NAK'
