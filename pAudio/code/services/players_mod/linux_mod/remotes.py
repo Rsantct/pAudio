@@ -49,4 +49,16 @@ def get_meta(remoteID):
         return METATEMPLATE.copy()
 
 
+def playback_control(remoteID, cmd):
+
+    remote = SOURCES.get(remoteID, {})
+
+    try:
+        remote_ans = send_cmd( f'player {cmd}', host=remote["ip"], port=remote["port"] )
+        return remote_ans
+
+    except Exception as e:
+        print(f'{Fmt.RED}(remotes) ERROR remote playback: {str(e)}{Fmt.END}')
+        return ''
+
 _init()
