@@ -12,7 +12,8 @@ import sys
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  save_json_file, time_sec2hhmmss, PLAYER_META_PATH
+from common import  save_json_file, time_sec2hhmmss, read_json_file, \
+                    PLAYER_META_PATH
 
 # List of players to be queried so that the response will be faster.
 # Set void to query all in _PLAYERS
@@ -338,7 +339,7 @@ def get_player_info():
         return _info2paudio_metadata(VOID_PLAYER_INFO)
 
 
-def playback_control(player, mode):
+def playback_control(cmd):
     """
     #   Para UN player determinado
     #       tell application "Spotify"
@@ -357,9 +358,14 @@ def playback_control(player, mode):
     #       end tell
     """
 
+    player = read_json_file(PLAYER_META_PATH).get('player', '')
+
+    if not player or player.lower == 'none':
+        return 'n/a'
+
     pbk_script = f'''
         tell application "{player}"
-            {mode}
+            {cmd}
         end tell
     '''
 
