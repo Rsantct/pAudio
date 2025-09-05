@@ -131,7 +131,7 @@ def read_mpd_config(mpd_config_path=''):
     return config
 
 
-def player_from_source():
+def get_player_from_source():
 
     source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
     lowsource = source.lower()
