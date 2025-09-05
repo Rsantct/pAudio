@@ -21,7 +21,7 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import  save_json_file, time_sec2hhmmss, read_json_file, \
                     METATEMPLATE, PLAYER_META_PATH, PREAMP_STATE_PATH, \
-                    player_from_source, Fmt
+                    get_player_from_source, Fmt
 
 
 def loop_save_player_info():
@@ -45,21 +45,22 @@ def get_player_info():
 
     res = METATEMPLATE
 
-    player = player_from_source()
+    player = get_player_from_source()
+    lowplayer = player.lower()
 
     try:
 
-        if player == 'spotify':
+        if lowplayer[:6] == 'remote':
+            res = remotes.get_meta(remoteID=player)
+
+        elif 'spotify' in lowplayer:
             res = spotify.get_spotify_info()
 
-        elif player == 'mpd':
+        elif 'mpd' in lowplayer or lowplayer == 'cd':
             res = mpd_mod.mpd_get_meta()
 
-        elif player == 'mplayer':
+        elif 'mplayer' in lowplayer:
             res = mplayer.mplayer_get_meta('dvb')
-
-        elif player[:6] == 'remote':
-            res = remotes.get_meta(remoteID=player)
 
         else:
             res["player"] = player if player else ''
@@ -71,19 +72,23 @@ def get_player_info():
     return res
 
 
-def playback_control(player, cmd):
+def playback_control(cmd):
     """ as per the current pAudio source
     """
 
-    player = player.lower()
+    player = get_player_from_source()
+    lowplayer = player.lower()
 
-    if player == 'spotify':
+    if lowplayer[:6] == 'remote':
+        res = remotes.playback_control(player, cmd)
+
+    elif 'spotify' in lowplayer:
         res = spotify.spotify_control(cmd)
 
-    elif player == 'mpd' or player == 'cd':
+    elif 'mpd' in lowplayer or lowplayer == 'cd':
         res = mpd_mod.mpd_control(cmd)
 
-    elif player == 'mplayer':
+    elif 'mplayer' in lowplayer:
         res = mplayer.mplayer_control(cmd)
 
     else:
