@@ -70,7 +70,7 @@ def read_mpd_config(mpd_config_path=''):
         return result
 
 
-    def strip(x):
+    def remove_wrap_quotes(x):
         """ removes " for config values
         """
 
@@ -117,9 +117,9 @@ def read_mpd_config(mpd_config_path=''):
                     elif next_token.lower() in ("no", "false", "0"):
                         next_token = False
                     if section:
-                        config[section][token] = strip(next_token)
+                        config[section][token] = remove_wrap_quotes(next_token)
                     else:
-                        config[token] = strip(next_token)
+                        config[token] = remove_wrap_quotes(next_token)
 
             except ValueError:
                 print(f"Error parsing line {lexer.lineno}: {lexer.error_leader()}")
