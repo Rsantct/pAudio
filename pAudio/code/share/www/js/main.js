@@ -116,6 +116,8 @@ var metablank           = {         // A player's metadata blank dict
                             'time_pos':     '',
                             'time_tot':     '',
                             'bitrate':      '',
+                            'format':       '',
+                            'file':         '',
                             'artist':       '',
                             'album':        '',
                             'title':        '',
@@ -517,6 +519,16 @@ function page_update() {
                 d = metablank;
             }
 
+            if (d['format']) {
+                document.getElementById("format").innerText = d['format'];
+            } else {
+                document.getElementById("format").innerText = "-:-:2"
+            }
+            if (d['file']) {
+                document.getElementById("file").innerText = d['file'];
+            } else {
+                document.getElementById("file").innerText = "-"
+            }
             if (d['bitrate']) {
                 document.getElementById("bitrate").innerText = d['bitrate'] + "\nkbps";
             } else {
@@ -1199,6 +1211,7 @@ function ck_display_advanced(mode) {
     }
 
     if ( show_advanced == true ) {
+        document.getElementById("format_file").style.display = "table-row";
         document.getElementById( "div_advanced_controls").style.display = "block";
         document.getElementById( "level_buttons13").style.display = "table-cell";
         document.getElementById( "but_restart").style.display = "inline-block";
@@ -1210,6 +1223,7 @@ function ck_display_advanced(mode) {
         document.getElementById( "tone_defeat").style.display = "inline-block";
     }
     else {
+        document.getElementById("format_file").style.display = "none";
         document.getElementById( "div_advanced_controls").style.display = "none";
         document.getElementById( "level_buttons13").style.display = "none";
         document.getElementById( "but_restart").style.display = "none";
