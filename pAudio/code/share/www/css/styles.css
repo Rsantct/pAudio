@@ -147,6 +147,8 @@
 
 
     table#player_info   { text-align: left; }
+    td#file             { border: 1px solid grey; border-radius: 10px/10px; width: 5%; font-size:0.6em;}
+    td#format           { border: 1px solid grey; border-radius: 10px/10px; width: 5%; font-size:0.6em;}
     td#bitrate          { border: 1px solid grey; border-radius: 10px/10px; width: 5%; font-size:0.6em;}
     td#artist           { border: 1px solid grey; border-radius: 10px/10px; }
     td#track_info       { border: 1px solid grey; border-radius: 10px/10px; width: 3%; font-size:0.6em;}
