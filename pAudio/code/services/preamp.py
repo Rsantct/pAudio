@@ -467,6 +467,21 @@ def set_source(sname):
     """ Jack and Coreaudio have different source management
     """
 
+    def recover_zita_link_ports():
+
+        res = ('', 0, 0)
+
+        try:
+            with open(f'{LOGFOLDER}/zita_link_udp_ports', 'r') as f:
+                zita_link_udp_ports = json.loads( f.read() )
+                res = zita_link_udp_ports[sname]
+                res = ( res["addr"], res["port"], res["udpport"] )
+        except Exception as e:
+            print(f'(preamp) `{sname}` source error recovering zita ports: {str(e)}')
+
+        return res
+
+
     if not sname in SOURCES:
         return f'must be in: { list( SOURCES.keys() ) }'
 
@@ -500,6 +515,7 @@ def set_source(sname):
             #                   'port': 9990,
             #                   'jport': 'zita_n2j_57'  }
 
+            # Track volume (optional)
             if SOURCES[sname].get('remote_track_level'):
 
                 remote_ip               = SOURCES[sname].get('ip')
@@ -507,6 +523,14 @@ def set_source(sname):
 
                 send_cmd('hello', host=remote_ip, port=remote_vol_daemon_port)
 
+            # This is to avoid restarting the local pAudio when the
+            # remote sender has been restarted.
+            # We force to restart zita-j2n at sender end.
+            # The local zita-n2j is supposed to be still listening
+            raddr, rport, rudpport = recover_zita_link_ports()
+            if raddr and rport and rudpport:
+                remote_zita_restart(raddr, rport, rudpport, 'stop')
+                remote_zita_restart(raddr, rport, rudpport, 'restart')
 
     else:
 
