@@ -523,13 +523,14 @@ def set_source(sname):
 
                 send_cmd('hello', host=remote_ip, port=remote_vol_daemon_port)
 
-            # This is to avoid restarting the local pAudio when the
-            # remote sender has been restarted.
+            # This is to avoid restarting the whole local pAudio
+            # when the remote sender has been restarted.
             # We force to restart zita-j2n at sender end.
             # The local zita-n2j is supposed to be still listening
             raddr, rport, rudpport = recover_zita_link_ports()
             if raddr and rport and rudpport:
                 remote_zita_restart(raddr, rport, rudpport, 'stop')
+                sleep(1)
                 remote_zita_restart(raddr, rport, rudpport, 'restart')
 
     else:
