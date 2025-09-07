@@ -983,9 +983,9 @@ def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
 
         print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
 
-        send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
+        result = send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
 
-        return None
+        return result
 
 
     zargs     = json.dumps( (get_my_ip(), zita_port, 'start') )
