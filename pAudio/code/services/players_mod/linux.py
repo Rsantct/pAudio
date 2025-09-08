@@ -19,31 +19,34 @@ import remotes
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  save_json_file, time_sec2hhmmss, read_json_file, \
-                    METATEMPLATE, PLAYER_META_PATH, PREAMP_STATE_PATH, \
+from common import  save_json_file, time_sec2hhmmss, read_json_file,     \
+                    PLAYERTEMPLATE, PLAYER_INFO_PATH, PREAMP_STATE_PATH, \
                     get_player_from_source, Fmt
 
 
 def loop_save_player_info():
+    """ This must be threaded
+        Will loop every second
+    """
 
     while True:
 
-        metadata = get_player_info()
+        player_info = get_player_info()
 
         for k in 'time_pos', 'time_tot':
-            if len(metadata.get(k, '')) > 5 and  metadata.get(k, '').startswith('00:'):
-                metadata[k] = metadata[k][3:]
+            if len(player_info.get(k, '')) > 5 and  player_info.get(k, '').startswith('00:'):
+                player_info[k] = player_info[k][3:]
 
-        save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
+        save_json_file(player_info, PLAYER_INFO_PATH, timeout=0.5)
 
         sleep(1)
 
 
 def get_player_info():
-    """ Get player metadata as per the current pAudio source
+    """ Get player info and metadata as per the current pAudio source
     """
 
-    res = METATEMPLATE
+    res = PLAYERTEMPLATE
 
     player = get_player_from_source()
     lowplayer = player.lower()
@@ -51,23 +54,23 @@ def get_player_info():
     try:
 
         if lowplayer[:6] == 'remote':
-            res = remotes.get_meta(remoteID=player)
+            res = remotes.get_info(remoteID=player)
 
         elif 'spotify' in lowplayer:
-            res = spotify.get_spotify_info()
+            res = spotify.get_info()
 
         elif 'mpd' in lowplayer or lowplayer == 'cd':
-            res = mpd_mod.mpd_get_meta()
+            res = mpd_mod.get_info()
 
         elif 'mplayer' in lowplayer:
-            res = mplayer.mplayer_get_meta('dvb')
+            res = mplayer.get_info('dvb')
 
         else:
             res["player"] = player if player else ''
 
     # This can happens if the player App is not ready at this moment
     except Exception as e:
-        print(f'{Fmt.MAGENTA}(linux) ERROR getting metadata from {player}: {str(e)}{Fmt.END}')
+        print(f'{Fmt.MAGENTA}(linux) ERROR getting info and metadata from {player}: {str(e)}{Fmt.END}')
 
     return res
 
@@ -83,13 +86,13 @@ def playback_control(cmd):
         res = remotes.playback_control(player, cmd)
 
     elif 'spotify' in lowplayer:
-        res = spotify.spotify_control(cmd)
+        res = spotify.playback_control(cmd)
 
     elif 'mpd' in lowplayer or lowplayer == 'cd':
-        res = mpd_mod.mpd_control(cmd)
+        res = mpd_mod.playback_control(cmd)
 
     elif 'mplayer' in lowplayer:
-        res = mplayer.mplayer_control(cmd)
+        res = mplayer.playback_control(cmd)
 
     else:
         res = 'n/a'
