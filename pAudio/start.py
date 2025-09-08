@@ -255,6 +255,10 @@ def stop():
 
     print(f'{Fmt.GRAY}{Fmt.BOLD}(start) Stopping pAudio{Fmt.END}')
 
+    # Only macOS
+    if sys.platform == 'darwin':
+        macos.restore_playback_device()
+
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon(mode='stop')
 
@@ -386,20 +390,14 @@ if __name__ == "__main__":
             stop()
             print(f'{Fmt.GRAY}{Fmt.BOLD}wait a bit to start pAudio... .. .{Fmt.END}')
             sleep(3)
-            if sys.platform == 'darwin':
-                restore_playback_device_settings()
             start()
 
         case 'stop':
             stop()
-            if sys.platform == 'darwin':
-                restore_playback_device_settings()
 
         case 'toggle':
             if process_is_running(pattern='pAudio/code'):
                 stop()
-                if sys.platform == 'darwin':
-                    restore_playback_device_settings()
             else:
                 start()
 
