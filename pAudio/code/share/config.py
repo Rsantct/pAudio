@@ -27,13 +27,30 @@ PREAMP_STATE_PATH       = f'{MAINFOLDER}/.preamp_state'
 LDCTRL_PATH             = f'{MAINFOLDER}/.loudness_control'
 LDMON_PATH              = f'{MAINFOLDER}/.loudness_monitor'
 AUXINFO_PATH            = f'{MAINFOLDER}/.aux_info'
-PLAYER_META_PATH        = f'{MAINFOLDER}/.player_metadata'
+
+PLAYER_INFO_PATH        = f'{MAINFOLDER}/.player_info'
+PLAYERTEMPLATE = {
+    'player':       '',
+    'state':        '',
+    'time_pos':     '',
+    'time_tot':     '',
+    'bitrate':      '',
+    'artist':       '',
+    'album':        '',
+    'title':        '',
+    'track_num':    '',
+    'track_uri':    '',
+    'tracks_tot':   ''
+}
 
 CDDA_MUSICBRAINZ_PATH   = f'{MAINFOLDER}/.cdda_musicbrainz'
 CDDA_META_PATH          = f'{MAINFOLDER}/.cdda_metadata'
-CDDA_META_TEMPLATE      = { 'discid': '', 'artist': '', 'album': '',
-                          'tracks': { }
-                          }
+CDDA_META_TEMPLATE = {
+    'discid':   '',
+    'artist':   '',
+    'album':    '',
+    'tracks':   { }
+}
 
 AMP_STATE_PATH      = f'{UHOME}/.amplifier'
 

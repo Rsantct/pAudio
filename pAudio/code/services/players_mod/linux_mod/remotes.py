@@ -12,7 +12,7 @@ import  json
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  Fmt, read_json_file, MAINFOLDER, METATEMPLATE, \
+from common import  Fmt, read_json_file, MAINFOLDER, PLAYERTEMPLATE, \
                     send_cmd
 
 def _init():
@@ -24,7 +24,7 @@ def _init():
     SOURCES = pAudio_cfg.get('sources')
 
 
-def get_meta(remoteID):
+def get_info(remoteID):
 
     remote = SOURCES.get(remoteID, {})
     # example:
@@ -37,16 +37,16 @@ def get_meta(remoteID):
 
 
     if not remote:
-        return METATEMPLATE.copy()
+        return PLAYERTEMPLATE.copy()
 
     try:
-        remote_ans = send_cmd( 'player get_meta', host=remote["ip"], port=remote["port"] )
+        remote_ans = send_cmd( 'player get_info', host=remote["ip"], port=remote["port"] )
         remote_ans = json.loads( remote_ans )
         return remote_ans
 
     except Exception as e:
-        print(f'{Fmt.RED}(remotes) ERROR getting remote metadata: {str(e)}{Fmt.END}')
-        return METATEMPLATE.copy()
+        print(f'{Fmt.RED}(remotes) ERROR getting remote player info and metadata: {str(e)}{Fmt.END}')
+        return PLAYERTEMPLATE.copy()
 
 
 def playback_control(remoteID, cmd):
@@ -60,5 +60,6 @@ def playback_control(remoteID, cmd):
     except Exception as e:
         print(f'{Fmt.RED}(remotes) ERROR remote playback: {str(e)}{Fmt.END}')
         return ''
+
 
 _init()

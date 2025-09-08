@@ -27,10 +27,10 @@ elif 'darwin' in sys.platform:
     macos.PLAYERS_OF_INTEREST=['Spotify', 'Music']
 
 
-def clear_metadata():
-    md = METATEMPLATE.copy()
+def clear_player_info():
+    md = PLAYERTEMPLATE.copy()
     md["player"] = get_player_from_source()
-    save_json_file(md, PLAYER_META_PATH)
+    save_json_file(md, PLAYER_INFO_PATH)
 
 
 def do_eject():
@@ -56,7 +56,7 @@ def do_eject():
 
 def _init():
 
-    clear_metadata()
+    clear_player_info()
 
     # MAIN LOOP to save player info to file
     if 'linux' in sys.platform:
@@ -76,14 +76,15 @@ def get_all_info():
         useful for web control clients querying
     """
 
-    metadata = read_json_file(PLAYER_META_PATH)
+    player_info = read_json_file(PLAYER_INFO_PATH)
 
     res = {
-        'player':           metadata.get('player', ''),
+        'player':           player_info.get('player', ''),
         'state':            playback_control( 'state' ),
+        'time_pos':         player_info.get('time_pos', ''),
         'random_mode':      'n/a',
         'discid':           '',
-        'metadata':         metadata
+        'metadata':         player_info
     }
 
     return res
@@ -114,8 +115,8 @@ def do(cmd, args):
         case 'get_all_info':
             resu = get_all_info()
 
-        case 'get_meta':
-            resu = read_json_file(PLAYER_META_PATH)
+        case 'get_info':
+            resu = read_json_file(PLAYER_INFO_PATH)
 
         case 'eject':
             resu = do_eject()

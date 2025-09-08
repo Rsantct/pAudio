@@ -20,20 +20,6 @@ from    config      import *
 
 USER = getuser()
 
-METATEMPLATE = {
-    'player':       '',
-    'state':        '',
-    'time_pos':     '',
-    'time_tot':     '',
-    'bitrate':      '',
-    'artist':       '',
-    'album':        '',
-    'title':        '',
-    'track_num':    '',
-    'track_uri':    '',
-    'tracks_tot':   ''
-}
-
 
 def read_mpd_config(mpd_config_path=''):
     """ mpd clients CANNOT access to MPD.config(),
@@ -379,14 +365,14 @@ def read_state_from_disk():
 
 
 def read_metadata_from_disk():
-    """ wrapper for reading the playing metadata dict
+    """ wrapper for reading the playing info and metadata dict
         (dictionary)
     """
-    return read_json_file(PLAYER_META_PATH)
+    return read_json_file(PLAYER_INFO_PATH)
 
 
 def read_cdda_meta_from_disk():
-    """ wrapper for reading the cdda metadata dict from disk
+    """ wrapper for reading the cdda info and metadata dict from disk
         (dictionary)
     """
 

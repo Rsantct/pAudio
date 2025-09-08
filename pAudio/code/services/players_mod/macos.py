@@ -13,7 +13,7 @@ UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import  save_json_file, time_sec2hhmmss, read_json_file, \
-                    PLAYER_META_PATH
+                    PLAYER_INFO_PATH
 
 # List of players to be queried so that the response will be faster.
 # Set void to query all in _PLAYERS
@@ -226,18 +226,20 @@ VOID_PLAYER_INFO = {
 }
 
 def loop_save_player_info(source=''):
-    """ source management is PENDING
+    """ This must be threaded
+        Will loop every second
+        source management is PENDING
     """
 
     while True:
 
-        metadata = get_player_info()
+        player_info = get_player_info()
 
         for k in 'time_pos', 'time_tot':
-            if len(metadata.get(k, '')) > 5 and  metadata.get(k, '').startswith('00:'):
-                metadata[k] = metadata[k][3:]
+            if len(player_info.get(k, '')) > 5 and  player_info.get(k, '').startswith('00:'):
+                player_info[k] = player_info[k][3:]
 
-        save_json_file(metadata, PLAYER_META_PATH, timeout=0.5)
+        save_json_file(player_info, PLAYER_INFO_PATH, timeout=0.5)
 
         sleep(1)
 
@@ -358,7 +360,7 @@ def playback_control(cmd):
     #       end tell
     """
 
-    player = read_json_file(PLAYER_META_PATH).get('player', '')
+    player = read_json_file(PLAYER_INFO_PATH).get('player', '')
 
     if not player or player.lower == 'none':
         return 'n/a'
