@@ -76,7 +76,7 @@ def _iterate_spotify_info():
         print("\n")
 
 
-def get_spotify_info():
+def get_info():
 
     spotibus = BUS.get("org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2")
     metadata = spotibus.Metadata
@@ -123,7 +123,7 @@ def get_spotify_info():
     return info
 
 
-def spotify_control(cmd, arg=''):
+def playback_control(cmd, arg=''):
     """ Controls the Spotify Desktop player
         input:  a command string
         output: the resulting status string
