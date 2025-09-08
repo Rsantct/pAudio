@@ -208,12 +208,14 @@ def start_zita_link():
 
         print( f'(start) Running zita-njbridge for: `{ source_name }`' )
 
-        # Trying to RUN THE REMOTE SENDER zita-j2n (*)
+        # Trying to RUN THE REMOTE SENDER zita-j2n (**)
         print(f'{Fmt.GRAY}(start) starting remote zita-j2n at: {params["ip"]}{Fmt.END}')
         remote_zita_restart(params["ip"], params["port"], UDP_PORT)
 
         # Append the UPD_PORT to zita_link_udp_ports
-        zita_link_udp_ports[source_name] = { 'addr': params["ip"], 'udpport': params["port"] }
+        zita_link_udp_ports[source_name] = { 'addr':    params["ip"],
+                                             'port':    params["port"],
+                                             'udpport': UDP_PORT}
 
         # RUN LOCAL RECEIVER:
         print(f'{Fmt.GRAY}(start) running local zita-n2j: {params["jport"]}{Fmt.END}')
@@ -222,9 +224,9 @@ def start_zita_link():
         # (i) zita will use 2 consecutive ports, so let's space by 10
         UDP_PORT += 10
 
-    # (*) Saving the zita's UDP PORTS for future use because
+    # (**) Saving the zita's UDP PORTS for future use because
     #     the remote sender could not be online at the moment ...
-    with open(f'{MAINFOLDER}/.zita_link_udp_ports', 'w') as f:
+    with open(f'{LOGFOLDER}/zita_link_udp_ports', 'w') as f:
         d = json.dumps( zita_link_udp_ports )
         f.write(d)
 

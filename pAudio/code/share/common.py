@@ -983,9 +983,9 @@ def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
 
         print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
 
-        send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
+        result = send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
 
-        return None
+        return result
 
 
     zargs     = json.dumps( (get_my_ip(), zita_port, 'start') )
@@ -1016,22 +1016,21 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
 
     zitajname = f'zita_n2j_{ raddr.split(".")[-1] }'
     zitacmd   = f'zita-n2j --jname {zitajname} --buff {buff_size} {get_my_ip()} {udp_port}'
+    zitalog   = f'{LOGFOLDER}/{zitajname}.log'
 
     # Assign ALIAS to ports to be able to switch by using
     # the IP port name of a remoteXXXX source in config.yml
     #
-    with open(f'{LOGFOLDER}/{zitajname}.log', 'w') as zitalog:
+    try:
+        # Using stdbuf because zita does use unbuffered output to tty, skipping stdout/stderr
+        sp.Popen( f'stdbuf -oL -eL {zitacmd} 1>{zitalog} 2>&1', shell=True )
+        wait4ports(zitajname, 3)
+        sp.Popen( f'jack_alias {zitajname}:out_1 {raddr}:out_1'.split() )
+        sp.Popen( f'jack_alias {zitajname}:out_2 {raddr}:out_2'.split() )
+        print(f'(common) RUNNING LOCAL: {zitacmd}, LOGGING under {LOGFOLDER}')
 
-        # Ignore if zita-njbridge is not available
-        try:
-            sp.Popen( zitacmd.split(), stdout=zitalog, stderr=zitalog )
-            wait4ports(zitajname, 3)
-            sp.Popen( f'jack_alias {zitajname}:out_1 {raddr}:out_1'.split() )
-            sp.Popen( f'jack_alias {zitajname}:out_2 {raddr}:out_2'.split() )
-            print(f'(common) RUNNING LOCAL: {zitacmd}, LOGGING under {LOGFOLDER}')
-
-        except Exception as e:
-            print(f'(common) ERROR: {e}, you may want run it for a remote source?')
+    except Exception as e:
+        print(f'(common) ERROR: {e}, you may want run it for a remote source?')
 
 
 def get_timestamp():
