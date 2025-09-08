@@ -338,11 +338,10 @@ def init():
         STATE["dsp_buffer_size"] = DSP.CC.config.active()["devices"]["chunksize"]
         STATE["dsp_buffer_ms"]   = int(round(STATE["dsp_buffer_size"] / STATE["fs"] * 1000))
 
-        # Changing MacOS default playback device
+        # Changing MacOS playback device
         # (It will be restored when ordering `paudio.sh stop`)
         if CONFIG.get('coreaudio'):
-            save_default_sound_device()
-            change_default_sound_device( CONFIG["coreaudio"]["devices"]["capture"]["device"] )
+            macos.change_default_sound_device( CONFIG["coreaudio"]["devices"]["capture"]["device"] )
 
         # Resuming audio settings on the DSP
         resume_audio()
