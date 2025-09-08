@@ -138,7 +138,7 @@ class My_files_event_handler(FileSystemEventHandler):
                 sleep(.25)      # anti bouncing
 
         # Check if metadata album or title has changed, then RESET
-        if PLAYER_META_PATH in path:
+        if PLAYER_INFO_PATH in path:
             md = read_metadata_from_disk()
             if not md:
                 return
