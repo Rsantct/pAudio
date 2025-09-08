@@ -21,7 +21,7 @@ import  sys
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  MAINFOLDER, METATEMPLATE, time_sec2hhmmss, \
+from common import  MAINFOLDER, PLAYERTEMPLATE, time_sec2hhmmss, \
                     read_last_lines, process_is_running
 
 
@@ -66,7 +66,7 @@ def send_mplayer_cmd(cmd, service='dvb'):
         sleep(2)
 
 
-def mplayer_control(cmd, arg='', service='dvb'):
+def playback_control(cmd, arg='', service='dvb'):
     """ Sends a command to Mplayer trough by its input fifo
         input:  a command string
         result: a result string: 'play' | 'stop' | 'pause' | ''
@@ -129,19 +129,18 @@ def mplayer_control(cmd, arg='', service='dvb'):
     return status
 
 
-def mplayer_get_meta(service='dvb'):
-    """ gets metadata from Mplayer as per
+def get_info(service='dvb'):
+    """ gets playing info and metadata from Mplayer as per
         http://www.mplayerhq.hu/DOCS/tech/slave.txt
 
-        input:      md:         a blank metadata dict to be updated
-                    service:    dvb | istreams
+        input:      service:    dvb | istreams
 
-        output:     the updated md dict
+        output:     the updated player info dict
     """
 
-    md = METATEMPLATE.copy()
+    pi = PLAYERTEMPLATE.copy()
 
-    md['player'] = 'Mplayer'
+    pi['player'] = 'Mplayer'
 
     # This is the file were Mplayer standard output has been redirected to,
     # so we can read there any answer when required to Mplayer slave daemon:
@@ -185,17 +184,17 @@ def mplayer_get_meta(service='dvb'):
     for line in lines:
 
         if 'ANS_AUDIO_CODEC=' in line:
-            md['codec'] = line.split('=')[-1].replace("'", "")
+            pi['codec'] = line.split('=')[-1].replace("'", "")
 
         if 'ANS_AUDIO_SAMPLES=' in line:
             Hz = line.split('=')[-1].replace("'", "").split('Hz')[0]
             ch = line.split('=')[-1].replace("'", "").split('ch')[0].split()[-1]
-            md['format'] = f'{Hz}:-:{ch}'
+            pi['format'] = f'{Hz}:-:{ch}'
 
         if 'ANS_AUDIO_BITRATE=' in line:
-            md['bitrate'] = line.split('=')[-1].replace("'", "").split()[0]
+            pi['bitrate'] = line.split('=')[-1].replace("'", "").split()[0]
 
         if 'ANS_FILENAME=' in line:
-            md['title'] = line.split('=')[-1].replace("'", "")
+            pi['title'] = line.split('=')[-1].replace("'", "")
 
-    return md
+    return pi
