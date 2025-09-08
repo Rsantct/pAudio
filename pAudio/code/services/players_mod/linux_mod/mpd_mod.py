@@ -17,7 +17,7 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import  time_sec2hhmmss, time_sec2mmss, read_mpd_config, \
                     read_json_file, get_pid_cmdline, Fmt,            \
-                    METATEMPLATE, MAINFOLDER, CDDA_META_PATH
+                    PLAYERTEMPLATE, MAINFOLDER, CDDA_META_PATH
 
 
 MPD_PORT                = 6600
@@ -224,7 +224,7 @@ def mpd_playlists(cmd, arg=''):
     return result
 
 
-def mpd_control( cmd, arg='', port=MPD_PORT ):
+def playback_control( cmd, arg='', port=MPD_PORT ):
     """ Comuticates to MPD music player daemon
 
         Input:      a command [arg] to query to the MPD daemon
@@ -338,10 +338,9 @@ def mpd_control( cmd, arg='', port=MPD_PORT ):
     return result
 
 
-def mpd_get_meta( md=METATEMPLATE.copy() ):
+def get_info():
     """ Comuticates to MPD music player daemon
-        Input:      blank metadata dict
-        Return:     track metadata dict
+        Return:     player info and track metadata dict
     """
 
     def get_bitrate_from_format(f):
@@ -356,29 +355,28 @@ def mpd_get_meta( md=METATEMPLATE.copy() ):
             print(e)
         return br
 
-    # to debug the server
-    #print(f'{Fmt.MAGENTA}mpd_meta{Fmt.END}')
+    pi = PLAYERTEMPLATE.copy()
 
-    md['player'] = 'MPD'
+    pi['player'] = 'MPD'
 
     if not _ping_mpd():
         print(f'{Fmt.RED}(mpd_mod.py) mpd_meta not connected to MPD{Fmt.END}')
-        return  md
+        return  pi
 
     try:
         st = CLI.status()
-        md["state"] = st.get('state', 'stop')
+        pi["state"] = st.get('state', 'stop')
 
     except Exception as e:
         print(f'{Fmt.RED}(mpd_mod.py) ERROR getting state: {str(e)}{Fmt.END}')
-        return md
+        return pi
 
     try:
         cs = CLI.currentsong()
 
     except Exception as e:
         print(f'{Fmt.RED}(mpd_mod.py) `currentsong` no answer from MPD{Fmt.END}')
-        return md
+        return pi
 
 
     # (i) Not all tracks have complete currentsong() fields. Some examples:
@@ -398,41 +396,41 @@ def mpd_get_meta( md=METATEMPLATE.copy() ):
     # Skip if no currentsong is loaded
     if cs:
         if 'artist' in cs:
-            md['artist']    = cs['artist']
+            pi['artist']    = cs['artist']
 
         if 'album' in cs:
-            md['album']     = cs['album']
+            pi['album']     = cs['album']
 
         if 'track' in cs:
-            md['track_num'] = cs['track']
+            pi['track_num'] = cs['track']
 
         if 'title' in cs:
-            md['title']     = cs['title']
+            pi['title']     = cs['title']
         elif 'file' in cs:
-            md['title']     = cs['file'].split('/')[-1]
+            pi['title']     = cs['file'].split('/')[-1]
 
         if 'file' in cs:
-            md['file']      = cs["file"]
+            pi['file']      = cs["file"]
 
             if not 'album' in cs:
                 # Try to put the URL site as 'album', if available
-                if '//' in md['file']:
-                    md['album'] = '/'.join( md['file'].split('/')[:3] )
+                if '//' in pi['file']:
+                    pi['album'] = '/'.join( pi['file'].split('/')[:3] )
 
 
     if 'playlistlength' in st:
-        md['tracks_tot']    = st['playlistlength']
+        pi['tracks_tot']    = st['playlistlength']
 
     if 'bitrate' in st:
         # playing wav/aiff/cdda files gives bitrate: '0'
         if st['bitrate'] != '0':
-            md['bitrate']   = st['bitrate']  # kbps
+            pi['bitrate']   = st['bitrate']  # kbps
 
     if 'audio' in st:
-        md['format'] = st['audio']
+        pi['format'] = st['audio']
 
-        if not md['bitrate']:
-            md['bitrate'] = get_bitrate_from_format( md['format'] )
+        if not pi['bitrate']:
+            pi['bitrate'] = get_bitrate_from_format( pi['format'] )
 
     if 'time' in st:
         # time is given as a string 'current:total', each part in seconds
@@ -440,8 +438,8 @@ def mpd_get_meta( md=METATEMPLATE.copy() ):
         tmp_pos = time_sec2hhmmss( int( st["time"].split(':')[0] ))
         tmp_tot = time_sec2hhmmss( int( st["time"].split(':')[1] ))
 
-        md["time_pos"] = tmp_pos
-        md["time_tot"] = tmp_tot
+        pi["time_pos"] = tmp_pos
+        pi["time_tot"] = tmp_tot
 
 
     # Special case CD audio we need to read artist and album
@@ -452,15 +450,15 @@ def mpd_get_meta( md=METATEMPLATE.copy() ):
 
         cdda_meta = read_cdda_meta_from_disk()
 
-        md["artist"]    = cdda_meta["artist"]
-        md["album"]     = cdda_meta["album"]
-        md["track_num"] = curr_cd_track
-        md["title"]     = cdda_meta["tracks"][curr_cd_track]["title"]
+        pi["artist"]    = cdda_meta["artist"]
+        pi["album"]     = cdda_meta["album"]
+        pi["track_num"] = curr_cd_track
+        pi["title"]     = cdda_meta["tracks"][curr_cd_track]["title"]
 
 
     _release_mpd()
 
-    return md
+    return pi
 
 
 _init()
