@@ -22,15 +22,21 @@ except Exception as e:
     print(f'{Fmt.BOLD}{Fmt.BLINK}Have you activated your Python Virtual Environment?{Fmt.END}')
 
 
-# CDROM device
-if 'cdrom_device' in CONFIG:
-    CDROM_DEVICE = CONFIG['cdrom_device']
-else:
-    CDROM_DEVICE = '/dev/cdrom'
-    print(f'{Fmt.BLUE}(cdda.py) Using default \'{CDROM_DEVICE}\'{Fmt.END}')
+def get_cdda_device():
+
+    try:
+        with open(f'{MAINFOLDER}/.cdda_device', 'r') as f:
+            return f.read()
+
+    except:
+        if 'cdrom_device' in CONFIG:
+            return CONFIG.get('cdrom_device', '/dev/cdrom')
+        else:
+            print(f'{Fmt.MAGENTA}(cdda.py) Using default \'/dev/cdrom\'{Fmt.END}')
+            return '/dev/cdrom'
 
 
-def _get_disc_metadata(device=CDROM_DEVICE):
+def _get_disc_metadata( device=get_cdda_device() ):
 
     def find_medium_list_idx(disc_id, medium_list_items):
         """
@@ -222,7 +228,7 @@ def _save_cdda_playlist( md={} ):
             m3u += '#EXTINF:'
             m3u += f'{durationsec},'
             m3u += f'{v["title"]}\n'
-            m3u += f'cdda:/{CDROM_DEVICE}/{k}\n'
+            m3u += f'cdda:/{ get_cdda_device() }/{k}\n'
 
         return m3u
 
@@ -265,7 +271,7 @@ def _save_cdda_playlist( md={} ):
     print(f'{Fmt.BLUE}(cdda.py) MPD CD playlist saved to {CDDA_PLS_PATH}{Fmt.END}')
 
 
-def dump_cdda_metadata(device=CDROM_DEVICE):
+def dump_cdda_metadata( device=get_cdda_device() ):
     """ dump CD-Audio disc matadata to:
 
             pe.audio.sys/.cdda_metadata
