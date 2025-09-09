@@ -15,8 +15,11 @@ import  shlex
 from    fmt         import Fmt
 import  sys
 import  ipaddress
+from    getpass     import getuser
 from    config      import *
 from    common_mod  import macos
+
+USER = getuser()
 
 macos.CONFIG = CONFIG.copy()
 macos.Fmt    = Fmt
