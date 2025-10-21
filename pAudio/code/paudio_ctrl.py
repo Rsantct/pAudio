@@ -56,6 +56,23 @@ def init():
     save_aux_info()
 
 
+def run_macro(mname):
+
+    if not mname or 'clear_last' in mname:
+
+        AUXINFO["last_macro"] = ''
+        return 'last_macro cleared'
+
+    if mname in get_macros():
+
+        print( f'(aux) running macro: {mname}' )
+        sp.Popen( f'"{MACROSFOLDER}/{mname}"', shell=True)
+        AUXINFO["last_macro"] = mname
+        return 'ordered'
+
+    else:
+        return 'macro not found'
+
 
 def save_aux_info():
     """ this must be threaded
@@ -209,6 +226,9 @@ def do( cmd_phrase):
 
         case 'zita_j2n':
             result = zita_j2n(args)
+
+        case 'run_macro':
+            result = run_macro(args)
 
 
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
