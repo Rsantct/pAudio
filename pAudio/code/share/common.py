@@ -25,6 +25,54 @@ macos.CONFIG = CONFIG.copy()
 macos.Fmt    = Fmt
 
 
+def get_macros(only_web_macros=True):
+    """ Returns the list of executable files under the macros folder.
+        By default the list is restricted to web macros kinf of files: "NN_xxxxxx"
+    """
+    macro_files = []
+
+    with os.scandir( f'{MACROSFOLDER}' ) as entries:
+
+        for entrie in entries:
+            fname = entrie.name
+
+            # Only executables files
+            if os.path.isfile(f'{MACROSFOLDER}/{fname}') and \
+               os.access(f'{MACROSFOLDER}/{fname}', os.X_OK):
+
+                # Web macros are the ones named NN_xxxxxx
+                if only_web_macros:
+                    if fname.split('_')[0].isdigit():
+                        macro_files.append(fname)
+                else:
+                    macro_files.append(fname)
+
+    macro_files.sort()
+
+    # (i) The web page needs a sorted list (numeric sorting only if NN_xxxxxx items)
+    if only_web_macros:
+        macro_files.sort( key=lambda x: int(x.split('_')[0]) )
+
+    return macro_files
+
+
+def get_remote_source_addr_port(src_name):
+    """ Gets the ip and port as configured under jack sources
+    """
+    r_addr = ''
+    r_port = 9990
+
+    if CONFIG.get('jack', {}):
+
+        if CONFIG['jack'].get('sources', {}):
+
+            r_src = CONFIG['jack']['sources'].get(src_name, {})
+            r_addr = r_src.get('remote_addr', '')
+            r_port = r_src.get('remote_port', 9990)
+
+    return r_addr, r_port
+
+
 def read_mpd_config(mpd_config_path=''):
     """ mpd clients CANNOT access to MPD.config(),
         so them needs to rely in reading the mpd config file
@@ -146,12 +194,13 @@ def get_player_from_source():
 
 def get_web_config():
 
-    # LU_monitor_enabled is a legacy option, now it is always enabled.
+    # LU_monitor_enabled is a legacy option, currently it is always enabled.
 
     result = {  'main_selector':        'sources',
                 'LU_monitor_enabled':   True,
                 'onoff':                'pAudio',
-                'monkey_button':        'toggle'
+                'monkey_button':        'toggle',
+                'user_macros':          get_macros()
     }
 
     for item, value in CONFIG.get('web_config', {}).items():
