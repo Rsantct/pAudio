@@ -23,12 +23,14 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 from    common  import  read_state_from_disk, read_metadata_from_disk, \
                         time_diff, get_timestamp, LOGFOLDER, USER, CONFIG
 
-# CDROM device
-if 'cdrom_device' in CONFIG:
-    CDROM_DEVICE = CONFIG['cdrom_device']
-else:
-    CDROM_DEVICE = '/dev/cdrom'
-    print(f'{Fmt.BLUE}(autoeject_cdda) Using default \'{CDROM_DEVICE}\'{Fmt.END}')
+
+def get_cdda_device():
+    try:
+        with open(f'{UHOME}/pAudio/.cdda_device', 'r') as f:
+            return f.read()
+    except:
+        print(f'{Fmt.MAGENTA}(autoeject_cdda) Using default \'/dev/cdrom\'{Fmt.END}')
+        return '/dev/cdrom'
 
 
 def main_loop():
@@ -75,8 +77,9 @@ def main_loop():
                 # real audio can be buffered several seconds
                 sleep(10)
 
-                Popen(f"eject {CDROM_DEVICE}".split())
-                print(f'(autoeject_cdda) CD playback is over, disc ejected.')
+                cdda_device = get_cdda_device()
+                Popen(f"eject {cdda_device}".split())
+                print(f'(autoeject_cdda) CD playback is over, disc ejected: {cdda_device}.')
                 disc_is_over = False
 
             sleep(timer)

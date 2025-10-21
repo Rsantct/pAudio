@@ -22,6 +22,7 @@ CODEFOLDER              = f'{MAINFOLDER}/code'
 CONFIG_PATH             = f'{MAINFOLDER}/config.yml'
 LOGFOLDER               = f'{MAINFOLDER}/log'
 PLUGINSFOLDER           = f'{MAINFOLDER}/code/share/plugins'
+MACROSFOLDER            = f'{MAINFOLDER}/code/macros'
 
 PREAMP_STATE_PATH       = f'{MAINFOLDER}/.preamp_state'
 LDCTRL_PATH             = f'{MAINFOLDER}/.loudness_control'

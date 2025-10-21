@@ -440,7 +440,7 @@ function init(){
 
     manage_main_cside();
 
-    //fill_in_macro_buttons();
+    fill_in_macro_buttons();
 
     //fill_in_playlists_selector();
 

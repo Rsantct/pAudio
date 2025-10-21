@@ -83,6 +83,15 @@ def load_CDDA():
 
 
 def check_for_CDDA(d):
+    """
+        d: a device identifier from udev, example:
+
+        Device('/sys/devices/pci0000:00/0000:00:1a.0/usb2/2-1/2-1.2/2-1.2:1.0/host6/target6:0:0/6:0:0:0/block/sr1')
+    """
+
+    def save_cdrom_device():
+        with open(f'{UHOME}/pAudio/.cdda_device', 'w') as f:
+            f.write(CDROM)
 
     srDevice = d.device_path.split('/')[-1]
     CDROM = f'/dev/{srDevice}'
@@ -98,6 +107,7 @@ def check_for_CDDA(d):
             # dumping metadata to a file to be used later from the underlaying player
             dump_cdda_metadata()
             print( f'(autoplay_cdda) trying to load the CD Audio' )
+            save_cdrom_device()
             load_CDDA()
 
         # Data disc
