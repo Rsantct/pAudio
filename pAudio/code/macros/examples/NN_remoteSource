@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+'''
+    A helper macro to listen to a remote pAudio machine.
+
+'''
+
+from json import loads as json_loads
+import sys
+import os
+from subprocess import Popen
+
+ME          = os.path.basename(sys.argv[0])
+UHOME       = os.path.expanduser("~")
+MAINFOLDER  = f'{UHOME}/pAudio'
+sys.path.append(f'{MAINFOLDER}/code/share')
+
+from common import *
+
+### USER CONFIG HERE:
+REM_SRC_NAME    = "remoteSalon"
+REM_DELAY       = 20
+###
+
+
+print(f'({ME}) Trying to connect to: {REM_SRC_NAME}')
+
+# The only local player, if so, is MPD
+Popen('mpc pause 1>/dev/null 2>&1', shell=True)
+
+raddr, rport = get_remote_source_addr_port(REM_SRC_NAME)
+
+if not raddr:
+    print(f'({ME}) ERROR getting remote source: {REM_SRC_NAME}')
+    sys.exit()
+
+send_cmd('set_xo mp',               host=raddr, port=rport)
+send_cmd(f'add_delay {REM_DELAY}',  host=raddr, port=rport)
+
+send_cmd(f'source {REM_SRC_NAME}')
+
+
+# Link the relative changes in volume from the remote sender,
+# by announcing that we are listening to it.
+# (The remote plugin 'remote_volume.py' will listen at remote_port + 5)
+send_cmd('hello', host=raddr, port=rport + 5)
+
