@@ -771,10 +771,9 @@ def do(cmd, args, add):
 
         case 'set_source':
             new = args
-            if STATE.get("source") != new:
-                result = set_source(new)
-                if result in ('done', 'ordered'):
-                    STATE["source"] = new
+            result = set_source(new)
+            if result in ('done', 'ordered'):
+                STATE["source"] = new
 
         case 'mono':
 
