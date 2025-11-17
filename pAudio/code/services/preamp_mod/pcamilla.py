@@ -286,7 +286,7 @@ def init_camilladsp(pAudio_config):
 
     # Starting CamillaDSP (MUTED)
     print(f'{Fmt.BLUE}Logging CamillaDSP to log/camilladsp.log ...{Fmt.END}')
-    cdsp_cmd = f'camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
+    cdsp_cmd = f'{UHOME}/bin/camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
                f'--logfile "{LOGFOLDER}/camilladsp.log"'
     p = sp.Popen( cdsp_cmd, shell=True )
     sleep(1)
