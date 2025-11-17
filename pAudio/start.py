@@ -345,6 +345,7 @@ def start():
         stop()
         return
 
+    print(f'{Fmt.BLUE}(start) server running :-){Fmt.END}')
 
     if not only_server:
 

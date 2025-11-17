@@ -726,6 +726,7 @@ def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
         except:
             tries -= 1
             sleep(period)
+            #print(f'{Fmt.GRAY}waiting for server response ...{Fmt.END}')
 
     if tries:
         return True

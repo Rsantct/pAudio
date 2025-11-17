@@ -170,11 +170,11 @@ def manage_lu_monitor(commandphrase):
 
 def restart_paudio(mode):
 
-    if not mode in ('start', 'restart', 'stop', 'state'):
+    if not mode in ('start', 'restart', 'stop', 'toggle', 'state'):
         return 'Needs `start| stop | state`'
 
     if mode == 'state':
-        return process_is_running('server.py paudio ')
+        return process_is_running('server.py paudio ')  # trailing space is needed
 
     elif 'start' in mode:
         sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
@@ -183,6 +183,16 @@ def restart_paudio(mode):
     elif mode == 'stop':
         sp.Popen(f'{UHOME}/bin/paudio_restart.sh stop',  shell=True)
         return 'Please wait a few ...'
+
+    elif mode == 'toggle':
+
+        if process_is_running('server.py paudio '):
+            sp.Popen(f'{UHOME}/bin/paudio_restart.sh stop',  shell=True)
+            return 'Please wait a few ...'
+
+        else:
+            sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
+            return 'Please wait a minute ...'
 
 
 # Interface function for this module
@@ -193,7 +203,7 @@ def do( cmd_phrase):
     prefix, cmd, args, _ = read_cmd_phrase(cmd_phrase)
 
     if prefix != 'ctrl':
-        return result
+        return 'bad commnad prefix'
 
     match cmd:
 
