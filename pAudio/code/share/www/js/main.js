@@ -1143,7 +1143,10 @@ function omd_onoff(mode) {
 
     ays = window.confirm( msg );
     if (ays){
-        control_cmd( cmd + ' ' + mode );
+        const ans = control_cmd( cmd + ' ' + mode );
+        if (ans){
+            window.alert( ans );
+        }
     }
 }
 
