@@ -77,6 +77,37 @@ def _connect_to_camilla():
     return True
 
 
+def check_cdsp_running(timeout=10):
+
+    def grep_log_errors():
+        with open(f'{LOGFOLDER}/camilladsp.log', 'r') as f:
+            logs = f.read().strip().split('\n')
+        return [l.strip() for l in logs if 'ERROR' in l]
+
+
+    period = .5
+    tries = int(timeout / period)
+
+    while tries:
+
+        _connect_to_camilla()
+        s = CC.general.state()
+        if str(s) == 'ProcessingState.RUNNING' or str(s) == 'ProcessingState.INACTIVE':
+            break
+        else:
+            print(f'{Fmt.BLUE}{"." * int(tries * period)}{Fmt.END}')
+
+        sleep(.5)
+        tries -= 1
+
+    if tries:
+        return True
+    else:
+        for x in grep_log_errors():
+            print(f'{Fmt.RED}{x}{Fmt.END}')
+        return False
+
+
 def _prepare_eq_conv_pcms():
     """ CamillaDSP needs a new FIR filename in order to
         reload the convolver coeffs
@@ -234,63 +265,10 @@ def init_camilladsp(pAudio_config):
         return result
 
 
-    def check_cdsp_running(timeout=10):
-
-        def grep_log_errors():
-            with open(f'{LOGFOLDER}/camilladsp.log', 'r') as f:
-                logs = f.read().strip().split('\n')
-            return [l.strip() for l in logs if 'ERROR' in l]
-
-
-        period = .5
-        tries = int(timeout / period)
-
-        while tries:
-
-            s = CC.general.state()
-            if str(s) == 'ProcessingState.RUNNING':
-                break
-            else:
-                print(f'{Fmt.BLUE}{"." * int(tries * period)}{Fmt.END}')
-
-            sleep(.5)
-            tries -= 1
-
-        if tries:
-            return True
-        else:
-            for x in grep_log_errors():
-                print(f'{Fmt.RED}{x}{Fmt.END}')
-            return False
-
-
     global CC
-
-    # Prepare the camilladsp.yml as per the pAudio user configuration
-    cfg_init = _prepare_cam_config(pAudio_config)
-
-    # Dumping init config
-    with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
-        yaml.safe_dump(cfg_init, f)
-    if DUMP_ACTIVE:
-        with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
-            yaml.safe_dump(cfg_init, f)
-
-
-    # Stop if any process running
-    sp.call('pkill -KILL camilladsp'.split())
-
 
     # restore Sound Card settings
     restore_sound_card()
-
-    # Starting CamillaDSP (MUTED)
-    print(f'{Fmt.BLUE}Logging CamillaDSP to log/camilladsp.log ...{Fmt.END}')
-    cdsp_cmd = f'{UHOME}/bin/camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
-               f'--logfile "{LOGFOLDER}/camilladsp.log"'
-    p = sp.Popen( cdsp_cmd, shell=True )
-    sleep(1)
-
 
     # Early return if connection to CamillaDSP fails
     if _connect_to_camilla():
@@ -299,24 +277,32 @@ def init_camilladsp(pAudio_config):
         print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
         return
 
+    # Prepare the camilladsp.yml as per the pAudio user configuration
+    cfg_init = _prepare_cam_config(pAudio_config)
+
+    # Dumping init config
+    with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
+        yaml.safe_dump(cfg_init, f)
+
+    if DUMP_ACTIVE:
+        with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
+            yaml.safe_dump(cfg_init, f)
 
     # Loading configuration
     try:
+
         print(f'Trying to load configuration and run. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
-        CC.config.set_active(cfg_init)
+        set_config_sync(cfg_init)
+        if not CC.config.active():
+            raise Exception('Falied to load the config into CamillaDSP, see LOG folder')
 
-        if check_cdsp_running(timeout=5):
+        # Check CPAL jack ports
+        if pAudio_config.get('jack'):
+            if not cpal_ports_ok():
+                return f'problems with Camilla DSP CPAL ports'
 
-            # Check CPAL jack ports
-            if pAudio_config.get('jack'):
-                if not cpal_ports_ok():
-                    return f'problems with Camilla DSP CPAL ports'
-
-            # ALL IS OK
-            return 'running'
-
-        else:
-            return f'Cannot start `camilladsp` process, see `pAudio/log`'
+        # ALL IS OK
+        return 'done'
 
     except Exception as e:
 
