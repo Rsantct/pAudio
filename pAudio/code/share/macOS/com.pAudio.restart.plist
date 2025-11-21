@@ -25,7 +25,7 @@
         <string>/bin/sh</string>
         <string>-l</string>
         <string>-c</string>
-        <string>exec sleep 3 && /usr/local/bin/python3 $HOME/pAudio/code/share/server.py paudio 0.0.0.0 9990</string>
+        <string>sleep 3 && exec /usr/local/bin/python3 $HOME/pAudio/code/share/server.py paudio 0.0.0.0 9990</string>
     </array>
 
     <!-- run on sesion init -->
