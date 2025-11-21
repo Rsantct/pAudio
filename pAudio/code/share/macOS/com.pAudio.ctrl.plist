@@ -3,16 +3,29 @@
  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
     <key>Label</key>
     <string>com.pAudio.ctrl</string>
 
-    <!-- using a shell to have a full user environment -->
+    <!-- This enables this process to use the session Desktop resources
+    -->
+    <key>LimitLoadToSessionType</key>
+    <array>
+            <string>Aqua</string>
+            <string>Background</string>
+            <string>LoginWindow</string>
+            <string>System</string>
+            <string>StandardIO</string>
+    </array>
+
+    <!-- using a shell to have a full user environment
+    -->
     <key>ProgramArguments</key>
     <array>
         <string>/bin/sh</string>
         <string>-l</string>
         <string>-c</string>
-        <string>exec /usr/local/bin/python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 9991</string>
+        <string>exec sleep 2 && /usr/local/bin/python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 9991</string>
     </array>
 
     <!-- run on sesion init -->
@@ -25,10 +38,10 @@
 
     <!-- DEBUG (while testing)
     <key>StandardOutPath</key>
-    <string>/tmp/pAudio.control.log</string>
+    <string>/tmp/com.pAudio.ctrl.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/tmp/pAudio.control.err</string>
+    <string>/tmp/com.pAudio.ctrl.err</string>
     -->
 
 </dict>
