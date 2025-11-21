@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+    <key>Label</key>
+    <string>com.pAudio.restart</string>
+
+    <!-- This enables this process to use the session Desktop resources
+    -->
+    <key>LimitLoadToSessionType</key>
+    <array>
+            <string>Aqua</string>
+            <string>Background</string>
+            <string>LoginWindow</string>
+            <string>System</string>
+            <string>StandardIO</string>
+    </array>
+
+    <!-- using a shell to have a full user environment
+    -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-l</string>
+        <string>-c</string>
+        <string>exec sleep 3 && /usr/local/bin/python3 $HOME/pAudio/code/share/server.py paudio 0.0.0.0 9990</string>
+    </array>
+
+    <!-- run on sesion init -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- do not restart if the program is terminated -->
+    <key>KeepAlive</key>
+    <false/>
+
+    <!-- DEBUG
+    <key>StandardOutPath</key>
+    <string>/tmp/com.pAudio.restart.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/com.pAudio.restart.err</string>
+    -->
+
+</dict>
+</plist>
