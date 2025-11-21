@@ -18,17 +18,23 @@ if [[ ! $VIRTUAL_ENV ]]; then
 fi
 
 
-function do_stop {
+function stop_pAudio_server {
     echo '(i) STOPPING pAudio'
     python3 $HOME/pAudio/start.py stop
 }
 
 
-function do_start {
+function run_camilladsp {
 
-    if [[ ! $DBUS_SESSION_BUS_ADDRESS ]]; then
-        export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
-    fi
+    echo "Running CamillaDSP in wait mode ..."
+
+    $HOME/bin/camilladsp --wait --mute \
+        --address 127.0.0.1 --port 1234 \
+        --logfile $HOME/pAudio/log/camilladsp.log &
+}
+
+
+function restart_pAudio_server {
 
     VERBOSE=''
     if [[ $1 == *"-v"* || $2 == *"-v"* ]]; then
@@ -43,6 +49,7 @@ function do_start {
     if [[ $VERBOSE == '-v' ]]; then
         echo "Starting pAudio in VERBOSE MODE"
         python3 $HOME/pAudio/start.py start $VERBOSE $ONLY_SERVER &
+
     else
         echo "Starting pAudio in background."
         python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
@@ -51,8 +58,24 @@ function do_start {
 }
 
 
+function do_start {
+
+    if [[ ! $DBUS_SESSION_BUS_ADDRESS ]]; then
+        export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+    fi
+
+    if [[ $(pgrep camilladsp) ]]; then
+        echo "CamillaDSP is already running."
+    else
+        run_camilladsp
+    fi
+
+    restart_pAudio_server $1 $2
+}
+
+
 if [[ $1 == 'stop' ]]; then
-    do_stop
+    stop_pAudio_server
 
 elif [[ ! $1 || $1 == *'start' ]]; then
     do_start $2 $3
