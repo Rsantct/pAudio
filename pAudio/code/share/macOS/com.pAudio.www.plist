@@ -23,7 +23,7 @@
     <key>KeepAlive</key>
     <false/>
 
-    <!-- DEBUG (while testing)
+    <!-- DEBUG
     <key>StandardOutPath</key>
     <string>/tmp/pAudio.www.log</string>
 
