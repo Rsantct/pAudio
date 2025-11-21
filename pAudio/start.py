@@ -268,7 +268,7 @@ def stop():
     if not only_server:
 
         # CamillaDSP
-        sp.call('pkill -KILL camilladsp', shell=True)
+        #sp.call('pkill -KILL camilladsp', shell=True)
 
         # Jack audio server (jloops will also die)
         if sys.platform == 'linux' and CONFIG.get('jack'):
@@ -318,15 +318,6 @@ def start():
 
             # remote sources
             start_zita_link()
-
-
-    # Special flag file for 'paudio.py'.
-    with open(f'{MAINFOLDER}/.paudio_flags', 'w') as f:
-        if only_server:
-            paudio_flags = {'run_camilladsp': False}
-        else:
-            paudio_flags = {'run_camilladsp': True}
-        f.write( json.dumps(paudio_flags) )
 
     # Run the pAudio main server 'paudio.py' to listen for commands
     # This INCLUDES running CamillaDSP with a proper configuration.
