@@ -47,21 +47,6 @@ if not STATE:
 
 def init():
 
-    def get_paudio_flags():
-        """ Special flag file for 'paudio.py'
-        """
-
-        res = {}
-
-        try:
-            with open(f'{MAINFOLDER}/.paudio_flags', 'r') as f:
-                res = json.loads( f.read() )
-        except:
-            print(f'{Fmt.RED}(preamp) problems reading paudio_flags{Fmt.END}')
-
-        return res
-
-
     def get_coreaudio_source():
         """ This retrieves the source name in coreaudio,
             from the `capture:` section in config.yml
@@ -324,16 +309,10 @@ def init():
     STATE["dsp_buffer_size"]    = 0
 
 
-    # Preparing and running camillaDSP
-    if get_paudio_flags().get('run_camilladsp'):
-        cdsp_state = DSP.init_camilladsp( pAudio_config=CONFIG )
+    # Initialize camillaDSP
+    cdsp_init = DSP.init_camilladsp( pAudio_config=CONFIG )
 
-    else:
-        cdsp_state = 'pending'
-        if DSP._connect_to_camilla():
-            cdsp_state = 'running'
-
-    if cdsp_state == 'running':
+    if cdsp_init == 'done':
 
         STATE["dsp_buffer_size"] = DSP.CC.config.active()["devices"]["chunksize"]
         STATE["dsp_buffer_ms"]   = int(round(STATE["dsp_buffer_size"] / STATE["fs"] * 1000))
@@ -350,6 +329,7 @@ def init():
         save_json_file(STATE, PREAMP_STATE_PATH)
 
     else:
+
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
         print(f'    - The sound card is attached')
         print(f'    - The `config.yml` file')
