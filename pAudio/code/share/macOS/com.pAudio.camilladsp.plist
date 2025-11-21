@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+    <key>Label</key>
+    <string>com.pAudio.camilladsp</string>
+
+    <key>LimitLoadToSessionType</key>
+    <array>
+            <string>Aqua</string>
+            <string>Background</string>
+            <string>StandardIO</string>
+    </array>
+
+    <!--
+    Start CamillaDSP in '--wait' mode, wainting for a configuration to be upluaded via websocket
+    -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-l</string>
+        <string>-c</string>
+        <string>exec $HOME/bin/camilladsp --wait --mute --address 127.0.0.1 --port 1234 --logfile $HOME/pAudio/log/camilladsp.log</string>
+    </array>
+
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/com.pAudio.camilladsp.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/com.pAudio.camilladsp.err</string>
+
+</dict>
+</plist>
