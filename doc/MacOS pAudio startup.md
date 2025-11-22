@@ -1,4 +1,4 @@
-# MacOs pAudio startup on session init
+# MacOS pAudio startup on session init
 
 The install script will place the folowing files for your session init:
 
