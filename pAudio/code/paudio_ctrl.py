@@ -66,7 +66,7 @@ def run_macro(mname):
     if mname in get_macros():
 
         print( f'(aux) running macro: {mname}' )
-        sp.Popen( f'"{MACROSFOLDER}/{mname}"', shell=True)
+        sp.Popen( ['{MACROSFOLDER}/{mname}'] )
         AUXINFO["last_macro"] = mname
         return 'ordered'
 
@@ -177,21 +177,21 @@ def restart_paudio(mode):
         return process_is_running('server.py paudio ')  # trailing space is needed
 
     elif 'start' in mode:
-        sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
+        sp.Popen([f'{UHOME}/bin/paudio_restart.sh', 'start'])
         return 'Please wait a minute ...'
 
     elif mode == 'stop':
-        sp.Popen(f'{UHOME}/bin/paudio_restart.sh stop',  shell=True)
+        sp.Popen([f'{UHOME}/bin/paudio_restart.sh', 'stop'])
         return 'Please wait a few ...'
 
     elif mode == 'toggle':
 
         if process_is_running('server.py paudio '):
-            sp.Popen(f'{UHOME}/bin/paudio_restart.sh stop',  shell=True)
+            sp.Popen([f'{UHOME}/bin/paudio_restart.sh', 'stop'])
             return 'Please wait a few ...'
 
         else:
-            sp.Popen(f'{UHOME}/bin/paudio_restart.sh start',  shell=True)
+            sp.Popen([f'{UHOME}/bin/paudio_restart.sh', 'start'])
             return 'Please wait a minute ...'
 
 
