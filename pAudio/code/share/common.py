@@ -25,6 +25,36 @@ macos.CONFIG = CONFIG.copy()
 macos.Fmt    = Fmt
 
 
+def json_string_fix(cad):
+    """ Example of a raw string that cannot be parsed by json.loads because nested double quotes (")
+
+        {"app":"Spotify","state":"playing","track":"L'elisir d'amore / Act 1: "Signor sargente" - Excerpt","artist":"Gaetano Donizetti","album":"Donizetti:L'elisir d'amore - Highlights","elapsed":19,"duration":161266}'
+    """
+
+    for i, c in enumerate(cad):
+
+        if c == '"':
+
+            if cad[i - 1] in ('{', '}', ':'):
+                continue
+
+            if cad[i + 1] in ('{', '}'):
+                continue
+
+            if cad[i - 2 : i] in ('",'):
+                continue
+
+            if cad[i - 1 : i + 1] in (',"'):
+                continue
+
+            if cad[i : i + 2] in ('":', '",'):
+                continue
+
+            cad = cad[ : i] + "'" + cad[i + 1 :]
+
+    return cad
+
+
 def get_macros(only_web_macros=True):
     """ Returns the list of executable files under the macros folder.
         By default the list is restricted to web macros kinf of files: "NN_xxxxxx"
