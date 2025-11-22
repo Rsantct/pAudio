@@ -4,11 +4,15 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 """
-    This is the command line pAudio launcher
+    This is the pAudio stuff launcher
 
-        start.py   start [-v]  |  stop  |  toggle
+    Usage:
+        start.py   start  |  stop | toggle
 
-            -v      verbose in attached terminal
+    NOTICE:
+
+        The TCP server processor and the void CamillaDSP must be
+        started before and outside this script.
 """
 #
 # A helper command to check what things are running:
@@ -253,7 +257,7 @@ def stop_zita_link():
 
 def stop():
 
-    print(f'{Fmt.GRAY}{Fmt.BOLD}(start) Stopping pAudio{Fmt.END}')
+    print(f'{Fmt.GRAY}{Fmt.BOLD}(start) Stopping pAudio server stuff ...{Fmt.END}')
 
     # Only macOS
     if sys.platform == 'darwin':
@@ -265,96 +269,50 @@ def stop():
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
 
-    if not only_server:
 
-        # CamillaDSP
-        #sp.call('pkill -KILL camilladsp', shell=True)
 
-        # Jack audio server (jloops will also die)
-        if sys.platform == 'linux' and CONFIG.get('jack'):
+    # Jack audio server (jloops will also die)
+    if sys.platform == 'linux' and CONFIG.get('jack'):
 
-            # Stop Zita_Link
-            stop_zita_link()
-            sleep(.25)
+        # Stop Zita_Link
+        stop_zita_link()
+        sleep(.25)
 
-            # Stop Jack
-            sp.call('pkill -KILL jackd', shell=True)
-
-    # server.py (be careful with trailing space in command line below)
-    sp.call('pkill -KILL -f "server.py paudio "', shell=True)
-
-    # Node.js web server
-    # ---
+        # Stop Jack
+        sp.call('pkill -KILL jackd', shell=True)
 
 
 def start():
-
-
-    # The stand-alone control server
-    if not process_is_running('paudio_ctrl'):
-        CTRL_PORT = PAUDIO_PORT + 1
-        srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio_ctrl {PAUDIO_ADDR} {CTRL_PORT}'
-        sp.Popen(srv_cmd, shell=True)
-
-    else:
-        print(f'{Fmt.GREEN}(start) paudio_ctrl server is already running.{Fmt.END}')
-
-    # Node.js control web page
-    if not process_is_running('www-server'):
-        node_cmd = f'node {MAINFOLDER}/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1'
-        sp.Popen(node_cmd, shell=True)
-        print(f'{Fmt.MAGENTA}(start) Launching pAudio web server running in background ...{Fmt.END}')
-
-    else:
-        print(f'{Fmt.GREEN}(start) pAudio web server is already running.{Fmt.END}')
-
-
-    if not only_server:
-        # Jack audio server
-        if sys.platform == 'linux' and CONFIG.get('jack'):
-
-            # Jack
-            prepare_jack_stuff()
-
-            # remote sources
-            start_zita_link()
-
-    # Run the pAudio main server 'paudio.py' to listen for commands
-    # This INCLUDES running CamillaDSP with a proper configuration.
-    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {PAUDIO_ADDR} {PAUDIO_PORT}'
-
-    if verbose:
-        srv_cmd += ' -v'
-    else:
-        srv_cmd += f' 1>{LOGFOLDER}/paudio.log 2>{LOGFOLDER}/paudio.err'
-        print("(start) pAudio will run in background ...")
-
-    sp.Popen(srv_cmd, shell=True)
 
     if not wait4server():
         print(f'{Fmt.RED}(start) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
         stop()
         return
 
-    print(f'{Fmt.BLUE}(start) server running :-){Fmt.END}')
+    print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
 
-    if not only_server:
+    # Jack audio server
+    if sys.platform == 'linux' and CONFIG.get('jack'):
 
-        # Rewire CamillaDSP ONLY with JACK
-        if sys.platform == 'linux' and CONFIG.get('jack'):
-            rewire_dsp()
+        # Jack
+        prepare_jack_stuff()
 
-        # The loudness_monitor daemon
-        manage_loudness_monitor_daemon()
+        # remote sources
+        start_zita_link()
 
-        # Plugins (stand-alone processes)
-        run_plugins()
+    # Rewire CamillaDSP ONLY with JACK
+    if sys.platform == 'linux' and CONFIG.get('jack'):
+        rewire_dsp()
+
+    # The loudness_monitor daemon
+    manage_loudness_monitor_daemon()
+
+    # Plugins (stand-alone processes)
+    run_plugins()
 
 
 if __name__ == "__main__":
 
-    verbose     = False
-    only_server = False
     mode        = ''
 
     for opc in sys.argv[1:]:
@@ -367,13 +325,6 @@ if __name__ == "__main__":
 
         elif 'toggle' in opc:
             mode = 'toggle'
-
-        elif '-v' in opc:
-            verbose = True
-
-
-        elif '-s' in opc:
-            only_server = True
 
 
     match mode:
