@@ -12,8 +12,8 @@ import sys
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  save_json_file, time_sec2hhmmss, read_json_file, \
-                    PLAYER_INFO_PATH
+from common import  json_string_fix, save_json_file, time_sec2hhmmss, \
+                    read_json_file, PLAYER_INFO_PATH
 
 # List of players to be queried so that the response will be faster.
 # Set void to query all in _PLAYERS
@@ -320,14 +320,14 @@ def get_player_info():
         if player_info:
 
             # comillas estén bien formateadas para JSON
-            player_info = player_info.replace('\\"', '"')
+            player_info = json_string_fix(player_info)
 
             try:
                 player_info = json.loads(player_info)
                 players_info.append( player_info )
 
             except Exception as e:
-                print(f'(players_macos) Error decoding JSON from {app}: {str(e)}')
+                print(f'(players_macos) Error decoding JSON from {player}: {str(e)}')
 
     # Orden inverso para quedarnos con el primero de los preferidos
     for player_info in players_info[::-1]:
