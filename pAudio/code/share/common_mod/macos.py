@@ -7,23 +7,29 @@ import  os
 import  subprocess as sp
 
 UHOME = os.path.expanduser('~')
-BREW  = '/opt/homebrew'
 
 
 def init():
 
     global SWITCHAUDIO_BIN, ADJUSTVOLUME_BIN
 
-    SWITCHAUDIO_BIN = ''
+    BREW                = '/opt/homebrew'
+    LOCAL               = 'usr/local'
+    SWITCHAUDIO_BIN     = ''
+    ADJUSTVOLUME_BIN    = ''
+
     if os.path.isfile(f'{UHOME}/bin/SwitchAudioSource'):
         SWITCHAUDIO_BIN = f'{UHOME}/bin/SwitchAudioSource'
     else:
         if os.path.isfile(f'{BREW}/bin/SwitchAudioSource'):
             SWITCHAUDIO_BIN = f'{BREW}/bin/SwitchAudioSource'
 
-    ADJUSTVOLUME_BIN = ''
+
     if os.path.isfile(f'{UHOME}/bin/AdjustVolume'):
         ADJUSTVOLUME_BIN = f'{UHOME}/bin/AdjustVolume'
+    else:
+        if os.path.isfile(f'{LOCAL}/bin/AdjustVolume'):
+            ADJUSTVOLUME_BIN = f'{LOCAL}/bin/AdjustVolume'
 
     if not SWITCHAUDIO_BIN:
         print(f'{Fmt.GRAY}(macos) SwitchAudioSource NOT available{Fmt.END}')
@@ -121,16 +127,21 @@ def set_device_vol(dev, vol):
         https://github.com/jonomuller/device-volume-adjuster
     """
 
-    try:
-        vol_unit = round( int(vol) / 100, 3)
-        cmd = f'{UHOME}/bin/AdjustVolume -s {vol_unit} -n "{dev}"'
-        sp.call(cmd, shell=True)
-        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to {vol} on "{dev}"{Fmt.END}')
-        return 'done'
+    if ADJUSTVOLUME_BIN:
 
-    except Exception as e:
-        print(f'{Fmt.GRAY}(pAudio) ERROR with AdjustVolume: {str(e)}{Fmt.END}')
-        return 'error'
+        try:
+            vol_unit = round( int(vol) / 100, 3)
+            cmd = f'{ADJUSTVOLUME_BIN} -s {vol_unit} -n "{dev}"'
+            sp.call(cmd, shell=True)
+            print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to {vol} on "{dev}"{Fmt.END}')
+            return 'done'
+
+        except Exception as e:
+            print(f'{Fmt.GRAY}(macos) ERROR with AdjustVolume: {str(e)}{Fmt.END}')
+            return 'error with AdjustVolume'
+
+    else:
+        return 'error AdjustVolume not available'
 
 
 def set_default_device_mute(mode='false'):
