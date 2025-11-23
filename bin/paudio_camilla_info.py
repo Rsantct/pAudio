@@ -47,13 +47,6 @@ if __name__ == "__main__":
     while True:
 
         if cam._connect_to_camilla():
-
-            #config = cam.CC.config.active()
-            #print('CONFIG:      ', config)
-            #
-            #state = cam.CC.general.state()
-            #print('STATE:       ', state, end='\t')
-
             level = cam.CC.levels.capture_peak()
             print('level:       ', level)
 
