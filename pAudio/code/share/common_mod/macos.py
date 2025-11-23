@@ -6,11 +6,14 @@
 import  os
 import  subprocess as sp
 
-
 UHOME = os.path.expanduser('~')
 
 
 class Fmt:
+    GREEN           = '\033[32m'
+    BLUE            = '\033[34m'
+    MAGENTA         = '\033[35m'
+    CYAN            = '\033[36m'
     GRAY            = '\033[90m'
     BOLD            = '\033[1m'
     END             = '\033[0m'
@@ -38,12 +41,15 @@ def init():
         if os.path.isfile(f'{LOCAL}/bin/AdjustVolume'):
             ADJUSTVOLUME_BIN = f'{LOCAL}/bin/AdjustVolume'
 
-    if not SWITCHAUDIO_BIN:
+    if SWITCHAUDIO_BIN:
+        print(f'{Fmt.GREEN}(macos) SwitchAudioSource tool detected{Fmt.END}')
+    else:
         print(f'{Fmt.GRAY}(macos) SwitchAudioSource NOT available{Fmt.END}')
 
-    if not ADJUSTVOLUME_BIN:
+    if ADJUSTVOLUME_BIN:
+        print(f'{Fmt.GREEN}(macos) AdjustVolume tool detected{Fmt.END}')
+    else:
         print(f'{Fmt.GRAY}(macos) AdjustVolume NOT available{Fmt.END}')
-
 
 def get_default_device_PENDING():
     #
@@ -247,4 +253,3 @@ def restore_playback_device(volume=50):
 
 
 init()
-
