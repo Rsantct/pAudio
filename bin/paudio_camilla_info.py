@@ -30,7 +30,18 @@ if __name__ == "__main__":
         print('LOAD:        ', load)
 
         config = cam.CC.config.active()
-        print('CONFIG:      ', config)
+
+        if config.get('devices', {}).get('capture', {}):
+            cap_dev = config['devices']['capture']['device']
+        else:
+            cap_dev = '--'
+        if config.get('devices', {}).get('playback', {}):
+            pbk_dev = config['devices']['playback']['device']
+        else:
+            pbk_dev = '--'
+
+        print('CAPTURE:     ', cap_dev)
+        print('PLAYBACK:    ', pbk_dev)
 
 
     while True:
