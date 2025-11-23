@@ -73,12 +73,14 @@ def init():
 
 
     def resume_audio():
+
+        set_mute( True )
+
         # Only multiway
         if XO_SETS:
             if not STATE["xo_set"] in XO_SETS:
                 STATE["xo_set"] = XO_SETS[0]
             set_xo( STATE["xo_set"] )
-
 
         # All multiway and full-range
         do_levels( 'level', dB=STATE["level"] )
@@ -88,8 +90,6 @@ def init():
         set_solo( STATE["solo"] )
 
         do_levels( 'balance', dB=STATE["balance"] )
-
-        set_mute( STATE["muted"] )
 
         # tones can be clamped when ordered out of range
         res = do_levels( 'bass', dB=STATE["bass"] )
@@ -129,6 +129,8 @@ def init():
 
             else:
                 STATE["source"] = ''
+
+        set_mute( STATE["muted"] )
 
         save_json_file(STATE, PREAMP_STATE_PATH)
 
@@ -317,13 +319,13 @@ def init():
         STATE["dsp_buffer_size"] = DSP.CC.config.active()["devices"]["chunksize"]
         STATE["dsp_buffer_ms"]   = int(round(STATE["dsp_buffer_size"] / STATE["fs"] * 1000))
 
+        # Resuming audio settings on the DSP
+        resume_audio()
+
         # Changing MacOS playback device
         # (It will be restored when ordering `paudio.sh stop`)
         if CONFIG.get('coreaudio'):
             macos.change_default_sound_device( CONFIG["coreaudio"]["devices"]["capture"]["device"] )
-
-        # Resuming audio settings on the DSP
-        resume_audio()
 
         # Saving state with user settings mods
         save_json_file(STATE, PREAMP_STATE_PATH)
