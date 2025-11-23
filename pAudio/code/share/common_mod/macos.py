@@ -3,7 +3,33 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
-import subprocess as sp
+import  os
+import  subprocess as sp
+
+UHOME = os.path.expanduser('~')
+BREW  = '/opt/homebrew'
+
+
+def init():
+
+    global SWITCHAUDIO_BIN, ADJUSTVOLUME_BIN
+
+    SWITCHAUDIO_BIN = ''
+    if os.path.isfile(f'{UHOME}/bin/SwitchAudioSource'):
+        SWITCHAUDIO_BIN = f'{UHOME}/bin/SwitchAudioSource'
+    else:
+        if os.path.isfile(f'{BREW}/bin/SwitchAudioSource'):
+            SWITCHAUDIO_BIN = f'{BREW}/bin/SwitchAudioSource'
+
+    ADJUSTVOLUME_BIN = ''
+    if os.path.isfile(f'{UHOME}/bin/AdjustVolume'):
+        ADJUSTVOLUME_BIN = f'{UHOME}/bin/AdjustVolume'
+
+    if not SWITCHAUDIO_BIN:
+        print(f'{Fmt.GRAY}(macos) SwitchAudioSource NOT available{Fmt.END}')
+
+    if not ADJUSTVOLUME_BIN:
+        print(f'{Fmt.GRAY}(macos) AdjustVolume NOT available{Fmt.END}')
 
 
 def get_default_device_PENDING():
@@ -46,10 +72,13 @@ def get_current_device():
         return ''
 
     dd = ''
-    try:
-        dd = sp.check_output('SwitchAudioSource -c'.split()).decode().strip()
-    except Exception as e:
-        print(f'{Fmt.GRAY}(pAudio) warning: {str(e)}{Fmt.END}')
+
+    if SWITCHAUDIO_BIN:
+        try:
+            dd = sp.check_output(f'{SWITCHAUDIO_BIN} -c'.split()).decode().strip()
+        except Exception as e:
+            print(f'{Fmt.GRAY}(macos) warning: {str(e)}{Fmt.END}')
+
     return dd
 
 
@@ -62,7 +91,7 @@ def get_default_device_vol():
     try:
         vol = sp.check_output(cmd, shell=True).decode().strip()
     except Exception as e:
-        print(f'{Fmt.GRAY}(pAudio) warning: {str(e)}{Fmt.END}')
+        print(f'{Fmt.GRAY}(macos) warning: {str(e)}{Fmt.END}')
         vol = ''
     return vol
 
@@ -83,7 +112,7 @@ def set_default_device_vol(vol):
         return 'done'
 
     else:
-        print(f'{Fmt.GRAY}(pAudio) Problems setting system volume to MAX on "{dev}"{Fmt.END}')
+        print(f'{Fmt.GRAY}(macos) Problems setting system volume to MAX on "{dev}"{Fmt.END}')
         return 'error'
 
 
@@ -94,7 +123,7 @@ def set_device_vol(dev, vol):
 
     try:
         vol_unit = round( int(vol) / 100, 3)
-        cmd = f'AdjustVolume -s {vol_unit} -n "{dev}"'
+        cmd = f'{UHOME}/bin/AdjustVolume -s {vol_unit} -n "{dev}"'
         sp.call(cmd, shell=True)
         print(f'{Fmt.BOLD}{Fmt.BLUE}Setting VOLUME to {vol} on "{dev}"{Fmt.END}')
         return 'done'
@@ -123,7 +152,7 @@ def set_default_device_mute(mode='false'):
         return 'done'
 
     else:
-        print(f'{Fmt.GRAY}(pAudio) Problems muting on "{dev}"{Fmt.END}')
+        print(f'{Fmt.GRAY}(macos) Problems muting on "{dev}"{Fmt.END}')
         return 'error'
 
 
@@ -164,12 +193,13 @@ def change_default_sound_device(new_dev):
     old_dev = get_current_device()
 
     # SWITCHING PLAYBACK DEV ---> CamillaDSP_capture
-    cmd_source = f'SwitchAudioSource -s \"{new_dev}\"'
-    tmp = sp.call(cmd_source, shell=True)
-    if tmp == 0:
-        print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Default Device: "{new_dev}"{Fmt.END}')
-    else:
-        print(f'{Fmt.GRAY}(pAudio) Problems setting default MacOS playback default device{Fmt.END}')
+    if SWITCHAUDIO_BIN:
+        cmd_source = f'{SWITCHAUDIO_BIN} -s \"{new_dev}\"'
+        tmp = sp.call(cmd_source, shell=True)
+        if tmp == 0:
+            print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Default Device: "{new_dev}"{Fmt.END}')
+        else:
+            print(f'{Fmt.GRAY}(macos) Problems setting default MacOS playback default device{Fmt.END}')
 
     # Set volume to max on the NEW PLAYBACK DEV
     set_default_device_vol('100')
@@ -192,9 +222,11 @@ def restore_playback_device(volume=50):
         print('(restore_playback_device) problems getting Default System Output Device')
 
     if dev:
-        sp.call(f'SwitchAudioSource -s "{dev}"', shell=True)
-        sp.call(f"osascript -e 'set volume output volume '{volume}", shell=True)
-        print(f'(restore_playback_device) Restoring Playback Device')
+        if SWITCHAUDIO_BIN:
+            sp.call(f'{SWITCHAUDIO_BIN} -s "{dev}"', shell=True)
+            sp.call(f"osascript -e 'set volume output volume '{volume}", shell=True)
+            print(f'(restore_playback_device) Restoring Playback Device')
 
 
+init()
 
