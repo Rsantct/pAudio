@@ -6,7 +6,14 @@
 import  os
 import  subprocess as sp
 
+
 UHOME = os.path.expanduser('~')
+
+
+class Fmt:
+    GRAY            = '\033[90m'
+    BOLD            = '\033[1m'
+    END             = '\033[0m'
 
 
 def init():
