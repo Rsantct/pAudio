@@ -17,12 +17,12 @@ import  sys
 import  ipaddress
 from    getpass     import getuser
 from    config      import *
-from    common_mod  import macos
+
+if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
+    from    common_mod  import macos
+    macos.CONFIG = CONFIG.copy()
 
 USER = getuser()
-
-macos.CONFIG = CONFIG.copy()
-macos.Fmt    = Fmt
 
 
 def json_string_fix(cad):
