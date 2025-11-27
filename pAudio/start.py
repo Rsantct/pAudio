@@ -4,26 +4,23 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 """
-    This is the pAudio stuff launcher
+    This is the launcher for the pAudio server and its child processes.
 
     Usage:
-        start.py   start  |  stop | toggle
+
+        start.py   start  |  stop  | --jack
+
+        --jack  will only run Jack as per the configuration under pAudio/config.yml
 
     NOTICE:
 
-        The TCP server processor and the void CamillaDSP must be
-        started before and outside this script.
+        A void CamillaDSP must be started before and outside this script
 """
-#
-# A helper command to check what things are running:
-#
-# pgrep -fla camilla; pgrep -fla node; pgrep -fla "server.py"; pgrep -fla 'plugins'
-#
-
 
 import  sys
 import  os
-from    time import sleep
+from    time        import sleep
+from    camilladsp  import CamillaClient
 
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
@@ -38,9 +35,37 @@ if sys.platform == 'linux' and CONFIG.get('jack'):
     from    jack_sources import SOURCES
 
 
+def check_cdsp_running():
+
+    # Temporay CamillaDSP client
+    HOST = '127.0.0.1'
+    PORT = 1234
+    CC   = CamillaClient(HOST, PORT)
+
+    try:
+        CC.connect()
+
+        s = CC.general.state()
+
+        if str(s) == 'ProcessingState.RUNNING' or str(s) == 'ProcessingState.INACTIVE':
+            print(f'{Fmt.BLUE}(start) CamillaDSP detected :-){Fmt.END}')
+            return True
+        else:
+            print(f'{Fmt.RED}(start) ERROR with CamillaDSP, check log folder.{Fmt.END}')
+            return False
+
+    except:
+        print(f'{Fmt.RED}(start) Unable to connect to CamillaDSP, check log folder.{Fmt.END}')
+        return False
+
+
 def prepare_jack_stuff():
     """ execute JACK with the convenient loops
     """
+
+    if sys.platform != 'linux':
+        print(f'{Fmt.RED}(start) JACK only on Linux{Fmt.END}')
+        return
 
     jloops_list = ['pre_in_loop']
 
@@ -71,7 +96,7 @@ def prepare_jack_stuff():
             print(f'{Fmt.BOLD}(start) Problems restarting PipeWire: {str(e)}{Fmt.END}')
 
 
-def rewire_dsp():
+def rewire_camilladsp():
     """ https://github.com/HEnquist/camilladsp?tab=readme-ov-file#jack
 
         CamillaDSP will show up in Jack as "cpal_client_in" and "cpal_client_out".
@@ -263,46 +288,55 @@ def stop():
     if sys.platform == 'darwin':
         macos.restore_playback_device()
 
-    # The loudness_monitor daemon
-    manage_loudness_monitor_daemon(mode='stop')
-
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
 
+    # The loudness_monitor daemon
+    manage_loudness_monitor_daemon(mode='stop')
 
-
-    # Jack audio server (jloops will also die)
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
-        # Stop Zita_Link
+        # Zita network to jack (Linux)
         stop_zita_link()
         sleep(.25)
 
-        # Stop Jack
-        sp.call('pkill -KILL jackd', shell=True)
+    # The server
+    sp.Popen(['pkill', '-f',  'server.py paudio '])
+
+    sleep(1)
 
 
 def start():
 
-    if not wait4server():
+    # Check if CamillaDPS is available
+    if not check_cdsp_running():
+        return
+
+    # Run the pAudio main server 'paudio.py' to listen for commands
+    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {PAUDIO_ADDR} {PAUDIO_PORT}'
+
+    if verbose:
+        srv_cmd += ' -v'
+    else:
+        srv_cmd += f' 1>{LOGFOLDER}/paudio.log 2>{LOGFOLDER}/paudio.err'
+        print("(start) The pAudio server will run in background ...")
+
+    sp.Popen( srv_cmd.split() )
+
+    if wait4server(timeout=30):
+        print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
+    else:
         print(f'{Fmt.RED}(start) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
         stop()
         return
 
-    print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
-
-    # Jack audio server
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
-        # Jack
-        prepare_jack_stuff()
-
-        # remote sources
+        # Zita network to jack (Linux)
         start_zita_link()
 
-    # Rewire CamillaDSP ONLY with JACK
-    if sys.platform == 'linux' and CONFIG.get('jack'):
-        rewire_dsp()
+        # Rewire CamillaDSP ONLY with Linux JACK
+        rewire_camilladsp()
 
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon()
@@ -313,7 +347,8 @@ def start():
 
 if __name__ == "__main__":
 
-    mode        = ''
+    mode    = ''
+    verbose = False
 
     for opc in sys.argv[1:]:
 
@@ -323,26 +358,23 @@ if __name__ == "__main__":
         elif 'stop' in opc:
             mode = 'stop'
 
-        elif 'toggle' in opc:
-            mode = 'toggle'
+        elif '-j' in opc:
+            mode = 'prepare_jack_stuff'
 
+        elif '-v' in opc:
+            verbose = True
 
     match mode:
 
         case 'start':
-            stop()
-            print(f'{Fmt.GRAY}{Fmt.BOLD}wait a bit to start pAudio... .. .{Fmt.END}')
-            sleep(3)
             start()
 
         case 'stop':
             stop()
 
-        case 'toggle':
-            if process_is_running(pattern='pAudio/code'):
-                stop()
-            else:
-                start()
+
+        case 'prepare_jack_stuff':
+            prepare_jack_stuff()
 
         case _ :
             print(__doc__)
