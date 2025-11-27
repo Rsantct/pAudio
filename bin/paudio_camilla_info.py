@@ -48,7 +48,8 @@ if __name__ == "__main__":
         if cam._connect_to_camilla():
             level = cam.CC.levels.capture_peak()
             main_volume = cam.CC.volume.main_volume()
-            print('level:       ', level, 'main_volume:  ', main_volume)
+            state = cam.CC.general.state()
+            print('level:       ', level, f'main_volume: {main_volume}', f'state: {state}')
 
         else:
             print('NO CONNECTION')
