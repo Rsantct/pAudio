@@ -63,12 +63,18 @@ def run_macro(mname):
         AUXINFO["last_macro"] = ''
         return 'last_macro cleared'
 
-    if mname in get_macros():
+    macro_path = f'{MACROSFOLDER}/{mname}'
 
-        print( f'(aux) running macro: {mname}' )
-        sp.Popen( ['{MACROSFOLDER}/{mname}'] )
-        AUXINFO["last_macro"] = mname
-        return 'ordered'
+    if os.path.isfile(macro_path):
+
+        print( f'(ctrl) ordering macro: {mname}' )
+
+        try:
+            sp.Popen( [macro_path] )
+            AUXINFO["last_macro"] = mname
+            return 'ordered'
+        except Exception as e:
+            return f'Error running `{mname}`: {str(e)}'
 
     else:
         return 'macro not found'
