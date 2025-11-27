@@ -45,11 +45,16 @@ DUMP_ACTIVE = True
 #######################################################33##########
 # (!) use ALWAYS THIS FUNCTION to load a new config into CamillaDSP
 ###################################################################
-def set_config_sync(cfg, wait=0.1):
+def set_config_sync(cfg, wait=CONFIG['camilladsp_activation_wait']):
     """ (i) When ordering set config some time is needed to be running
         This is a fake sync, but just works  >:-)
     """
-    CC.config.set_active(cfg)
+
+    try:
+        CC.config.set_active(cfg)
+    except Exception as e:
+        print(f'{Fmt.BOLD}(pcamilla) Error in config.set_active(): {str(e)}{Fmt.END}')
+        return
 
     if DUMP_ACTIVE:
         with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
@@ -148,7 +153,7 @@ def _prepare_cam_config(pAudio_config):
             """
 
             xosets = list( pAudio_config["xo"].keys() )
-            print(f'{Fmt.BLUE}{Fmt.BOLD}XOVER sets: {xosets}{Fmt.END}')
+            print(f'{Fmt.BLUE}{Fmt.BOLD}(pcamilla) XOVER sets: {xosets}{Fmt.END}')
 
             # xo filters
             for set_name, values in pAudio_config["xo"].items():
@@ -185,7 +190,7 @@ def _prepare_cam_config(pAudio_config):
         mixer_name = f'from2to{ len(m["mapping"]) }channels'
         cam_config["mixers"][mixer_name] = m
 
-        print(f'{Fmt.GREEN}{mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
+        print(f'{Fmt.GREEN}(pcamilla) {mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
 
         # Adding the mixer to the pipeline
         mwm_step = {'type': 'Mixer', 'name': mixer_name}
@@ -246,7 +251,7 @@ def init_camilladsp(pAudio_config):
 
             # Early return if any `cpal_client_in-01` is detected
             if '-' in cpal_port.name:
-                print(f'{Fmt.BOLD}Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
+                print(f'{Fmt.BOLD}(pcamilla) Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
                 result = False
                 break
 
@@ -257,7 +262,7 @@ def init_camilladsp(pAudio_config):
 
             for c in conns:
                 if 'system' in c.name:
-                    print(f'{Fmt.BOLD}CPAL <--> SYSTEM detected: {cpal_port.name} {c.name}{Fmt.END}')
+                    print(f'{Fmt.BOLD}(pcamilla) CPAL <--> SYSTEM detected: {cpal_port.name} {c.name}{Fmt.END}')
                     result = False
 
         jcli.close()
@@ -272,9 +277,9 @@ def init_camilladsp(pAudio_config):
 
     # Early return if connection to CamillaDSP fails
     if _connect_to_camilla():
-        print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
+        print(f'{Fmt.BLUE}(pcamilla) Connected to CamillaDSP websocket.{Fmt.END}')
     else:
-        print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
+        print(f'{Fmt.BOLD}(pcamilla) ERROR connecting to CamillaDSP websocket.{Fmt.END}')
         return
 
     # Prepare the camilladsp.yml as per the pAudio user configuration
@@ -291,8 +296,10 @@ def init_camilladsp(pAudio_config):
     # Loading configuration
     try:
 
-        print(f'Trying to load configuration and run. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
+        print(f'(pcamilla) Trying to load configuration and run. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
         set_config_sync(cfg_init)
+        # First configuration takes a bit
+        sleep(.25)
         if not CC.config.active():
             raise Exception('Falied to load the config into CamillaDSP, see LOG folder')
 
@@ -306,7 +313,7 @@ def init_camilladsp(pAudio_config):
 
     except Exception as e:
 
-        print(f'{Fmt.BOLD}ERROR loading CamillaDSP configuration. {str(e)}{Fmt.END}')
+        print(f'{Fmt.BOLD}(pcamilla) ERROR loading CamillaDSP configuration. {str(e)}{Fmt.END}')
         return str(e)
 
 
