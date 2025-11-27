@@ -46,7 +46,7 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops_list=[], di
         f.write(jack_cmd)
         f.write('\n\n')
 
-    sp.Popen(jack_cmd, shell=True)
+    sp.Popen(jack_cmd.split())
 
     if wait4jackports('system', timeout=10):
 
