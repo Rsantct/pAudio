@@ -9,24 +9,10 @@
 #   - a DBUS_SESSION_BUS_ADDRESS if neccessary for JACK when not in a X environment
 #
 
-function start_camilladsp {
-
-    if [[ $(pgrep camilladsp) ]]; then
-        echo "CamillaDSP is already running."
-
-    else
-        echo "Running CamillaDSP in wait mode ..."
-        $HOME/bin/camilladsp --wait --mute \
-            --address 127.0.0.1 --port 1234 \
-            --logfile $HOME/pAudio/log/camilladsp.log &
-    fi
-}
-
-
-function start_pAudio_www {
+function start_www {
 
     if [[ $(pgrep -f "nodejs_www_server/www-server.js") ]]; then
-        echo "pAudio web server is already running."
+        echo "(paudio_restart) pAudio web server is already running."
 
     else
         node $HOME/pAudio/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1 &
@@ -35,10 +21,10 @@ function start_pAudio_www {
 }
 
 
-function start_pAudio_ctrl {
+function start_ctrl {
 
     if [[ $(pgrep -f "server.py paudio_ctrl") ]]; then
-        echo "pAudio_ctrl server is already running."
+        echo "(paudio_restart) pAudio_ctrl server is already running."
 
     else
         python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 $CTRL_PORT &
@@ -47,67 +33,66 @@ function start_pAudio_ctrl {
 }
 
 
-function start_pAudio_server {
+function start_jack {
 
-    if [[ $(pgrep -f "server.py paudio ") ]]; then
-        echo "pAudio server is already running."
-
-    else
-        python3 $HOME/pAudio/code/share/server.py paudio 0.0.0.0 $PA_PORT &
-
+    # needed for headless machines
+    if [[ ! $DBUS_SESSION_BUS_ADDRESS ]]; then
+        export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
     fi
+
+    # needs & for background running
+    python3 $HOME/pAudio/start.py --jack &
+    sleep 1
 }
 
 
-function start_pAudio_stuff {
+function start_camilladsp {
 
-    VERBOSE=''
-    if [[ $1 == *"-v"* || $2 == *"-v"* ]]; then
-        VERBOSE='-v'
+    if [[ $(uname) == "Linux" ]]; then
+        echo "(paudio_restart) killing CamillaDSP."
+        pkill -f camilladsp 1>/dev/null 2>&1
+        sleep 1
     fi
 
-    if [[ $VERBOSE == '-v' ]]; then
-        echo "Starting pAudio in VERBOSE MODE"
-        python3 $HOME/pAudio/start.py start $VERBOSE &
+    if [[ $(pgrep camilladsp) ]]; then
+        echo "(paudio_restart) CamillaDSP is already running."
 
     else
-        echo "Starting pAudio in background."
-        python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
-                                            2> $HOME/pAudio/log/start.err &
+        echo "(paudio_restart) Running CamillaDSP in wait mode ..."
+        $HOME/bin/camilladsp --wait --mute \
+            --address 127.0.0.1 --port 1234 \
+            --logfile $HOME/pAudio/log/camilladsp.log &
+        sleep 2
     fi
 }
 
 
 function do_stop {
 
-    # Notice: CamillaDSP, the web server and the paudio_ctrl server
-    #         remains intact from here
+    python3 $HOME/pAudio/start.py stop          # pAudio server
 
-    echo '(i) STOPPING pAudio stuff'
-    python3 $HOME/pAudio/start.py stop
-
-    echo '(i) STOPPING pAudio server'
-    pkill -f "server.py paudio "
-
+    if [[ $(uname) == "Linux" ]]; then
+        pkill -f camilladsp 1>/dev/null 2>&1    # CamillaDSP
+        sleep 1
+        pkill -f 'jackd -d' 1>/dev/null 2>&1    # Jack
+    fi
     sleep 1
 }
 
 
 function do_start {
 
-    if [[ ! $DBUS_SESSION_BUS_ADDRESS ]]; then
-        export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+    if [[ $(uname) == "Linux" ]]; then          # Jack
+        start_jack
     fi
 
-    start_camilladsp
+    start_camilladsp                            # CamillaDSP
 
-    start_pAudio_www
+    start_www                                   # Node WWW server
 
-    start_pAudio_ctrl
+    start_ctrl                                  # pAudio control server
 
-    start_pAudio_server
-
-    start_pAudio_stuff $1 $2
+    python3 $HOME/pAudio/start.py start         # pAudio server
 }
 
 
