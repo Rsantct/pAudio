@@ -392,6 +392,42 @@ def wait4ports( pattern, timeout=10 ):
         return False
 
 
+def check_output(host, port, message, timeout=1.0, chunk_size=4096):
+    """
+    Envía 'message' a (host, port) vía TCP y devuelve la respuesta completa
+    como string, similar a subprocess.check_output().
+    """
+
+    if not host or not port or not message:
+        return ''
+
+    data = b''
+
+    try:
+        with socket.create_connection((host, port)) as conn:
+
+            conn.settimeout(timeout)
+
+            if isinstance(message, str):
+                message = message.encode()
+
+            conn.sendall(message)
+
+            while True:
+                try:
+                    chunk = conn.recv(chunk_size)
+                    if not chunk:
+                        break
+                    data += chunk
+                except socket.timeout:
+                    break
+
+    except Exception as e:
+        pass
+
+    return data.decode()
+
+
 def send_cmd( cmd, sender='', verbose=False, timeout=3, host=PAUDIO_ADDR, port=PAUDIO_PORT ):
     """ Sends a command to a pAudio server partner.
         Returns a string about the execution response or an error if so.
@@ -750,13 +786,13 @@ def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
     tries  = int(timeout / period)
 
     while tries:
-        try:
-            sp.check_output(f'echo "hello" | nc localhost {port}', shell=True)
+
+        if check_output('localhost', port,' hello'):
             break
-        except:
-            tries -= 1
-            sleep(period)
-            #print(f'{Fmt.GRAY}waiting for server response ...{Fmt.END}')
+
+        tries -= 1
+        sleep(period)
+        #print(f'{Fmt.GRAY}waiting for server response ...{Fmt.END}')
 
     if tries:
         return True
