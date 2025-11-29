@@ -88,6 +88,7 @@ def prepare_jack_stuff():
 
     # **PipeWire** needs to detect this new Jack and connect to it
     if process_is_running('pipewire'):
+
         try:
             sp.call( 'systemctl --user restart pipewire', shell=True)
             print(f'{Fmt.BLUE}(start) Reloading PipeWire for jack-sink ...{Fmt.END}')
