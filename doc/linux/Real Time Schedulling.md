@@ -27,3 +27,12 @@ Vamos a decirle al Kernel que deje de restringir el tiempo de CPU para los grupo
     
         kernel.sched_rt_runtime_us = -1
 
+### ATENCIÓN
+
+Esta configuración es de RIESGO: en caso de un error en el procesamiento de real-time, el sistema se quedará colgado porque se le ha concedido todo el tiempo de CPU.
+
+Una configuración más conservadora sería asignarle 950000 ~ 980000 us, ejemplo:
+
+     kernel.sched_rt_runtime_us = 980000
+
+De esta manera el sistema responderá, lentamente, a ping o a ssh para podor parar JACKD en caso de accidente.
