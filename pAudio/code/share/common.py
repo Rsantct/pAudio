@@ -156,6 +156,10 @@ def read_mpd_config(mpd_config_path=''):
         mpd_config_path = get_running_mpd_config_path()
 
 
+    if not os.path.isfile(mpd_config_path):
+        print(f'(common) read_mpd_config, file NOT found: {mpd_config_path}')
+        return {}
+
     with open(mpd_config_path, 'r') as f:
 
         lexer = shlex.shlex(f)
