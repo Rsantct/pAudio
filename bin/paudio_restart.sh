@@ -92,7 +92,19 @@ function do_start {
 
     start_ctrl                                          # pAudio control server
 
-    python3 $HOME/pAudio/start.py start                 # pAudio server
+
+    # $1 can be -v for verbose mode                     # pAudio server
+    VERBOSE=''
+    if [[ $1 == *"-v"* || $2 == *"-v"* ]]; then
+        VERBOSE='-v'
+    fi
+
+    if [[ $VERBOSE == '-v' ]]; then
+        python3 $HOME/pAudio/start.py start $VERBOSE &
+    else
+        python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
+                                            2> $HOME/pAudio/log/start.err &
+    fi
 }
 
 
@@ -118,7 +130,7 @@ if [[ $1 == 'stop' ]]; then
 
 elif [[ ! $1 || $1 == *'start' ]]; then
     do_stop
-    do_start $2 $3
+    do_start $2
 
 else
     echo
