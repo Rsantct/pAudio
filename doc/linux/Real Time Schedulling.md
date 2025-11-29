@@ -30,7 +30,7 @@ Vamos a decirle al Kernel que deje de restringir el tiempo de CPU para los grupo
 
 **ATENCIÓN**
 
-Esta configuración es de RIESGO: en caso de un error en el procesamiento de real-time, el sistema se quedará colgado porque se le ha concedido todo el tiempo de CPU.
+Esta configuración es de RIESGO: en caso de un error en el procesamiento de real-time, el sistema se quedará colgado porque se le ha concedido todo el tiempo de CPU, en favor de minimizar XRUNS en el procesamiento de audio.
 
 Una configuración más conservadora sería asignarle 950000 ~ 980000 us, ejemplo:
 
