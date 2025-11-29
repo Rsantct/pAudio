@@ -38,7 +38,7 @@ Una configuración más conservadora sería asignarle 950000 ~ 980000 us, ejempl
 
 De esta manera el sistema responderá, lentamente, a ping o a ssh para podor parar JACKD en caso de accidente.
 
-### Solución 2: Usar systemd-run (ALternativa bypass del Slice de usuario)
+### Solución 2: Usar systemd-run (Alternativa bypass del Slice de usuario)
 
 A veces, la sesión de terminal (user@1000.service) está restringida, pero crear un ámbito (scope) nuevo funciona. En lugar de ejecutar jackd directamente, pídele a Systemd que te cree un entorno limpio para él.
 
