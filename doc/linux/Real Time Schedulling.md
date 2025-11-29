@@ -18,7 +18,8 @@
 En los Kernels modernos (como el 6.12 que usas) con Systemd, tu terminal se ejecuta dentro de un "Cgroup" (slice) que por defecto tiene 0 microsegundos de tiempo asignado para procesos Real-Time para evitar que bloquees el sistema.
 
 Aquí tienes la solución jerárquica para arreglar esto en Armbian:
-Solución 1: Desactivar el "Throttling" de RT globalmente (La más efectiva)
+
+### Solución 1: Desactivar el "Throttling" de RT globalmente (PREFERIDA)
 
 Vamos a decirle al Kernel que deje de restringir el tiempo de CPU para los grupos de tiempo real.
 
@@ -27,7 +28,7 @@ Vamos a decirle al Kernel que deje de restringir el tiempo de CPU para los grupo
     
         kernel.sched_rt_runtime_us = -1
 
-### ATENCIÓN
+**ATENCIÓN**
 
 Esta configuración es de RIESGO: en caso de un error en el procesamiento de real-time, el sistema se quedará colgado porque se le ha concedido todo el tiempo de CPU.
 
@@ -36,3 +37,13 @@ Una configuración más conservadora sería asignarle 950000 ~ 980000 us, ejempl
      kernel.sched_rt_runtime_us = 980000
 
 De esta manera el sistema responderá, lentamente, a ping o a ssh para podor parar JACKD en caso de accidente.
+
+### Solución 2: Usar systemd-run (ALternativa bypass del Slice de usuario)
+
+A veces, la sesión de terminal (user@1000.service) está restringida, pero crear un ámbito (scope) nuevo funciona. En lugar de ejecutar jackd directamente, pídele a Systemd que te cree un entorno limpio para él.
+
+Ejecuta Jack así:
+
+    systemd-run --user --scope -p "RealtimeScheduling=yes" -p "LimitRTPRIO=95" -p "LimitMEMLOCK=infinity" jackd -d dummy
+
+Si esto arranca, significa que tu sesión de terminal es la que está "sucia" o restringida por Systemd.
