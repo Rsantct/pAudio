@@ -27,7 +27,7 @@ function start_ctrl {
         echo "(paudio_restart) pAudio_ctrl server is already running."
 
     else
-        python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 $CTRL_PORT &
+        python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 $CTRL_PORT 1>/dev/null 2>&1 &
 
     fi
 }
@@ -50,7 +50,7 @@ function start_camilladsp {
 
     if [[ $(uname) == "Linux" ]]; then
         echo "(paudio_restart) killing CamillaDSP."
-        pkill -f camilladsp 1>/dev/null 2>&1
+        pkill -KILL -f camilladsp 1>/dev/null 2>&1
         sleep 1
     fi
 
@@ -69,12 +69,12 @@ function start_camilladsp {
 
 function do_stop {
 
-    python3 $HOME/pAudio/start.py stop          # pAudio server
+    python3 $HOME/pAudio/start.py stop                  # pAudio server
 
     if [[ $(uname) == "Linux" ]]; then
-        pkill -f camilladsp 1>/dev/null 2>&1    # CamillaDSP
+        pkill -KILL -f camilladsp 1>/dev/null 2>&1      # CamillaDSP
         sleep 1
-        pkill -f 'jackd -d' 1>/dev/null 2>&1    # Jack
+        pkill -KILL -f 'jackd' 1>/dev/null 2>&1      # Jack
     fi
     sleep 1
 }
@@ -82,17 +82,17 @@ function do_stop {
 
 function do_start {
 
-    if [[ $(uname) == "Linux" ]]; then          # Jack
+    if [[ $(uname) == "Linux" ]]; then                  # Jack
         start_jack
     fi
 
-    start_camilladsp                            # CamillaDSP
+    start_camilladsp                                    # CamillaDSP
 
-    start_www                                   # Node WWW server
+    start_www                                           # Node WWW server
 
-    start_ctrl                                  # pAudio control server
+    start_ctrl                                          # pAudio control server
 
-    python3 $HOME/pAudio/start.py start         # pAudio server
+    python3 $HOME/pAudio/start.py start                 # pAudio server
 }
 
 
