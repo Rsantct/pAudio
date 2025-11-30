@@ -882,7 +882,8 @@ def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
         zargs = json.dumps( (get_my_ip(), None, 'stop') )
         remotecmd = f'aux zita_j2n {zargs}'
 
-        print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
+        if CONFIG["verbose"]:
+            print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
 
         result = send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
 
@@ -907,7 +908,8 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
 
     if mode == 'stop':
 
-        print(f'{Fmt.GRAY}(common) killing local zita-n2j: {jport}{Fmt.END}')
+        if CONFIG["verbose"]:
+            print(f'{Fmt.GRAY}(common) killing local zita-n2j: {jport}{Fmt.END}')
 
         zitapattern  = f'zita-n2j --jname {jport}'
         sp.call( ['pkill', '-KILL', '-u', USER, '-f',  zitapattern] )
