@@ -22,6 +22,9 @@ from   subprocess import Popen, run, check_output
 
 UHOME = os.path.expanduser("~")
 
+GRAY = '\033[90m'
+BLUE = '\033[34m'
+END  = '\033[0m'
 
 def mpd_is_running():
     try:
@@ -33,15 +36,15 @@ def mpd_is_running():
 
 def stop():
     #run( f'killall -KILL mpd', shell=True )
-    print('(plugins/mpd.py) will not stop MPD anymore')
+    print(f'{GRAY}(plugins/mpd.py) will not stop MPD anymore{END}')
 
 
 def start():
 
     if mpd_is_running():
-        print('(plugins/mpd.py) MPD server already running')
+        print(f'{GRAY}(plugins/mpd.py) MPD server already running{END}')
     else:
-        print('(plugins/mpd.py) running MPD server ...')
+        print(f'{BLUE}(plugins/mpd.py) running MPD server ...{END}')
         Popen( f'mpd {UHOME}/.mpdconf', shell=True )
 
 
