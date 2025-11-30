@@ -12,7 +12,9 @@
 function start_www {
 
     if [[ $(pgrep -f "nodejs_www_server/www-server.js") ]]; then
-        echo "(paudio_restart) pAudio web server is already running."
+        if [[ $VERBOSE == 'true' ]]; then
+            echo "(paudio_restart) pAudio web server is already running."
+        fi
 
     else
         node $HOME/pAudio/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1 &
@@ -24,8 +26,9 @@ function start_www {
 function start_ctrl {
 
     if [[ $(pgrep -f "server.py paudio_ctrl") ]]; then
-        echo "(paudio_restart) pAudio_ctrl server is already running."
-
+        if [[ $VERBOSE == 'true' ]]; then
+            echo "(paudio_restart) pAudio_ctrl server is already running."
+        fi
     else
         python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 $CTRL_PORT 1>/dev/null 2>&1 &
 
@@ -41,7 +44,14 @@ function start_jack {
     fi
 
     # needs & for background running
-    python3 $HOME/pAudio/start.py --jack &
+    if [[ $VERBOSE == 'true' ]]; then
+        python3 $HOME/pAudio/start.py --jack &
+
+    else
+        python3 $HOME/pAudio/start.py --jack 1>/dev/null 2>&1 &
+
+    fi
+
     sleep 1
 }
 
@@ -49,16 +59,22 @@ function start_jack {
 function start_camilladsp {
 
     if [[ $(uname) == "Linux" ]]; then
-        echo "(paudio_restart) killing CamillaDSP."
+        if [[ $VERBOSE == 'true' ]]; then
+            echo "(paudio_restart) killing CamillaDSP."
+        fi
         pkill -KILL -f camilladsp 1>/dev/null 2>&1
         sleep 1
     fi
 
     if [[ $(pgrep camilladsp) ]]; then
-        echo "(paudio_restart) CamillaDSP is already running."
+        if [[ $VERBOSE == 'true' ]]; then
+            echo "(paudio_restart) CamillaDSP is already running."
+        fi
 
     else
-        echo "(paudio_restart) Running CamillaDSP in wait mode ..."
+        if [[ $VERBOSE == 'true' ]]; then
+            echo "(paudio_restart) Running CamillaDSP in wait mode ..."
+        fi
         $HOME/bin/camilladsp --wait --mute \
             --address 127.0.0.1 --port 1234 \
             --logfile $HOME/pAudio/log/camilladsp.log &
@@ -74,7 +90,7 @@ function do_stop {
     if [[ $(uname) == "Linux" ]]; then
         pkill -KILL -f camilladsp 1>/dev/null 2>&1      # CamillaDSP
         sleep 1
-        pkill -KILL -f 'jackd' 1>/dev/null 2>&1      # Jack
+        pkill -KILL -f 'jackd'    1>/dev/null 2>&1      # Jack
     fi
     sleep 1
 }
@@ -92,14 +108,7 @@ function do_start {
 
     start_ctrl                                          # pAudio control server
 
-
-    # $1 can be -v for verbose mode                     # pAudio server
-    VERBOSE=''
-    if [[ $1 == *"-v"* || $2 == *"-v"* ]]; then
-        VERBOSE='-v'
-    fi
-
-    if [[ $VERBOSE == '-v' ]]; then
+    if [[ $VERBOSE == 'true' ]]; then                   # pAudio server
         python3 $HOME/pAudio/start.py start $VERBOSE &
     else
         python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
@@ -123,14 +132,22 @@ if [[ ! $PA_PORT ]]; then
 fi
 CTRL_PORT=$((PA_PORT + 1))
 
+VERBOSE='false'
 
 # Main
 if [[ $1 == 'stop' ]]; then
     do_stop
 
 elif [[ ! $1 || $1 == *'start' ]]; then
+
+    if [[ $2 == *'-v'* ]]; then
+        VERBOSE='true'
+    fi
+    echo $VERBOSE > $HOME/pAudio/.verbose
+
     do_stop
-    do_start $2
+
+    do_start
 
 else
     echo
