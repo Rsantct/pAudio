@@ -48,7 +48,8 @@ def check_cdsp_running():
         s = CC.general.state()
 
         if str(s) == 'ProcessingState.RUNNING' or str(s) == 'ProcessingState.INACTIVE':
-            print(f'{Fmt.BLUE}(start) CamillaDSP detected :-){Fmt.END}')
+            if VERBOSE:
+                print(f'{Fmt.BLUE}(start) CamillaDSP detected :-){Fmt.END}')
             return True
         else:
             print(f'{Fmt.RED}(start) ERROR with CamillaDSP, check log folder.{Fmt.END}')
@@ -91,7 +92,8 @@ def prepare_jack_stuff():
 
         try:
             sp.call( 'systemctl --user restart pipewire', shell=True)
-            print(f'{Fmt.BLUE}(start) Reloading PipeWire for jack-sink ...{Fmt.END}')
+            if VERBOSE:
+                print(f'{Fmt.BLUE}(start) Reloading PipeWire for jack-sink ...{Fmt.END}')
 
         except Exception as e:
             print(f'{Fmt.BOLD}(start) Problems restarting PipeWire: {str(e)}{Fmt.END}')
@@ -129,7 +131,8 @@ def rewire_camilladsp():
                 result.append( do_alias() )
 
         if all(result):
-            print(f'{Fmt.BLUE}(start) set alias for camillaDSP jack ports.{Fmt.END}')
+            if VERBOSE:
+                print(f'{Fmt.BLUE}(start) set alias for camillaDSP jack ports.{Fmt.END}')
         else:
             print(f'{Fmt.BOLD}(start) ERROR setting alias for camillaDSP jack ports.{Fmt.END}')
 
@@ -141,7 +144,8 @@ def rewire_camilladsp():
 
     # Removing the CamillaDSP auto spawned Jack connections
     # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
-    print(f'{Fmt.GRAY}(start) Trying to wire camillaDSP jack ports ...{Fmt.END}')
+    if VERBOSE:
+        print(f'{Fmt.GRAY}(start) Trying to wire camillaDSP jack ports ...{Fmt.END}')
 
     # open a temporary jack.Client
     jack_mod._jcli_activate('wire_CamillaDSP')
@@ -166,12 +170,14 @@ def run_plugins(mode='start'):
 
     if mode == 'start':
         for plugin in CONFIG["plugins"]:
-            print(f'{Fmt.BLUE}{Fmt.BOLD}Running plugin: {plugin} ...{Fmt.END}')
+            if VERBOSE:
+                print(f'{Fmt.BLUE}{Fmt.BOLD}Running plugin: {plugin} ...{Fmt.END}')
             sp.Popen(f'{PLUGINSFOLDER}/{plugin} start', shell=True)
 
     elif mode == 'stop':
         for plugin in CONFIG["plugins"]:
-            print(f'{Fmt.GRAY}Stopping plugin: {plugin} ...{Fmt.END}')
+            if VERBOSE:
+                print(f'{Fmt.GRAY}Stopping plugin: {plugin} ...{Fmt.END}')
             sp.Popen(f'{PLUGINSFOLDER}/{plugin} stop', shell=True)
 
 
@@ -182,13 +188,15 @@ def manage_loudness_monitor_daemon(mode='start'):
         if not process_is_running('loudness_monitor.py'):
             return()
 
-        print(f'{Fmt.GRAY}(start) Stopping loudness_monitor.py{Fmt.END}')
+        if VERBOSE:
+            print(f'{Fmt.GRAY}(start) Stopping loudness_monitor.py{Fmt.END}')
 
         tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py stop'
         sp.call(tmp, shell=True)
 
     else:
-        print(f'{Fmt.GRAY}(start) Running loudness_monitor.py in background ...{Fmt.END}')
+        if VERBOSE:
+            print(f'{Fmt.GRAY}(start) Running loudness_monitor.py in background ...{Fmt.END}')
 
         tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py start'
         sp.Popen(tmp, shell=True)
@@ -236,10 +244,12 @@ def start_zita_link():
         if not 'remote' in source_name:
             continue
 
-        print( f'(start) Running zita-njbridge for: `{ source_name }`' )
+        if VERBOSE:
+            print( f'(start) Running zita-njbridge for: `{ source_name }`' )
 
         # Trying to RUN THE REMOTE SENDER zita-j2n (**)
-        print(f'{Fmt.GRAY}(start) starting remote zita-j2n at: {params["ip"]}{Fmt.END}')
+        if VERBOSE:
+            print(f'{Fmt.GRAY}(start) starting remote zita-j2n at: {params["ip"]}{Fmt.END}')
         remote_zita_restart(params["ip"], params["port"], UDP_PORT)
 
         # Append the UPD_PORT to zita_link_udp_ports
@@ -248,7 +258,8 @@ def start_zita_link():
                                              'udpport': UDP_PORT}
 
         # RUN LOCAL RECEIVER:
-        print(f'{Fmt.GRAY}(start) running local zita-n2j: {params["jport"]}{Fmt.END}')
+        if VERBOSE:
+            print(f'{Fmt.GRAY}(start) running local zita-n2j: {params["jport"]}{Fmt.END}')
         local_zita_restart( params["ip"], UDP_PORT, ZITA_BUFFER_MS )
 
         # (i) zita will use 2 consecutive ports, so let's space by 10
@@ -283,7 +294,8 @@ def stop_zita_link():
 
 def stop():
 
-    print(f'{Fmt.GRAY}{Fmt.BOLD}(start) Stopping pAudio server stuff ...{Fmt.END}')
+    if VERBOSE:
+        print(f'{Fmt.GRAY}{Fmt.BOLD}(start) Stopping pAudio server stuff ...{Fmt.END}')
 
     # Only macOS
     if sys.platform == 'darwin':
@@ -316,7 +328,7 @@ def start():
     # Run the pAudio main server 'paudio.py' to listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {PAUDIO_ADDR} {PAUDIO_PORT}'
 
-    if verbose:
+    if VERBOSE:
         srv_cmd += ' -v'
     else:
         srv_cmd += f' 1>{LOGFOLDER}/paudio.log 2>{LOGFOLDER}/paudio.err'
@@ -325,7 +337,8 @@ def start():
     sp.Popen( srv_cmd.split() )
 
     if wait4server(timeout=30):
-        print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
+        if VERBOSE:
+            print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
     else:
         print(f'{Fmt.RED}(start) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
         stop()
@@ -349,7 +362,7 @@ def start():
 if __name__ == "__main__":
 
     mode    = ''
-    verbose = False
+    VERBOSE = False
 
     for opc in sys.argv[1:]:
 
@@ -363,7 +376,7 @@ if __name__ == "__main__":
             mode = 'prepare_jack_stuff'
 
         elif '-v' in opc:
-            verbose = True
+            VERBOSE = True
 
     match mode:
 
