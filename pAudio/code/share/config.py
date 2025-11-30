@@ -128,7 +128,7 @@ def _init():
                 try:
                     with open(LSPK_YML_PATH, 'r') as f:
                         res = yaml.safe_load( f.read() )
-                        print(f'{Fmt.BLUE}Loudspeaker config file `{CONFIG["loudspeaker"]}/lspk.yml` was found{Fmt.END}')
+                        #print(f'{Fmt.BLUE}Loudspeaker config file `{CONFIG["loudspeaker"]}/lspk.yml` was found{Fmt.END}')
 
                 except Exception as e:
                     print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
@@ -347,6 +347,15 @@ def _init():
 
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
+
+    CONFIG["verbose"] = False
+    try:
+        with open(f'{MAINFOLDER}/.verbose', 'r') as f:
+            tmp = f.read()
+            if 'true' in tmp.lower():
+                CONFIG["verbose"] = True
+    except:
+        pass
 
     CONFIG["mainfolder"]        = MAINFOLDER
     PAUDIO_ADDR, PAUDIO_PORT    = get_pAudio_addr_port()
