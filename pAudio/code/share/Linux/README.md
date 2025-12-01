@@ -20,3 +20,5 @@ This is accomplished by the following files:
     .config/wireplumber/
     └── main.lua.d
         └── 50-disable-all-alsa.lua
+
+See inside the **`doc/`** folder for more details
