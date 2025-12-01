@@ -22,9 +22,16 @@ In addition, you should know that PipeWire will automagically release any sound 
 
 Install the JACK bridge: **`sudo apt install pipewire-jack`**
 
-Prepare the following user session PipeWire / Wireplumber setting files. You'll find a copy of these files under the **`config_examples/.config/`** directory in this repository. These files overrides the same general settings of the base configuration `/usr/share/pipewire/pipewire.conf`
+Prepare the below user session PipeWire / Wireplumber setting files. These files overrides the same general settings of the base configuration `/usr/share/pipewire/pipewire.conf`
 
-**Notice** that for safety reasons we want the Desktop user session NOT to use any sound card.
+These files configures the Pipewire behavior so that:
+
+- Prevent Pipewire to use any sound card
+- Make Pipewire jack_sink as default, so any desktop App via Pulseaudio/Pipewire will appear under our JACK ports PipeWire_L/R
+- Configure a desired resampling quality for any desktop App that plays using Pulseaudio/Pipewire (you can fine tune it by editing `paudio-client.conf`)
+
+You'll find a copy of these files under the **`pAudio/code/share/Linux/.config/`** directory in this repository.
+
 
 
         .config/wireplumber/
@@ -88,7 +95,6 @@ You can check the wanted setting:
          ...
          ...
 
-You can fine tune the resampling quality.
 
 **Recommended:** monitor the CPU load and posible errors/xruns by running:
 - `qjackctl`
