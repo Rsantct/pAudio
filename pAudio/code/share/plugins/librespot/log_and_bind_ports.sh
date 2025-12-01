@@ -24,7 +24,7 @@
 
 
 # Logging
-LOG_PATH="$HOME/pe.audio.sys/log/librespot.log"
+LOG_PATH="$HOME/pAudio/log/librespot.log"
 NOW_ZULU=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # Event right padded
 EVENT_RPAD=$(printf "%-12s" $PLAYER_EVENT)
