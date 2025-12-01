@@ -21,8 +21,6 @@
 #   - The jack port does not emerge until first time playing.
 #   - There is not any option to autoconnect to any destination jack port.
 
-
-
 # Logging
 LOG_PATH="$HOME/pAudio/log/librespot.log"
 NOW_ZULU=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -43,15 +41,13 @@ else
 
 fi
 
-
 # Binding Jack ports
 if [[ $PLAYER_EVENT == "started" || $PLAYER_EVENT == "playing" || $PLAYER_EVENT == "changed" ]]; then
 
     conns=$(jack_lsp -c librespot_loop\:input)
 
-    if [[ $conns != *"librespot:out"* ]]; then
+    if [[ $conns && $conns != *"librespot:out"* ]]; then
         jack_connect librespot:out_0 librespot_loop:input_1 1>/dev/null 2>&1
         jack_connect librespot:out_1 librespot_loop:input_2 1>/dev/null 2>&1
     fi
-
 fi
