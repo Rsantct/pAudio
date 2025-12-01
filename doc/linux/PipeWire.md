@@ -96,9 +96,12 @@ You can check the wanted setting:
          ...
 
 
-**Recommended:** monitor the CPU load and posible errors/xruns by running:
-- `qjackctl`
-- `pw-top`
+## Recommended
+
+Please monitor the CPU load and posible errors/xruns by running:
+
+- **`qjackctl`**
+- **`pw-top`**
 
 
 
