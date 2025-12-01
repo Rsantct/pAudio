@@ -31,7 +31,6 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import kill_bill, Fmt
 
-
 # Current user
 USER = getuser()
 
@@ -42,7 +41,6 @@ except Exception as e:
     print(f'{Fmt.RED}(librespot) error getting librespot binary: {str(e)}{Fmt.END}')
     sys.exit()
 
-
 # libresport options list (do not configure here: bitrate, name, backend, device)
 OTHER_OPTS = [
     #'--disable-audio-cache',
@@ -51,6 +49,9 @@ OTHER_OPTS = [
     '--mixer softvol --volume-ctrl fixed --initial-volume 100',
     '--format F32'
 ]
+
+# Librespot --onevent program
+EVENT_PROGRAM = os.path.dirname(__file__) + '/librespot/log_and_bind_ports.sh'
 
 
 def run_watchdog():
@@ -74,27 +75,37 @@ def run_watchdog():
 
 
 def start():
+
     # 'librespot' binary prints out the playing track and some info.
     # We redirect them to a temporary file that will be periodically
     # read from a player control daemon.
 
+    BACKEND_OPTS = f'--backend {BACKEND}'
+    if BACKEND == 'jackaudio':
+        BACKEND_OPTS += f' --device librespot'
 
     moreopt_str = ' '.join(OTHER_OPTS)
 
     cmd = f'{BINARY} --name {gethostname()} ' + \
-          f'--onevent {UHOME}/pe.audio.sys/share/plugins/librespot/log_and_bind_ports.sh ' + \
+          f'--onevent {EVENT_PROGRAM} ' + \
           f'--bitrate 320 {BACKEND_OPTS} {moreopt_str}'
 
-    eventsPath = f'{UHOME}/pe.audio.sys/.librespot_events'
+    eventsPath = f'{UHOME}/pAudio/log/.librespot_events'
+
 
     with open(eventsPath, 'a') as f:
         Popen( cmd.split(), stdout=f, stderr=f )
+
+    print(f'{Fmt.GRAY}(librespot) running librespot ...{Fmt.END}')
+
 
     job = threading.Thread(target=run_watchdog)
     job.start()
 
 
 def stop():
+
+    print(f'{Fmt.GRAY}(librespot) stopping ...{Fmt.END}')
 
     # kill previous scripts like this in background
     kill_bill( os.getpid() )
@@ -104,23 +115,30 @@ def stop():
 
 if __name__ == "__main__":
 
-    if sys.argv[1:]:
+    BACKEND = 'jackaudio'
+    MODE = ''
 
-        if sys.argv[1] == 'start':
+    for opc in sys.argv[1:]:
 
-            if sys.argv[2:] and 'pulse' in sys.argv[2].lower():
-                BACKEND_OPTS = f'--backend pulseaudio'
-            else:
-                BACKEND_OPTS = f'--backend jackaudio --device librespot'
+        if opc == 'start':
+            MODE = 'start'
 
+        elif opc == 'stop':
+            MODE = 'stop'
+
+        elif 'pulse' in opc:
+            BACKEND = 'pulseaudio'
+
+        elif 'jack' in opc:
+            BACKEND = 'jackaudio'
+
+    if MODE == 'start':
             stop()
             start()
 
-        elif sys.argv[1] == 'stop':
+    elif MODE == 'stop':
             stop()
-
-        else:
-            print(__doc__)
 
     else:
         print(__doc__)
+        sys.exit()
