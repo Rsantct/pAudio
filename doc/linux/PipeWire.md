@@ -24,7 +24,7 @@ Install the JACK bridge: **`sudo apt install pipewire-jack`**
 
 Prepare the below user session PipeWire / Wireplumber setting files. These files overrides the same general settings of the base configuration `/usr/share/pipewire/pipewire.conf`
 
-These files configures the Pipewire behavior so that:
+These files configures the Pipewire user session behavior so that:
 
 - Prevent Pipewire to use any sound card
 - Make Pipewire jack_sink as default, so any desktop App via Pulseaudio/Pipewire will appear under our JACK ports PipeWire_L/R
