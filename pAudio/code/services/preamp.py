@@ -323,7 +323,7 @@ def init():
         # Resuming audio settings on the CAM
         resume_audio()
 
-        # Changing MacOS playback device
+        # Changing macOS playback device
         # (It will be restored when ordering `paudio.sh stop`)
         if CONFIG.get('coreaudio'):
             macos.change_default_sound_device( CONFIG["coreaudio"]["devices"]["capture"]["device"] )
