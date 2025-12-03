@@ -2,7 +2,7 @@
 
 ## Audio software
 
-- [BlackHole](https://github.com/ExistentialAudio/BlackHole#installation-instructions) to route your audio.
+- [BlackHole](https://github.com/ExistentialAudio/BlackHole) to route your audio. Please do not use the Homebrew installation method currently does not work, install it by downloading the [official package](https://existential.audio/blackhole).
 
 - [Node.js](https://nodejs.org/en) to serve the control web page (Choose the recommended `LTS` version).
 
@@ -24,7 +24,7 @@
 In order to automatically switch the Mac system-wide audio playback to the pAudio BlackHole input, and restore later, you may want to install a couple of additional tools:
 
 - [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster) This is comes as a ZIP file. Copy to `/usr/local/bin/` or just to `$HOME/bin/`
-- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx) This installs via homebrew
+- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx) This installs via Homebrew, If you still don’t have Homebrew, please go to https://brew.sh
 
 ## CamillaDSP
 
@@ -67,7 +67,7 @@ A Python **`version >= 3.10`** is needed here, check yours in a terminal:
 
 If you need to **install a recent version of Python**, the recommended way to do it is by using the _Homebrew_ software manager:
 
-If you still don't have Homebrew, please go to https://brew.sh
+If you still don’t have Homebrew, please go to https://brew.sh
 
 Once you have Homebrew, simply run in a terminal:
 
