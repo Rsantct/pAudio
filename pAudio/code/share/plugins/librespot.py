@@ -15,7 +15,8 @@
     This is useful if your sound card cannot run at the same samplerate as
     pe.audio.sys, as mine does (ESI UDJ6 only works at 48 KHz)
 
-    2025-01: librespot suddently crashes, so will use a watchdog here
+    2025-01: librespot 0.4.0 suddently crashes, so will use a watchdog here
+    2025-11: crashes stopped with libresport 0.8.0
 
 """
 import  sys
