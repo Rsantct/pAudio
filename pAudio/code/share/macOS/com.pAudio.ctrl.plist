@@ -25,7 +25,7 @@
         <string>/bin/sh</string>
         <string>-l</string>
         <string>-c</string>
-        <string>sleep 2 && source $HOME/.env/bin/activate && exec /usr/local/bin/python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 9991</string>
+        <string>sleep 2 && source $HOME/.env/bin/activate && exec python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 9991</string>
     </array>
 
     <!-- run on sesion init -->
@@ -37,12 +37,12 @@
     <false/>
 
     <!-- DEBUG (while testing)
+    -->
     <key>StandardOutPath</key>
     <string>/tmp/com.pAudio.ctrl.log</string>
 
     <key>StandardErrorPath</key>
     <string>/tmp/com.pAudio.ctrl.err</string>
-    -->
 
 </dict>
 </plist>
