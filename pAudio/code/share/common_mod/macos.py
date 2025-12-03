@@ -221,9 +221,9 @@ def change_default_sound_device(new_dev):
         cmd_source = f'{SWITCHAUDIO_BIN} -s \"{new_dev}\"'
         tmp = sp.call(cmd_source, shell=True)
         if tmp == 0:
-            print(f'{Fmt.BOLD}{Fmt.BLUE}Setting MacOS Playback Default Device: "{new_dev}"{Fmt.END}')
+            print(f'{Fmt.BOLD}{Fmt.BLUE}Setting macOS Playback Default Device: "{new_dev}"{Fmt.END}')
         else:
-            print(f'{Fmt.GRAY}(macos) Problems setting default MacOS playback default device{Fmt.END}')
+            print(f'{Fmt.GRAY}(macos) Problems setting default macOS playback default device{Fmt.END}')
 
     # Set volume to max on the NEW PLAYBACK DEV
     set_default_device_vol('100')
