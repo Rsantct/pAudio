@@ -56,38 +56,34 @@ Open a a terminal and run:
 
 ## Python modules
 
-NOTE: run the command `python` in a terminal and check if **Python version is >= 3.10**
+The Python programming language is included in MacOS but an older version than the current stable one.
 
-If you need to install a recent Python, use Homebrew (**):
+### Python version
 
-    brew install python3
+A Python **`version >= 3.10`** is needed here, check yours in a terminal:
 
-[pip](https://pip.pypa.io/en/stable/) is the standard Python package manager.
+    $ python --version
+    Python 3.13.1
 
-Upgrade `pip`:
+If you need to **install a recent version of Python**, the recommended way to do it is by using the _Homebrew_ software manager:
 
-    python3 -m pip install --upgrade pip setuptools wheel
+If you still don't have Homebrew, please go to https://brew.sh
 
-If the above command fails, you'll need to [install pip](https://pip.pypa.io/en/stable/installation/#supported-methods), then retry in order to upgrade `setuptools`.
+Once you have Homebrew, simply run in a terminal:
 
-(**) UPDATE Python version >= 3.13 on MacOS via Homebrew
+    brew install python
 
-Like for Linux Debian users, to install additional Python packages you'll need to prepare a Python Virtual Environment for your user (by inheriting the system Python packages)
+### Python modules
 
-    $ python3 -m venv --system-site-packages ~/.env
-    $ source ~/.env/bin/activate
-    (.env) $ 
-    
-        HERE YOU CAN INSTALL NORMALLY the standard Python modules and the CamillaDSP module,
-        while you are inside the activated virtual environment:
-    
-    (.env) $ pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
-    (.env) $ pip3 install git+https://github.com/HEnquist/pycamilladsp.git
-    
-         You can now deactivate the Python Env BUT it is not necessary
+pAudio needs to install some additional modules to work
 
-    (.env) $ deactivate
-    $
+Standar modules
+
+    python3 -m pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
+
+The CamillaDSP python module (https://github.com/HEnquist/pycamilladsp)
+
+    python3 -m pip3 install git+https://github.com/HEnquist/pycamilladsp.git
 
 
 # Install on Linux
