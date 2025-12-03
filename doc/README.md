@@ -75,15 +75,23 @@ Once you have Homebrew, simply run in a terminal:
 
 ### Python modules
 
-pAudio needs to install some additional modules to work
+pAudio needs some additional modules to work. In most recent Python versions, these must be installed under a _Python Virtual Environment_, that is, not globally.
 
-Standar modules
 
-    python3 -m pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
+    $ python3 -m venv --system-site-packages ~/.env
+    $ source ~/.env/bin/activate
+    (.env) $ 
+    
+        HERE YOU CAN INSTALL NORMALLY the standard Python modules and the CamillaDSP module,
+        while you are inside the activated virtual environment:
+    
+    (.env) $ pip3 install numpy scipy matplotlib PyYAML psutil watchdog sounddevice websocket_client
+    (.env) $ pip3 install git+https://github.com/HEnquist/pycamilladsp.git
+    
+         You can now deactivate the Python Environmet (BUT it is not necessary)
 
-The CamillaDSP python module (https://github.com/HEnquist/pycamilladsp)
-
-    python3 -m pip3 install git+https://github.com/HEnquist/pycamilladsp.git
+    (.env) $ deactivate
+    $
 
 
 # Install on Linux
