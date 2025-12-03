@@ -223,10 +223,12 @@ def _prepare_cam_config(pAudio_config):
 
 def init_camilladsp(pAudio_config):
     """ Updates camilladsp.yml with user configs,
-        includes auto making the DRC yaml stuff,
-        then runs the CamillaDSP process.
+        including the auto made DRC yaml stuff.
 
-        returns a <string>:
+        Then uploads the configuration to the previously
+        CamillaDSP running process.
+
+        Returns a <string>:
 
             'done' OR 'some problem description...'
     """
@@ -296,7 +298,7 @@ def init_camilladsp(pAudio_config):
     # Loading configuration
     try:
 
-        print(f'(pcamilla) Trying to load configuration and run. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
+        print(f'(pcamilla) Trying to load configuration into the runnig CamillaDSP process. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
         set_config_sync(cfg_init)
         # First configuration takes a bit
         sleep(.25)
