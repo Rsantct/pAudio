@@ -12,19 +12,21 @@ UHOME = os.path.expanduser('~')
 sys.path.append(f'{UHOME}/pAudio/code/services/preamp_mod')
 
 import pcamilla as cam
-
+import platform
 
 if __name__ == "__main__":
 
 
     if cam._connect_to_camilla():
 
-        cap_devs = cam.CC.general.list_capture_devices('CoreAudio')
-        cap_devs = [x[0] for x in cap_devs]
-        pbk_devs = cam.CC.general.list_playback_devices('CoreAudio')
-        pbk_devs = [x[0] for x in pbk_devs]
-        print('CAP_DEVICES: ', cap_devs)
-        print('PBK_DEVICES: ', pbk_devs)
+        if platform.system() == 'Darwin':
+
+            cap_devs = cam.CC.general.list_capture_devices('CoreAudio')
+            cap_devs = [x[0] for x in cap_devs]
+            pbk_devs = cam.CC.general.list_playback_devices('CoreAudio')
+            pbk_devs = [x[0] for x in pbk_devs]
+            print('CAP_DEVICES: ', cap_devs)
+            print('PBK_DEVICES: ', pbk_devs)
 
         state = cam.CC.general.state()
         print('STATE:       ', state)
