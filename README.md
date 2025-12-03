@@ -1,4 +1,4 @@
-# pAudio v1.0-alpha
+# pAudio v1.0
 
 A PC based advanced preamplifier, with FIR based EQ and active loudspeaker XOVER management.
 
