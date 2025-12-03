@@ -180,12 +180,20 @@ More resources [here](https://www.minidsp.com/applications/advanced-tools/fir-fi
 
 To run the system-wide processor:
 
-    ~/pAudio/start.py   start
+    ~/bin/paudio_restart.sh start
 
 To stop:
 
-    ~/pAudio/start.py   stop
+    ~/bin/paudio_restart.sh stop
 
+For troubleshooting, use verbose mode:
+
+    ~/bin/paudio_restart.sh start --verbose
+
+
+### NOTICE
+
+If this is your first time using the Python library `matplotlib` included here, the pAudio system may not start correctly due to necessary internal precompilation. Please try again.
 
 # Controlling pAudio
 
