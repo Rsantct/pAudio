@@ -1,4 +1,4 @@
-# Install on MacOS
+# Install on macOS
 
 ## Audio software
 
@@ -56,7 +56,7 @@ Open a a terminal and run:
 
 ## Python modules
 
-The Python programming language is included in MacOS but an older version than the current stable one.
+The Python programming language is included in macOS but an older version than the current stable one.
 
 ### Python version
 
@@ -129,7 +129,7 @@ Set the output device name to be used in **`~/pAudio/config.yml`**, for example:
     output:
         device:      E30 II      # DAC USB Topping E30
 
-#### MacOS
+#### macOS
 
 Find the proper device name in **Midi and Audio Setup**, the one your loudspeakers are connected.
 
