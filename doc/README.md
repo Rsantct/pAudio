@@ -1,8 +1,8 @@
-# Install on MacOS
+# Install on macOS
 
 ## Audio software
 
-- [BlackHole](https://github.com/ExistentialAudio/BlackHole#installation-instructions) to route your audio.
+- [BlackHole](https://github.com/ExistentialAudio/BlackHole) to route your audio. Please do not use the Homebrew installation method currently does not work, install it by downloading the [official package](https://existential.audio/blackhole).
 
 - [Node.js](https://nodejs.org/en) to serve the control web page (Choose the recommended `LTS` version).
 
@@ -23,8 +23,8 @@
 
 In order to automatically switch the Mac system-wide audio playback to the pAudio BlackHole input, and restore later, you may want to install a couple of additional tools:
 
-- [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster) This is comes as a ZIP file. Copy to /usr/local/bin/ or just to $HOME/bin/
-- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx) This installs via homebrew
+- [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster) This is comes as a ZIP file. Copy to `/usr/local/bin/` or just to `$HOME/bin/`
+- [SwitchAudioSource](https://github.com/deweller/switchaudio-osx) This installs via Homebrew, If you still don’t have Homebrew, please go to https://brew.sh
 
 ## CamillaDSP
 
@@ -56,23 +56,27 @@ Open a a terminal and run:
 
 ## Python modules
 
-NOTE: run the command `python` in a terminal and check if **Python version is >= 3.10**
+The Python programming language is included in macOS but an older version than the current stable one.
 
-If you need to install a recent Python, use Homebrew (**):
+### Python version
 
-    brew install python3
+A Python **`version >= 3.10`** is needed here, check yours in a terminal:
 
-[pip](https://pip.pypa.io/en/stable/) is the standard Python package manager.
+    $ python --version
+    Python 3.13.1
 
-Upgrade `pip`:
+If you need to **install a recent version of Python**, the recommended way to do it is by using the _Homebrew_ software manager:
 
-    python3 -m pip install --upgrade pip setuptools wheel
+If you still don’t have Homebrew, please go to https://brew.sh
 
-If the above command fails, you'll need to [install pip](https://pip.pypa.io/en/stable/installation/#supported-methods), then retry in order to upgrade `setuptools`.
+Once you have Homebrew, simply run in a terminal:
 
-(**) UPDATE Python version >= 3.13 on MacOS via Homebrew
+    brew install python
 
-Like for Linux Debian users, to install additional Python packages you'll need to prepare a Python Virtual Environment for your user (by inheriting the system Python packages)
+### Python modules
+
+pAudio needs some additional modules to work. In most recent Python versions, these must be installed under a _Python Virtual Environment_, that is, not globally.
+
 
     $ python3 -m venv --system-site-packages ~/.env
     $ source ~/.env/bin/activate
@@ -81,10 +85,10 @@ Like for Linux Debian users, to install additional Python packages you'll need t
         HERE YOU CAN INSTALL NORMALLY the standard Python modules and the CamillaDSP module,
         while you are inside the activated virtual environment:
     
-    (.env) $ pip3 install numpy scipy matplotlib PyYAML watchdog sounddevice websocket_client
+    (.env) $ pip3 install numpy scipy matplotlib PyYAML psutil watchdog sounddevice websocket_client
     (.env) $ pip3 install git+https://github.com/HEnquist/pycamilladsp.git
     
-         You can now deactivate the Python Env BUT it is not necessary
+         You can now deactivate the Python Environmet (BUT it is not necessary)
 
     (.env) $ deactivate
     $
@@ -125,7 +129,7 @@ Set the output device name to be used in **`~/pAudio/config.yml`**, for example:
     output:
         device:      E30 II      # DAC USB Topping E30
 
-#### MacOS
+#### macOS
 
 Find the proper device name in **Midi and Audio Setup**, the one your loudspeakers are connected.
 
@@ -176,12 +180,20 @@ More resources [here](https://www.minidsp.com/applications/advanced-tools/fir-fi
 
 To run the system-wide processor:
 
-    ~/pAudio/start.py   start
+    ~/bin/paudio_restart.sh start
 
 To stop:
 
-    ~/pAudio/start.py   stop
+    ~/bin/paudio_restart.sh stop
 
+For troubleshooting, use verbose mode:
+
+    ~/bin/paudio_restart.sh start --verbose
+
+
+### NOTICE
+
+If this is your first time using the Python library `matplotlib` included here, the pAudio system may not start correctly due to necessary internal precompilation. Please try again.
 
 # Controlling pAudio
 

@@ -1,8 +1,8 @@
-# pAudio v1.0-alpha
+# pAudio v1.0
 
 A PC based advanced preamplifier, with FIR based EQ and active loudspeaker XOVER management.
 
-This is a system-wide audio control for a MacOS (or Linux PC), so that you can EQ and control all the audio sent to your DAC, Audio Interface, or Headphones.
+This is a system-wide audio control for a macOS (or Linux PC), so that you can EQ and control all the audio sent to your DAC, Audio Interface, or Headphones.
 
 External sources (vinyl and other analog stuff) can be processed with a high quality inputs sound card.
 
@@ -28,7 +28,7 @@ Features:
 
 # Credits
 
-pAudio is based on [CamillaDSP](https://github.com/HEnquist/camilladsp#readme) a very powerful audio processing tool, for **Mac** and **Linux**.
+pAudio is based on [CamillaDSP](https://github.com/HEnquist/camilladsp#readme) a very powerful audio processing tool, for **macOS** and **Linux**.
 
 Loudness compensation curves follow ISO 226:2003, from my other project [audiotools](https://github.com/Rsantct/audiotools/tree/master/convolver_eq). Here these freq domain curves are converted to FIR to be used in CamillaDSP convolution filtering.
 

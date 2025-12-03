@@ -1,10 +1,10 @@
-# MacOS advanced: audio sources
+# macOS advanced: audio sources
 
 ## - Basic setup
 
 Listen to **Mac Desktop sound** (Spotify, Safari web browser, Music, ...) through by the pAudio processor.
 
-#### MacOs:
+#### macOS:
 
     Settings ---> Sound Output --> BlackHole 2Ch
 
@@ -25,7 +25,7 @@ For example if you have a TV connected to Line In on your Mac, and you want not 
 - Mac Desktop sound
 - TV sound
 
-#### MacOS MIDI Audio Configuration:
+#### macOS MIDI Audio Configuration:
 
 You need to prepare an **Aggregate Device** under _MIDI Audio Configuration_, having both BlackHole and your Line In, example:
 
@@ -37,7 +37,7 @@ This example is a MacBook Pro without Line In, but an USB sound card with line i
 
 If you use your integrated Mac Line IN / OUT connections, set the **Source Clock** to Line In, this way **Drif correction** will be applied to the BlackHole device.
 
-#### MacOs:
+#### macOs:
 
     Settings ---> Sound Output --> Aggregate Device
 

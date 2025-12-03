@@ -24,7 +24,7 @@ def _init():
     SOURCES = pAudio_cfg.get('sources')
 
 
-def get_info(remoteID):
+def get_info(remoteID, timeout=0.5):
 
     remote = SOURCES.get(remoteID, {})
     # example:
@@ -40,7 +40,7 @@ def get_info(remoteID):
         return PLAYERTEMPLATE.copy()
 
     try:
-        remote_ans = send_cmd( 'player get_info', host=remote["ip"], port=remote["port"] )
+        remote_ans = send_cmd( 'player get_info', host=remote["ip"], port=remote["port"], timeout=timeout )
         remote_ans = json.loads( remote_ans )
         return remote_ans
 

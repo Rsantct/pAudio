@@ -45,11 +45,16 @@ DUMP_ACTIVE = True
 #######################################################33##########
 # (!) use ALWAYS THIS FUNCTION to load a new config into CamillaDSP
 ###################################################################
-def set_config_sync(cfg, wait=0.1):
+def set_config_sync(cfg, wait=CONFIG['camilladsp_activation_wait']):
     """ (i) When ordering set config some time is needed to be running
         This is a fake sync, but just works  >:-)
     """
-    CC.config.set_active(cfg)
+
+    try:
+        CC.config.set_active(cfg)
+    except Exception as e:
+        print(f'{Fmt.BOLD}(pcamilla) Error in config.set_active(): {str(e)}{Fmt.END}')
+        return
 
     if DUMP_ACTIVE:
         with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
@@ -75,6 +80,37 @@ def _connect_to_camilla():
         return False
 
     return True
+
+
+def check_cdsp_running(timeout=10):
+
+    def grep_log_errors():
+        with open(f'{LOGFOLDER}/camilladsp.log', 'r') as f:
+            logs = f.read().strip().split('\n')
+        return [l.strip() for l in logs if 'ERROR' in l]
+
+
+    period = .5
+    tries = int(timeout / period)
+
+    while tries:
+
+        _connect_to_camilla()
+        s = CC.general.state()
+        if str(s) == 'ProcessingState.RUNNING' or str(s) == 'ProcessingState.INACTIVE':
+            break
+        else:
+            print(f'{Fmt.BLUE}{"." * int(tries * period)}{Fmt.END}')
+
+        sleep(.5)
+        tries -= 1
+
+    if tries:
+        return True
+    else:
+        for x in grep_log_errors():
+            print(f'{Fmt.RED}{x}{Fmt.END}')
+        return False
 
 
 def _prepare_eq_conv_pcms():
@@ -117,7 +153,7 @@ def _prepare_cam_config(pAudio_config):
             """
 
             xosets = list( pAudio_config["xo"].keys() )
-            print(f'{Fmt.BLUE}{Fmt.BOLD}XOVER sets: {xosets}{Fmt.END}')
+            print(f'{Fmt.BLUE}{Fmt.BOLD}(pcamilla) XOVER sets: {xosets}{Fmt.END}')
 
             # xo filters
             for set_name, values in pAudio_config["xo"].items():
@@ -154,7 +190,7 @@ def _prepare_cam_config(pAudio_config):
         mixer_name = f'from2to{ len(m["mapping"]) }channels'
         cam_config["mixers"][mixer_name] = m
 
-        print(f'{Fmt.GREEN}{mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
+        print(f'{Fmt.GREEN}(pcamilla) {mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
 
         # Adding the mixer to the pipeline
         mwm_step = {'type': 'Mixer', 'name': mixer_name}
@@ -187,10 +223,12 @@ def _prepare_cam_config(pAudio_config):
 
 def init_camilladsp(pAudio_config):
     """ Updates camilladsp.yml with user configs,
-        includes auto making the DRC yaml stuff,
-        then runs the CamillaDSP process.
+        including the auto made DRC yaml stuff.
 
-        returns a <string>:
+        Then uploads the configuration to the previously
+        CamillaDSP running process.
+
+        Returns a <string>:
 
             'done' OR 'some problem description...'
     """
@@ -215,7 +253,7 @@ def init_camilladsp(pAudio_config):
 
             # Early return if any `cpal_client_in-01` is detected
             if '-' in cpal_port.name:
-                print(f'{Fmt.BOLD}Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
+                print(f'{Fmt.BOLD}(pcamilla) Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
                 result = False
                 break
 
@@ -226,7 +264,7 @@ def init_camilladsp(pAudio_config):
 
             for c in conns:
                 if 'system' in c.name:
-                    print(f'{Fmt.BOLD}CPAL <--> SYSTEM detected: {cpal_port.name} {c.name}{Fmt.END}')
+                    print(f'{Fmt.BOLD}(pcamilla) CPAL <--> SYSTEM detected: {cpal_port.name} {c.name}{Fmt.END}')
                     result = False
 
         jcli.close()
@@ -234,37 +272,17 @@ def init_camilladsp(pAudio_config):
         return result
 
 
-    def check_cdsp_running(timeout=10):
-
-        def grep_log_errors():
-            with open(f'{LOGFOLDER}/camilladsp.log', 'r') as f:
-                logs = f.read().strip().split('\n')
-            return [l.strip() for l in logs if 'ERROR' in l]
-
-
-        period = .5
-        tries = int(timeout / period)
-
-        while tries:
-
-            s = CC.general.state()
-            if str(s) == 'ProcessingState.RUNNING':
-                break
-            else:
-                print(f'{Fmt.BLUE}{"." * int(tries * period)}{Fmt.END}')
-
-            sleep(.5)
-            tries -= 1
-
-        if tries:
-            return True
-        else:
-            for x in grep_log_errors():
-                print(f'{Fmt.RED}{x}{Fmt.END}')
-            return False
-
-
     global CC
+
+    # restore Sound Card settings
+    restore_sound_card()
+
+    # Early return if connection to CamillaDSP fails
+    if _connect_to_camilla():
+        print(f'{Fmt.BLUE}(pcamilla) Connected to CamillaDSP websocket.{Fmt.END}')
+    else:
+        print(f'{Fmt.BOLD}(pcamilla) ERROR connecting to CamillaDSP websocket.{Fmt.END}')
+        return
 
     # Prepare the camilladsp.yml as per the pAudio user configuration
     cfg_init = _prepare_cam_config(pAudio_config)
@@ -272,55 +290,32 @@ def init_camilladsp(pAudio_config):
     # Dumping init config
     with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
         yaml.safe_dump(cfg_init, f)
+
     if DUMP_ACTIVE:
         with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
             yaml.safe_dump(cfg_init, f)
 
-
-    # Stop if any process running
-    sp.call('pkill -KILL camilladsp'.split())
-
-
-    # restore Sound Card settings
-    restore_sound_card()
-
-    # Starting CamillaDSP (MUTED)
-    print(f'{Fmt.BLUE}Logging CamillaDSP to log/camilladsp.log ...{Fmt.END}')
-    cdsp_cmd = f'{UHOME}/bin/camilladsp --wait -m -a 127.0.0.1 -p 1234 ' + \
-               f'--logfile "{LOGFOLDER}/camilladsp.log"'
-    p = sp.Popen( cdsp_cmd, shell=True )
-    sleep(1)
-
-
-    # Early return if connection to CamillaDSP fails
-    if _connect_to_camilla():
-        print(f'{Fmt.BLUE}Connected to CamillaDSP websocket.{Fmt.END}')
-    else:
-        print(f'{Fmt.BOLD}ERROR connecting to CamillaDSP websocket.{Fmt.END}')
-        return
-
-
     # Loading configuration
     try:
-        print(f'Trying to load configuration and run. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
-        CC.config.set_active(cfg_init)
 
-        if check_cdsp_running(timeout=5):
+        print(f'(pcamilla) Trying to load configuration into the runnig CamillaDSP process. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
+        set_config_sync(cfg_init)
+        # First configuration takes a bit
+        sleep(.25)
+        if not CC.config.active():
+            raise Exception('Falied to load the config into CamillaDSP, see LOG folder')
 
-            # Check CPAL jack ports
-            if pAudio_config.get('jack'):
-                if not cpal_ports_ok():
-                    return f'problems with Camilla DSP CPAL ports'
+        # Check CPAL jack ports
+        if pAudio_config.get('jack'):
+            if not cpal_ports_ok():
+                return f'problems with Camilla DSP CPAL ports'
 
-            # ALL IS OK
-            return 'running'
-
-        else:
-            return f'Cannot start `camilladsp` process, see `pAudio/log`'
+        # ALL IS OK
+        return 'done'
 
     except Exception as e:
 
-        print(f'{Fmt.BOLD}ERROR loading CamillaDSP configuration. {str(e)}{Fmt.END}')
+        print(f'{Fmt.BOLD}(pcamilla) ERROR loading CamillaDSP configuration. {str(e)}{Fmt.END}')
         return str(e)
 
 

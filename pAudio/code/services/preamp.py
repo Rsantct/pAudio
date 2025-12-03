@@ -23,7 +23,7 @@ sys.path.append(f'{MAINFOLDER}/code/services/preamp_mod')
 from    common      import *
 from    eq_fir2png  import fir2png
 
-import  pcamilla as DSP
+import  pcamilla as CAM
 
 if sys.platform.lower() == 'linux' and CONFIG.get('jack'):
     import  jack
@@ -46,21 +46,6 @@ if not STATE:
 
 
 def init():
-
-    def get_paudio_flags():
-        """ Special flag file for 'paudio.py'
-        """
-
-        res = {}
-
-        try:
-            with open(f'{MAINFOLDER}/.paudio_flags', 'r') as f:
-                res = json.loads( f.read() )
-        except:
-            print(f'{Fmt.RED}(preamp) problems reading paudio_flags{Fmt.END}')
-
-        return res
-
 
     def get_coreaudio_source():
         """ This retrieves the source name in coreaudio,
@@ -88,12 +73,14 @@ def init():
 
 
     def resume_audio():
+
+        set_mute( True )
+
         # Only multiway
         if XO_SETS:
             if not STATE["xo_set"] in XO_SETS:
                 STATE["xo_set"] = XO_SETS[0]
             set_xo( STATE["xo_set"] )
-
 
         # All multiway and full-range
         do_levels( 'level', dB=STATE["level"] )
@@ -103,8 +90,6 @@ def init():
         set_solo( STATE["solo"] )
 
         do_levels( 'balance', dB=STATE["balance"] )
-
-        set_mute( STATE["muted"] )
 
         # tones can be clamped when ordered out of range
         res = do_levels( 'bass', dB=STATE["bass"] )
@@ -144,6 +129,8 @@ def init():
 
             else:
                 STATE["source"] = ''
+
+        set_mute( STATE["muted"] )
 
         save_json_file(STATE, PREAMP_STATE_PATH)
 
@@ -275,7 +262,8 @@ def init():
     STATE["fs"]             = CONFIG["samplerate"]
     STATE["polarity"]       = '++'
 
-    # State input and output devices
+
+    # Update state with both input and output devices
     #
     if CONFIG.get('jack'):
 
@@ -299,7 +287,6 @@ def init():
         STATE["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
         STATE["jack_buffer_ms"]   = int(round(STATE["jack_buffer_size"] / STATE["fs"] * 1000))
 
-
     elif CONFIG.get('coreaudio'):
 
         # 1st we need to prepare Coreaudio capture section, see above funcion
@@ -313,6 +300,7 @@ def init():
         STATE["output_dev"] = 'unknown'
 
 
+    # Update state with jack buffer if so
     if not CONFIG.get('jack'):
         try:
             del STATE["jack_buffer_size"]
@@ -324,32 +312,27 @@ def init():
     STATE["dsp_buffer_size"]    = 0
 
 
-    # Preparing and running camillaDSP
-    if get_paudio_flags().get('run_camilladsp'):
-        cdsp_state = DSP.init_camilladsp( pAudio_config=CONFIG )
+    # Initialize camillaDSP
+    cdsp_init = CAM.init_camilladsp( pAudio_config=CONFIG )
 
-    else:
-        cdsp_state = 'pending'
-        if DSP._connect_to_camilla():
-            cdsp_state = 'running'
+    if cdsp_init == 'done':
 
-    if cdsp_state == 'running':
-
-        STATE["dsp_buffer_size"] = DSP.CC.config.active()["devices"]["chunksize"]
+        STATE["dsp_buffer_size"] = CAM.CC.config.active()["devices"]["chunksize"]
         STATE["dsp_buffer_ms"]   = int(round(STATE["dsp_buffer_size"] / STATE["fs"] * 1000))
 
-        # Changing MacOS playback device
+        # Resuming audio settings on the CAM
+        resume_audio()
+
+        # Changing macOS playback device
         # (It will be restored when ordering `paudio.sh stop`)
         if CONFIG.get('coreaudio'):
             macos.change_default_sound_device( CONFIG["coreaudio"]["devices"]["capture"]["device"] )
-
-        # Resuming audio settings on the DSP
-        resume_audio()
 
         # Saving state with user settings mods
         save_json_file(STATE, PREAMP_STATE_PATH)
 
     else:
+
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
         print(f'    - The sound card is attached')
         print(f'    - The `config.yml` file')
@@ -404,19 +387,19 @@ def eq2png():
 # Interface functions with the underlying modules
 
 def set_mute(mode):
-    return DSP.set_mute(mode)
+    return CAM.set_mute(mode)
 
 
 def set_solo(mode):
-    return DSP.set_solo(mode)
+    return CAM.set_solo(mode)
 
 
 def set_polarity(mode):
-    return DSP.set_polarity(mode)
+    return CAM.set_polarity(mode)
 
 
 def set_loudness(mode, level=STATE["level"]):
-    result = DSP.set_loudness(mode, level)
+    result = CAM.set_loudness(mode, level)
     return result
 
 
@@ -434,7 +417,7 @@ def set_drc(drcID):
         else:
             flat_gain = CONFIG["drc_gains"][drcID].get('flat_gain', 0.0)
 
-        res = DSP.set_drc(drcID, flat_gain)
+        res = CAM.set_drc(drcID, flat_gain)
 
     return res
 
@@ -457,7 +440,7 @@ def set_xo(xoID):
             if x[3:] == xoID:
                 flat_gains[x] = gains["flat_gain"]
 
-        res = DSP.set_xo(xoID, flat_gains)
+        res = CAM.set_xo(xoID, flat_gains)
 
     return res
 
@@ -492,7 +475,7 @@ def set_source(sname):
         if sname == 'Desktop':
             return 'no change available'
 
-        res = DSP.set_capture( SOURCES[sname] )
+        res = CAM.set_capture( SOURCES[sname] )
 
         # Extra in coreaudio update STATE.input_dev
         config_yml         = yaml.safe_load( open(CONFIG_PATH, 'r') )
@@ -545,44 +528,44 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
     """
 
     def set_level(dB):
-        DSP.set_volume(dB + CONFIG["ref_level_gain_offset"] )
+        CAM.set_volume(dB + CONFIG["ref_level_gain_offset"] )
         return set_loudness(mode=STATE["equal_loudness"], level=dB)
 
 
     def set_balance(dB):
-        return DSP.set_balance(dB)
+        return CAM.set_balance(dB)
 
 
     def set_lu_offset(dB):
-        return DSP.set_lu_offset(-dB)
+        return CAM.set_lu_offset(-dB)
 
 
     def set_bass(dB):
         if not STATE["tone_defeat"]:
-            return DSP.set_bass(dB)
+            return CAM.set_bass(dB)
         else:
             return "done"
 
 
     def set_treble(dB):
         if not STATE["tone_defeat"]:
-            return DSP.set_treble(dB)
+            return CAM.set_treble(dB)
         else:
             return "done"
 
 
     def set_target(tID):
-        return DSP.set_target(tID)
+        return CAM.set_target(tID)
 
 
     def set_tone_defeat(mode):
         res = []
         if mode == True:
-            res.append( DSP.set_bass(   0.0 ) )
-            res.append( DSP.set_treble( 0.0 ) )
+            res.append( CAM.set_bass(   0.0 ) )
+            res.append( CAM.set_treble( 0.0 ) )
         else:
-            res.append( DSP.set_bass(   STATE["bass"]   ) )
-            res.append( DSP.set_treble( STATE["treble"] ) )
+            res.append( CAM.set_bass(   STATE["bass"]   ) )
+            res.append( CAM.set_treble( STATE["treble"] ) )
         res = ' '.join( set(res) )
         return res
 
@@ -785,16 +768,16 @@ def do(cmd, args, add):
 
                 case 'on':
                     new = 'mid'
-                    result = DSP.set_midside(new)
+                    result = CAM.set_midside(new)
 
                 case 'off':
                     new = 'off'
-                    result = DSP.set_midside(new)
+                    result = CAM.set_midside(new)
 
                 case 'toggle':
                     curr = STATE["midside"]
                     new = {'off': 'mid', 'mid': 'off', 'side': 'off'}[curr]
-                    result = DSP.set_midside(new)
+                    result = CAM.set_midside(new)
 
             if result == 'done':
                 STATE["midside"] = new
@@ -804,7 +787,7 @@ def do(cmd, args, add):
             new = args
 
             if STATE["midside"] != new:
-                result = DSP.set_midside(new)
+                result = CAM.set_midside(new)
 
                 if result == 'done':
                     STATE["midside"] = new
@@ -903,13 +886,13 @@ def do(cmd, args, add):
 
         # Special commands when using cammillaDSP
         case 'get_cdsp_config':
-            result = DSP.get_config()
+            result = CAM.get_config()
 
         case 'get_cdsp_preamp_mixer':
-            result = DSP.get_config()["mixers"]["preamp_mixer"]
+            result = CAM.get_config()["mixers"]["preamp_mixer"]
 
         case 'get_cdsp_pipeline':
-            result = DSP.get_config()["pipeline"]
+            result = CAM.get_config()["pipeline"]
 
         case _:
             result = 'unknown command'

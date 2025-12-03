@@ -5,44 +5,39 @@
 <dict>
 
     <key>Label</key>
-    <string>com.pAudio.ctrl</string>
+    <string>com.pAudio.camilladsp</string>
 
-    <!-- This enables this process to use the session Desktop resources
-    -->
     <key>LimitLoadToSessionType</key>
     <array>
             <string>Aqua</string>
             <string>Background</string>
-            <string>LoginWindow</string>
-            <string>System</string>
             <string>StandardIO</string>
     </array>
 
-    <!-- using a shell to have a full user environment
+    <!--
+    Start CamillaDSP in '--wait' mode, wainting for a configuration to be upluaded via websocket
     -->
     <key>ProgramArguments</key>
     <array>
         <string>/bin/sh</string>
         <string>-l</string>
         <string>-c</string>
-        <string>sleep 2 && source $HOME/.env/bin/activate && exec python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 9991</string>
+        <string>exec $HOME/bin/camilladsp --wait --mute --address 127.0.0.1 --port 1234 --logfile $HOME/pAudio/log/camilladsp.log</string>
     </array>
 
-    <!-- run on sesion init -->
+
     <key>RunAtLoad</key>
     <true/>
 
-    <!-- do not restart if the program is terminated -->
     <key>KeepAlive</key>
     <false/>
 
-    <!-- DEBUG (while testing)
-    -->
+    <!-- DEBUG
     <key>StandardOutPath</key>
-    <string>/tmp/com.pAudio.ctrl.log</string>
-
+    <string>/tmp/com.pAudio.camilladsp.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/com.pAudio.ctrl.err</string>
+    <string>/tmp/com.pAudio.camilladsp.err</string>
+    -->
 
 </dict>
 </plist>

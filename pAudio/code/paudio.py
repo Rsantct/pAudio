@@ -36,12 +36,10 @@ print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 def _init():
 
     # Prepare DRC FIR graphs
-    cmd = f'python3 {CODEFOLDER}/share/drc_fir2png.py'
-    sp.Popen(cmd, shell=True)
+    sp.Popen(['python3', f'{CODEFOLDER}/share/drc_fir2png.py'])
 
     # Prepare DRC IIR graphs
-    cmd = f'python3 {CODEFOLDER}/share/drc_iir2png.py'
-    sp.Popen(cmd, shell=True)
+    sp.Popen(['python3', f'{CODEFOLDER}/share/drc_iir2png.py'])
 
 
 def do(cmd_phrase):

@@ -203,8 +203,10 @@ def save2disk():
     # Saving to disk rounded to 1 dB
     with open( LDMON_PATH, 'w') as f:
         # From dBFS to dBLU ( 0 dBLU = -23dBFS )
-        I_LU = meter.I - -23.0
-        M_LU = meter.M - -23.0
+        # float() is needed because recent numpy from
+        # audiotools.loudness_meter provides np.float32 types
+        I_LU = float(meter.I - -23.0)
+        M_LU = float(meter.M - -23.0)
         # Floor the value on disk as per the used threshold
         I_LU = I_LU // meter.I_threshold * meter.I_threshold
         M_LU = M_LU // meter.M_threshold * meter.M_threshold

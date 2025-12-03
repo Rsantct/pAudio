@@ -10,9 +10,9 @@ from    common import *
 import  jack
 import  multiprocessing as mp
 
-
 JCLI = None
 
+VERBOSE = CONFIG["verbose"]
 
 def _jcli_activate(cli_name = 'jack_mod'):
 
@@ -31,7 +31,8 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops_list=[], di
         including jack_loops
     """
 
-    print(f'{Fmt.BLUE}(jack_mod) Trying to run JACK ...{Fmt.END}')
+    if VERBOSE:
+        print(f'{Fmt.BLUE}(jack_mod) Trying to run JACK ...{Fmt.END}')
 
     if dither:
         dither = 'shaped'
@@ -39,21 +40,22 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops_list=[], di
         dither = 'none'
 
     jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
-               f' 1>>{LOGFOLDER}/jackd.log 2>&1'
+               f' 1>{LOGFOLDER}/jackd.log 2>&1'
 
     with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
         f.write('JACKD COMMAND LINE:\n')
         f.write(jack_cmd)
         f.write('\n\n')
 
-    sp.Popen(jack_cmd, shell=True)
+    sp.Popen( jack_cmd, shell=True )
 
     if wait4jackports('system', timeout=10):
 
         run_jloops(jloops_list)
 
         dit = 'dither:shaped' if dither else ''
-        print(f'{Fmt.BLUE}(jack_mod) JACK fs:{fs} period:{period} n:{nperiods} {dit}{Fmt.END}')
+        if VERBOSE:
+            print(f'{Fmt.BLUE}(jack_mod) JACK fs:{fs} period:{period} n:{nperiods} {dit}{Fmt.END}')
         return True
 
     else:
@@ -69,7 +71,8 @@ def _jack_loop(clientname, nports=2):
         CREDITS:  https://jackclient-python.readthedocs.io/en/0.4.5/examples.html
     """
 
-    print( f'{Fmt.CYAN}(jack_loop) trying to run: {clientname} with {nports} ports ...{Fmt.END}' )
+    if VERBOSE:
+        print( f'{Fmt.CYAN}(jack_loop) trying to run: {clientname} with {nports} ports ...{Fmt.END}' )
 
 
     # The jack module instance for our looping ports
@@ -94,9 +97,10 @@ def _jack_loop(clientname, nports=2):
     # If jack shutdowns, will trigger on 'event' so that the below 'whith client' will break.
     @client.set_shutdown_callback
     def shutdown(status, reason):
-        print(f'{Fmt.GRAY}(jack_loop) JACK shutdown!{Fmt.END}')
-        print(f'{Fmt.GRAY}(jack_loop) JACK status:{Fmt.END}', status)
-        print(f'{Fmt.GRAY}(jack_loop) JACK reason:{Fmt.END}', reason)
+        if VERBOSE:
+            print(f'{Fmt.GRAY}(jack_loop) JACK shutdown!{Fmt.END}')
+            print(f'{Fmt.GRAY}(jack_loop) JACK status:{Fmt.END}', status)
+            print(f'{Fmt.GRAY}(jack_loop) JACK reason:{Fmt.END}', reason)
         # This triggers an event so that the below 'with client' will terminate
         event.set()
 
@@ -113,7 +117,8 @@ def _jack_loop(clientname, nports=2):
         # This tells the JACK server that we are ready to roll.
         # Our above process() callback will start running now.
 
-        print( f'{Fmt.CYAN}(jack_loop) running {clientname}{Fmt.END}' )
+        if VERBOSE:
+            print( f'{Fmt.CYAN}(jack_loop) running {clientname}{Fmt.END}' )
         try:
             event.wait()
         except KeyboardInterrupt:
@@ -125,7 +130,9 @@ def _jack_loop(clientname, nports=2):
 def run_jloops(loop_names=[]):
     """ Preparing the loops
     """
-    print(f'{Fmt.CYAN}(jack_mod) Please wait for JACK LOOPS: {loop_names}{Fmt.END}')
+    if VERBOSE:
+        print(f'{Fmt.CYAN}(jack_mod) Please wait for JACK LOOPS: {loop_names}{Fmt.END}')
+
     for loop_name in loop_names:
         jloop = mp.Process( target=_jack_loop, args=(loop_name, 2) )
         jloop.start()

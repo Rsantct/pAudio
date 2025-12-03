@@ -17,12 +17,42 @@ import  sys
 import  ipaddress
 from    getpass     import getuser
 from    config      import *
-from    common_mod  import macos
+
+if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
+    from    common_mod  import macos
+    macos.CONFIG = CONFIG.copy()
 
 USER = getuser()
 
-macos.CONFIG = CONFIG.copy()
-macos.Fmt    = Fmt
+
+def json_string_fix(cad):
+    """ Example of a raw string that cannot be parsed by json.loads because nested double quotes (")
+
+        {"app":"Spotify","state":"playing","track":"L'elisir d'amore / Act 1: "Signor sargente" - Excerpt","artist":"Gaetano Donizetti","album":"Donizetti:L'elisir d'amore - Highlights","elapsed":19,"duration":161266}'
+    """
+
+    for i, c in enumerate(cad):
+
+        if c == '"':
+
+            if cad[i - 1] in ('{', '}', ':'):
+                continue
+
+            if cad[i + 1] in ('{', '}'):
+                continue
+
+            if cad[i - 2 : i] in ('",'):
+                continue
+
+            if cad[i - 1 : i + 1] in (',"'):
+                continue
+
+            if cad[i : i + 2] in ('":', '",'):
+                continue
+
+            cad = cad[ : i] + "'" + cad[i + 1 :]
+
+    return cad
 
 
 def get_macros(only_web_macros=True):
@@ -125,6 +155,10 @@ def read_mpd_config(mpd_config_path=''):
     if not mpd_config_path:
         mpd_config_path = get_running_mpd_config_path()
 
+
+    if not os.path.isfile(mpd_config_path):
+        print(f'(common) read_mpd_config, file NOT found: {mpd_config_path}')
+        return {}
 
     with open(mpd_config_path, 'r') as f:
 
@@ -360,6 +394,42 @@ def wait4ports( pattern, timeout=10 ):
         return True
     else:
         return False
+
+
+def check_output(host, port, message, timeout=1.0, chunk_size=4096):
+    """
+    Envía 'message' a (host, port) vía TCP y devuelve la respuesta completa
+    como string, similar a subprocess.check_output().
+    """
+
+    if not host or not port or not message:
+        return ''
+
+    data = b''
+
+    try:
+        with socket.create_connection((host, port)) as conn:
+
+            conn.settimeout(timeout)
+
+            if isinstance(message, str):
+                message = message.encode()
+
+            conn.sendall(message)
+
+            while True:
+                try:
+                    chunk = conn.recv(chunk_size)
+                    if not chunk:
+                        break
+                    data += chunk
+                except socket.timeout:
+                    break
+
+    except Exception as e:
+        pass
+
+    return data.decode()
 
 
 def send_cmd( cmd, sender='', verbose=False, timeout=3, host=PAUDIO_ADDR, port=PAUDIO_PORT ):
@@ -714,19 +784,63 @@ def process_is_running(pattern):
     return False
 
 
+def kill_bill(pid=0):
+    """ Kill any previous instance of the given PID
+
+        returns: '' or a 'string with any error'
+    """
+
+    if not pid:
+        return 'a pid is needed'
+
+    try:
+        process = psutil.Process(pid)
+        pid_cmdline = os.path.basename( process.cmdline()[1] )
+
+    except psutil.NoSuchProcess:
+        return 'no such process'
+
+    except psutil.AccessDenied:
+        return 'access denied'
+
+    except Exception as e:
+        return f'error: {str(e)}'
+
+    errors = ''
+
+    for proc in psutil.process_iter():
+
+        try:
+            if proc.name() == "python.exe" or proc.name() == "python3":
+
+                for cmdline in proc.cmdline():
+
+                    if pid_cmdline in cmdline:
+
+                        # Avoids harakiri
+                        if proc.pid != pid:
+                            print(f"Killing {cmdline} PID: {proc.pid}")
+                            proc.kill()
+
+        except Exception as e:
+            errors += f'{str(e)}\n'
+
+    return errors
+
+
 def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
 
     period = .5
     tries  = int(timeout / period)
 
     while tries:
-        try:
-            sp.check_output(f'echo "hello" | nc localhost {port}', shell=True)
+
+        if check_output('localhost', port,' hello'):
             break
-        except:
-            tries -= 1
-            sleep(period)
-            #print(f'{Fmt.GRAY}waiting for server response ...{Fmt.END}')
+
+        tries -= 1
+        sleep(period)
+        #print(f'{Fmt.GRAY}waiting for server response ...{Fmt.END}')
 
     if tries:
         return True
@@ -812,7 +926,8 @@ def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
         zargs = json.dumps( (get_my_ip(), None, 'stop') )
         remotecmd = f'aux zita_j2n {zargs}'
 
-        print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
+        if CONFIG["verbose"]:
+            print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
 
         result = send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
 
@@ -837,7 +952,8 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
 
     if mode == 'stop':
 
-        print(f'{Fmt.GRAY}(common) killing local zita-n2j: {jport}{Fmt.END}')
+        if CONFIG["verbose"]:
+            print(f'{Fmt.GRAY}(common) killing local zita-n2j: {jport}{Fmt.END}')
 
         zitapattern  = f'zita-n2j --jname {jport}'
         sp.call( ['pkill', '-KILL', '-u', USER, '-f',  zitapattern] )

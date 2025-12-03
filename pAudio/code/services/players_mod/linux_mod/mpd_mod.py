@@ -19,8 +19,7 @@ from common import  time_sec2hhmmss, time_sec2mmss, read_mpd_config, \
                     read_json_file, get_pid_cmdline, Fmt,            \
                     PLAYERTEMPLATE, MAINFOLDER, CDDA_META_PATH
 
-
-MPD_PORT                = 6600
+MPD_PORT = 6600
 CDDA_MPD_PLAYLIST_PATH  = f'{MAINFOLDER}/.cdda_mpd_playlist'
 LAST_MPD_PLAYLIST_PATH  = f'{MAINFOLDER}/.last_mpd_playlist'
 
@@ -36,7 +35,8 @@ CLI.idletimeout = 1 # timeout for fetching the result of the idle command is han
 
 
 def _init():
-    MPD_PORT = read_mpd_config()["port"]
+    global MPD_PORT
+    MPD_PORT = read_mpd_config().get('port', 6600)
 
 
 def read_cdda_meta_from_disk():

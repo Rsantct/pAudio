@@ -23,12 +23,11 @@
     <key>KeepAlive</key>
     <false/>
 
-    <!-- DEBUG (while testing)
+    <!-- DEBUG
     <key>StandardOutPath</key>
-    <string>/tmp/pAudio.www.log</string>
-
+    <string>/tmp/com.pAudio.www.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/pAudio.www.err</string>
+    <string>/tmp/com.pAudio.www.err</string>
     -->
 
 </dict>
