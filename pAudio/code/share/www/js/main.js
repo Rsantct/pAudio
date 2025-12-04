@@ -367,7 +367,7 @@ function init(){
 
         // If empty macros list, do nothing
         if ( mFnames.length == 0 ){
-            console.log( '(i) empty macros array', mFnames)
+            console.log( '(i) empty macros array')
             document.getElementById( "macro_buttons").style.display = 'none';
             return
         }
