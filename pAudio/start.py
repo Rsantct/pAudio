@@ -36,6 +36,15 @@ if sys.platform == 'linux' and CONFIG.get('jack'):
 
 
 def check_cdsp_running():
+    """
+    https://github.com/HEnquist/pycamilladsp/blob/master/camilladsp/datastructures.py
+
+    RUNNING     Processing is running
+    PAUSED      Processing is paused
+    INACTIVE    CamillaDSP is inactive, and waiting for a new config to be supplied
+    STARTING    The processing is being set up
+    STALLED     The processing is stalled because the capture device isn't providing any data
+    """
 
     # Temporay CamillaDSP client
     HOST = '127.0.0.1'
@@ -47,12 +56,13 @@ def check_cdsp_running():
 
         s = CC.general.state()
 
-        if str(s) == 'ProcessingState.RUNNING' or str(s) == 'ProcessingState.INACTIVE':
+        if 'RUNNING' in str(s) or 'INACTIVE' in str(s) or 'PAUSED' in str(s):
             if VERBOSE:
                 print(f'{Fmt.BLUE}(start) CamillaDSP detected :-){Fmt.END}')
             return True
         else:
-            print(f'{Fmt.RED}(start) ERROR with CamillaDSP, check log folder.{Fmt.END}')
+            print(f'{Fmt.RED}(start) Bad CamillaDSP state: {str(s)}{Fmt.END}')
+            print(f'{Fmt.RED}(start) - check log folder -{Fmt.END}')
             return False
 
     except:
