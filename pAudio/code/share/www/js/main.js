@@ -105,7 +105,7 @@ var web_config          = { 'main_selector':      'sources',
                             'user_macros':        []
 };
 
-var drc_sets            = get_drc_sets();
+var drc_sets            = [];
 
 var mFnames             = web_config.user_macros; // Macro file names
 
@@ -291,12 +291,17 @@ function manage_main_cside(){
     // Server warnings have max prioriy
     if (aux_info.warning !== ''){
         main_cside_msg = aux_info.warning;
+
     }else if (state.convolver_runs==false){
         main_cside_msg = '( sleeping )';
+
     }else{
+
         if (hold_cside_msg > 0){
             hold_cside_msg -= 1;
+
         }else{
+
             if (state.drc_set == 'none'){
                 main_cside_msg = state.loudspeaker;
             }else{
@@ -304,6 +309,7 @@ function manage_main_cside(){
             }
         }
     }
+
     document.getElementById("main_cside").innerText = main_cside_msg;
 }
 
@@ -432,7 +438,11 @@ function init(){
     }
 
 
+    console.log('Preparing page');
+
     get_web_config();
+
+    get_drc_sets();
 
     state_get();
 
@@ -447,6 +457,7 @@ function init(){
     show_hide_LU_frame();
 
     // SCHEDULES THE PAGE_UPDATE (only runtime variable items)
+    console.log('Looping to page_update ...');
     setInterval( page_update, AUTO_UPDATE_INTERVAL );
 }
 
@@ -485,6 +496,10 @@ function page_update() {
 
         function player_controls_update(playerState) {
 
+            if ( ! playerState ){
+                return
+            }
+
             if        ( playerState.includes('stop') ) {
                 document.getElementById("buttonStop").style.background  = "rgb(185, 185, 185)";
                 document.getElementById("buttonStop").style.color       = "white";
@@ -514,6 +529,9 @@ function page_update() {
 
         function player_metadata_update(d) {
 
+            if ( !d ){
+                return
+            }
 
             if ( d['artist'] == ''  && d['album'] == '' && d['title'] == '' ){
                 d = metablank;
@@ -745,6 +763,11 @@ function page_update() {
 
 
     function state_refresh(){
+
+        if ( Object.keys(state).length <= 5 ){
+            return
+        }
+
         // Updates level, balance, tone and delay info
         document.getElementById("levelInfo").innerHTML  = state.level.toFixed(1);
         document.getElementById("balInfo").innerHTML    = 'BAL: '  + state.balance;
@@ -815,13 +838,19 @@ function page_update() {
     // PREAMP STUFF
     state_get();
 
-    //  Cancel updating if not connected
-    if (!server_available){
+    //  Cancel updating if not answer
+    if ( Object.keys(state).length == 0 ){
         document.getElementById("levelInfo").innerHTML  = '--';
         document.getElementById("main_cside").innerText = ':: pAudio :: not connected';
         player_info_clear();
         player_controls_clear();
         return;
+    }
+
+    // Try retrieving the drc_sets
+    if ( drc_sets.length == 0 ){
+        console.log('Retrying get_drc_sets')
+        get_drc_sets()
     }
 
     //  Refresh static stuff if loudspeaker's audio processes has changed
@@ -1315,11 +1344,15 @@ function get_drc_sets() {
 
     let res = [];
 
+    const tmp = control_cmd( 'get_drc_sets' )
+
     try {
-        res = JSON.parse( control_cmd( 'get_drc_sets' ) );
+        res = JSON.parse( tmp );
     }catch(e){
-        console.log(e)
+        console.log('(i) cannot get drc sets')
     }
+
+    drc_sets = res;
 
     return res
 }
@@ -1331,6 +1364,7 @@ function state_get() {
         server_available = true;
         document.title = 'pAudio ' + state.loudspeaker;
     }catch(e){
+        state = {};
         server_available = false;
         document.getElementById("main_cside").innerText =
                                         ':: pAudio :: not connected';
