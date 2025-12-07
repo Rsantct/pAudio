@@ -337,6 +337,12 @@ def init():
         print(f'    - The sound card is attached')
         print(f'    - The `config.yml` file')
         print(f'    - Logs under ~/pAudio/log/{Fmt.END}\n')
+
+        # set a WARNING message
+        camilla_error = get_last_camilladsp_error()
+        send_cmd(f"ctrl warning clear", port=PAUDIO_PORT+1)
+        send_cmd(f"ctrl warning set {camilla_error}", port=PAUDIO_PORT+1)
+
         sys.exit()
 
 
