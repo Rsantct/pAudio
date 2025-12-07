@@ -339,9 +339,9 @@ def init():
         print(f'    - Logs under ~/pAudio/log/{Fmt.END}\n')
 
         # set a WARNING message
-        camilla_error = get_last_camilladsp_error()
+        camilla_error = get_camilladsp_last_error() # {date:xxx, time:xxx, error:xxx}
         send_cmd(f"ctrl warning clear", port=PAUDIO_PORT+1)
-        send_cmd(f"ctrl warning set {camilla_error}", port=PAUDIO_PORT+1)
+        send_cmd(f"ctrl warning set {camilla_error['error']}", port=PAUDIO_PORT+1)
 
         sys.exit()
 
