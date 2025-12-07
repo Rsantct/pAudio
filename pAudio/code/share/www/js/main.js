@@ -266,7 +266,7 @@ function fill_in_page_statics(){
     }
 
 
-    main_cside_msg = ':: pAudio :: ' + state.loudspeaker;
+    manage_main_cside( ':: pAudio :: ' + state.loudspeaker );
 
 
     // updates level cell info with ref_SPL
@@ -286,14 +286,18 @@ function fill_in_page_statics(){
 }
 
 
-function manage_main_cside(){
+function manage_main_cside( msg = '' ){
 
-    // Server warnings have max prioriy
-    if (aux_info.warning !== ''){
-        main_cside_msg = aux_info.warning;
+    if ( ! msg ){
+        msg = main_cside_msg;
+    }
+
+    // Server warnings overrides any message
+    if ( aux_info.warning !== ''){
+        msg = aux_info.warning;
 
     }else if (state.convolver_runs==false){
-        main_cside_msg = '( sleeping )';
+        msg = '( sleeping )';
 
     }else{
 
@@ -302,15 +306,18 @@ function manage_main_cside(){
 
         }else{
 
-            if (state.drc_set == 'none'){
-                main_cside_msg = state.loudspeaker;
-            }else{
-                main_cside_msg = state.loudspeaker + ' (' + state.drc_set + ')';
+            if (state.loudspeaker){
+                if (state.drc_set == 'none'){
+                    msg = state.loudspeaker;
+
+                }else{
+                    msg = state.loudspeaker + ' (' + state.drc_set + ')';
+                }
             }
         }
     }
 
-    document.getElementById("main_cside").innerText = main_cside_msg;
+    document.getElementById("main_cside").innerText = msg;
 }
 
 
@@ -834,6 +841,7 @@ function page_update() {
 
     //// AUX STUFF
     aux_info_refresh();
+    manage_main_cside();
 
     // PREAMP STUFF
     state_get();
@@ -841,7 +849,7 @@ function page_update() {
     //  Cancel updating if not answer
     if ( Object.keys(state).length == 0 ){
         document.getElementById("levelInfo").innerHTML  = '--';
-        document.getElementById("main_cside").innerText = ':: pAudio :: not connected';
+        main_cside_msg = ':: pAudio :: not connected';
         player_info_clear();
         player_controls_clear();
         return;
@@ -868,8 +876,6 @@ function page_update() {
     LU_refresh();
     //
     graphs_update();
-    //
-    manage_main_cside();
 }
 
 
@@ -1366,8 +1372,7 @@ function state_get() {
     }catch(e){
         state = {};
         server_available = false;
-        document.getElementById("main_cside").innerText =
-                                        ':: pAudio :: not connected';
+        main_cside_msg = ':: pAudio :: not connected';
     }
 }
 
