@@ -913,6 +913,36 @@ def get_my_ip():
         return ''
 
 
+def get_last_camilladsp_error():
+    """
+    --> Al iniciar pAudio con el DAC apagado
+    2025-12-06 22:36:50.131948 ERROR [src/bin.rs:293] Playback error: Could not find playback device 'E30 II'
+
+    --> Al apagar el DAC con pAudio arrancado
+    2025-12-06 22:40:34.001230 ERROR [src/bin.rs:293] Playback error: Playback device is no longer alive
+    """
+
+    res = ''
+
+    try:
+
+        lines = read_last_lines(f'{LOGFOLDER}/camilladsp.log', 100)
+
+        for line in lines[::1]:
+
+            linesplit = line.split()
+
+            if 'ERROR' in linesplit:
+                tmp = linesplit[4:]
+                res = ' '.join(tmp)
+                break
+
+    except Exception as e:
+        print(f'(common.get_last_camilladsp_error) {str(e)}')
+
+    return res
+
+
 def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
     """
         Restarting zita-j2n on the multiroom sender's end,
