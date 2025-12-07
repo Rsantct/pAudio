@@ -18,12 +18,11 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 from common import *
 
 
-# COMMAND LOG FILE
-LOGFNAME = f'{LOGFOLDER}/paudio_ctrl.log'
+CAMILLADSP_LAST_ERROR = {}
 
+LOGFNAME = f'{LOGFOLDER}/paudio_ctrl.log'
 if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
     print ( f"{Fmt.RED}(paudio_ctrl) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
-
 print ( f"{Fmt.BLUE}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
@@ -32,7 +31,7 @@ def init():
         preamp.py will alert there for eq_graph changes
     """
 
-    global AUXINFO, ONOFF_MODE
+    global AUXINFO, ONOFF_MODE, CAMILLADSP_LAST_ERROR
 
     # Reset paudio_ctrl.log
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
@@ -46,6 +45,8 @@ def init():
             ONOFF_MODE = 'amplifier'
 
 
+    CAMILLA_LAST_ERROR = get_camilladsp_last_error()
+
     AUXINFO = {
         "loudness_monitor": read_json_file(LDMON_PATH),
         "last_macro":       "",
@@ -54,6 +55,46 @@ def init():
     }
 
     save_aux_info()
+
+
+def save_aux_info():
+    """ this must be threaded
+    """
+
+    global CAMILLADSP_LAST_ERROR
+
+    def dosave():
+        save_json_file(AUXINFO, AUXINFO_PATH)
+
+    # Dynamic update <onoff>
+
+    if ONOFF_MODE == 'amplifier':
+
+        AUXINFO['onoff'] = amp_switch('state')
+
+    elif ONOFF_MODE == 'pAudio':
+
+        if process_is_running('paudio '):
+            AUXINFO['onoff'] = 'on'
+        else:
+            AUXINFO['onoff'] = 'off'
+
+    else:
+        AUXINFO['onoff'] = '-'
+
+
+    # Dynamic update <CamillaDSP ERROR>
+
+    curr_cdsp_error = get_camilladsp_last_error()
+
+    if curr_cdsp_error != CAMILLADSP_LAST_ERROR:
+        CAMILLADSP_LAST_ERROR = curr_cdsp_error
+        AUXINFO["warning"] = curr_cdsp_error["error"]
+        warning_expire(10)
+
+
+    job = threading.Thread(target=dosave,)
+    job.start()
 
 
 def run_macro(mname):
@@ -85,33 +126,6 @@ def run_macro(mname):
     save_aux_info()
 
     return result
-
-
-def save_aux_info():
-    """ this must be threaded
-    """
-
-    def dosave():
-        save_json_file(AUXINFO, AUXINFO_PATH)
-
-    # Dynamic updates
-    if ONOFF_MODE == 'amplifier':
-
-        AUXINFO['onoff'] = amp_switch('state')
-
-    elif ONOFF_MODE == 'pAudio':
-
-        if process_is_running('paudio '):
-            AUXINFO['onoff'] = 'on'
-        else:
-            AUXINFO['onoff'] = 'off'
-
-    else:
-        AUXINFO['onoff'] = '-'
-
-
-    job = threading.Thread(target=dosave,)
-    job.start()
 
 
 def zita_j2n(args):
@@ -163,7 +177,7 @@ def zita_j2n(args):
     return result
 
 
-def manage_lu_monitor(commandphrase):
+def lu_monitor_manager(commandphrase):
     """ Manages the loudness_monitor.py daemon through by its fifo
     """
     #   As per LDCTRL_PATH is a namedpipe (FIFO), it is needed that
@@ -221,7 +235,7 @@ def warning_expire(timeout=5):
     job.start()
 
 
-def manage_warning_msg(arg):
+def warning_msg_manager(arg):
     """ Manages the warning field under .aux_info than can be used
         from the control web page interface
     """
@@ -299,11 +313,11 @@ def do( cmd_phrase):
             result = read_json_file(LDMON_PATH)
 
         case 'reset_loudness_monitor' | 'reset_lu_monitor':
-            result = manage_lu_monitor('reset')
+            result = lu_monitor_manager('reset')
 
         case 'set_loudness_monitor_scope' | 'set_lu_monitor_scope':
             args = 'source' # FORCED to source
-            result = manage_lu_monitor(f'scope={args}')
+            result = lu_monitor_manager(f'scope={args}')
 
         case 'zita_j2n':
             result = zita_j2n(args)
@@ -312,7 +326,7 @@ def do( cmd_phrase):
             result = run_macro(args)
 
         case 'warning':
-            result = manage_warning_msg(args)
+            result = warning_msg_manager(args)
 
 
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
