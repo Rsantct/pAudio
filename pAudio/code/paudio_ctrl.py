@@ -58,10 +58,12 @@ def init():
 
 def run_macro(mname):
 
+    result = 'nothing was done'
+
     if not mname or 'clear_last' in mname:
 
         AUXINFO["last_macro"] = ''
-        return 'last_macro cleared'
+        result = 'last_macro cleared'
 
     macro_path = f'{MACROSFOLDER}/{mname}'
 
@@ -72,12 +74,17 @@ def run_macro(mname):
         try:
             sp.Popen( [macro_path] )
             AUXINFO["last_macro"] = mname
-            return 'ordered'
+            result = 'ordered'
         except Exception as e:
-            return f'Error running `{mname}`: {str(e)}'
+            result = f'Error running `{mname}`: {str(e)}'
 
     else:
-        return 'macro not found'
+        result = 'macro not found'
+
+
+    save_aux_info()
+
+    return result
 
 
 def save_aux_info():
@@ -201,6 +208,64 @@ def restart_paudio(mode):
             return 'Please wait a minute ...'
 
 
+def warning_expire(timeout=5):
+    """ Threads a timer to clear the warning message field inside .aux_info
+    """
+
+    def mytimer(timeout):
+        sleep(timeout)
+        AUXINFO['warning'] = ''
+        save_aux_info()
+
+    job = threading.Thread(target=mytimer, args=(timeout,))
+    job.start()
+
+
+def manage_warning_msg(arg):
+    """ Manages the warning field under .aux_info than can be used
+        from the control web page interface
+    """
+    args = arg.split()
+
+    if args[0] == 'set':
+
+        if AUXINFO['warning']:
+            result = 'warning message in use'
+        else:
+            AUXINFO['warning'] = ' '.join(args[1:])
+            warning_expire(timeout=60)
+            result = 'done'
+
+    elif args[0] == 'perm':
+
+        if AUXINFO['warning']:
+            result = 'warning message in use'
+        else:
+            AUXINFO['warning'] = ' '.join(args[1:])
+            result = 'done'
+
+    elif args[0] == 'clear':
+        AUXINFO['warning'] = ''
+        result = 'done'
+
+    elif args[0] == 'get':
+        result = AUXINFO['warning']
+
+    elif args[0] == 'expire':
+        if args[1:] and args[1].isdigit():
+            warning_expire(timeout=int(args[1]))
+            result = 'done'
+        else:
+            result = 'bad expire timeout'
+    else:
+        result = 'usage: warning set message | warning clear'
+
+
+    save_aux_info()
+
+    return result
+
+
 # Interface function for this module
 def do( cmd_phrase):
 
@@ -245,6 +310,9 @@ def do( cmd_phrase):
 
         case 'run_macro':
             result = run_macro(args)
+
+        case 'warning':
+            result = manage_warning_msg(args)
 
 
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
