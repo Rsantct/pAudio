@@ -913,28 +913,31 @@ def get_my_ip():
         return ''
 
 
-def get_last_camilladsp_error():
+def get_camilladsp_last_error():
     """
     --> Al iniciar pAudio con el DAC apagado
     2025-12-06 22:36:50.131948 ERROR [src/bin.rs:293] Playback error: Could not find playback device 'E30 II'
 
     --> Al apagar el DAC con pAudio arrancado
     2025-12-06 22:40:34.001230 ERROR [src/bin.rs:293] Playback error: Playback device is no longer alive
+
+    Devuelve un DICT: {'date':'', 'time':'', 'error':''}
     """
 
-    res = ''
+    res = {'date':'', 'time':'', 'error':''}
 
     try:
 
         lines = read_last_lines(f'{LOGFOLDER}/camilladsp.log', 100)
 
-        for line in lines[::1]:
+        for line in lines[::-1]:
 
             linesplit = line.split()
 
             if 'ERROR' in linesplit:
-                tmp = linesplit[4:]
-                res = ' '.join(tmp)
+                res["date"]  = linesplit[0]
+                res["time"]  = linesplit[1]
+                res["error"] = ' '.join( linesplit[4:] )
                 break
 
     except Exception as e:
