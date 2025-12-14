@@ -229,7 +229,7 @@ def init():
                        'lu_offset', 'equal_loudness', 'target', 'drc_set' )
 
         if not prop in valid_props:
-            print(f'{Fmt.BOLD}config.yml on_init NOT valid: `{prop}`{Fmt.END}')
+            print(f'{Fmt.BOLD}(on_init) NOT valid: `{prop}`{Fmt.END}')
             continue
 
         if not value:
@@ -243,14 +243,14 @@ def init():
                 if value in TARGET_SETS + ['none']:
                     STATE["target"] = value
                 else:
-                    print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR in config target{Fmt.END}')
 
             case 'drc_set':
 
                 if value in DRC_SETS or value == 'none':
                     STATE["drc_set"] = value
                 else:
-                    print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR in config drc_set{Fmt.END}')
 
             case _:
 
