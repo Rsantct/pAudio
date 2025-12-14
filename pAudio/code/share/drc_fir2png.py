@@ -204,19 +204,14 @@ def prepare_IMGFOLDER():
 
 
 def get_DSP_in_use():
-    """ The DSP in use is set inside preamp.py
+    """ The running DSP
     """
-    with open(f'{CODEFOLDER}/services/preamp.py', 'r') as f:
-        tmp = f.readlines()
-    import_lines = [line for line in tmp if 'import ' in line]
-    import_DSP_line = str([line for line in import_lines if 'DSP' in line])
-    res = 'unknown'
-    if 'camilla' in import_DSP_line:
-        res = 'camilladsp'
-    elif 'brutefir' in import_DSP_line:
+    res = ''
+    if process_is_running('brutefir'):
         res = 'brutefir'
+    elif process_is_running('camilladsp'):
+        res = 'camilladsp'
     return res
-
 
 if __name__ == '__main__':
 
@@ -295,7 +290,7 @@ if __name__ == '__main__':
 
             if DSP_IN_USE == 'camilladsp':
                 if drc_set in CONFIG["drc"]:
-                    atten = CONFIG["drc"][drc_set].get('gain_offset', 0.0)
+                    atten = CONFIG["drc_gains"][drc_set].get('flat_gain', 0.0)
 
             magdB -= atten
 
