@@ -229,7 +229,7 @@ def init():
                        'lu_offset', 'equal_loudness', 'target', 'drc_set' )
 
         if not prop in valid_props:
-            print(f'{Fmt.BOLD}config.yml on_init NOT valid: `{prop}`{Fmt.END}')
+            print(f'{Fmt.BOLD}(on_init) NOT valid: `{prop}`{Fmt.END}')
             continue
 
         if not value:
@@ -243,14 +243,14 @@ def init():
                 if value in TARGET_SETS + ['none']:
                     STATE["target"] = value
                 else:
-                    print(f'{Fmt.BOLD}ERROR in config target{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR in config target{Fmt.END}')
 
             case 'drc_set':
 
                 if value in DRC_SETS or value == 'none':
                     STATE["drc_set"] = value
                 else:
-                    print(f'{Fmt.BOLD}ERROR in config drc_set{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR in config drc_set{Fmt.END}')
 
             case _:
 
@@ -337,6 +337,12 @@ def init():
         print(f'    - The sound card is attached')
         print(f'    - The `config.yml` file')
         print(f'    - Logs under ~/pAudio/log/{Fmt.END}\n')
+
+        # set a WARNING message
+        camilla_error = get_camilladsp_last_error() # {date:xxx, time:xxx, error:xxx}
+        send_cmd(f"ctrl warning clear", port=PAUDIO_PORT+1)
+        send_cmd(f"ctrl warning set {camilla_error['error']}", port=PAUDIO_PORT+1)
+
         sys.exit()
 
 
@@ -580,9 +586,8 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
             lspk_eq_posit_gain = CONFIG.get('lspk_eq_posit_gain', 0.0)
 
             # DRC
-            if candidate["drc_set"] == 'none':
-                drc_posit_gain = 0.0
-            else:
+            drc_posit_gain = 0.0
+            if candidate["drc_set"] != 'none':
                 drc_posit_gain = CONFIG["drc_gains"][ candidate["drc_set"] ]["posit_gain"]
 
             # XO: we need to find out the greater one involved in the xo_set
@@ -601,6 +606,10 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
 
         candidate = STATE.copy()
+
+        # avoid incoherent state, for example if drc files were renamed
+        if not candidate["drc_set"] in CONFIG["drc"]:
+            candidate["drc_set"] = 'none'
 
         if cmd == 'target':
             candidate['target'] = tID

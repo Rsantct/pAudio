@@ -346,7 +346,7 @@ def start():
 
     sp.Popen( srv_cmd.split() )
 
-    if wait4server(timeout=30):
+    if wait4server(timeout=20):
         if VERBOSE:
             print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
     else:

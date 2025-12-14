@@ -51,8 +51,11 @@ def set_config_sync(cfg, wait=CONFIG['camilladsp_activation_wait']):
     """
 
     try:
-        CC.config.set_active(cfg)
+
+        res = CC.config.set_active(cfg)
+
     except Exception as e:
+
         print(f'{Fmt.BOLD}(pcamilla) Error in config.set_active(): {str(e)}{Fmt.END}')
         return
 

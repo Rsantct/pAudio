@@ -18,12 +18,11 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 from common import *
 
 
-# COMMAND LOG FILE
-LOGFNAME = f'{LOGFOLDER}/paudio_ctrl.log'
+CAMILLADSP_LAST_ERROR = {}
 
+LOGFNAME = f'{LOGFOLDER}/paudio_ctrl.log'
 if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
     print ( f"{Fmt.RED}(paudio_ctrl) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
-
 print ( f"{Fmt.BLUE}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 
@@ -32,7 +31,7 @@ def init():
         preamp.py will alert there for eq_graph changes
     """
 
-    global AUXINFO, ONOFF_MODE
+    global AUXINFO, ONOFF_MODE, CAMILLADSP_LAST_ERROR
 
     # Reset paudio_ctrl.log
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
@@ -46,6 +45,8 @@ def init():
             ONOFF_MODE = 'amplifier'
 
 
+    CAMILLA_LAST_ERROR = get_camilladsp_last_error()
+
     AUXINFO = {
         "loudness_monitor": read_json_file(LDMON_PATH),
         "last_macro":       "",
@@ -56,38 +57,17 @@ def init():
     save_aux_info()
 
 
-def run_macro(mname):
-
-    if not mname or 'clear_last' in mname:
-
-        AUXINFO["last_macro"] = ''
-        return 'last_macro cleared'
-
-    macro_path = f'{MACROSFOLDER}/{mname}'
-
-    if os.path.isfile(macro_path):
-
-        print( f'(ctrl) ordering macro: {mname}' )
-
-        try:
-            sp.Popen( [macro_path] )
-            AUXINFO["last_macro"] = mname
-            return 'ordered'
-        except Exception as e:
-            return f'Error running `{mname}`: {str(e)}'
-
-    else:
-        return 'macro not found'
-
-
 def save_aux_info():
     """ this must be threaded
     """
 
+    global CAMILLADSP_LAST_ERROR
+
     def dosave():
         save_json_file(AUXINFO, AUXINFO_PATH)
 
-    # Dynamic updates
+    # Dynamic update <onoff>
+
     if ONOFF_MODE == 'amplifier':
 
         AUXINFO['onoff'] = amp_switch('state')
@@ -103,8 +83,49 @@ def save_aux_info():
         AUXINFO['onoff'] = '-'
 
 
+    # Dynamic update <CamillaDSP ERROR>
+
+    curr_cdsp_error = get_camilladsp_last_error()
+
+    if curr_cdsp_error != CAMILLADSP_LAST_ERROR:
+        CAMILLADSP_LAST_ERROR = curr_cdsp_error
+        AUXINFO["warning"] = curr_cdsp_error["error"]
+        warning_expire(10)
+
+
     job = threading.Thread(target=dosave,)
     job.start()
+
+
+def run_macro(mname):
+
+    result = 'nothing was done'
+
+    if not mname or 'clear_last' in mname:
+
+        AUXINFO["last_macro"] = ''
+        result = 'last_macro cleared'
+
+    macro_path = f'{MACROSFOLDER}/{mname}'
+
+    if os.path.isfile(macro_path):
+
+        print( f'(ctrl) ordering macro: {mname}' )
+
+        try:
+            sp.Popen( [macro_path] )
+            AUXINFO["last_macro"] = mname
+            result = 'ordered'
+        except Exception as e:
+            result = f'Error running `{mname}`: {str(e)}'
+
+    else:
+        result = 'macro not found'
+
+
+    save_aux_info()
+
+    return result
 
 
 def zita_j2n(args):
@@ -156,7 +177,7 @@ def zita_j2n(args):
     return result
 
 
-def manage_lu_monitor(commandphrase):
+def lu_monitor_manager(commandphrase):
     """ Manages the loudness_monitor.py daemon through by its fifo
     """
     #   As per LDCTRL_PATH is a namedpipe (FIFO), it is needed that
@@ -201,6 +222,64 @@ def restart_paudio(mode):
             return 'Please wait a minute ...'
 
 
+def warning_expire(timeout=5):
+    """ Threads a timer to clear the warning message field inside .aux_info
+    """
+
+    def mytimer(timeout):
+        sleep(timeout)
+        AUXINFO['warning'] = ''
+        save_aux_info()
+
+    job = threading.Thread(target=mytimer, args=(timeout,))
+    job.start()
+
+
+def warning_msg_manager(arg):
+    """ Manages the warning field under .aux_info than can be used
+        from the control web page interface
+    """
+    args = arg.split()
+
+    if args[0] == 'set':
+
+        if AUXINFO['warning']:
+            result = 'warning message in use'
+        else:
+            AUXINFO['warning'] = ' '.join(args[1:])
+            warning_expire(timeout=60)
+            result = 'done'
+
+    elif args[0] == 'perm':
+
+        if AUXINFO['warning']:
+            result = 'warning message in use'
+        else:
+            AUXINFO['warning'] = ' '.join(args[1:])
+            result = 'done'
+
+    elif args[0] == 'clear':
+        AUXINFO['warning'] = ''
+        result = 'done'
+
+    elif args[0] == 'get':
+        result = AUXINFO['warning']
+
+    elif args[0] == 'expire':
+        if args[1:] and args[1].isdigit():
+            warning_expire(timeout=int(args[1]))
+            result = 'done'
+        else:
+            result = 'bad expire timeout'
+    else:
+        result = 'usage: warning set message | warning clear'
+
+
+    save_aux_info()
+
+    return result
+
+
 # Interface function for this module
 def do( cmd_phrase):
 
@@ -234,17 +313,20 @@ def do( cmd_phrase):
             result = read_json_file(LDMON_PATH)
 
         case 'reset_loudness_monitor' | 'reset_lu_monitor':
-            result = manage_lu_monitor('reset')
+            result = lu_monitor_manager('reset')
 
         case 'set_loudness_monitor_scope' | 'set_lu_monitor_scope':
             args = 'source' # FORCED to source
-            result = manage_lu_monitor(f'scope={args}')
+            result = lu_monitor_manager(f'scope={args}')
 
         case 'zita_j2n':
             result = zita_j2n(args)
 
         case 'run_macro':
             result = run_macro(args)
+
+        case 'warning':
+            result = warning_msg_manager(args)
 
 
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
