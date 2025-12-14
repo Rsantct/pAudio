@@ -586,9 +586,8 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
             lspk_eq_posit_gain = CONFIG.get('lspk_eq_posit_gain', 0.0)
 
             # DRC
-            if candidate["drc_set"] == 'none':
-                drc_posit_gain = 0.0
-            else:
+            drc_posit_gain = 0.0
+            if candidate["drc_set"] != 'none':
                 drc_posit_gain = CONFIG["drc_gains"][ candidate["drc_set"] ]["posit_gain"]
 
             # XO: we need to find out the greater one involved in the xo_set
@@ -607,6 +606,10 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 
 
         candidate = STATE.copy()
+
+        # avoid incoherent state, for example if drc files were renamed
+        if not candidate["drc_set"] in CONFIG["drc"]:
+            candidate["drc_set"] = 'none'
 
         if cmd == 'target':
             candidate['target'] = tID
