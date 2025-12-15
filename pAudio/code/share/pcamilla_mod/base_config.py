@@ -13,8 +13,6 @@ def prepare_base_config(pAudio_config, cam_config):
 
     def prepare_devices():
 
-        chunksize = 1024
-
         # Coreaudio
         if pAudio_config.get('coreaudio'):
 
@@ -22,6 +20,8 @@ def prepare_base_config(pAudio_config, cam_config):
 
             cam_config["devices"]["capture"] ["type"] = 'CoreAudio'
             cam_config["devices"]["playback"]["type"] = 'CoreAudio'
+
+            chunksize = pAudio_config["coreaudio"]["devices"].get('chunksize', 1024)
 
 
         # Jack
@@ -34,6 +34,8 @@ def prepare_base_config(pAudio_config, cam_config):
 
             if pAudio_config["jack"].get('period'):
                 chunksize = pAudio_config["jack"].get('period')
+            else:
+                chunksize = 1024
 
             cam_config["devices"] = {
 
@@ -54,7 +56,6 @@ def prepare_base_config(pAudio_config, cam_config):
 
 
         cam_config["devices"]["samplerate"]         = pAudio_config["samplerate"]
-
         cam_config["devices"]["chunksize"]          = chunksize
 
         cam_config["devices"]["silence_threshold"]  = -80
