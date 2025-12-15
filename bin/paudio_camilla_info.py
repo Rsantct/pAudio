@@ -28,17 +28,24 @@ if __name__ == "__main__":
             print('CAP_DEVICES: ', cap_devs)
             print('PBK_DEVICES: ', pbk_devs)
 
-        state = cam.CC.general.state()
+
+        state = cam.CC.general.state().name
         print('STATE:       ', state)
 
-        load = cam.CC.status.processing_load()
+        load = round(cam.CC.status.processing_load(), 1)
         print('LOAD:        ', load)
 
-        config = cam.CC.config.active()
         cap_dev = '--'
         pbk_dev = '--'
+        chunksize = 0
+
+        config = cam.CC.config.active()
 
         if config:
+
+            chunk_size = config.get('devices', {}).get('chunksize', 0)
+            print('BUFFER:      ', chunk_size)
+
             if config.get('devices', {}).get('capture', {}):
                 cap_dev = config['devices']['capture']['device']
             if config.get('devices', {}).get('playback', {}):
@@ -51,10 +58,16 @@ if __name__ == "__main__":
     while True:
 
         if cam._connect_to_camilla():
-            level = cam.CC.levels.capture_peak()
             main_volume = cam.CC.volume.main_volume()
-            state = cam.CC.general.state()
-            print('level:       ', level, f'main_volume: {main_volume}', f'state: {state}')
+            state       = cam.CC.general.state().name
+            config      = cam.CC.config.active()
+            chunksize   = 0
+            if config:
+                chunksize = config.get('devices', {}).get('chunksize', 0)
+            load        = cam.CC.status.processing_load()
+            level       = cam.CC.levels.capture_peak()
+            level       = [ round(x, 1) for x in level ]
+            print(f'{str(chunksize).rjust(4)} {round(load, 1)} %', f'L{level}R | vol: {main_volume}', state)
 
         else:
             print('NO CONNECTION')
