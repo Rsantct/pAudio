@@ -45,7 +45,7 @@ def init():
             ONOFF_MODE = 'amplifier'
 
 
-    CAMILLA_LAST_ERROR = get_camilladsp_last_error()
+    CAMILLADSP_LAST_ERROR = get_camilladsp_last_error()
 
     AUXINFO = {
         "loudness_monitor": read_json_file(LDMON_PATH),
@@ -58,13 +58,8 @@ def init():
 
 
 def save_aux_info():
-    """ this must be threaded
-    """
 
     global CAMILLADSP_LAST_ERROR
-
-    def dosave():
-        save_json_file(AUXINFO, AUXINFO_PATH)
 
     # Dynamic update <onoff>
 
@@ -93,8 +88,15 @@ def save_aux_info():
         warning_expire(10)
 
 
-    job = threading.Thread(target=dosave,)
-    job.start()
+    # Adding Loudness Monitor to .aux_info
+    AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
+
+    # Adding CamillaDSP state to .aux_info
+    AUXINFO["CamillaDSP_state"] = get_camilladsp_state()
+
+    # Threading the .aux_info file saving
+    save_job = threading.Thread( target=save_json_file, args=(AUXINFO, AUXINFO_PATH) )
+    save_job.start()
 
 
 def run_macro(mname):
@@ -296,7 +298,6 @@ def do( cmd_phrase):
             result = 'paudio_ctrl'
 
         case 'aux_info':
-            AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
             save_aux_info()
             result = AUXINFO
 
