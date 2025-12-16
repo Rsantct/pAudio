@@ -70,7 +70,11 @@ def print_current():
     load        = CC.status.processing_load()
 
     level       = CC.levels.capture_peak()
-    level       = [ round(x, 1) for x in level ]
+
+    if level:
+        level   = [ round(x) for x in level ]
+    else:
+        level   = ['-', '-']
 
     print(f'{str(chunksize).rjust(4)} {round(load, 1)} %', f'L{level}R   vol: {main_volume}', state)
 
