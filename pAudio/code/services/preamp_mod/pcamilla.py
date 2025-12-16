@@ -98,9 +98,7 @@ def check_cdsp_running(timeout=10):
 
     while tries:
 
-        _connect_to_camilla()
-        s = CC.general.state()
-        if str(s) == 'ProcessingState.RUNNING' or str(s) == 'ProcessingState.INACTIVE':
+        if _connect_to_camilla():
             break
         else:
             print(f'{Fmt.BLUE}{"." * int(tries * period)}{Fmt.END}')
@@ -109,10 +107,14 @@ def check_cdsp_running(timeout=10):
         tries -= 1
 
     if tries:
+
         return True
+
     else:
+
         for x in grep_log_errors():
             print(f'{Fmt.RED}{x}{Fmt.END}')
+
         return False
 
 

@@ -6,58 +6,110 @@
 import  os
 import  sys
 from    time import sleep
+import  platform
+from    camilladsp import CamillaClient
 
-UHOME = os.path.expanduser('~')
 
-sys.path.append(f'{UHOME}/pAudio/code/services/preamp_mod')
+def print_header():
 
-import pcamilla as cam
-import platform
+    CC.connect()
+
+    if platform.system() == 'Darwin':
+
+        cap_devs = CC.general.list_capture_devices('CoreAudio')
+        cap_devs = [x[0] for x in cap_devs]
+        pbk_devs = CC.general.list_playback_devices('CoreAudio')
+        pbk_devs = [x[0] for x in pbk_devs]
+        print('CAP_DEVICES: ', cap_devs)
+        print('PBK_DEVICES: ', pbk_devs)
+
+
+    state = CC.general.state().name
+    print('STATE:       ', state)
+
+    load = round(CC.status.processing_load(), 1)
+    print('LOAD:        ', load)
+
+    cap_dev = '--'
+    pbk_dev = '--'
+    chunksize = 0
+
+    config = CC.config.active()
+
+    if config:
+
+        chunk_size = config.get('devices', {}).get('chunksize', 0)
+        print('BUFFER:      ', chunk_size)
+
+        if config.get('devices', {}).get('capture', {}):
+            cap_dev = config['devices']['capture']['device']
+        if config.get('devices', {}).get('playback', {}):
+            pbk_dev = config['devices']['playback']['device']
+
+    print('CAPTURE:     ', cap_dev)
+    print('PLAYBACK:    ', pbk_dev)
+
+    CC.disconnect()
+
+
+def print_current():
+
+    CC.connect()
+
+    main_volume = CC.volume.main_volume()
+
+    state       = CC.general.state().name
+
+    config      = CC.config.active()
+
+    chunksize   = 0
+
+    if config:
+        chunksize = config.get('devices', {}).get('chunksize', 0)
+
+    load        = CC.status.processing_load()
+
+    level       = CC.levels.capture_peak()
+    level       = [ round(x, 1) for x in level ]
+
+    print(f'{str(chunksize).rjust(4)} {round(load, 1)} %', f'L{level}R   vol: {main_volume}', state)
+
+    CC.disconnect()
+
+
+def camillacdsp_connect():
+
+    try:
+        CC.connect()
+        CC.disconnect()
+        return True
+
+    except Exception as e:
+        #print(str(e))
+        return False
+
 
 if __name__ == "__main__":
 
+    camilladsp_port = 1234
 
-    if cam._connect_to_camilla():
+    CC = CamillaClient('127.0.0.1', camilladsp_port)
 
-        if platform.system() == 'Darwin':
+    if camillacdsp_connect():
 
-            cap_devs = cam.CC.general.list_capture_devices('CoreAudio')
-            cap_devs = [x[0] for x in cap_devs]
-            pbk_devs = cam.CC.general.list_playback_devices('CoreAudio')
-            pbk_devs = [x[0] for x in pbk_devs]
-            print('CAP_DEVICES: ', cap_devs)
-            print('PBK_DEVICES: ', pbk_devs)
+        print_header()
 
-        state = cam.CC.general.state()
-        print('STATE:       ', state)
-
-        load = cam.CC.status.processing_load()
-        print('LOAD:        ', load)
-
-        config = cam.CC.config.active()
-        cap_dev = '--'
-        pbk_dev = '--'
-
-        if config:
-            if config.get('devices', {}).get('capture', {}):
-                cap_dev = config['devices']['capture']['device']
-            if config.get('devices', {}).get('playback', {}):
-                pbk_dev = config['devices']['playback']['device']
-
-        print('CAPTURE:     ', cap_dev)
-        print('PLAYBACK:    ', pbk_dev)
+    else:
+        print('NOT_AVAILABLE')
 
 
     while True:
 
-        if cam._connect_to_camilla():
-            level = cam.CC.levels.capture_peak()
-            main_volume = cam.CC.volume.main_volume()
-            state = cam.CC.general.state()
-            print('level:       ', level, f'main_volume: {main_volume}', f'state: {state}')
+        try:
+            print_current()
 
-        else:
-            print('NO CONNECTION')
+        except:
+            print('NOT_AVAILABLE')
 
-        sleep(1)
+        sleep(1.5)
 
