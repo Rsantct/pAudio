@@ -292,17 +292,14 @@ function manage_main_cside( msg = '' ){
 
         const c = aux_info.CamillaDSP_state;
 
-        console.log(1111, c);
-
-        if ( !c ) {
+        if ( ! c ) {
             return false
         }
 
         if ( c.includes('NOT') || c.includes('INACTIVE') ) {
-            console.log('false');
             return false
+
         }else{
-            console.log('true');
             return true
         }
     }
