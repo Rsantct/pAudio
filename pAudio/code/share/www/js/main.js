@@ -288,29 +288,52 @@ function fill_in_page_statics(){
 
 function manage_main_cside( msg = '' ){
 
+    function CamillaDSP_is_ready() {
+
+        const c = aux_info.CamillaDSP_state;
+
+        console.log(1111, c);
+
+        if ( !c ) {
+            return false
+        }
+
+        if ( c.includes('NOT') || c.includes('INACTIVE') ) {
+            console.log('false');
+            return false
+        }else{
+            console.log('true');
+            return true
+        }
+    }
+
+
     if ( ! msg ){
         msg = main_cside_msg;
     }
 
     // Server warnings overrides any message
-    if ( aux_info.warning !== ''){
+    if ( aux_info.warning !== '') {
         msg = aux_info.warning;
 
-    }else if (state.convolver_runs==false){
+    } else if (state.convolver_runs==false) {
         msg = '( sleeping )';
 
-    }else{
+    } else if( ! CamillaDSP_is_ready() ) {
+        msg = 'DSP unloaded, needs restart';
+
+    } else {
 
         if (hold_cside_msg > 0){
             hold_cside_msg -= 1;
 
-        }else{
+        } else {
 
             if (state.loudspeaker){
                 if (state.drc_set == 'none'){
                     msg = state.loudspeaker;
 
-                }else{
+                } else {
                     msg = state.loudspeaker + ' (' + state.drc_set + ')';
                 }
             }
