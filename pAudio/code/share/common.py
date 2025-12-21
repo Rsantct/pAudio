@@ -17,7 +17,6 @@ import  sys
 import  ipaddress
 from    getpass     import getuser
 from    config      import *
-from    camilladsp  import  CamillaClient
 
 if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
     from    common_mod  import macos
@@ -912,25 +911,6 @@ def get_my_ip():
         return tmp.split()[0]
     except:
         return ''
-
-
-def get_camilladsp_state():
-
-    camilladsp_port = 1234
-
-    CC = CamillaClient('127.0.0.1', camilladsp_port)
-
-    try:
-        CC.connect()
-        st = CC.general.state().name
-        CC.disconnect()
-
-    except:
-        st = 'NOT_AVAILABLE'
-
-    del(CC)
-
-    return st
 
 
 def get_camilladsp_last_error():
