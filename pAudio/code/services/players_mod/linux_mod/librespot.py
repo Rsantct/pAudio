@@ -28,7 +28,7 @@ class Fmt:
     END     = '\033[0m'
 
 
-def read_events():
+def _read_events():
     """ returns a list of JSON events inside EVENTS_PATH
     """
 
@@ -66,7 +66,7 @@ def get_info():
 
     info = info_void.copy()
 
-    events = read_events()
+    events = _read_events()
 
     try:
 
