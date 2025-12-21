@@ -11,6 +11,7 @@
 from    subprocess  import Popen
 import  os
 import  sys
+from    camilladsp  import  CamillaClient
 
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
@@ -55,6 +56,25 @@ def init():
     }
 
     save_aux_info()
+
+
+def get_camilladsp_state():
+
+    camilladsp_port = 1234
+
+    CC = CamillaClient('127.0.0.1', camilladsp_port)
+
+    try:
+        CC.connect()
+        st = CC.general.state().name
+        CC.disconnect()
+
+    except:
+        st = 'NOT_AVAILABLE'
+
+    del(CC)
+
+    return st
 
 
 def save_aux_info():
