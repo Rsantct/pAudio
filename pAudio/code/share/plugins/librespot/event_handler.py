@@ -93,7 +93,7 @@ match player_event:
             d['episode_metadata_fields'] = episode_metadata_fields
 
 
-tmp = json.dumps(d, indent = 4)
+tmp = json.dumps(d) #, indent = 4)
 
 with open(EVENTS_PATH, 'a') as f:
     f.write(tmp + '\n')
