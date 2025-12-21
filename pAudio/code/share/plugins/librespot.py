@@ -29,7 +29,6 @@ from    time import sleep
 
 
 UHOME       = os.path.expanduser("~")
-EVENTSPATH  = f'{UHOME}/pAudio/log/librespot_events'
 USER        = getuser()
 
 try:
@@ -48,16 +47,17 @@ OTHER_OPTS = [
 ]
 
 # Librespot --onevent program
-EVENT_PROGRAM = os.path.dirname(__file__) + '/librespot/log_and_bind_ports.sh'
+ONEVENT_PROGRAM = os.path.dirname(__file__) + '/librespot/event_handler.py'
+EVENTS_PATH     = f'{UHOME}/pAudio/log/librespot_events'
 
 class Fmt:
-    RED             = '\033[31m'
-    BLUE            = '\033[34m'
-    MAGENTA         = '\033[35m'
-    CYAN            = '\033[36m'
-    GRAY            = '\033[90m'
-    BOLD            = '\033[1m'
-    END             = '\033[0m'
+    RED     = '\033[31m'
+    BLUE    = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN    = '\033[36m'
+    GRAY    = '\033[90m'
+    BOLD    = '\033[1m'
+    END     = '\033[0m'
 
 
 def kill_previous(pattern):
@@ -83,7 +83,7 @@ def kill_previous(pattern):
             sp.call( f'kill -KILL {p}'.split() )
 
 
-def run_watchdog():
+def run_watchdog(period=10):
 
     def check_librespot_is_running():
 
@@ -100,30 +100,25 @@ def run_watchdog():
         if not check_librespot_is_running():
             start()
 
-        sleep(10)
+        sleep(period)
 
 
 def start():
 
-    # 'librespot' binary prints out the playing track and some info.
-    # We redirect them to a temporary file that will be periodically
-    # read from a player control daemon.
-
-    BACKEND_OPTS = f'--backend {backend}'
+    backend_opts = f'--backend {backend}'
     if backend == 'jackaudio':
-        BACKEND_OPTS += f' --device librespot'
+        backend_opts += f' --device librespot'
 
     moreopt_str = ' '.join(OTHER_OPTS)
 
     cmd = f'{BINARY} --name {gethostname()} ' + \
-          f'--onevent {EVENT_PROGRAM} ' + \
-          f'--bitrate 320 {BACKEND_OPTS} {moreopt_str}'
+          f'--onevent {ONEVENT_PROGRAM} ' + \
+          f'--bitrate 320 {backend_opts} {moreopt_str}'
 
-    with open(EVENTSPATH, 'w') as f:
+    with open('/dev/null', 'w') as f:
         sp.Popen( cmd.split(), stdout=f, stderr=f )
 
     print(f'{Fmt.GRAY}(librespot) running librespot ...{Fmt.END}')
-
 
     job = threading.Thread(target=run_watchdog)
     job.start()
