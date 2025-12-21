@@ -133,6 +133,8 @@ def stop():
 
 if __name__ == "__main__":
 
+    with open(EVENTS_PATH, 'w') as dummy:
+        pass
 
     backend = 'jackaudio'
     mode = ''
