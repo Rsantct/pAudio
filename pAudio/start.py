@@ -83,7 +83,6 @@ def prepare_jack_stuff():
     if any('mpd' in p for p in CONFIG["plugins"]):
         jloops_list.append('mpd_loop')
 
-
     fs       = CONFIG["samplerate"]
     alsa_dev = CONFIG["jack"]["device"]
     period   = CONFIG["jack"]["period"]
