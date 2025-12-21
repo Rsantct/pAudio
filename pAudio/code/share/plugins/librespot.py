@@ -21,23 +21,19 @@
 """
 import  sys
 import  os
-from    subprocess import Popen, call, check_output
+import  subprocess as sp
 from    socket import gethostname
 from    getpass import getuser
 import  threading
 from    time import sleep
 
-UHOME = os.path.expanduser("~")
-sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import kill_bill, Fmt
+UHOME       = os.path.expanduser("~")
+EVENTSPATH  = f'{UHOME}/pAudio/log/librespot_events'
+USER        = getuser()
 
-# Current user
-USER = getuser()
-
-# librespot binary
 try:
-    BINARY = check_output('which librespot'.split()).decode().strip()
+    BINARY = sp.check_output('which librespot'.split()).decode().strip()
 except Exception as e:
     print(f'{Fmt.RED}(librespot) error getting librespot binary: {str(e)}{Fmt.END}')
     sys.exit()
@@ -54,6 +50,38 @@ OTHER_OPTS = [
 # Librespot --onevent program
 EVENT_PROGRAM = os.path.dirname(__file__) + '/librespot/log_and_bind_ports.sh'
 
+class Fmt:
+    RED             = '\033[31m'
+    BLUE            = '\033[34m'
+    MAGENTA         = '\033[35m'
+    CYAN            = '\033[36m'
+    GRAY            = '\033[90m'
+    BOLD            = '\033[1m'
+    END             = '\033[0m'
+
+
+def kill_previous(pattern):
+    """ Kill previous instances as per the given process pattern
+    """
+
+    if not pattern:
+        return
+
+    current_ps = []
+
+    try:
+        current_ps = sp.check_output(['pgrep', '-f', pattern]).decode()
+        current_ps = [x for x in current_ps.split('\n') if x]
+    except:
+        pass
+
+    if len(current_ps) > 1:
+
+        print(f'{Fmt.GRAY}(librespot) Killing previous `{pattern}` ...{Fmt.END}')
+
+        for p in current_ps[:-1]:
+            sp.call( f'kill -KILL {p}'.split() )
+
 
 def run_watchdog():
 
@@ -62,7 +90,7 @@ def run_watchdog():
         with open('/dev/null', 'w') as fnull:
 
             # This has a reverse logic :-|
-            if call( ['pgrep', '-u', USER, 'librespot'], stdout=fnull, stderr=fnull ):
+            if sp.call( ['pgrep', '-u', USER, 'librespot'], stdout=fnull, stderr=fnull ):
                 return False
             else:
                 return True
@@ -81,8 +109,8 @@ def start():
     # We redirect them to a temporary file that will be periodically
     # read from a player control daemon.
 
-    BACKEND_OPTS = f'--backend {BACKEND}'
-    if BACKEND == 'jackaudio':
+    BACKEND_OPTS = f'--backend {backend}'
+    if backend == 'jackaudio':
         BACKEND_OPTS += f' --device librespot'
 
     moreopt_str = ' '.join(OTHER_OPTS)
@@ -91,11 +119,8 @@ def start():
           f'--onevent {EVENT_PROGRAM} ' + \
           f'--bitrate 320 {BACKEND_OPTS} {moreopt_str}'
 
-    eventsPath = f'{UHOME}/pAudio/log/.librespot_events'
-
-
-    with open(eventsPath, 'a') as f:
-        Popen( cmd.split(), stdout=f, stderr=f )
+    with open(EVENTSPATH, 'w') as f:
+        sp.Popen( cmd.split(), stdout=f, stderr=f )
 
     print(f'{Fmt.GRAY}(librespot) running librespot ...{Fmt.END}')
 
@@ -106,38 +131,36 @@ def start():
 
 def stop():
 
-    print(f'{Fmt.GRAY}(librespot) stopping ...{Fmt.END}')
-
-    # kill previous scripts like this in background
-    kill_bill( os.getpid() )
-
-    call( ['pkill', '-u', USER, '-KILL', '-f',  'bin/librespot']  )
+    print(f'{Fmt.GRAY}(librespot) stopping all stuff ...{Fmt.END}')
+    kill_previous( os.path.basename(__file__) )
+    sp.call( ['pkill', '-u', USER, '-KILL', '-f',  'bin/librespot']  )
 
 
 if __name__ == "__main__":
 
-    BACKEND = 'jackaudio'
-    MODE = ''
+
+    backend = 'jackaudio'
+    mode = ''
 
     for opc in sys.argv[1:]:
 
         if opc == 'start':
-            MODE = 'start'
+            mode = 'start'
 
         elif opc == 'stop':
-            MODE = 'stop'
+            mode = 'stop'
 
         elif 'pulse' in opc:
-            BACKEND = 'pulseaudio'
+            backend = 'pulseaudio'
 
         elif 'jack' in opc:
-            BACKEND = 'jackaudio'
+            backend = 'jackaudio'
 
-    if MODE == 'start':
+    if mode == 'start':
             stop()
             start()
 
-    elif MODE == 'stop':
+    elif mode == 'stop':
             stop()
 
     else:
