@@ -208,8 +208,15 @@ def get_player_from_source():
     source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
     lowsource = source.lower()
 
-    if lowsource == 'spotify':
-        player = 'spotify'
+    if 'spotify' in lowsource:
+
+        if any('librespot' in p for p in CONFIG['plugins']):
+            player = 'librespot'
+        else:
+            player = 'spotify'
+
+    elif 'librespot' in lowsource:
+        player = 'librespot'
 
     elif 'mpd' in lowsource or lowsource == 'cd':
         player = 'mpd'
