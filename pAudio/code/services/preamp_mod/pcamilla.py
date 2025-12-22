@@ -279,9 +279,6 @@ def init_camilladsp(pAudio_config):
 
     global CC
 
-    # restore Sound Card settings
-    restore_sound_card()
-
     # Early return if connection to CamillaDSP fails
     if _connect_to_camilla():
         print(f'{Fmt.BLUE}(pcamilla) Connected to CamillaDSP websocket.{Fmt.END}')
