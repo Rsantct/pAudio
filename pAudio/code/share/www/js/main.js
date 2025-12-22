@@ -574,6 +574,11 @@ function page_update() {
             } else {
                 document.getElementById("file").innerText = "-"
             }
+            if (d['track_uri']) {
+                document.getElementById("file").innerText = d['track_uri'];
+            } else {
+                document.getElementById("file").innerText = "-"
+            }
             if (d['bitrate']) {
                 document.getElementById("bitrate").innerText = d['bitrate'] + "\nkbps";
             } else {
