@@ -92,13 +92,14 @@ def get_info():
             if e["event"] == 'track_changed':
 
                 info['title']      = e.get('common_metadata_fields', {}).get('name', '')
-                ms                 = e.get('common_metadata_fields', {}).get('duration_ms', '')
+                info['track_num']  = e.get('track_metadata_fields',  {}).get('number', '')
                 info['track_uri']  = e.get('common_metadata_fields', {}).get('uri', '')
                 info['art_url']    = e.get('common_metadata_fields', {}).get('covers', [])[0]
-                info['track_num']  = e.get('track_metadata_fields',  {}).get('number', '')
                 info['album']      = e.get('track_metadata_fields',  {}).get('album', '')
                 info['artist']     = e.get('track_metadata_fields',  {}).get('artists', [])[0]
-                info['time_tot']   = time_sec2hhmmss(int(ms) / 1000)
+                ms                 = e.get('common_metadata_fields', {}).get('duration_ms', '')
+                ms = time_sec2hhmmss(int(ms) / 1000)
+                info['time_tot']   = ms
 
                 break
 
