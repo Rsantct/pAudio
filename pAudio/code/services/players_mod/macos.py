@@ -26,9 +26,11 @@ _PLAYERS = {
         if application "Spotify" is running then
             tell application "Spotify"
                 if player state is playing or player state is paused then
-                    set tName to ""
-                    set aName to ""
-                    set alName to ""
+                    set tName   to ""
+                    set aName   to ""
+                    set alName  to ""
+                    set tURI    to ""
+                    set tNum    to ""
                     try
                         if name of current track is not missing value then set tName to name of current track
                     end try
@@ -37,6 +39,12 @@ _PLAYERS = {
                     end try
                     try
                         if album of current track is not missing value then set alName to album of current track
+                    end try
+                    try
+                        if id of current track is not missing value then set tURI to id of current track
+                    end try
+                    try
+                        if track number of current track is not missing value then set tNum to track number of current track
                     end try
                     set pState to player state
                     try
@@ -54,10 +62,10 @@ _PLAYERS = {
                         else
                             set dur to 0
                         end if
-                    on error
-                        set dur to 0
+                        on error
+                            set dur to 0
                     end try
-                    return "{\\"app\\":\\"Spotify\\",\\"state\\":\\"" & pState & "\\",\\"track\\":\\"" & tName & "\\",\\"artist\\":\\"" & aName & "\\",\\"album\\":\\"" & alName & "\\",\\"elapsed\\":" & (round elapsed) & ",\\"duration\\":" & (round dur) & "}"
+                    return "{\\"app\\":\\"Spotify\\",\\"state\\":\\"" & pState & "\\",\\"track_num\\":\\"" & tNum & "\\",\\"track\\":\\"" & tName & "\\",\\"track_uri\\":\\"" & tURI & "\\",\\"artist\\":\\"" & aName & "\\",\\"album\\":\\"" & alName & "\\",\\"elapsed\\":" & (round elapsed) & ",\\"duration\\":" & (round dur) & "}"
                 end if
             end tell
         end if
@@ -275,31 +283,36 @@ def _info2paudio_metadata(info):
     """ simply maps the applescript info dict to pAudio metatdata dict format
     """
 
+    fs           = ''
+    bitrate      = '-'
+    track_format = '-:-:2'
+
     match info.get('app'):
+
 
         case 'Spotify':
             fs = '44100'
+            track_format = f'{fs}:16:2'
             # 2025-11 spotify premium lossless
             bitrate = '1411'
             time_tot = time_sec2hhmmss( info.get('duration') / 1000 )
 
         case _:
-            fs = ''
-            bitrate = '-'
             time_tot = time_sec2hhmmss( info.get('duration') )
 
 
-    res = { "player":       info.get('app', ''),
-            "state":        info.get('state', 'stop'),
-            "time_pos":     time_sec2hhmmss( info.get('elapsed') ),
-            "time_tot":     time_tot,
-            "bitrate":      bitrate,
-            "artist":       info.get('artist'),
-            "album":        info.get('album'),
-            "title":        info.get('track'),
-            "track_num":    '',
-            "track_uri":    '',
-            "tracks_tot":   ''
+    res = { 'player':       info.get('app', ''),
+            'state':        info.get('state', 'stop'),
+            'time_pos':     time_sec2hhmmss( info.get('elapsed') ),
+            'time_tot':     time_tot,
+            'bitrate':      bitrate,
+            'artist':       info.get('artist'),
+            'album':        info.get('album'),
+            'title':        info.get('track'),
+            'track_num':    info.get('track_num'),
+            'track_uri':    info.get('track_uri'),
+            'tracks_tot':   '',
+            'format':       track_format
             }
 
     return res
