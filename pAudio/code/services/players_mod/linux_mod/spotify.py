@@ -88,7 +88,8 @@ def get_info():
         "shuffle":      spotibus.Shuffle,
         "time_pos":     time_sec2hhmmss( spotibus.Position / 1e6 ),
         "time_tot":     time_sec2hhmmss( metadata.get("mpris:length") / 1e6 ),
-        "bitrate":      '320',
+        # 2025-11 spotify premium lossless 1411 kbps
+        "bitrate":      '1411',
         "artist":       '',
         "album":        metadata.get("xesam:album"),
         "title":        metadata.get("xesam:title"),
