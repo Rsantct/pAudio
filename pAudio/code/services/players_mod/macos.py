@@ -279,10 +279,13 @@ def _info2paudio_metadata(info):
 
         case 'Spotify':
             fs = '44100'
+            # 2025-11 spotify premium lossless
+            bitrate = '1411'
             time_tot = time_sec2hhmmss( info.get('duration') / 1000 )
 
         case _:
             fs = ''
+            bitrate = '-'
             time_tot = time_sec2hhmmss( info.get('duration') )
 
 
@@ -290,7 +293,7 @@ def _info2paudio_metadata(info):
             "state":        info.get('state', 'stop'),
             "time_pos":     time_sec2hhmmss( info.get('elapsed') ),
             "time_tot":     time_tot,
-            "bitrate":      fs,
+            "bitrate":      bitrate,
             "artist":       info.get('artist'),
             "album":        info.get('album'),
             "title":        info.get('track'),
