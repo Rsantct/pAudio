@@ -53,7 +53,8 @@ def get_info():
         "shuffle":      None,
         "time_pos":     '',
         "time_tot":     '',
-        "bitrate":      '320 Kbps',
+        # 2025-11 Spotify lossless 1411 kbps is pending in librespot
+        "bitrate":      '320',
         "artist":       '',
         "album":        '',
         "title":        '',
