@@ -569,46 +569,59 @@ function page_update() {
             } else {
                 document.getElementById("format").innerText = "-:-:2"
             }
+
             if (d['file']) {
                 document.getElementById("file").innerText = d['file'];
             } else {
                 document.getElementById("file").innerText = "-"
             }
+
             if (d['track_uri']) {
                 document.getElementById("file").innerText = d['track_uri'];
             } else {
                 document.getElementById("file").innerText = "-"
             }
+
             if (d['bitrate']) {
                 document.getElementById("bitrate").innerText = d['bitrate'] + "\nkbps";
             } else {
                 document.getElementById("bitrate").innerText = "-\nkbps"
             }
+
             if (d['artist']) {
                 document.getElementById("artist").innerText  = d['artist'];
             } else {
                 document.getElementById("artist").innerText = "-"
             }
+
             if (d['track_num']) {
                 document.getElementById("track_info").innerText   = d['track_num'];
             } else {
                 document.getElementById("track_info").innerText = "-"
             }
+
             if (d['tracks_tot']) {
                 document.getElementById("track_info").innerText += ('\n' + d['tracks_tot']);
             } else {
                 document.getElementById("track_info").innerText += "\n-"
             }
-            if (d['time_pos']) {
-                document.getElementById("time").innerText    = d['time_pos'] + "\n" + d['time_tot'];
-            } else {
-                document.getElementById("time").innerText = "-"
+
+            let tpos = d['time_pos'];
+            let ttot = d['time_tot'];
+            if ( ! tpos ){
+                tpos = '-'
             }
+            if ( ! ttot ){
+                ttot = '-'
+            }
+            document.getElementById("time").innerText    = tpos + "\n" + ttot;
+
             if (d['album']) {
                 document.getElementById("album").innerText   = d['album'];
             } else {
                 document.getElementById("album").innerText = "-"
             }
+
             if (d['title']) {
                 document.getElementById("title").innerText   = d['title'];
             } else {
