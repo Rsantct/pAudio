@@ -5,16 +5,17 @@ This is for a black box Linux machine (say a little Raspberry Pi 3B+ and up), or
 
 ## Install Linux Packages
 
-The control web page needs:
 
-    sudo apt install git nodejs node-js-yaml
+### Generic tools and control web page software:
+
+    sudo apt install alsa-utils alsa-ucm-conf xdotool cdtool libportaudio2 libffi-dev git nodejs node-js-yaml
 
 ### Python packages from Debian:
 
     sudo apt install python3-venv python3-pip python3-dev python3-yaml python3-jack-client \
-         python3-mpd python3-pydbus python3-numpy python3-scipy python3-matplotlib libffi-dev \
-         python3-pyudev python3-libdiscid python3-musicbrainzngs libportaudio2 python3-watchdog \
-         python3-serial python3-m3u8 python3-psutil python3-websocket pydbus xdotool cdtool
+         python3-mpd python3-pydbus python3-numpy python3-scipy python3-matplotlib \
+         python3-pyudev python3-libdiscid python3-musicbrainzngs python3-watchdog \
+         python3-serial python3-m3u8 python3-psutil python3-websocket python3-pydbus 
 
 
 ### Python packages not provided by Debian:
