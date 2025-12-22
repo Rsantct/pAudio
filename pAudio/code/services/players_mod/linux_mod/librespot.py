@@ -47,22 +47,23 @@ def _read_events():
 def get_info():
 
     info_void = {
-        "player":       "Spotify",
-        "state":        '',
-        "loop_mode":    None,
-        "shuffle":      None,
-        "time_pos":     '',
-        "time_tot":     '',
+        'player':       'Spotify',
+        'state':        '',
+        'loop_mode':    None,
+        'shuffle':      None,
+        'time_pos':     '',
+        'time_tot':     '',
         # 2025-11 Spotify lossless 1411 kbps is pending in librespot
-        "bitrate":      '320',
-        "artist":       '',
-        "album":        '',
-        "title":        '',
-        "track_num":    '',
-        "track_uri":    '',
-        "tracks_tot":   '',
-        "art_url":      '',
-        "samplerate":   '44100'
+        'bitrate':      '320',
+        'format':       '44100:16:2',
+        'samplerate':   '44100',
+        'artist':       '',
+        'album':        '',
+        'title':        '',
+        'track_num':    '',
+        'track_uri':    '',
+        'tracks_tot':   '',
+        'art_url':      ''
     }
 
     info = info_void.copy()
@@ -70,8 +71,8 @@ def get_info():
     events = _read_events()
 
     try:
-
-        for e in events[::-1]:
+        # about 100 events old must be enough
+        for e in events[:100][::-1]:
 
             if e["event"] in ('playing', 'paused'):
 
