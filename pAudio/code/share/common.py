@@ -791,50 +791,6 @@ def process_is_running(pattern):
     return False
 
 
-def kill_bill(pid=0):
-    """ Kill any previous instance of the given PID
-
-        returns: '' or a 'string with any error'
-    """
-
-    if not pid:
-        return 'a pid is needed'
-
-    try:
-        process = psutil.Process(pid)
-        pid_cmdline = os.path.basename( process.cmdline()[1] )
-
-    except psutil.NoSuchProcess:
-        return 'no such process'
-
-    except psutil.AccessDenied:
-        return 'access denied'
-
-    except Exception as e:
-        return f'error: {str(e)}'
-
-    errors = ''
-
-    for proc in psutil.process_iter():
-
-        try:
-            if proc.name() == "python.exe" or proc.name() == "python3":
-
-                for cmdline in proc.cmdline():
-
-                    if pid_cmdline in cmdline:
-
-                        # Avoids harakiri
-                        if proc.pid != pid:
-                            print(f"Killing {cmdline} PID: {proc.pid}")
-                            proc.kill()
-
-        except Exception as e:
-            errors += f'{str(e)}\n'
-
-    return errors
-
-
 def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
 
     period = .5
