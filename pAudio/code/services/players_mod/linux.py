@@ -12,6 +12,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "linux_mod"))
 
 import spotify
+import librespot
 import mpd_mod
 import mplayer
 import remotes
@@ -58,6 +59,9 @@ def get_player_info():
 
         elif 'spotify' in lowplayer:
             res = spotify.get_info()
+
+        elif 'librespot' in lowplayer:
+            res = librespot.get_info()
 
         elif 'mpd' in lowplayer or lowplayer == 'cd':
             res = mpd_mod.get_info()
