@@ -90,6 +90,7 @@ def get_info():
         "time_tot":     time_sec2hhmmss( metadata.get("mpris:length") / 1e6 ),
         # 2025-11 spotify premium lossless 1411 kbps
         "bitrate":      '1411',
+        "format":       '44100:16:2',
         "artist":       '',
         "album":        metadata.get("xesam:album"),
         "title":        metadata.get("xesam:title"),
