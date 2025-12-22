@@ -16,7 +16,8 @@
     pe.audio.sys, as mine does (ESI UDJ6 only works at 48 KHz)
 
     2025-01: librespot 0.4.0 suddently crashes, so will use a watchdog here
-    2025-11: crashes stopped with libresport 0.8.0
+    2025-11: Crashes stopped with libresport 0.8.0,
+             also jack ports remains stable when track changes
 
 """
 import  sys
@@ -105,6 +106,9 @@ def run_watchdog(period=10):
 
 def start():
 
+    # 2025-11 spotify premium lossless 1411 kbps, but pending in librespot
+    bitrate = 320
+
     backend_opts = f'--backend {backend}'
     if backend == 'jackaudio':
         backend_opts += f' --device librespot'
@@ -113,7 +117,7 @@ def start():
 
     cmd = f'{BINARY} --name {gethostname()} ' + \
           f'--onevent {ONEVENT_PROGRAM} ' + \
-          f'--bitrate 320 {backend_opts} {moreopt_str}'
+          f'--bitrate {bitrate} {backend_opts} {moreopt_str}'
 
     with open('/dev/null', 'w') as f:
         sp.Popen( cmd.split(), stdout=f, stderr=f )
