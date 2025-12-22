@@ -330,6 +330,9 @@ def stop():
 
 def start():
 
+    # restore Sound Card settings (currently only for Linux-ALSA)
+    restore_sound_card()
+
     # Check if CamillaDPS is available
     if not check_cdsp_running():
         return
@@ -394,7 +397,6 @@ if __name__ == "__main__":
 
         case 'stop':
             stop()
-
 
         case 'prepare_jack_stuff':
             prepare_jack_stuff()
