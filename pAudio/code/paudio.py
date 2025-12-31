@@ -28,7 +28,7 @@ from services import players
 LOGFNAME = f'{LOGFOLDER}/paudio_cmd.log'
 
 if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 20e6:
-    print ( f"{Fmt.RED}(paudio_) log file exceeds ~ 20 MB '{LOGFNAME}'{Fmt.END}" )
+    print ( f"{Fmt.RED}(paudio) log file exceeds ~ 20 MB '{LOGFNAME}'{Fmt.END}" )
 
 print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
@@ -40,6 +40,11 @@ def _init():
 
     # Prepare DRC IIR graphs
     sp.Popen(['python3', f'{CODEFOLDER}/share/drc_iir2png.py'])
+
+    # Reset pAudio log
+    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio'
+    with open(LOGFNAME, 'w') as FLOG:
+            FLOG.write(f'{logline}\n')
 
 
 def do(cmd_phrase):
