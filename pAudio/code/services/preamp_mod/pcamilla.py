@@ -620,7 +620,7 @@ def set_drc(drc_id, flat_gain=0.0):
     for i, step in enumerate( cfg["pipeline"] ):
 
         # filter DRC steps
-        if step.get('description') and  '(DRC ' in step.get('description', ''):
+        if step.get('description') and  step.get('description', '').startswith('DRC '):
 
             step_ch = step["channels"][0]
 
