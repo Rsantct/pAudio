@@ -36,14 +36,14 @@ def update_lspk(pAudio_config, cam_config):
     # 2.b. Prepare pipeline steps for DRC
     pipeline_drc_L_step = {
         'type':         'Filter',
-        'description':  f'{ pAudio_config["loudspeaker"] } (DRC left)',
+        'description':  f'DRC left ({pAudio_config["loudspeaker"]})',
         'channels':     [0],
         'bypassed':     False,
         'names':        []
     }
     pipeline_drc_R_step = {
         'type':         'Filter',
-        'description':  f'{ pAudio_config["loudspeaker"]} (DRC right)',
+        'description':  f'DRC right ({pAudio_config["loudspeaker"]})',
         'channels':     [1],
         'bypassed':     False,
         'names':        []
