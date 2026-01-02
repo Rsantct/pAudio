@@ -387,6 +387,9 @@ def _init():
     if not 'ref_level_gain_offset' in CONFIG:
         CONFIG["ref_level_gain_offset"] = 0.0
 
+    if not 'loudness_compensation_clamped_above_zero' in CONFIG:
+        CONFIG["loudness_compensation_above_zero"] = False
+
     if not "tones_span_dB" in CONFIG:
         CONFIG["tones_span_dB"] = 6.0
 
