@@ -3,7 +3,15 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+# 2025/12       ** OBSOLETE **
+#
+#       This is obsolete because in recent builds of the librespot binary,
+#       the librespot:out_x jack ports remain stable.
+#
+
 # This program is called from the libresport --onevent option
+#
+#   https://github.com/librespot-org/librespot/wiki/Events
 #
 # --onevent runs a program by providing some useful environmet variables:
 #
@@ -23,9 +31,12 @@
 
 # Logging
 LOG_PATH="$HOME/pAudio/log/librespot.log"
-NOW_ZULU=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
 # Event right padded
 EVENT_RPAD=$(printf "%-12s" $PLAYER_EVENT)
+
+
+NOW_ZULU=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # volume event
 if [[ $PLAYER_EVENT == "volume_set" ]]; then

@@ -16,28 +16,24 @@
     pe.audio.sys, as mine does (ESI UDJ6 only works at 48 KHz)
 
     2025-01: librespot 0.4.0 suddently crashes, so will use a watchdog here
-    2025-11: crashes stopped with libresport 0.8.0
+    2025-11: Crashes stopped with libresport 0.8.0,
+             also jack ports remains stable when track changes
 
 """
 import  sys
 import  os
-from    subprocess import Popen, call, check_output
+import  subprocess as sp
 from    socket import gethostname
 from    getpass import getuser
 import  threading
 from    time import sleep
 
-UHOME = os.path.expanduser("~")
-sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import kill_bill, Fmt
+UHOME       = os.path.expanduser("~")
+USER        = getuser()
 
-# Current user
-USER = getuser()
-
-# librespot binary
 try:
-    BINARY = check_output('which librespot'.split()).decode().strip()
+    BINARY = sp.check_output('which librespot'.split()).decode().strip()
 except Exception as e:
     print(f'{Fmt.RED}(librespot) error getting librespot binary: {str(e)}{Fmt.END}')
     sys.exit()
@@ -52,17 +48,50 @@ OTHER_OPTS = [
 ]
 
 # Librespot --onevent program
-EVENT_PROGRAM = os.path.dirname(__file__) + '/librespot/log_and_bind_ports.sh'
+ONEVENT_PROGRAM = os.path.dirname(__file__) + '/librespot/event_handler.py'
+EVENTS_PATH     = f'{UHOME}/pAudio/log/librespot_events'
+
+class Fmt:
+    RED     = '\033[31m'
+    BLUE    = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN    = '\033[36m'
+    GRAY    = '\033[90m'
+    BOLD    = '\033[1m'
+    END     = '\033[0m'
 
 
-def run_watchdog():
+def kill_previous(pattern):
+    """ Kill previous instances as per the given process pattern
+    """
+
+    if not pattern:
+        return
+
+    current_ps = []
+
+    try:
+        current_ps = sp.check_output(['pgrep', '-f', pattern]).decode()
+        current_ps = [x for x in current_ps.split('\n') if x]
+    except:
+        pass
+
+    if len(current_ps) > 1:
+
+        print(f'{Fmt.GRAY}(librespot) Killing previous `{pattern}` ...{Fmt.END}')
+
+        for p in current_ps[:-1]:
+            sp.call( f'kill -KILL {p}'.split() )
+
+
+def run_watchdog(period=10):
 
     def check_librespot_is_running():
 
         with open('/dev/null', 'w') as fnull:
 
             # This has a reverse logic :-|
-            if call( ['pgrep', '-u', USER, 'librespot'], stdout=fnull, stderr=fnull ):
+            if sp.call( ['pgrep', '-u', USER, 'librespot'], stdout=fnull, stderr=fnull ):
                 return False
             else:
                 return True
@@ -72,33 +101,28 @@ def run_watchdog():
         if not check_librespot_is_running():
             start()
 
-        sleep(10)
+        sleep(period)
 
 
 def start():
 
-    # 'librespot' binary prints out the playing track and some info.
-    # We redirect them to a temporary file that will be periodically
-    # read from a player control daemon.
+    # 2025-11 spotify premium lossless 1411 kbps, but pending in librespot
+    bitrate = 320
 
-    BACKEND_OPTS = f'--backend {BACKEND}'
-    if BACKEND == 'jackaudio':
-        BACKEND_OPTS += f' --device librespot'
+    backend_opts = f'--backend {backend}'
+    if backend == 'jackaudio':
+        backend_opts += f' --device librespot'
 
     moreopt_str = ' '.join(OTHER_OPTS)
 
     cmd = f'{BINARY} --name {gethostname()} ' + \
-          f'--onevent {EVENT_PROGRAM} ' + \
-          f'--bitrate 320 {BACKEND_OPTS} {moreopt_str}'
+          f'--onevent {ONEVENT_PROGRAM} ' + \
+          f'--bitrate {bitrate} {backend_opts} {moreopt_str}'
 
-    eventsPath = f'{UHOME}/pAudio/log/.librespot_events'
-
-
-    with open(eventsPath, 'a') as f:
-        Popen( cmd.split(), stdout=f, stderr=f )
+    with open('/dev/null', 'w') as f:
+        sp.Popen( cmd.split(), stdout=f, stderr=f )
 
     print(f'{Fmt.GRAY}(librespot) running librespot ...{Fmt.END}')
-
 
     job = threading.Thread(target=run_watchdog)
     job.start()
@@ -106,38 +130,38 @@ def start():
 
 def stop():
 
-    print(f'{Fmt.GRAY}(librespot) stopping ...{Fmt.END}')
-
-    # kill previous scripts like this in background
-    kill_bill( os.getpid() )
-
-    call( ['pkill', '-u', USER, '-KILL', '-f',  'bin/librespot']  )
+    print(f'{Fmt.GRAY}(librespot) stopping all stuff ...{Fmt.END}')
+    kill_previous( os.path.basename(__file__) )
+    sp.call( ['pkill', '-u', USER, '-KILL', '-f',  'bin/librespot']  )
 
 
 if __name__ == "__main__":
 
-    BACKEND = 'jackaudio'
-    MODE = ''
+    with open(EVENTS_PATH, 'w') as dummy:
+        pass
+
+    backend = 'jackaudio'
+    mode = ''
 
     for opc in sys.argv[1:]:
 
         if opc == 'start':
-            MODE = 'start'
+            mode = 'start'
 
         elif opc == 'stop':
-            MODE = 'stop'
+            mode = 'stop'
 
         elif 'pulse' in opc:
-            BACKEND = 'pulseaudio'
+            backend = 'pulseaudio'
 
         elif 'jack' in opc:
-            BACKEND = 'jackaudio'
+            backend = 'jackaudio'
 
-    if MODE == 'start':
+    if mode == 'start':
             stop()
             start()
 
-    elif MODE == 'stop':
+    elif mode == 'stop':
             stop()
 
     else:

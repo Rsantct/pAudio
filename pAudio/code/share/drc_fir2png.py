@@ -53,15 +53,19 @@ def get_drc_fir_sets():
 
     pcms_folder = f'{LSPKFOLDER}/{CONFIG["samplerate"]}'
 
+    drc_fir_extensions = ('pcm', 'bin', 'f32')
+
     try:
         files = os.listdir(pcms_folder)
         files = [x for x in files if os.path.isfile(f'{pcms_folder}/{x}') ]
-        drc_files = [x for x in files if x.startswith('drc.') ]
+        drc_files = [x for x in files if x.startswith('drc.') and x.split('.')[-1] in drc_fir_extensions ]
 
     except:
         pass
 
+
     for f in drc_files:
+
         chID  = f.split('.')[1]
         drcID = '.'.join(f.split('.')[2:]).replace('.pcm', '')
 

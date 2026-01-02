@@ -48,6 +48,7 @@ def print_header():
 
     print('CAPTURE:     ', cap_dev)
     print('PLAYBACK:    ', pbk_dev)
+    print()
 
     CC.disconnect()
 
@@ -70,9 +71,13 @@ def print_current():
     load        = CC.status.processing_load()
 
     level       = CC.levels.capture_peak()
-    level       = [ round(x, 1) for x in level ]
 
-    print(f'{str(chunksize).rjust(4)} {round(load, 1)} %', f'L{level}R   vol: {main_volume}', state)
+    if level:
+        level   = [ round(x) for x in level ]
+    else:
+        level   = ['-', '-']
+
+    print(f'{str(chunksize).rjust(4)} {round(load, 1)} %', f'level: {str(level[0]).rjust(5)} {str(level[1]).rjust(5)} (vol {main_volume})', state)
 
     CC.disconnect()
 

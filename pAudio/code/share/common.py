@@ -17,7 +17,6 @@ import  sys
 import  ipaddress
 from    getpass     import getuser
 from    config      import *
-from    camilladsp  import  CamillaClient
 
 if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
     from    common_mod  import macos
@@ -209,8 +208,15 @@ def get_player_from_source():
     source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
     lowsource = source.lower()
 
-    if lowsource == 'spotify':
-        player = 'spotify'
+    if 'spotify' in lowsource:
+
+        if any('librespot' in p for p in CONFIG['plugins']):
+            player = 'librespot'
+        else:
+            player = 'spotify'
+
+    elif 'librespot' in lowsource:
+        player = 'librespot'
 
     elif 'mpd' in lowsource or lowsource == 'cd':
         player = 'mpd'
@@ -346,13 +352,13 @@ def amp_switch(mode):
 
 def restore_sound_card():
     """
+        Only works for Linux-ALSA
+
         This assumes that you have set your alsamixer levels and saved them to:
             ~/pAudio/alsactl.<YOUR_ALSA_CARD_NAME>
     """
 
-    pa_config_path = f'{UHOME}/pAudio/config.yml'
-
-    with open(pa_config_path, 'r') as f:
+    with open(f'{UHOME}/pAudio/config.yml', 'r') as f:
         pa_config = yaml.safe_load( f.read() )
 
     if not pa_config.get('jack'):
@@ -368,11 +374,11 @@ def restore_sound_card():
     cmd = f'alsactl --file {alsactl_path} restore {alsa_name}'
 
     if os.path.isfile(alsactl_path):
-        print(f'{Fmt.BLUE}Restoring: {alsactl_path}{Fmt.END}')
+        print(f'{Fmt.GREEN}(common) Restoring \'{alsa_name}\' cound card settings: {alsactl_path}{Fmt.END}')
         sp.call(cmd, shell=True)
 
     else:
-        print(f'{Fmt.RED}File not found: {alsactl_path}{Fmt.END}')
+        print(f'{Fmt.RED}(common) \'{alsa_name}\' sound card settings file not found: {alsactl_path}{Fmt.END}')
 
 
 def wait4ports( pattern, timeout=10 ):
@@ -785,50 +791,6 @@ def process_is_running(pattern):
     return False
 
 
-def kill_bill(pid=0):
-    """ Kill any previous instance of the given PID
-
-        returns: '' or a 'string with any error'
-    """
-
-    if not pid:
-        return 'a pid is needed'
-
-    try:
-        process = psutil.Process(pid)
-        pid_cmdline = os.path.basename( process.cmdline()[1] )
-
-    except psutil.NoSuchProcess:
-        return 'no such process'
-
-    except psutil.AccessDenied:
-        return 'access denied'
-
-    except Exception as e:
-        return f'error: {str(e)}'
-
-    errors = ''
-
-    for proc in psutil.process_iter():
-
-        try:
-            if proc.name() == "python.exe" or proc.name() == "python3":
-
-                for cmdline in proc.cmdline():
-
-                    if pid_cmdline in cmdline:
-
-                        # Avoids harakiri
-                        if proc.pid != pid:
-                            print(f"Killing {cmdline} PID: {proc.pid}")
-                            proc.kill()
-
-        except Exception as e:
-            errors += f'{str(e)}\n'
-
-    return errors
-
-
 def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
 
     period = .5
@@ -912,25 +874,6 @@ def get_my_ip():
         return tmp.split()[0]
     except:
         return ''
-
-
-def get_camilladsp_state():
-
-    camilladsp_port = 1234
-
-    CC = CamillaClient('127.0.0.1', camilladsp_port)
-
-    try:
-        CC.connect()
-        st = CC.general.state().name
-        CC.disconnect()
-
-    except:
-        st = 'NOT_AVAILABLE'
-
-    del(CC)
-
-    return st
 
 
 def get_camilladsp_last_error():

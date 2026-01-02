@@ -173,11 +173,11 @@ def append_dither(pAudio_config, cam_config):
             # Full Range can have PREAMP, and optionally EQ and/or DRC
             else:
 
-                if   '(drc'    in step.get('description').lower():
+                if   step.get('description').lower().startswith('drc '):
                     step_type = 'drc'
-                elif '(eq'     in step.get('description').lower():
+                elif step.get('description').lower().startswith('eq '):
                     step_type = 'eq'
-                elif 'preamp.' in step.get('description').lower():
+                elif step.get('description').lower().startswith('preamp.'):
                     step_type = 'preamp'
 
             if last_step_type and step_type != last_step_type:

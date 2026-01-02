@@ -36,14 +36,14 @@ def update_lspk(pAudio_config, cam_config):
     # 2.b. Prepare pipeline steps for DRC
     pipeline_drc_L_step = {
         'type':         'Filter',
-        'description':  f'{ pAudio_config["loudspeaker"] } (DRC left)',
+        'description':  f'DRC left ({pAudio_config["loudspeaker"]})',
         'channels':     [0],
         'bypassed':     False,
         'names':        []
     }
     pipeline_drc_R_step = {
         'type':         'Filter',
-        'description':  f'{ pAudio_config["loudspeaker"]} (DRC right)',
+        'description':  f'DRC right ({pAudio_config["loudspeaker"]})',
         'channels':     [1],
         'bypassed':     False,
         'names':        []
@@ -71,9 +71,9 @@ def update_lspk(pAudio_config, cam_config):
 
             for filter_id, filter_params in filters.items():
 
-                filter_id = f'drc_{set_name}_{filter_id}_{ch}'
+                tmp = f'drc_{set_name}_{filter_id:02}_{ch}'
 
-                cam_config["filters"][filter_id] = filter_params
+                cam_config["filters"][tmp] = filter_params
 
 
     # 4. Append to pipeline
@@ -118,15 +118,15 @@ def update_lspk(pAudio_config, cam_config):
 
             for f in pAudio_config["drc"][first_drc_set][ch]:
 
-                f = f'drc_{first_drc_set}_{f}_{ch}'
+                tmp = f'drc_{first_drc_set}_{f:02}_{ch}'
 
                 if ch == 'L':
-                    pipeline_drc_L_step_names.append(f)
-                    print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_drc_L_step["description"]}`{Fmt.END}')
+                    pipeline_drc_L_step_names.append(tmp)
+                    print(f'{Fmt.BLUE}Adding filter `{tmp}` to pipeline `{pipeline_drc_L_step["description"]}`{Fmt.END}')
 
                 if ch == 'R':
-                    pipeline_drc_R_step_names.append(f)
-                    print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_drc_R_step["description"]}`{Fmt.END}')
+                    pipeline_drc_R_step_names.append(tmp)
+                    print(f'{Fmt.BLUE}Adding filter `{tmp}` to pipeline `{pipeline_drc_R_step["description"]}`{Fmt.END}')
 
 
     # 5. Populate step names

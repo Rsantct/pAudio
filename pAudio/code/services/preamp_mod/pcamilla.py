@@ -279,8 +279,6 @@ def init_camilladsp(pAudio_config):
 
     global CC
 
-    # restore Sound Card settings
-    restore_sound_card()
 
     # Early return if connection to CamillaDSP fails
     if _connect_to_camilla():
@@ -422,10 +420,19 @@ def set_target(tID):
         return f'(pcamilla.set_target) ERROR: {str(e)}'
 
 
-def set_loudness(mode, level):
+def set_loudness( mode, level, clamp_above_zero=True):
+    """ mode:   loudness compensation activation True/False
+
+        level:  target level relative to REF_LEVEL
+
+        clamp_above_zero:  do not apply curve for level > 0 dB
+    """
 
     if type(mode) != bool:
         return 'must be True/False'
+
+    if clamp_above_zero:
+        level = min(level, 0)
 
     spl                 = level + mkeq.LOUDNESS_REF_LEVEL
     mkeq.spl            = spl
@@ -607,28 +614,41 @@ def set_drc(drc_id, flat_gain=0.0):
         into the pipeline step `names` field
     """
 
-    # get all filters named drc_<drc_id>_xxx
     cfg           = get_config()
     fnames        = cfg.get('filters')
+
+    # DRC filters are named 'drc_{drc_id}_NN_C', where:
+    #   NN  number of stage (01 for FIR types, or several secuential NN for IIR types)
+    #   C   channel 'L' or 'R'
+
     drc_fnames    = [ x for x in fnames if x[:4] == 'drc_' and x[-2:] in ('_L', '_R') ]
-    drc_id_fnames = [ x for x in drc_fnames if f'_{drc_id}_' in x ]
+    drc_id_fnames = [ x for x in drc_fnames if x[3:-4] == f'_{drc_id}_' ]
     drc_id_fnames = sorted( drc_id_fnames )
 
     # Iterate over the pipeline steps
     for i, step in enumerate( cfg["pipeline"] ):
 
         # filter DRC steps
-        if step.get('description') and  '(DRC ' in step.get('description', ''):
+        if step.get('description') and  step.get('description', '').startswith('DRC '):
 
             step_ch = step["channels"][0]
 
-            # remove any 'drc_xxxx' in `names:` (will keep dither if so)
+            # remove any 'drc_xxxx' in `names:` (will keep 'dither' if so)
             new_names = [ x for x in step["names"] if x[:4] != 'drc_' ]
+
+            # 'dither' must be the LAST pipeline step
+            dither_pending = False
+            if 'dither' in new_names:
+                new_names.remove('dither')
+                dither_pending = True
 
             # add the new drc filters in `names:`
             for fname in drc_id_fnames:
                 if step_ch == 0 and fname[-2:] == '_L' or step_ch == 1 and fname[-2:] == '_R':
-                    new_names = [fname] + new_names
+                    new_names.append(fname)
+
+            if dither_pending:
+                new_names.append('dither')
 
             cfg["pipeline"][i]["names"] = new_names
 

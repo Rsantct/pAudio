@@ -405,7 +405,11 @@ def set_polarity(mode):
 
 
 def set_loudness(mode, level=STATE["level"]):
-    result = CAM.set_loudness(mode, level)
+    result = CAM.set_loudness(
+        mode,
+        level,
+        clamp_above_zero = not CONFIG["loudness_compensation_above_zero"]
+    )
     return result
 
 
