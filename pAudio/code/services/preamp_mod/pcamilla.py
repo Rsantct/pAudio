@@ -420,10 +420,19 @@ def set_target(tID):
         return f'(pcamilla.set_target) ERROR: {str(e)}'
 
 
-def set_loudness(mode, level):
+def set_loudness( mode, level, clamp_above_zero=True):
+    """ mode:   loudness compensation activation True/False
+
+        level:  target level relative to REF_LEVEL
+
+        clamp_above_zero:  do not apply curve for level > 0 dB
+    """
 
     if type(mode) != bool:
         return 'must be True/False'
+
+    if clamp_above_zero:
+        level = min(level, 0)
 
     spl                 = level + mkeq.LOUDNESS_REF_LEVEL
     mkeq.spl            = spl
