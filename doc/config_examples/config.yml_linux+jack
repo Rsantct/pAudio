@@ -10,6 +10,7 @@ jack:
     period:         1024
     nperiods:       2
     dither:         true
+    softmode:       false
     sources:
         analog:
             jport:  system
