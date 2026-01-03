@@ -40,11 +40,10 @@ except Exception as e:
 
 # libresport options list (do not configure here: bitrate, name, backend, device)
 OTHER_OPTS = [
-    #'--disable-audio-cache',
     # https://github.com/librespot-org/librespot/wiki/FAQ
     # For AUDIOPHILES
     '--mixer softvol --volume-ctrl fixed --initial-volume 100',
-    '--format F32'
+    '--format F32 --disable-audio-cache'
 ]
 
 # Librespot --onevent program
