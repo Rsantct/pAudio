@@ -26,7 +26,8 @@ def _jcli_activate(cli_name = 'jack_mod'):
         print('(jack_mod) cannot activate jack.Client `{cli_name}`')
 
 
-def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops_list=[], dither=False):
+def run_jackd(  alsa_dev='', fs=44100, period=1024, nperiods=2,
+                jloops_list=[], dither=False, softmode=False ):
     """ Run JACK in a separate process,
         including jack_loops
     """
@@ -39,8 +40,13 @@ def run_jackd(alsa_dev='', fs=44100, period=1024, nperiods=2, jloops_list=[], di
     else:
         dither = 'none'
 
+    if softmode:
+        sm = '--softmode'
+    else:
+        sm = ''
+
     jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
-               f' 1>{LOGFOLDER}/jackd.log 2>&1'
+               f' {sm} 1>{LOGFOLDER}/jackd.log 2>&1'
 
     with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
         f.write('JACKD COMMAND LINE:\n')
