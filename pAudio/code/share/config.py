@@ -102,10 +102,12 @@ def _init():
         period   = CONFIG["jack"].get('period', 1024)
         nperiods = CONFIG["jack"].get('nperiods', 2)
         dither   = CONFIG["jack"].get('dither', False)
+        softmode = CONFIG["jack"].get('softmode', False)
 
         CONFIG["jack"]["period"]    = period
         CONFIG["jack"]["nperiods"]  = nperiods
         CONFIG["jack"]["dither"]    = dither
+        CONFIG["jack"]["softmode"]  = softmode
 
 
     def get_lspk_config():
