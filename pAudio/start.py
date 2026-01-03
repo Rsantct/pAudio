@@ -88,10 +88,12 @@ def prepare_jack_stuff():
     period   = CONFIG["jack"]["period"]
     nperiods = CONFIG["jack"]["nperiods"]
     dither   = CONFIG["jack"]["dither"]
+    softmode = CONFIG["jack"]["softmode"]
 
     if not jack_mod.run_jackd(  alsa_dev=alsa_dev,
                                 fs=fs, period=period, nperiods=nperiods,
-                                jloops_list=jloops_list, dither=dither):
+                                jloops_list=jloops_list,
+                                dither=dither, softmode=softmode):
 
         print(f'{Fmt.BOLD}(start) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
