@@ -102,10 +102,12 @@ def _init():
         period   = CONFIG["jack"].get('period', 1024)
         nperiods = CONFIG["jack"].get('nperiods', 2)
         dither   = CONFIG["jack"].get('dither', False)
+        softmode = CONFIG["jack"].get('softmode', False)
 
         CONFIG["jack"]["period"]    = period
         CONFIG["jack"]["nperiods"]  = nperiods
         CONFIG["jack"]["dither"]    = dither
+        CONFIG["jack"]["softmode"]  = softmode
 
 
     def get_lspk_config():
@@ -393,6 +395,16 @@ def _init():
     if not "tones_span_dB" in CONFIG:
         CONFIG["tones_span_dB"] = 6.0
 
+    #-----------------------------------------------
+    # Expert zone
+    if not CONFIG.get('expert_zone', {}):
+        CONFIG['expert_zone'] = {}
+
+    if CONFIG.get('expert_zone', {}).get('camilladsp_xrun_monitor', None) == None:
+        CONFIG["expert_zone"]["camilladsp_xrun_monitor"] = False
+
+    #-----------------------------------------------
+    # LOUDSPEAKER configuration will be merged below.
     if CONFIG.get('loudspeaker'):
         LOUDSPEAKER = CONFIG["loudspeaker"]
     else:
@@ -407,8 +419,6 @@ def _init():
 
     LSPK_YML_PATH = f'{LSPKFOLDER}/lspk.yml'
 
-
-    # MERGING the specific LOUDSPEAKER configuration
     lspk_config = get_lspk_config()
     #
     # DEBUG

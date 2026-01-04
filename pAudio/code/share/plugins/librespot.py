@@ -16,8 +16,9 @@
     pe.audio.sys, as mine does (ESI UDJ6 only works at 48 KHz)
 
     2025-01: librespot 0.4.0 suddently crashes, so will use a watchdog here
-    2025-11: Crashes stopped with libresport 0.8.0,
-             also jack ports remains stable when track changes
+    2025-11: Crashes stopped with libresport 0.8.0, but will keep the watchgog.
+             Also jack ports remains stable when track changes, so the '--onevent'
+             program does not need to reconnect librespot to jack anymore.
 
 """
 import  sys
@@ -40,11 +41,10 @@ except Exception as e:
 
 # libresport options list (do not configure here: bitrate, name, backend, device)
 OTHER_OPTS = [
-    #'--disable-audio-cache',
     # https://github.com/librespot-org/librespot/wiki/FAQ
     # For AUDIOPHILES
     '--mixer softvol --volume-ctrl fixed --initial-volume 100',
-    '--format F32'
+    '--format F32 --disable-audio-cache'
 ]
 
 # Librespot --onevent program

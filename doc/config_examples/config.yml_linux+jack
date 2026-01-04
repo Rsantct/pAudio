@@ -10,6 +10,7 @@ jack:
     period:         1024
     nperiods:       2
     dither:         true
+    softmode:       false
     sources:
         analog:
             jport:  system
@@ -39,3 +40,8 @@ plugins:
     - autoeject_cdda.py
     - mpd.py
     - spotify_desktop.py    # for more details see inside thep lugin docstring
+
+# optional
+expert_zone:
+    camilladsp_xrun_monitor: true       # default is true
+    disable_silence_timeout: false      # default is false

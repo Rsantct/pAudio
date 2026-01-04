@@ -50,6 +50,7 @@ def prepare_base_config(pAudio_config, cam_config):
                             }
             }
 
+
         else:
             print(f'{Fmt.BOLD}Audio backend still not supported{Fmt.END}')
             sys.exit()
@@ -58,9 +59,16 @@ def prepare_base_config(pAudio_config, cam_config):
         cam_config["devices"]["samplerate"]         = pAudio_config["samplerate"]
         cam_config["devices"]["chunksize"]          = chunksize
 
-        cam_config["devices"]["silence_threshold"]  = -80
+        cam_config["devices"]["silence_threshold"]  = -100
 
-        cam_config["devices"]["silence_timeout"]    = 30
+        # Jack (CPAL) **DOES NOT**  work well stopping the DSP, in some systems.
+        # If no audio, a flood of:
+        # ERROR [src/cpaldevice.rs:537] an error occurred on stream: A backend-specific error has occurred: xrun (buffer over or under run)
+        if pAudio_config.get('expert_zone', {}).get('disable_silence_timeout', False):
+            cam_config["devices"]["silence_timeout"] = 0
+        else:
+            cam_config["devices"]["silence_timeout"] = 30
+
 
 
     def prepare_filters():

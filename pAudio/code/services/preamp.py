@@ -225,7 +225,7 @@ def init():
     # Optional user config settings having precedence over the saved state:
     for prop, value in CONFIG.get('on_init', {}).items():
 
-        valid_props = ('level', 'balance', 'bass', 'treble', 'tone_defeat',
+        valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
                        'lu_offset', 'equal_loudness', 'target', 'drc_set' )
 
         if not prop in valid_props:

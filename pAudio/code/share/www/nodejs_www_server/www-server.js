@@ -5,14 +5,6 @@
     This file is part of 'pAudio', a PC based personal audio system.
 */
 
-// The DEFAULT listening HTTP PORT unless passed via command line
-let NODEJS_PORT = 8088;
-const myArgs = process.argv.slice(2);
-if (myArgs[0]){
-    NODEJS_PORT = myArgs[0];
-}
-
-
 // Importing modules (require)
 const http  = require('http');
 const url   = require('url');
@@ -23,18 +15,28 @@ const os    = require('os');
 
 
 // Command line option '-v' VERBOSE -vv VERY VERBOSE
-var verbose = false;
-var vv      = false;
-const opcs = process.argv.slice(2);
-if ( opcs.indexOf('-v') != -1 ){
-    verbose = true;
-}
-if ( opcs.indexOf('-vv') != -1 ){
-    verbose = true;
-    vv      = true;
-}
-var PA_ADDR = '0.0.0.0'
-var PA_PORT = 9980
+let PA_ADDR     = '0.0.0.0';
+let PA_PORT     = 9980;
+let NODEJS_ADDR = "0.0.0.0";
+let NODEJS_PORT = 8088;
+let verbose     = false;
+let vv          = false;
+
+process.argv.slice(2).forEach(opt => {
+
+    if ( ! isNaN(opt) ) {
+        NODEJS_PORT = parseInt(opt, 10);
+    }
+    else if (opt === '-v') {
+        verbose = true;
+        console.log('(verbose mode)')
+    }
+    else if (opt === '-vv') {
+        verbose = true;
+        vv = true;
+        console.log('(very verbose mode)')
+    }
+});
 
 
 // Getting address & port to communicate to pAudio
@@ -135,7 +137,9 @@ function onHttpReq( httpReq, httpRes ){
 
 
     // very verbose mode
-    if (vv) console.log( FgCyan, '(node) httpServer RX:', httpReq.url, Reset );
+    if (vv) {
+        console.log( FgCyan, '(node) httpServer RX:', httpReq.url, Reset );
+    }
 
 
     // Prepare http header
@@ -180,6 +184,13 @@ function onHttpReq( httpReq, httpRes ){
     // Favicons for Mozilla and Chrome like browsers
     else if (httpReq.url.match(/^\/favicon/g)){
         ctype = 'image/vnd.microsoft.icon';
+        fpath = docRoot + httpReq.url;
+        http_serve_file(fpath);
+    }
+
+    // Apple png icons
+    else if (httpReq.url.match(/^\/apple-touch-icon/g)){
+        ctype = 'image/png';
         fpath = docRoot + httpReq.url;
         http_serve_file(fpath);
     }
@@ -323,7 +334,7 @@ function onHttpReq( httpReq, httpRes ){
 
 // Starts an HTTP SERVER, which automagically will trigger
 // a function when a 'request' event occurs.
-http.createServer( onHttpReq ).listen( NODEJS_PORT );
+http.createServer( onHttpReq ).listen( NODEJS_PORT, NODEJS_ADDR );
 
 console.log('Node.js', process.version);
 console.log('Server running at http://localhost:' + NODEJS_PORT + '/');
