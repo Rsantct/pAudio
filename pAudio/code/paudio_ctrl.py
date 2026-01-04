@@ -99,13 +99,14 @@ def save_aux_info():
 
 
     # Dynamic update <CamillaDSP ERROR>
+    if CONFIG["expert_zone"]["camilladsp_xrun_monitor"]:
 
-    curr_cdsp_error = get_camilladsp_last_error()
+        curr_cdsp_error = get_camilladsp_last_error()
 
-    if curr_cdsp_error != CAMILLADSP_LAST_ERROR:
-        CAMILLADSP_LAST_ERROR = curr_cdsp_error
-        AUXINFO["warning"] = curr_cdsp_error["error"]
-        warning_expire(10)
+        if curr_cdsp_error != CAMILLADSP_LAST_ERROR:
+            CAMILLADSP_LAST_ERROR = curr_cdsp_error
+            AUXINFO["warning"] = curr_cdsp_error["error"]
+            warning_expire(10)
 
 
     # Adding Loudness Monitor to .aux_info
