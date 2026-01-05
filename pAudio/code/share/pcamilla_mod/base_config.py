@@ -134,7 +134,7 @@ def prepare_base_config(pAudio_config, cam_config):
 
 def append_dither(pAudio_config, cam_config):
     """ Adjust the dither filter as per the output sample format and samplerate
-        This must be called only no dither is applied after CamillaDSP
+        This must be called only if no dither is applied after CamillaDSP
     """
 
     def get_bit_depth(fmt):
@@ -197,4 +197,3 @@ def append_dither(pAudio_config, cam_config):
 
             last_step_type = step_type
 
-    return
