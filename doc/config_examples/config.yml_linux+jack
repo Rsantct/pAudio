@@ -43,5 +43,12 @@ plugins:
 
 # optional
 expert_zone:
-    camilladsp_xrun_monitor: true       # default is true
-    disable_silence_timeout: false      # default is false
+
+    # Messages will appear in the control web page. Default is true.
+    camilladsp_xrun_monitor: true
+
+    # Useful for some use cases as Raspberry Pi 3 and jack backend (cpal), to avoid the CamillaDSP
+    # xrun cpal errors when the intermediate cpal layer does not detect camilladsp packets.
+    # Default is false. Notice that CPU load will not decrease anymore, so you may
+    # consider to include a 'paudio_restart.sh stop' entry in your daily crontab.
+    disable_silence_timeout: false
