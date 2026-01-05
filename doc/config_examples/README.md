@@ -1,7 +1,12 @@
-**NOTICE**
 
-Here we offer **`pAudio/config.yml`** examples
 
-- `config.yml` is about sound devices an general settigns.
+## pAudio `config.yml`
 
-- For Loudspeaker configuration see **`pAudio/loudspeaker/xxxxx_example`** folders
+The **`pAudio/config.yml`** main file is about sound devices, sources and an general settigns.
+
+To a apply dither at the very end of the processing signal path, you can set `dither: true` under the `playback:` devices section.
+
+
+## Loudspeaker configuration `lspk.yml`
+
+The loudspeaker configuration is defined in **`pAudio/loudspeakers/myLoudspeaker/lspk.yml`** (see pAudio/loudspeakers/examples for further info)
