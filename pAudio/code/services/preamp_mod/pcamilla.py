@@ -221,7 +221,9 @@ def _prepare_cam_config(pAudio_config):
         prepare_multiway_structure()
 
     # Dither (will apply to the lasts steps of the pipeline)
-    base_config.append_dither(pAudio_config, cam_config)
+
+    if pAudio_config.get("coreaudio", {}).get("devices", {}).get("playback", {}).get("dither", {}):
+        base_config.append_dither(pAudio_config, cam_config)
 
     return cam_config
 

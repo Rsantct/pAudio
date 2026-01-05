@@ -134,6 +134,7 @@ def prepare_base_config(pAudio_config, cam_config):
 
 def append_dither(pAudio_config, cam_config):
     """ Adjust the dither filter as per the output sample format and samplerate
+        This must be called only if no dither is applied after CamillaDSP
     """
 
     def get_bit_depth(fmt):
@@ -145,7 +146,7 @@ def append_dither(pAudio_config, cam_config):
         return int(bd)
 
 
-    if not( pAudio_config.get("coreaudio") and pAudio_config["coreaudio"]["devices"]["playback"].get("dither") ):
+    if not pAudio_config.get("coreaudio", {}).get("devices", {}).get("playback", {}).get("dither", False):
         return
 
     # First of all we need to remove the pAudio dither parameter.
@@ -195,3 +196,4 @@ def append_dither(pAudio_config, cam_config):
                 step["names"].append('dither')
 
             last_step_type = step_type
+
