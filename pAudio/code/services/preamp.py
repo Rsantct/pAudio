@@ -525,6 +525,15 @@ def set_source(sname):
                 sleep(1)
                 remote_zita_restart(raddr, rport, rudpport, 'restart')
 
+            # Remote delay (optional)
+            if SOURCES[sname].get('remote_delay', 0):
+
+                remote_ip    = SOURCES[sname].get('ip')
+                remote_port  = SOURCES[sname].get('port')
+                remote_delay = SOURCES[sname].get('remote_delay')
+
+                send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
+
     else:
 
         res = 'bad config.yml'
