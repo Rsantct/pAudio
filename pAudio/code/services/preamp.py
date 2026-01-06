@@ -222,7 +222,7 @@ def init():
     # DRC sets
     DRC_SETS = ['none'] + list( CONFIG["drc"].keys() )
 
-    # Optional user config settings having precedence over the saved state:
+    # ON_INIT optional user config settings having precedence over the saved state:
     for prop, value in CONFIG.get('on_init', {}).items():
 
         valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
@@ -299,7 +299,6 @@ def init():
         STATE["input_dev"]  = 'unknown'
         STATE["output_dev"] = 'unknown'
 
-
     # Update state with jack buffer if so
     if not CONFIG.get('jack'):
         try:
@@ -309,8 +308,9 @@ def init():
             pass
 
 
-    STATE["dsp_buffer_size"]    = 0
-
+    # Reset state values
+    STATE["dsp_buffer_size"] = 0
+    STATE["extra_delay"] = 0
 
     # Initialize camillaDSP
     cdsp_init = CAM.init_camilladsp( pAudio_config=CONFIG )
@@ -391,6 +391,10 @@ def eq2png():
 
 
 # Interface functions with the underlying modules
+
+def set_delay(delay):
+    return CAM.set_delay(delay)
+
 
 def set_mute(mode):
     return CAM.set_mute(mode)
@@ -773,6 +777,11 @@ def do(cmd, args, add):
             result = json.dumps(XO_SETS)
 
         # Change commands
+        case 'add_delay':
+            new = args
+            result = set_delay(new)
+            if result == 'done':
+                STATE["extra_delay"] = round(float(new), 1)
 
         case 'set_source':
             new = args
