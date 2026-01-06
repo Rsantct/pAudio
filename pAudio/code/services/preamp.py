@@ -505,7 +505,8 @@ def set_source(sname):
         if 'remote' in sname:
 
             # Example:
-            # 'remoteSalon': {  'remote_delay': 0,
+            # 'remoteSalon': {  'local_delay': 5,
+            #                   'remote_delay': 0,
             #                   'remote_track_level': True,
             #                   'ip': '192.168.1.57',
             #                   'port': 9990,
@@ -537,6 +538,16 @@ def set_source(sname):
                 remote_delay = SOURCES[sname].get('remote_delay')
 
                 send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
+
+            # Local delay (optional)
+            local_delay = SOURCES[sname].get('local_delay', 0)
+            if local_delay:
+                if set_delay( local_delay ) == 'done':
+                    STATE["extra_delay"] = local_delay
+
+        else:
+            if set_delay( 0.0 ) == 'done':
+                STATE["extra_delay"] = 0
 
     else:
 
