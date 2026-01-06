@@ -81,7 +81,7 @@ def make_xo_iir_filter(way_type='hi', subtype='LR', order=2, freq=2000, freq2=0)
     return f
 
 
-def make_delay_filter(description='', delay=0.0):
+def make_delay_filter(delay=0.0, description=''):
 
     f = {
             "description": description,
