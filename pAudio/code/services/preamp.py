@@ -222,7 +222,7 @@ def init():
     # DRC sets
     DRC_SETS = ['none'] + list( CONFIG["drc"].keys() )
 
-    # Optional user config settings having precedence over the saved state:
+    # ON_INIT optional user config settings having precedence over the saved state:
     for prop, value in CONFIG.get('on_init', {}).items():
 
         valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
@@ -299,7 +299,6 @@ def init():
         STATE["input_dev"]  = 'unknown'
         STATE["output_dev"] = 'unknown'
 
-
     # Update state with jack buffer if so
     if not CONFIG.get('jack'):
         try:
@@ -309,8 +308,9 @@ def init():
             pass
 
 
-    STATE["dsp_buffer_size"]    = 0
-
+    # Reset state values
+    STATE["dsp_buffer_size"] = 0
+    STATE["extra_delay"] = 0
 
     # Initialize camillaDSP
     cdsp_init = CAM.init_camilladsp( pAudio_config=CONFIG )
@@ -391,6 +391,10 @@ def eq2png():
 
 
 # Interface functions with the underlying modules
+
+def set_delay(delay):
+    return CAM.set_delay(delay)
+
 
 def set_mute(mode):
     return CAM.set_mute(mode)
@@ -501,7 +505,8 @@ def set_source(sname):
         if 'remote' in sname:
 
             # Example:
-            # 'remoteSalon': {  'remote_delay': 0,
+            # 'remoteSalon': {  'local_delay': 5,
+            #                   'remote_delay': 0,
             #                   'remote_track_level': True,
             #                   'ip': '192.168.1.57',
             #                   'port': 9990,
@@ -524,6 +529,25 @@ def set_source(sname):
                 remote_zita_restart(raddr, rport, rudpport, 'stop')
                 sleep(1)
                 remote_zita_restart(raddr, rport, rudpport, 'restart')
+
+            # Remote delay (optional)
+            if SOURCES[sname].get('remote_delay', 0):
+
+                remote_ip    = SOURCES[sname].get('ip')
+                remote_port  = SOURCES[sname].get('port')
+                remote_delay = SOURCES[sname].get('remote_delay')
+
+                send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
+
+            # Local delay (optional)
+            local_delay = SOURCES[sname].get('local_delay', 0)
+            if local_delay:
+                if set_delay( local_delay ) == 'done':
+                    STATE["extra_delay"] = local_delay
+
+        else:
+            if set_delay( 0.0 ) == 'done':
+                STATE["extra_delay"] = 0
 
     else:
 
@@ -764,6 +788,11 @@ def do(cmd, args, add):
             result = json.dumps(XO_SETS)
 
         # Change commands
+        case 'add_delay':
+            new = args
+            result = set_delay(new)
+            if result == 'done':
+                STATE["extra_delay"] = round(float(new), 1)
 
         case 'set_source':
             new = args

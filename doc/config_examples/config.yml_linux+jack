@@ -20,8 +20,9 @@ jack:
 
         remoteSalon:
             remote_addr:        192.168.1.57
-            remote_delay:       0
             remote_track_level: true
+            remote_delay:       0
+            local_delay:        0
 
     # Optional config for zita-njbridge based multiroom remote sources
     zita_udp_base:          65000

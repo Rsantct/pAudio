@@ -75,6 +75,9 @@ def prepare_base_config(pAudio_config, cam_config):
 
         cam_config["filters"] =    {
 
+        # Preamp delay
+        'preamp_delay':         make_delay_filter('preamp channels delay'),
+
         # Balance and Polarity
         'bal_pol_L':            make_gain_filter(0.0, 'Balance and Polarity Left'),
         'bal_pol_R':            make_gain_filter(0.0, 'Balance and Polarity Right'),
@@ -83,7 +86,7 @@ def prepare_base_config(pAudio_config, cam_config):
         'dither':               make_dither_filter('Shibata441', 16),
 
         # DRC gain offset
-        'flat_gain_drc':      make_gain_filter(0.0, 'gain offset for DRC in use'),
+        'flat_gain_drc':        make_gain_filter(0.0, 'gain offset for DRC in use'),
 
         # XO will be done later if so.
 

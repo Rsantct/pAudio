@@ -446,6 +446,29 @@ def set_loudness( mode, level, clamp_above_zero=True):
 
 
 # Other setting audio functions
+def set_delay(delay):
+
+    try:
+        delay = round( float(delay), 1)
+    except Exception as e:
+        return str(e)
+
+    if delay > 2000:
+        return 'max delay is 2000 ms'
+
+    if not delay >= 0.0:
+        return 'delay must be zero or positive float'
+
+    c = CC.config.active()
+
+    c["filters"]["preamp_delay"]["parameters"]["delay"] = delay
+
+    # Upload the config to runtime
+    set_config_sync(c)
+
+    return 'done'
+
+
 def set_volume(dB=None, mode='abs'):
     """ get or set the Main fader volume
 
