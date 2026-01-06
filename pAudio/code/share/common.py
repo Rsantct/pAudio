@@ -374,8 +374,11 @@ def restore_sound_card():
     cmd = f'alsactl --file {alsactl_path} restore {alsa_name}'
 
     if os.path.isfile(alsactl_path):
-        print(f'{Fmt.GREEN}(common) Restoring \'{alsa_name}\' cound card settings: {alsactl_path}{Fmt.END}')
-        sp.call(cmd, shell=True)
+        print(f'{Fmt.GREEN}(common) trying to restore \'{alsa_name}\' sound card settings: {alsactl_path}{Fmt.END}')
+        try:
+            sp.call(cmd, shell=True)
+        except Exception as e:
+            print(f'{Fmt.BOLD}(common) Error restoring \'{alsa_name}\': {str(e)}{Fmt.END}')
 
     else:
         print(f'{Fmt.RED}(common) \'{alsa_name}\' sound card settings file not found: {alsactl_path}{Fmt.END}')
