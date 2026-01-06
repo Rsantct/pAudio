@@ -76,7 +76,7 @@ def prepare_base_config(pAudio_config, cam_config):
         cam_config["filters"] =    {
 
         # Preamp delay
-        'preamp_delay':         make_delay_filter('preamp channels delay'),
+        'preamp_delay':         make_delay_filter(0.0, 'preamp channels delay'),
 
         # Balance and Polarity
         'bal_pol_L':            make_gain_filter(0.0, 'Balance and Polarity Left'),
