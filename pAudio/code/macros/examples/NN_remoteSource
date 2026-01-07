@@ -11,27 +11,23 @@ UHOME       = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 from common import *
 
-rem_src_name = 'remoteSalon'
+REM_SRC_NAME = 'remoteSalon'
 
-raddr, rport = get_remote_source_addr_port(rem_src_name)
-
+# Getting remote address
+raddr, rport = get_remote_source_addr_port(REM_SRC_NAME)
 if not raddr:
-    print(f'({ME}) ERROR getting remote source: {rem_src_name}')
+    print(f'({ME}) ERROR getting remote source: {REM_SRC_NAME}')
     sys.exit()
 
 # Set remote XO => mp
 remote_ans = send_cmd('set_xo mp', host=raddr, port=rport)
-
 if not remote_ans == 'done':
-    print(f'{Fmt.RED}Cannot set XO to \'mp\' in {rem_src_name}{Fmt.END}')
-
+    print(f'{Fmt.RED}Cannot set XO to \'mp\' in {REM_SRC_NAME}{Fmt.END}')
 
 # Set local source
-local_ans = send_cmd(f'source {rem_src_name}', timeout=10)
-
+local_ans = send_cmd(f'source {REM_SRC_NAME}', timeout=10)
 if not local_ans == 'ordered':
-    print(f'{Fmt.RED}Cannot select {rem_src_name}: {local_ans}{Fmt.END}')
-
+    print(f'{Fmt.RED}Cannot select {REM_SRC_NAME}: {local_ans}{Fmt.END}')
 
 # Stopping local players
 Popen('mpc pause 1>/dev/null 2>&1', shell=True)
