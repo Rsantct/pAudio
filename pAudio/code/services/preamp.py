@@ -91,6 +91,8 @@ def init():
 
         do_levels( 'balance', dB=STATE["balance"] )
 
+        set_midside( STATE["midside"] )
+
         # tones can be clamped when ordered out of range
         res = do_levels( 'bass', dB=STATE["bass"] )
         if res != 'done':
@@ -226,13 +228,14 @@ def init():
     for prop, value in CONFIG.get('on_init', {}).items():
 
         valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
-                       'lu_offset', 'equal_loudness', 'target', 'drc_set' )
+                       'lu_offset', 'equal_loudness', 'target', 'drc_set',
+                       'mid_side', 'mono' )
 
         if not prop in valid_props:
             print(f'{Fmt.BOLD}(on_init) NOT valid: `{prop}`{Fmt.END}')
             continue
 
-        if not value:
+        if value == None:
             continue
 
         # Some validation
@@ -243,14 +246,36 @@ def init():
                 if value in TARGET_SETS + ['none']:
                     STATE["target"] = value
                 else:
-                    print(f'{Fmt.BOLD}(on_init) ERROR in config target{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR in target{Fmt.END}')
 
             case 'drc_set':
 
                 if value in DRC_SETS or value == 'none':
                     STATE["drc_set"] = value
                 else:
-                    print(f'{Fmt.BOLD}(on_init) ERROR in config drc_set{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR in drc_set{Fmt.END}')
+
+            case 'mid_side':
+
+                mid_side_values = ('off', 'mid', 'side', 'solo_L', 'solo_R')
+                if value in mid_side_values:
+                    STATE["midside"] = value
+                else:
+                    print(f'{Fmt.BOLD}(on_init) ERROR mid_side must be in: {mid_side_values}{Fmt.END}')
+
+            case 'mono':
+
+                mono_values = ('off', 'on', True, False)
+
+                if value in mono_values:
+                    if value == 'on' or value == True:
+                        value = 'mid'
+                    else:
+                        value = 'off'
+                    STATE["midside"] = value
+
+                else:
+                    print(f'{Fmt.BOLD}(on_init) ERROR mono must be in: {mono_values}{Fmt.END}')
 
             case _:
 
@@ -308,7 +333,7 @@ def init():
             pass
 
 
-    # Reset state values
+    # Force values
     STATE["dsp_buffer_size"] = 0
     STATE["extra_delay"] = 0
 
@@ -392,6 +417,10 @@ def eq2png():
 
 # Interface functions with the underlying modules
 
+def set_gain_offset(gain):
+    return CAM.set_gain_offset(gain)
+
+
 def set_delay(delay):
     return CAM.set_delay(delay)
 
@@ -402,6 +431,10 @@ def set_mute(mode):
 
 def set_solo(mode):
     return CAM.set_solo(mode)
+
+
+def set_midside(mode):
+    return CAM.set_midside(mode)
 
 
 def set_polarity(mode):
@@ -540,19 +573,27 @@ def set_source(sname):
 
                 send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
 
-            # Local delay (optional)
-            local_delay = SOURCES[sname].get('local_delay', 0)
-            if local_delay:
-                if set_delay( local_delay ) == 'done':
-                    STATE["extra_delay"] = local_delay
-
         # Local source
         else:
-            if set_delay( 0.0 ) == 'done':
-                STATE["extra_delay"] = 0
+            pass
 
+
+        # Delay ms (optional)
+        delay = SOURCES[sname].get('local_delay', 0.0)
+        if set_delay( delay ) == 'done':
+            STATE["extra_delay"] = delay
+
+        # Source gain offset (usually for analaog)
+        gain = SOURCES[sname].get('gain', 0.0)
+        try:
+            gain = round(gain, 1)
+            if set_gain_offset( gain ) == 'done':
+                STATE["source_gain_offset"] = gain
+        except Exception as e:
+            res = f'cannot set gain {gain} dB for source: {sname}'
+
+    # only coreaudio or jack
     else:
-
         res = 'bad config.yml'
 
 
@@ -812,16 +853,16 @@ def do(cmd, args, add):
 
                 case 'on':
                     new = 'mid'
-                    result = CAM.set_midside(new)
+                    result = set_midside(new)
 
                 case 'off':
                     new = 'off'
-                    result = CAM.set_midside(new)
+                    result = set_midside(new)
 
                 case 'toggle':
                     curr = STATE["midside"]
                     new = {'off': 'mid', 'mid': 'off', 'side': 'off'}[curr]
-                    result = CAM.set_midside(new)
+                    result = set_midside(new)
 
             if result == 'done':
                 STATE["midside"] = new
@@ -831,7 +872,7 @@ def do(cmd, args, add):
             new = args
 
             if STATE["midside"] != new:
-                result = CAM.set_midside(new)
+                result = set_midside(new)
 
                 if result == 'done':
                     STATE["midside"] = new
