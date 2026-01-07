@@ -1,47 +1,37 @@
 #!/usr/bin/env python3
-
-'''
+"""
     A helper macro to listen to a remote pAudio machine.
+"""
 
-'''
-
-from json import loads as json_loads
 import sys
 import os
 from subprocess import Popen
 
-ME          = os.path.basename(sys.argv[0])
 UHOME       = os.path.expanduser("~")
-MAINFOLDER  = f'{UHOME}/pAudio'
-sys.path.append(f'{MAINFOLDER}/code/share')
-
+sys.path.append(f'{UHOME}/pAudio/code/share')
 from common import *
 
-### USER CONFIG HERE:
-REM_SRC_NAME    = "remoteSalon"
-REM_DELAY       = 20
-###
+rem_src_name = 'remoteSalon'
 
-
-print(f'({ME}) Trying to connect to: {REM_SRC_NAME}')
-
-# The only local player, if so, is MPD
-Popen('mpc pause 1>/dev/null 2>&1', shell=True)
-
-raddr, rport = get_remote_source_addr_port(REM_SRC_NAME)
+raddr, rport = get_remote_source_addr_port(rem_src_name)
 
 if not raddr:
-    print(f'({ME}) ERROR getting remote source: {REM_SRC_NAME}')
+    print(f'({ME}) ERROR getting remote source: {rem_src_name}')
     sys.exit()
 
-send_cmd('set_xo mp',               host=raddr, port=rport)
-send_cmd(f'add_delay {REM_DELAY}',  host=raddr, port=rport)
+# Set remote XO => mp
+remote_ans = send_cmd('set_xo mp', host=raddr, port=rport)
 
-send_cmd(f'source {REM_SRC_NAME}')
+if not remote_ans == 'done':
+    print(f'{Fmt.RED}Cannot set XO to \'mp\' in {rem_src_name}{Fmt.END}')
 
 
-# Link the relative changes in volume from the remote sender,
-# by announcing that we are listening to it.
-# (The remote plugin 'remote_volume.py' will listen at remote_port + 5)
-send_cmd('hello', host=raddr, port=rport + 5)
+# Set local source
+local_ans = send_cmd(f'source {rem_src_name}', timeout=10)
 
+if not local_ans == 'ordered':
+    print(f'{Fmt.RED}Cannot select {rem_src_name}: {local_ans}{Fmt.END}')
+
+
+# Stopping local players
+Popen('mpc pause 1>/dev/null 2>&1', shell=True)
