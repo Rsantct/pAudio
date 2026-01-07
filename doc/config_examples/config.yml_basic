@@ -25,6 +25,7 @@ loudspeaker: MyLoudspeaker
 
 # Optional settings at startup
 on_init:
+    mono:               off
     level:
     lu_offset:          9.0
     equal_loudness:     true
