@@ -50,3 +50,6 @@ web_config:
 
     # HELP button language: en(glish) | sp(panish) | cat(alan)
     help_lang:      en
+
+# 'onoff' user's command or script to toggle the amplifier (optional)
+amplifier_switch_cmd:   '~/bin/ampli.sh'
