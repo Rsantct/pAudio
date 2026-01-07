@@ -502,6 +502,7 @@ def set_source(sname):
 
         res = jack_sources.select( sname )
 
+        # Remote source
         if 'remote' in sname:
 
             # Example:
@@ -545,6 +546,7 @@ def set_source(sname):
                 if set_delay( local_delay ) == 'done':
                     STATE["extra_delay"] = local_delay
 
+        # Local source
         else:
             if set_delay( 0.0 ) == 'done':
                 STATE["extra_delay"] = 0
