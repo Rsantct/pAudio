@@ -39,15 +39,16 @@ def init():
     with open(LOGFNAME, 'w') as FLOG:
             FLOG.write(f'{logline}\n')
 
+    # ON/OFF button behavior (default pAudio)
     ONOFF_MODE = 'pAudio'
-
     if CONFIG.get('web_config'):
-        if 'amp' in CONFIG["web_config"].get('onoff', ''):
+        if 'amp' in CONFIG.get('web_config', {}).get('onoff', ''):
             ONOFF_MODE = 'amplifier'
 
-
+    # CamillaDSP monitoring
     CAMILLADSP_LAST_ERROR = get_camilladsp_last_error()
 
+    # Aux info file
     AUXINFO = {
         "loudness_monitor": read_json_file(LDMON_PATH),
         "last_macro":       "",
@@ -56,25 +57,6 @@ def init():
     }
 
     save_aux_info()
-
-
-def get_camilladsp_state():
-
-    camilladsp_port = 1234
-
-    CC = CamillaClient('127.0.0.1', camilladsp_port)
-
-    try:
-        CC.connect()
-        st = CC.general.state().name
-        CC.disconnect()
-
-    except:
-        st = 'NOT_AVAILABLE'
-
-    del(CC)
-
-    return st
 
 
 def save_aux_info():
@@ -118,6 +100,25 @@ def save_aux_info():
     # Threading the .aux_info file saving
     save_job = threading.Thread( target=save_json_file, args=(AUXINFO, AUXINFO_PATH) )
     save_job.start()
+
+
+def get_camilladsp_state():
+
+    camilladsp_port = 1234
+
+    CC = CamillaClient('127.0.0.1', camilladsp_port)
+
+    try:
+        CC.connect()
+        st = CC.general.state().name
+        CC.disconnect()
+
+    except:
+        st = 'NOT_AVAILABLE'
+
+    del(CC)
+
+    return st
 
 
 def run_macro(mname):

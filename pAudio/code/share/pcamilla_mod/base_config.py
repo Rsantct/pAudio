@@ -75,6 +75,9 @@ def prepare_base_config(pAudio_config, cam_config):
 
         cam_config["filters"] =    {
 
+        # Source gain (analog sources)
+        'source_gain_offset':   make_gain_filter(0.0, 'source gain (usually for analaog)'),
+
         # Preamp delay
         'preamp_delay':         make_delay_filter(0.0, 'preamp channels delay'),
 
@@ -119,12 +122,12 @@ def prepare_base_config(pAudio_config, cam_config):
             {   'description':  'preamp.L',
                 'channels':     [0],
                 'type':         'Filter',
-                'names':        ['preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_L']
+                'names':        ['source_gain_offset', 'preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_L']
             },
             {   'description':  'preamp.R',
                 'channels':     [1],
                 'type':         'Filter',
-                'names':        ['preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_R']
+                'names':        ['source_gain_offset', 'preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_R']
             }
         ]
 

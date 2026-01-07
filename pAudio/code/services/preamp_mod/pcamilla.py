@@ -221,7 +221,6 @@ def _prepare_cam_config(pAudio_config):
         prepare_multiway_structure()
 
     # Dither (will apply to the lasts steps of the pipeline)
-
     if pAudio_config.get("coreaudio", {}).get("devices", {}).get("playback", {}).get("dither", {}):
         base_config.append_dither(pAudio_config, cam_config)
 
@@ -280,7 +279,6 @@ def init_camilladsp(pAudio_config):
 
 
     global CC
-
 
     # Early return if connection to CamillaDSP fails
     if _connect_to_camilla():
@@ -446,6 +444,26 @@ def set_loudness( mode, level, clamp_above_zero=True):
 
 
 # Other setting audio functions
+def set_gain_offset(gain):
+
+    try:
+        gain = round(gain, 1)
+    except Exception as e:
+        return str(e)
+
+    if abs(gain) > 15.0:
+        return 'max gain is +/- 15 dB'
+
+    c = CC.config.active()
+
+    c["filters"]["source_gain_offset"]["parameters"]["gain"] = gain
+
+    # Upload the config to runtime
+    set_config_sync(c)
+
+    return 'done'
+
+
 def set_delay(delay):
 
     try:
