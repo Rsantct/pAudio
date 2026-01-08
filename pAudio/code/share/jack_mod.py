@@ -18,13 +18,15 @@ def _jcli_activate(cli_name = 'jack_mod'):
 
     global JCLI
 
-    JCLI = jack.Client(cli_name, no_start_server=True)
-
     try:
+        JCLI = jack.Client(cli_name, no_start_server=True)
         JCLI.activate()
-    except:
-        print('(jack_mod) cannot activate jack.Client `{cli_name}`')
 
+    except Exception as e:
+        print(f'{Fmt.BOLD}(jack_mod) cannot activate jack.Client `{cli_name}`: {str(e)}{Fmt.BOLD}')
+        return str(e)
+
+    return 'done'
 
 def run_jackd(  alsa_dev='', fs=44100, period=1024, nperiods=2,
                 jloops_list=[], dither=False, softmode=False ):
