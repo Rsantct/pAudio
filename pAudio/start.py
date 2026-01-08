@@ -221,6 +221,8 @@ def start_zita_link():
 
         Further info at doc/80_Multiroom_pe.audio.sys.md
     """
+    UDP_PORT       = 65000
+    ZITA_BUFFER_MS = 20
 
     try:
         tmp = CONFIG["jack"].get('zita_udp_base')
@@ -228,11 +230,10 @@ def start_zita_link():
         if type(tmp) == int:
             UDP_PORT = tmp
         else:
-            raise Exception("BAD VALUE 'zita_udp_base'")
+            print(f'{Fmt.RED}(start) Bad value zita_udp_base: {tmp}, using {UDP_PORT}{Fmt.END}')
 
     except Exception as e:
-        UDP_PORT = 65000
-        print(f'{Fmt.RED}(start) ERROR in config.yml: {str(e)}, using {UDP_PORT} {Fmt.END}')
+        print(f'{Fmt.RED}(start) ERROR in zita_udp_base: {str(e)}, using {UDP_PORT}{Fmt.END}')
 
     try:
         tmp = CONFIG["jack"].get('zita_buffer_ms')
@@ -240,16 +241,14 @@ def start_zita_link():
         if type(tmp) == int:
             ZITA_BUFFER_MS = tmp
         else:
-            raise Exception("BAD VALUE 'zita_buffer_ms'")
+            print(f'{Fmt.RED}(start) Bad value zita_buffer_ms: {tmp}, using {ZITA_BUFFER_MS}{Fmt.END}')
 
     except Exception as e:
-        ZITA_BUFFER_MS = 20
-        print(f'{Fmt.RED}(start) ERROR in config.yml: {str(e)}, using {ZITA_BUFFER_MS} {Fmt.END}')
+        print(f'{Fmt.RED}(start) ERROR in zita_buffer_ms: {str(e)}, using {ZITA_BUFFER_MS}{Fmt.END}')
 
 
+    # Iterare remoteSOURCES
     zita_link_udp_ports = {}
-
-    # SOURCES example see stop_zita_link() below
     for source_name, params in SOURCES.items():
 
         if not 'remote' in source_name:
@@ -285,12 +284,7 @@ def start_zita_link():
 
 def stop_zita_link():
 
-    # SOURCES example:
-    # { 'none': {},
-    #   'mpd': {'jport': 'mpd_loop'},
-    #   'analog': {'jport': 'system'},
-    #   'remoteSalon': {'remote_delay': 0, 'ip': '192.168.1.57', 'port': 9990, 'jport': 'zita_n2j_57'}
-    # }
+    # Iterare remoteSOURCES
     for source_name, params in SOURCES.items():
 
         if not 'remote' in source_name:
