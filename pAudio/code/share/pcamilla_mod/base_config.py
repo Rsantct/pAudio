@@ -122,12 +122,14 @@ def prepare_base_config(pAudio_config, cam_config):
             {   'description':  'preamp.L',
                 'channels':     [0],
                 'type':         'Filter',
-                'names':        ['source_gain_offset', 'preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_L']
+                'names':        ['source_gain_offset', 'preamp_eq', 'flat_gain_drc',
+                                 'lu_offset', 'bal_pol_L', 'preamp_delay']
             },
             {   'description':  'preamp.R',
                 'channels':     [1],
                 'type':         'Filter',
-                'names':        ['source_gain_offset', 'preamp_eq', 'flat_gain_drc', 'lu_offset', 'bal_pol_R']
+                'names':        ['source_gain_offset', 'preamp_eq', 'flat_gain_drc',
+                                 'lu_offset', 'bal_pol_R', 'preamp_delay']
             }
         ]
 
