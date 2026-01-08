@@ -104,19 +104,22 @@ def get_sources():
 def select(source):
 
     # open a temporary jack.Client
-    jm._jcli_activate('source_selector')
+    tmp = jm._jcli_activate('source_selector')
 
-    jm.clear_preamp()
+    if tmp == 'done':
+        jm.clear_preamp()
 
-    if source == 'none':
-        return 'ordered'
+        if source == 'none':
+            return 'ordered'
 
-    res = jm.connect_bypattern( SOURCES[source]["jport"], 'pre_in_loop' )
+        res = jm.connect_bypattern( SOURCES[source]["jport"], 'pre_in_loop' )
 
-    # close the temporary jack.Client
-    del jm.JCLI
+        # close the temporary jack.Client
+        del jm.JCLI
 
-    return res
+        return res
 
+    else:
+        return tmp
 
 _init()
