@@ -159,17 +159,21 @@ def rewire_camilladsp():
         print(f'{Fmt.GRAY}(start) Trying to wire camillaDSP jack ports ...{Fmt.END}')
 
     # open a temporary jack.Client
-    jack_mod._jcli_activate('wire_CamillaDSP')
+    tmp = jack_mod._jcli_activate('wire_CamillaDSP')
 
+    if tmp == 'done':
 
-    # (i) system:capture ports may not exists, depending on sound card model
-    if jack_mod.get_ports('system', is_physical=True, is_output=True):
-        jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
+        # (i) system:capture ports may not exists, depending on sound card model
+        if jack_mod.get_ports('system', is_physical=True, is_output=True):
+            jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
 
-    jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
+        jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
 
-    # close the temporary jack.Client
-    del jack_mod.JCLI
+        # close the temporary jack.Client
+        del jack_mod.JCLI
+
+    else:
+        print(f'{Fmt.BOLD}(start) Cannot wire camillaDSP jack ports: {tmp}{Fmt.END}')
 
 
 def run_plugins(mode='start'):
