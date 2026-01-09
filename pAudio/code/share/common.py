@@ -350,6 +350,33 @@ def amp_switch(mode):
     return res
 
 
+def detect_sound_card_io(alsa_dev):
+    """ Detect the recording and playback capabilities of the sound card
+        returns: 'recplay' | 'rec' | 'play' | ''
+    """
+
+    arecord = aplay = ''
+    try:
+        arecord = sp.check_output('arecord -l'.split()).decode()
+    except:
+        pass
+    try:
+        aplay = sp.check_output('aplay -l'.split()).decode()
+    except:
+        pass
+
+    cname = alsa_dev.replace('hw:','').split(',')[0]
+
+    if cname in arecord and cname in aplay:
+        return 'recplay'
+    elif cname in arecord and not cname in aplay:
+        return 'rec'
+    elif not cname in arecord and cname in aplay:
+        return 'play'
+    else:
+        return ''
+
+
 def restore_sound_card():
     """
         Only works for Linux-ALSA
