@@ -292,25 +292,27 @@ def init():
     #
     if CONFIG.get('jack'):
 
-        # open a temporary jack.Client
-        jcli = jack.Client(name='tmp', no_start_server=True)
-
-        if jcli.get_ports('system', is_physical=True, is_output=True):
-            STATE["input_dev"]  = CONFIG["jack"]["device"]
-        else:
-            STATE["input_dev"]  = ''
-
-        if jcli.get_ports('system', is_physical=True, is_input=True):
-            STATE["output_dev"]  = CONFIG["jack"]["device"]
-        else:
-            STATE["output_dev"]  = ''
-
-        # close the temporary jack.Client
-        del jcli
-
-
         STATE["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
         STATE["jack_buffer_ms"]   = int(round(STATE["jack_buffer_size"] / STATE["fs"] * 1000))
+        STATE["input_dev"]        = ''
+        STATE["output_dev"]       = ''
+
+        # open a temporary jack.Client
+        try:
+            jcli = jack.Client(name='tmp', no_start_server=True)
+
+            if jcli.get_ports('system', is_physical=True, is_output=True):
+                STATE["input_dev"]  = CONFIG["jack"]["device"]
+
+            if jcli.get_ports('system', is_physical=True, is_input=True):
+                STATE["output_dev"]  = CONFIG["jack"]["device"]
+
+            jcli.close()
+            del jcli
+
+        except Exception as e:
+            print(f'{Fmt.RED}(preamp) init, cannot open a jack client to chek i/o devices: {str(e)}{Fmt.END}')
+
 
     elif CONFIG.get('coreaudio'):
 
