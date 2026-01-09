@@ -18,18 +18,20 @@ def _jcli_activate(cli_name = 'jack_mod'):
 
     global JCLI
 
-    JCLI = jack.Client(cli_name, no_start_server=True)
-
     try:
+        JCLI = jack.Client(cli_name, no_start_server=True)
         JCLI.activate()
-    except:
-        print('(jack_mod) cannot activate jack.Client `{cli_name}`')
+
+    except Exception as e:
+        print(f'{Fmt.BOLD}(jack_mod) cannot activate jack.Client `{cli_name}`: {str(e)}{Fmt.BOLD}')
+        return str(e)
+
+    return 'done'
 
 
-def run_jackd(  alsa_dev='', fs=44100, period=1024, nperiods=2,
+def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=2,
                 jloops_list=[], dither=False, softmode=False ):
-    """ Run JACK in a separate process,
-        including jack_loops
+    """ Run JACK in a separate process, including jack_loops
     """
 
     if VERBOSE:
@@ -45,7 +47,19 @@ def run_jackd(  alsa_dev='', fs=44100, period=1024, nperiods=2,
     else:
         sm = ''
 
-    jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
+    if 'rec' in io_mode and 'play' in io_mode:
+        mode = 'd'
+
+    elif 'rec' in io_mode and not 'play' in io_mode:
+        mode = 'C'
+
+    elif not 'rec' in io_mode and 'play' in io_mode:
+        mode = 'P'
+    else:
+        print(f'{Fmt.RED}(jack_mod) BAD io_mode{Fmt.END}')
+        return False
+
+    jack_cmd = f'jackd -d alsa -{mode} {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
                f' {sm} 1>{LOGFOLDER}/jackd.log 2>&1'
 
     with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
@@ -80,9 +94,13 @@ def _jack_loop(clientname, nports=2):
     if VERBOSE:
         print( f'{Fmt.CYAN}(jack_loop) trying to run: {clientname} with {nports} ports ...{Fmt.END}' )
 
-
     # The jack module instance for our looping ports
-    client = jack.Client(name=clientname, no_start_server=True)
+    try:
+        client = jack.Client(name=clientname, no_start_server=True)
+
+    except Exception as e:
+        print(f'{Fmt.RED}(jack_mod) jack_loop, cannot open a jack clent: {str(e)}{Fmt.END}')
+        return
 
     if client.status.name_not_unique:
         client.close()

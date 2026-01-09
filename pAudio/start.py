@@ -71,7 +71,7 @@ def check_cdsp_running():
 
 
 def prepare_jack_stuff():
-    """ execute JACK with the convenient loops
+    """ Run JACK with the appropriate parameters and loops
     """
 
     if sys.platform != 'linux':
@@ -90,7 +90,9 @@ def prepare_jack_stuff():
     dither   = CONFIG["jack"]["dither"]
     softmode = CONFIG["jack"]["softmode"]
 
-    if not jack_mod.run_jackd(  alsa_dev=alsa_dev,
+    io_mode  = detect_sound_card_io(alsa_dev)
+
+    if not jack_mod.run_jackd(  alsa_dev=alsa_dev, io_mode=io_mode,
                                 fs=fs, period=period, nperiods=nperiods,
                                 jloops_list=jloops_list,
                                 dither=dither, softmode=softmode):
@@ -113,7 +115,8 @@ def prepare_jack_stuff():
 def rewire_camilladsp():
     """ https://github.com/HEnquist/camilladsp?tab=readme-ov-file#jack
 
-        CamillaDSP will show up in Jack as "cpal_client_in" and "cpal_client_out".
+        CamillaDSP will emerge in Jack as "cpal_client_in" and "cpal_client_out",
+        so CPAL acts as an intermediate layer.
     """
 
     def cpal_alias():
@@ -159,17 +162,21 @@ def rewire_camilladsp():
         print(f'{Fmt.GRAY}(start) Trying to wire camillaDSP jack ports ...{Fmt.END}')
 
     # open a temporary jack.Client
-    jack_mod._jcli_activate('wire_CamillaDSP')
+    tmp = jack_mod._jcli_activate('wire_CamillaDSP')
 
+    if tmp == 'done':
 
-    # (i) system:capture ports may not exists, depending on sound card model
-    if jack_mod.get_ports('system', is_physical=True, is_output=True):
-        jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
+        # (i) system:capture ports may not exists, depending on sound card model
+        if jack_mod.get_ports('system', is_physical=True, is_output=True):
+            jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
 
-    jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
+        jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
 
-    # close the temporary jack.Client
-    del jack_mod.JCLI
+        # close the temporary jack.Client
+        del jack_mod.JCLI
+
+    else:
+        print(f'{Fmt.BOLD}(start) Cannot wire camillaDSP jack ports: {tmp}{Fmt.END}')
 
 
 def run_plugins(mode='start'):
@@ -221,6 +228,8 @@ def start_zita_link():
 
         Further info at doc/80_Multiroom_pe.audio.sys.md
     """
+    UDP_PORT       = 65000
+    ZITA_BUFFER_MS = 20
 
     try:
         tmp = CONFIG["jack"].get('zita_udp_base')
@@ -228,11 +237,10 @@ def start_zita_link():
         if type(tmp) == int:
             UDP_PORT = tmp
         else:
-            raise Exception("BAD VALUE 'zita_udp_base'")
+            print(f'{Fmt.RED}(start) Bad value zita_udp_base: {tmp}, using {UDP_PORT}{Fmt.END}')
 
     except Exception as e:
-        UDP_PORT = 65000
-        print(f'{Fmt.RED}(start) ERROR in config.yml: {str(e)}, using {UDP_PORT} {Fmt.END}')
+        print(f'{Fmt.RED}(start) ERROR in zita_udp_base: {str(e)}, using {UDP_PORT}{Fmt.END}')
 
     try:
         tmp = CONFIG["jack"].get('zita_buffer_ms')
@@ -240,16 +248,14 @@ def start_zita_link():
         if type(tmp) == int:
             ZITA_BUFFER_MS = tmp
         else:
-            raise Exception("BAD VALUE 'zita_buffer_ms'")
+            print(f'{Fmt.RED}(start) Bad value zita_buffer_ms: {tmp}, using {ZITA_BUFFER_MS}{Fmt.END}')
 
     except Exception as e:
-        ZITA_BUFFER_MS = 20
-        print(f'{Fmt.RED}(start) ERROR in config.yml: {str(e)}, using {ZITA_BUFFER_MS} {Fmt.END}')
+        print(f'{Fmt.RED}(start) ERROR in zita_buffer_ms: {str(e)}, using {ZITA_BUFFER_MS}{Fmt.END}')
 
 
+    # Iterare remoteSOURCES
     zita_link_udp_ports = {}
-
-    # SOURCES example see stop_zita_link() below
     for source_name, params in SOURCES.items():
 
         if not 'remote' in source_name:
@@ -285,12 +291,7 @@ def start_zita_link():
 
 def stop_zita_link():
 
-    # SOURCES example:
-    # { 'none': {},
-    #   'mpd': {'jport': 'mpd_loop'},
-    #   'analog': {'jport': 'system'},
-    #   'remoteSalon': {'remote_delay': 0, 'ip': '192.168.1.57', 'port': 9990, 'jport': 'zita_n2j_57'}
-    # }
+    # Iterare remoteSOURCES
     for source_name, params in SOURCES.items():
 
         if not 'remote' in source_name:

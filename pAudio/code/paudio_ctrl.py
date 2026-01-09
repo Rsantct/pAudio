@@ -175,13 +175,19 @@ def zita_j2n(args):
         return f'killing {zitajname}'
 
     # NORMAL mode
-    jcli = jack.Client(name='zitatmp', no_start_server=True)
+    try:
+        jcli = jack.Client(name='zitatmp', no_start_server=True)
+
+    except Exception as e:
+        print(f'{Fmt.RED}(paudio_ctrl) zita_j2n cannot open a jack client: {str(e)}{Fmt.END}')
+        return 'cannot open a jack client'
 
     jports = jcli.get_ports()
 
     result = ''
 
     if not [x for x in jports if zitajname in x.name]:
+
         zitacmd     = f'zita-j2n --jname {zitajname} {dest} {udpport}'
         with open('/dev/null', 'w') as fnull:
             sp.Popen( zitacmd.split(), stdout=fnull, stderr=fnull )
@@ -197,6 +203,7 @@ def zita_j2n(args):
         result = str(e)
 
     jcli.close()
+    del jcli
 
     return result
 
