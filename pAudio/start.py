@@ -113,7 +113,8 @@ def prepare_jack_stuff():
 def rewire_camilladsp():
     """ https://github.com/HEnquist/camilladsp?tab=readme-ov-file#jack
 
-        CamillaDSP will show up in Jack as "cpal_client_in" and "cpal_client_out".
+        CamillaDSP will emerge in Jack as "cpal_client_in" and "cpal_client_out",
+        so CPAL acts as an intermediate layer.
     """
 
     def cpal_alias():
