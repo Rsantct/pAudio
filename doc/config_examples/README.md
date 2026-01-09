@@ -7,7 +7,7 @@ The **`pAudio/config.yml`** main file is about sound devices, sources and an gen
 
 To a apply dither at the very end of the processing signal path, it depends on whether you use:
 - Coreaudio (macOS), dither will applied by CamillaDSP. Set `dither: true` under the `coreaudio/devices/playback` section
-- Jack (Linux), dither will be applied by the jack sound card driver. Set `dither: true` under the `jack` section.
+- Jack (Linux), dither will be applied by the jack sound card backend. Set `dither: true` under the `jack` section.
 
 ### Jack backend and its CPAL layer
 
