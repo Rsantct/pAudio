@@ -29,10 +29,9 @@ def _jcli_activate(cli_name = 'jack_mod'):
     return 'done'
 
 
-def run_jackd(  alsa_dev='', fs=44100, period=1024, nperiods=2,
+def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=2,
                 jloops_list=[], dither=False, softmode=False ):
-    """ Run JACK in a separate process,
-        including jack_loops
+    """ Run JACK in a separate process, including jack_loops
     """
 
     if VERBOSE:
@@ -48,13 +47,25 @@ def run_jackd(  alsa_dev='', fs=44100, period=1024, nperiods=2,
     else:
         sm = ''
 
-    jack_cmd = f'jackd -d alsa -d {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
-               f' {sm} 1>{LOGFOLDER}/jackd.log 2>&1'
+    if 'rec' in io_mode and 'play' in io_mode:
+        mode = 'd'
+
+    elif 'rec' in io_mode and not 'play' in io_mode:
+        mode = 'C'
+
+    elif not 'rec' in io_mode and 'play' in io_mode:
+        mode = 'P'
+    else:
+        print(f'{Fmt.RED}(jack_mod) BAD io_mode{Fmt.END}')
+        return False
 
     with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
         f.write('JACKD COMMAND LINE:\n')
         f.write(jack_cmd)
         f.write('\n\n')
+
+    jack_cmd = f'jackd -d alsa -{mode} {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
+               f' {sm} 1>{LOGFOLDER}/jackd.log 2>&1'
 
     sp.Popen( jack_cmd, shell=True )
 
