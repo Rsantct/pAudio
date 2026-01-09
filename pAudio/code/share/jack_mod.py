@@ -28,6 +28,7 @@ def _jcli_activate(cli_name = 'jack_mod'):
 
     return 'done'
 
+
 def run_jackd(  alsa_dev='', fs=44100, period=1024, nperiods=2,
                 jloops_list=[], dither=False, softmode=False ):
     """ Run JACK in a separate process,
