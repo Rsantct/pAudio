@@ -251,7 +251,12 @@ def init_camilladsp(pAudio_config):
 
         result = True
 
-        jcli = jack.Client(name='tmp', no_start_server=True)
+        try:
+            jcli = jack.Client(name='tmp', no_start_server=True)
+
+        except Exception as e:
+            print(f'{Fmt.BOLD}(pcamilla) cannot open a jack client to check cpal ports: {str(e)}{Fmt.END}')
+            return False
 
         cpal_ports = jcli.get_ports('cpal_client')
 
@@ -274,6 +279,7 @@ def init_camilladsp(pAudio_config):
                     result = False
 
         jcli.close()
+        del jcli
 
         return result
 
