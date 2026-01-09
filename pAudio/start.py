@@ -71,7 +71,7 @@ def check_cdsp_running():
 
 
 def prepare_jack_stuff():
-    """ execute JACK with the convenient loops
+    """ Run JACK with the appropriate parameters and loops
     """
 
     if sys.platform != 'linux':
@@ -90,7 +90,9 @@ def prepare_jack_stuff():
     dither   = CONFIG["jack"]["dither"]
     softmode = CONFIG["jack"]["softmode"]
 
-    if not jack_mod.run_jackd(  alsa_dev=alsa_dev,
+    io_mode  = detect_sound_card_io(alsa_dev)
+
+    if not jack_mod.run_jackd(  alsa_dev=alsa_dev, io_mode=io_mode,
                                 fs=fs, period=period, nperiods=nperiods,
                                 jloops_list=jloops_list,
                                 dither=dither, softmode=softmode):
