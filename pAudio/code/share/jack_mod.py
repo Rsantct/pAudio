@@ -59,13 +59,13 @@ def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=
         print(f'{Fmt.RED}(jack_mod) BAD io_mode{Fmt.END}')
         return False
 
+    jack_cmd = f'jackd -d alsa -{mode} {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
+               f' {sm} 1>{LOGFOLDER}/jackd.log 2>&1'
+
     with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
         f.write('JACKD COMMAND LINE:\n')
         f.write(jack_cmd)
         f.write('\n\n')
-
-    jack_cmd = f'jackd -d alsa -{mode} {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
-               f' {sm} 1>{LOGFOLDER}/jackd.log 2>&1'
 
     sp.Popen( jack_cmd, shell=True )
 
@@ -94,9 +94,13 @@ def _jack_loop(clientname, nports=2):
     if VERBOSE:
         print( f'{Fmt.CYAN}(jack_loop) trying to run: {clientname} with {nports} ports ...{Fmt.END}' )
 
-
     # The jack module instance for our looping ports
-    client = jack.Client(name=clientname, no_start_server=True)
+    try:
+        client = jack.Client(name=clientname, no_start_server=True)
+
+    except Exception as e:
+        print(f'{Fmt.RED}(jack_mod) jack_loop, cannot open a jack clent: {str(e)}{Fmt.END}')
+        return
 
     if client.status.name_not_unique:
         client.close()
