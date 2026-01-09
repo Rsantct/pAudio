@@ -52,4 +52,4 @@ expert_zone:
     # xrun cpal errors when the intermediate cpal layer does not detect camilladsp packets.
     # Default is false. Notice that CPU load will not decrease anymore, so you may
     # consider to include a 'paudio_restart.sh stop' entry in your daily crontab.
-    disable_silence_timeout: false
+    disable_silence_timeout: true
