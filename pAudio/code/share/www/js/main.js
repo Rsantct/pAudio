@@ -1234,7 +1234,11 @@ function oi_LU_slider_action(slider_value){
 
 
 function highlight_macro_button(id){
-    document.getElementById(id).className = 'macro_button_highlighted';
+    try{
+        document.getElementById(id).className = 'macro_button_highlighted';
+    }catch(e){
+        console.log(e.message)
+    }
 }
 
 
