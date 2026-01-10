@@ -583,7 +583,7 @@ def save_json_file(d, fpath, timeout=1):
     while tries:
         try:
             with open(fpath, 'w') as f:
-                f.write(json.dumps(d))
+                f.write( json.dumps(d, indent=2) )
             break
         except:
             tries -= 1
