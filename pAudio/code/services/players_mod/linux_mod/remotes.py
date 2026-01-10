@@ -35,18 +35,20 @@ def get_info(remoteID, timeout=0.5):
     #   'jport': 'zita_n2j_57'
     #  }
 
+    remote_ans = PLAYERTEMPLATE.copy()
 
     if not remote:
-        return PLAYERTEMPLATE.copy()
+        return remote_ans
 
     try:
-        remote_ans = send_cmd( 'player get_info', host=remote["ip"], port=remote["port"], timeout=timeout )
-        remote_ans = json.loads( remote_ans )
-        return remote_ans
+        tmp = send_cmd( 'player get_info', host=remote["ip"], port=remote["port"], timeout=timeout )
+        if tmp.strip() != 'timed out':
+            remote_ans = json.loads( tmp )
 
     except Exception as e:
         print(f'{Fmt.RED}(remotes) ERROR getting remote player info and metadata: {str(e)}{Fmt.END}')
-        return PLAYERTEMPLATE.copy()
+
+    return remote_ans
 
 
 def playback_control(remoteID, cmd):

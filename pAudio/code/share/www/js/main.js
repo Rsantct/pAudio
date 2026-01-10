@@ -712,6 +712,10 @@ function page_update() {
             server_available = false;
         }
 
+        if ( aux_info.loudspeaker ) {
+            document.title = 'pAudio ' + aux_info.loudspeaker;
+        }
+
         if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
             document.getElementById("OnOffButton").innerText = aux_info.onoff.toUpperCase();
             document.getElementById("OnOffButton").style.display = 'block';
@@ -1230,7 +1234,11 @@ function oi_LU_slider_action(slider_value){
 
 
 function highlight_macro_button(id){
-    document.getElementById(id).className = 'macro_button_highlighted';
+    try{
+        document.getElementById(id).className = 'macro_button_highlighted';
+    }catch(e){
+        console.log(e.message)
+    }
 }
 
 
@@ -1406,7 +1414,6 @@ function state_get() {
     try{
         state = JSON.parse( control_cmd('preamp state') );
         server_available = true;
-        document.title = 'pAudio ' + state.loudspeaker;
     }catch(e){
         state = {};
         server_available = false;

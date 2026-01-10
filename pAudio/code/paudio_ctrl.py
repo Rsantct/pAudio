@@ -50,6 +50,7 @@ def init():
 
     # Aux info file
     AUXINFO = {
+        "loudspeaker":      CONFIG.get('loudspeaker', ''),
         "loudness_monitor": read_json_file(LDMON_PATH),
         "last_macro":       "",
         "warning":          "",
