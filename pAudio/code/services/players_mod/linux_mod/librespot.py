@@ -122,4 +122,4 @@ if __name__ == "__main__":
 
     tmp = get_info()
 
-    print( json.dumps(tmp) )
+    print( json.dumps(tmp, indent=2) )
