@@ -712,6 +712,10 @@ function page_update() {
             server_available = false;
         }
 
+        if ( aux_info.loudspeaker ) {
+            document.title = 'pAudio ' + aux_info.loudspeaker;
+        }
+
         if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
             document.getElementById("OnOffButton").innerText = aux_info.onoff.toUpperCase();
             document.getElementById("OnOffButton").style.display = 'block';
@@ -1406,7 +1410,6 @@ function state_get() {
     try{
         state = JSON.parse( control_cmd('preamp state') );
         server_available = true;
-        document.title = 'pAudio ' + state.loudspeaker;
     }catch(e){
         state = {};
         server_available = false;
