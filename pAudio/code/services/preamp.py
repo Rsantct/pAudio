@@ -213,7 +213,7 @@ def init():
     # Dump CONFIG to disk
     with open(f'{MAINFOLDER}/.pAudio_cfg', 'w') as f:
         #f.write( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
-        f.write( json.dumps(CONFIG) )
+        f.write( json.dumps(CONFIG, indent=2) )
 
     # Target curve sets
     TARGET_SETS = get_target_sets(fs=CONFIG["samplerate"])
@@ -822,7 +822,7 @@ def do(cmd, args, add):
             result = 'preamp'
 
         case 'state':
-            result = json.dumps(STATE)
+            result = json.dumps(STATE, indent=2)
 
         case 'get_sources':
             result = json.dumps( list(SOURCES.keys()) )

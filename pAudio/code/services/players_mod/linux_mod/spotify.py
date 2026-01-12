@@ -199,4 +199,4 @@ def playback_control(cmd, arg=''):
 if __name__ == "__main__":
 
     info = get_spotify_info()
-    print( json.dumps(info) )
+    print( json.dumps(info, indent=2) )

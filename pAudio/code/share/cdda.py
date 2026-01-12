@@ -119,7 +119,7 @@ def _get_disc_metadata( device=get_cdda_device() ):
                                              )
         try:
             with open(CDDA_MUSICBRAINZ_PATH, 'w') as f:
-                f.write( json.dumps( mz_result ) )
+                f.write( json.dumps( mz_result, indent=2 ) )
         except:
             print(f'{Fmt.RED}(cdda.py) cannot write to {CDDA_MUSICBRAINZ_PATH}{Fmt.END}')
 
@@ -283,7 +283,7 @@ def dump_cdda_metadata( device=get_cdda_device() ):
     md = _get_disc_metadata(device)
 
     with open(CDDA_META_PATH, 'w') as f:
-        f.write( json.dumps( md ) )
+        f.write( json.dumps( md, indent=2 ) )
 
     if md["discid"]:
 

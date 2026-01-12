@@ -394,4 +394,4 @@ def playback_control(cmd):
 
 if __name__ == "__main__":
 
-    print( json.dumps( get_player_info() ) )
+    print( json.dumps( get_player_info(), indent=2 ) )

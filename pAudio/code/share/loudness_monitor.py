@@ -71,7 +71,7 @@ if not AUDIO_SOURCE:
 def prepare_ldmon_path():
     init_values = {"LU_I": -77.0, "LU_M": -80.0, "scope": "track"}
     with open( LDMON_PATH, 'w') as f:
-        f.write( json.dumps(init_values) )
+        f.write( json.dumps(init_values, indent=2) )
 
 
 def prepare_control_fifo(fname):
@@ -209,7 +209,7 @@ def save2disk():
         I_LU = I_LU // meter.I_threshold * meter.I_threshold
         M_LU = M_LU // meter.M_threshold * meter.M_threshold
         d = { "LU_I":  I_LU, "LU_M":  M_LU, "scope": scope }
-        f.write( json.dumps(d) )
+        f.write( json.dumps(d, indent=2) )
 
 
 if __name__ == '__main__':

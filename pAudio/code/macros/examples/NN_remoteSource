@@ -19,6 +19,9 @@ if not raddr:
     print(f'({ME}) ERROR getting remote source: {REM_SRC_NAME}')
     sys.exit()
 
+# Stopping local players
+Popen('mpc pause 1>/dev/null 2>&1', shell=True)
+
 # Set remote XO => mp
 remote_ans = send_cmd('set_xo mp', host=raddr, port=rport)
 if not remote_ans == 'done':
@@ -28,6 +31,3 @@ if not remote_ans == 'done':
 local_ans = send_cmd(f'source {REM_SRC_NAME}', timeout=10)
 if not local_ans == 'ordered':
     print(f'{Fmt.RED}Cannot select {REM_SRC_NAME}: {local_ans}{Fmt.END}')
-
-# Stopping local players
-Popen('mpc pause 1>/dev/null 2>&1', shell=True)
