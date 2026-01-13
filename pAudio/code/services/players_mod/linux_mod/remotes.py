@@ -12,14 +12,14 @@ import  json
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  Fmt, read_json_file, MAINFOLDER, PLAYERTEMPLATE, \
+from common import  Fmt, read_json_file, LOGFOLDER, PLAYERTEMPLATE, \
                     send_cmd
 
 def _init():
 
     global SOURCES
 
-    pAudio_cfg = read_json_file(f'{MAINFOLDER}/.pAudio_cfg')
+    pAudio_cfg = read_json_file(f'{LOGFOLDER}/pAudio_cfg')
 
     SOURCES = pAudio_cfg.get('sources')
 
