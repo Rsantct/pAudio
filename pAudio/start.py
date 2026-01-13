@@ -220,7 +220,7 @@ def manage_loudness_monitor_daemon(mode='start'):
         sp.Popen(tmp, shell=True)
 
 
-def start_zita_link():
+def start_zita_links():
     """ A LAN audio connection based on zita-njbridge from Fons Adriaensen.
 
             "similar to having analog audio connections between the
@@ -339,7 +339,7 @@ def start():
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
         # Zita network to jack (Linux)
-        start_zita_link()
+        start_zita_links()
 
         # Rewire CamillaDSP ONLY with Linux JACK
         rewire_camilladsp()
