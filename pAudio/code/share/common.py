@@ -939,6 +939,25 @@ def get_camilladsp_last_error():
     return res
 
 
+def find_zita_link_ports(source_name):
+    """ a helper to read the auxiliary file:
+            log/zita_link_udp_ports
+    """
+
+    result = ('', 0, 0)
+
+    try:
+        with open(f'{LOGFOLDER}/zita_link_udp_ports', 'r') as f:
+            zita_remotes = json.loads( f.read() )
+            zita_remote = zita_remotes[source_name]
+            result = ( zita_remote["addr"], zita_remote["port"], zita_remote["udpport"] )
+
+    except Exception as e:
+        print(f'{Fmt.RED}(common) Error reading log/zita_link_udp_ports for source `{sname}`: {str(e)}{Fmt.END}')
+
+    return result
+
+
 def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
     """
         Restarting zita-j2n on the multiroom sender's end,
