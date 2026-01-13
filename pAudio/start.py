@@ -228,31 +228,8 @@ def start_zita_link():
 
         Further info at doc/80_Multiroom_pe.audio.sys.md
     """
-    UDP_PORT       = 65000
-    ZITA_BUFFER_MS = 20
-
-    try:
-        tmp = CONFIG["jack"].get('zita_udp_base')
-
-        if type(tmp) == int:
-            UDP_PORT = tmp
-        else:
-            print(f'{Fmt.RED}(start) Bad value zita_udp_base: {tmp}, using {UDP_PORT}{Fmt.END}')
-
-    except Exception as e:
-        print(f'{Fmt.RED}(start) ERROR in zita_udp_base: {str(e)}, using {UDP_PORT}{Fmt.END}')
-
-    try:
-        tmp = CONFIG["jack"].get('zita_buffer_ms')
-
-        if type(tmp) == int:
-            ZITA_BUFFER_MS = tmp
-        else:
-            print(f'{Fmt.RED}(start) Bad value zita_buffer_ms: {tmp}, using {ZITA_BUFFER_MS}{Fmt.END}')
-
-    except Exception as e:
-        print(f'{Fmt.RED}(start) ERROR in zita_buffer_ms: {str(e)}, using {ZITA_BUFFER_MS}{Fmt.END}')
-
+    UDP_PORT = CONFIG["jack"]["zita_udp_base"]
+    BUFF_MS  = CONFIG["jack"]["zita_buffer_ms"]
 
     # Iterare remoteSOURCES
     zita_link_udp_ports = {}
@@ -277,7 +254,7 @@ def start_zita_link():
         # RUN LOCAL RECEIVER:
         if VERBOSE:
             print(f'{Fmt.GRAY}(start) running local zita-n2j: {params["jport"]}{Fmt.END}')
-        local_zita_restart( params["ip"], UDP_PORT, ZITA_BUFFER_MS )
+        local_zita_restart( params["ip"], UDP_PORT, BUFF_MS )
 
         # (i) zita will use 2 consecutive ports, so let's space by 10
         UDP_PORT += 10
