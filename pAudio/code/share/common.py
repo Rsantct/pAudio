@@ -952,10 +952,10 @@ def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
         zargs = json.dumps( (get_my_ip(), None, 'stop') )
         remotecmd = f'aux zita_j2n {zargs}'
 
-        if CONFIG["verbose"]:
-            print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}{Fmt.END}')
-
         result = send_cmd(remotecmd, host=raddr, port=ctrl_port, timeout=1)
+
+        if CONFIG["verbose"]:
+            print(f'{Fmt.GRAY}(common) stopping remote {raddr}: {remotecmd}. Response was: {Fmt.BOLD}{result}{Fmt.END}')
 
         return result
 
@@ -964,7 +964,7 @@ def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
     remotecmd = f'aux zita_j2n {zargs}'
     result = send_cmd(remotecmd, host=raddr, port=ctrl_port)
 
-    print(f'(common) SENDING TO REMOTE: {remotecmd}')
+    print(f'{Fmt.GRAY}(common) SENDING TO REMOTE: {remotecmd}. Response was: {Fmt.BOLD}{result}{Fmt.END}')
 
     return result
 
@@ -1000,10 +1000,10 @@ def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='resta
         wait4ports(zitajname, 3)
         sp.Popen( f'jack_alias {zitajname}:out_1 {raddr}:out_1'.split() )
         sp.Popen( f'jack_alias {zitajname}:out_2 {raddr}:out_2'.split() )
-        print(f'(common) RUNNING LOCAL: {zitacmd}, LOGGING under {LOGFOLDER}')
+        print(f'{Fmt.GRAY}(common) RUNNING LOCAL: {zitacmd}, {Fmt.BOLD}LOGGING under {LOGFOLDER}{Fmt.END}')
 
     except Exception as e:
-        print(f'(common) ERROR: {e}, you may want run it for a remote source?')
+        print(f'{Fmt.RED}(common) ERROR: {e}, you may want run it for a remote source?{Fmt.END}')
 
 
 def get_timestamp():
