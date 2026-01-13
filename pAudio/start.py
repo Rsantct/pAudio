@@ -285,7 +285,7 @@ def start_zita_link():
     # (**) Saving the zita's UDP PORTS for future use because
     #     the remote sender could not be online at the moment ...
     with open(f'{LOGFOLDER}/zita_link_udp_ports', 'w') as f:
-        d = json.dumps( zita_link_udp_ports )
+        d = json.dumps( zita_link_udp_ports, indent=2 )
         f.write(d)
 
 
