@@ -211,7 +211,7 @@ def init():
     CONFIG["sources"] = SOURCES
 
     # Dump CONFIG to disk
-    with open(f'{MAINFOLDER}/.pAudio_cfg', 'w') as f:
+    with open(f'{LOGFOLDER}/pAudio_cfg', 'w') as f:
         #f.write( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
         f.write( json.dumps(CONFIG, indent=2) )
 
@@ -502,24 +502,11 @@ def set_source(sname):
     """ Jack and Coreaudio have different source management
     """
 
-    def recover_zita_link_ports():
-
-        res = ('', 0, 0)
-
-        try:
-            with open(f'{LOGFOLDER}/zita_link_udp_ports', 'r') as f:
-                zita_link_udp_ports = json.loads( f.read() )
-                res = zita_link_udp_ports[sname]
-                res = ( res["addr"], res["port"], res["udpport"] )
-        except Exception as e:
-            print(f'(preamp) `{sname}` source error recovering zita ports: {str(e)}')
-
-        return res
-
+    source_is_available = True
+    result = 'no changes'
 
     if not sname in SOURCES:
         return f'must be in: { list( SOURCES.keys() ) }'
-
 
     # COREAUDIO
     if CONFIG.get('coreaudio'):
@@ -539,8 +526,6 @@ def set_source(sname):
     # JACK
     elif CONFIG.get('jack'):
 
-        res = jack_sources.select( sname )
-
         # Remote source
         if 'remote' in sname:
 
@@ -552,58 +537,67 @@ def set_source(sname):
             #                   'port': 9990,
             #                   'jport': 'zita_n2j_57'  }
 
-            # Track volume (optional)
+            remote_ip    = SOURCES[sname].get('ip')
+            remote_port  = SOURCES[sname].get('port', 9990)
+            remote_delay = SOURCES[sname].get('remote_delay', 0)
+
+            # Tell the remote to track its volume to the local end (optional)
             if SOURCES[sname].get('remote_track_level'):
+                send_cmd('hello', host=remote_ip, port=remote_port + 5)
 
-                remote_ip               = SOURCES[sname].get('ip')
-                remote_vol_daemon_port  = SOURCES[sname].get('port') + 5
-
-                send_cmd('hello', host=remote_ip, port=remote_vol_daemon_port)
-
-            # This is to avoid restarting the whole local pAudio
-            # when the remote sender has been restarted.
             # We force to restart zita-j2n at sender end.
-            # The local zita-n2j is supposed to be still listening
-            raddr, rport, rudpport = recover_zita_link_ports()
+            # (the local zita-n2j is supposed to be listening from start up)
+            raddr, rport, rudpport = find_zita_link_ports(sname)
+
             if raddr and rport and rudpport:
-                remote_zita_restart(raddr, rport, rudpport, 'stop')
-                sleep(1)
-                remote_zita_restart(raddr, rport, rudpport, 'restart')
 
-            # Remote delay (optional)
-            if SOURCES[sname].get('remote_delay', 0):
+                ans = remote_zita_restart(raddr, rport, rudpport, 'restart').lower()
 
-                remote_ip    = SOURCES[sname].get('ip')
-                remote_port  = SOURCES[sname].get('port')
-                remote_delay = SOURCES[sname].get('remote_delay')
+                if not ('error' in ans or 'timed out' in ans):
 
-                send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
+                    # Remote delay (optional)
+                    if remote_delay:
+                        send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
 
-        # Local source
-        else:
-            pass
+                    # Prepare the local volume as the remote side
+                    tmp = send_cmd(f'state', host=remote_ip, port=remote_port)
+                    try:
+                        rem_vol = tmp.get('level', -30)
+                    except:
+                        rem_vol = -30
+                    send_cmd( f'preamp level {rem_vol}' )
 
+                else:
+                    source_is_available = False
 
         # Delay ms (optional)
         delay = SOURCES[sname].get('local_delay', 0.0)
         if set_delay( delay ) == 'done':
             STATE["extra_delay"] = delay
 
-        # Source gain offset (usually for analaog)
-        gain = SOURCES[sname].get('gain', 0.0)
-        try:
-            gain = round(gain, 1)
-            if set_gain_offset( gain ) == 'done':
-                STATE["source_gain_offset"] = gain
-        except Exception as e:
-            res = f'cannot set gain {gain} dB for source: {sname}'
+        if source_is_available:
 
-    # only coreaudio or jack
+            # Switch to source
+            result = jack_sources.select( sname )
+
+            # and apply gain offset (usually for analaog)
+            gain = SOURCES[sname].get('gain', 0.0)
+            try:
+                gain = round(gain, 1)
+                if set_gain_offset( gain ) == 'done':
+                    STATE["source_gain_offset"] = gain
+            except Exception as e:
+                result = f'cannot set gain {gain} dB for source: {sname}'
+
+        else:
+            result = 'source not available'
+
+    # if not coreaudio or jack
     else:
-        res = 'bad config.yml'
+        result = 'bad config.yml'
 
 
-    return res
+    return result
 
 
 def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
