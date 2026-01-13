@@ -555,17 +555,20 @@ def set_source(sname):
 
                 if not ('error' in ans or 'timed out' in ans):
 
+                    # Lower the local volume initially
+                    do_levels( 'level', -30.0 )
+
                     # Remote delay (optional)
                     if remote_delay:
                         send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
 
-                    # Prepare the local volume as the remote side
+                    # Balance the local volume as the remote side
                     tmp = send_cmd(f'state', host=remote_ip, port=remote_port)
                     try:
                         rem_vol = tmp.get('level', -30)
                     except:
                         rem_vol = -30
-                    send_cmd( f'preamp level {rem_vol}' )
+                    do_levels( 'level', rem_vol )
 
                 else:
                     source_is_available = False
