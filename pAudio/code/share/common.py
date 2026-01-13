@@ -940,7 +940,7 @@ def get_camilladsp_last_error():
 
 
 def find_zita_link_ports(source_name):
-    """ a helper to read the auxiliary file:
+    """ A helper to read zita_link addressing data from the auxiliary file:
             log/zita_link_udp_ports
     """
 
