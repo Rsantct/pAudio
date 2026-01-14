@@ -211,9 +211,7 @@ def init():
     CONFIG["sources"] = SOURCES
 
     # Dump CONFIG to disk
-    with open(f'{LOGFOLDER}/pAudio_cfg', 'w') as f:
-        #f.write( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
-        f.write( json.dumps(CONFIG, indent=2) )
+    write_pAudio_cfg(CONFIG)
 
     # Target curve sets
     TARGET_SETS = get_target_sets(fs=CONFIG["samplerate"])
@@ -502,6 +500,30 @@ def set_source(sname):
     """ Jack and Coreaudio have different source management
     """
 
+    def read_remote_source_config(sname):
+        """ Reread the remote source config from the config.py file,
+            so that on the fly configuration changes can be applied
+
+            Example:
+                { 'remote_addr': '192.168.1.57',
+                  'remote_track_level': True,
+                  'remote_delay': 55,
+                  'local_delay': 0
+                }
+
+        """
+        with open(f'{MAINFOLDER}/config.yml', 'r') as f:
+            config = yaml.safe_load(f)
+
+        rem_cfg = config["jack"]["sources"].get(sname, {})
+
+        # we also append the common zita buffer so that
+        # on-the-fly changes can be applied.
+        rem_cfg["zita_buffer_ms"] = config["jack"].get('zita_buffer_ms', 20)
+
+        return rem_cfg
+
+
     source_is_available = True
     result = 'no changes'
 
@@ -528,30 +550,24 @@ def set_source(sname):
 
         # Remote source
         if 'remote' in sname:
-
-            # Example:
-            # 'remoteSalon': {  'local_delay': 5,
-            #                   'remote_delay': 0,
-            #                   'remote_track_level': True,
-            #                   'ip': '192.168.1.57',
-            #                   'port': 9990,
-            #                   'jport': 'zita_n2j_57'  }
-
-            remote_ip    = SOURCES[sname].get('ip')
-            remote_port  = SOURCES[sname].get('port', 9990)
-            remote_delay = SOURCES[sname].get('remote_delay', 0)
+            remote_cfg     = read_remote_source_config(sname)
+            zita_buff      = remote_cfg.get('zita_buffer_ms')
+            remote_ip      = remote_cfg.get('remote_addr')
+            remote_port    = remote_cfg.get('remote_port', 9990)
+            remote_delay   = remote_cfg.get('remote_delay', 0)
+            do_track_level = remote_cfg.get('remote_track_level')
 
             # Tell the remote to track its volume to the local end (optional)
-            if SOURCES[sname].get('remote_track_level'):
+            if do_track_level:
                 send_cmd('hello', host=remote_ip, port=remote_port + 5)
 
-            # We force to restart zita-j2n at sender end.
+            # Remote zita-j2n sender. We force to restart zita-j2n at sender end.
             # (the local zita-n2j is supposed to be listening from start up)
             raddr, rport, rudpport = find_zita_link_ports(sname)
 
             if raddr and rport and rudpport:
 
-                ans = remote_zita_restart(raddr, rport, rudpport, 'restart').lower()
+                ans = zita_remote_restart(raddr, rport, rudpport, 'restart').lower()
 
                 if not ('error' in ans or 'timed out' in ans):
 
@@ -572,6 +588,15 @@ def set_source(sname):
 
                 else:
                     source_is_available = False
+
+            # Local zita-n2j receiver. If a new buffer setting is found
+            # under config.yml, then we restart the local zita-n2j
+            init_buff = CONFIG["jack"]["zita_buffer_ms"]
+            if zita_buff != init_buff:
+                print(f'{Fmt.BLUE}zita-n2j appliyng new buffer: {zita_buff} ms{Fmt.END}')
+                zita_local_restart(raddr, rudpport, zita_buff)
+                CONFIG["jack"]["zita_buffer_ms"] = zita_buff
+                write_pAudio_cfg(CONFIG)
 
         # Delay ms (optional)
         delay = SOURCES[sname].get('local_delay', 0.0)
