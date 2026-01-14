@@ -25,6 +25,11 @@ if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
 USER = getuser()
 
 
+def write_pAudio_cfg(c):
+    with open(f'{LOGFOLDER}/pAudio_cfg', 'w') as f:
+        f.write( json.dumps(c, indent=2) )
+
+
 def json_string_fix(cad):
     """ Example of a raw string that cannot be parsed by json.loads because nested double quotes (")
 
@@ -958,7 +963,7 @@ def find_zita_link_ports(source_name):
     return result
 
 
-def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
+def zita_remote_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
     """
         Restarting zita-j2n on the multiroom sender's end,
         pointing to our ip.
@@ -988,41 +993,57 @@ def remote_zita_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
     return result
 
 
-def local_zita_restart(raddr='', udp_port=0, buff_size=20, jport='', mode='restart'):
+def zita_local_restart(raddr='', udp_port=0, buff_size=20, mode='restart', jport=''):
     """
         Run zita-n2j listen ports on the multiroom receiver's end.
 
         (i) Will log zita process printouts under LOGFOLDER
     """
 
-    if mode == 'stop':
+    def do_stop():
 
         if CONFIG["verbose"]:
             print(f'{Fmt.GRAY}(common) killing local zita-n2j: {jport}{Fmt.END}')
 
         zitapattern  = f'zita-n2j --jname {jport}'
-        sp.call( ['pkill', '-KILL', '-u', USER, '-f',  zitapattern] )
 
-        return None
+        try:
+            sp.call( ['pkill', '-KILL', '-u', USER, '-f',  zitapattern] )
+            return 'done'
+        except Exception as e:
+            return str(e)
 
 
-    zitajname = f'zita_n2j_{ raddr.split(".")[-1] }'
-    zitacmd   = f'zita-n2j --jname {zitajname} --buff {buff_size} {get_my_ip()} {udp_port}'
-    zitalog   = f'{LOGFOLDER}/{zitajname}.log'
+    if not jport:
+        jport = f'zita_n2j_{ raddr.split(".")[-1] }'
+    zitacmd = f'zita-n2j --jname {jport} --buff {buff_size} {get_my_ip()} {udp_port}'
+    zitalog = f'{LOGFOLDER}/{jport}.log'
 
-    # Assign ALIAS to ports to be able to switch by using
+    # jport is used for mode=stop
+    if not jport and not (raddr and udp_port):
+        print(f'{Fmt.RED}(common) zita_local_restart bad arguments{Fmt.END}')
+        return 'bad arguments'
+
+    tmp = do_stop()
+
+    if mode == 'stop':
+        return tmp
+
+    # Assign ALIAS to JACK ports to be able to switch by using
     # the IP port name of a remoteXXXX source in config.yml
     #
     try:
         # Using stdbuf because zita does use unbuffered output to tty, skipping stdout/stderr
         sp.Popen( f'stdbuf -oL -eL {zitacmd} 1>{zitalog} 2>&1', shell=True )
-        wait4ports(zitajname, 3)
-        sp.Popen( f'jack_alias {zitajname}:out_1 {raddr}:out_1'.split() )
-        sp.Popen( f'jack_alias {zitajname}:out_2 {raddr}:out_2'.split() )
+        wait4ports(jport, 3)
+        sp.Popen( f'jack_alias {jport}:out_1 {raddr}:out_1'.split() )
+        sp.Popen( f'jack_alias {jport}:out_2 {raddr}:out_2'.split() )
         print(f'{Fmt.GRAY}(common) RUNNING LOCAL: {zitacmd}, {Fmt.BOLD}LOGGING under {LOGFOLDER}{Fmt.END}')
+        return 'done'
 
     except Exception as e:
-        print(f'{Fmt.RED}(common) ERROR: {e}, you may want run it for a remote source?{Fmt.END}')
+        print(f'{Fmt.RED}(common) zita_local_restart ERROR: {e}{Fmt.END}')
+        return str(e)
 
 
 def get_timestamp():
