@@ -220,13 +220,16 @@ def manage_loudness_monitor_daemon(mode='start'):
         sp.Popen(tmp, shell=True)
 
 
-def start_zita_links():
+def prepare_zita_links():
     """ A LAN audio connection based on zita-njbridge from Fons Adriaensen.
 
             "similar to having analog audio connections between the
             sound cards of the systems using it"
 
         Further info at doc/80_Multiroom_pe.audio.sys.md
+
+        Here we just prepare the local receivers and the addresses
+        and ports mapping to use.
     """
     UDP_PORT = CONFIG["jack"]["zita_udp_base"]
     BUFF_MS  = CONFIG["jack"]["zita_buffer_ms"]
@@ -239,24 +242,20 @@ def start_zita_links():
             continue
 
         if VERBOSE:
-            print( f'(start) Running zita-njbridge for: `{ source_name }`' )
-
-        # Trying to RUN THE REMOTE SENDER zita-j2n (**)
-        if VERBOSE:
-            print(f'{Fmt.GRAY}(start) starting remote zita-j2n at: {params["ip"]}{Fmt.END}')
-        zita_remote_restart(params["ip"], params["port"], UDP_PORT)
+            print( f'(start) preparing zita_link for: `{ source_name }`' )
 
         # Append the UPD_PORT to zita_link_udp_ports
         zita_link_udp_ports[source_name] = { 'addr':    params["ip"],
                                              'port':    params["port"],
                                              'udpport': UDP_PORT}
 
-        # RUN LOCAL RECEIVER:
-        if VERBOSE:
-            print(f'{Fmt.GRAY}(start) running local zita-n2j: {params["jport"]}{Fmt.END}')
-        zita_local_restart( params["ip"], UDP_PORT, BUFF_MS )
+        # Launch the local receiver:
+        if ip_is_reachable(params["ip"]):
+            zita_local_restart( params["ip"], UDP_PORT, BUFF_MS )
+            if VERBOSE:
+                print(f'{Fmt.GRAY}(start) running local zita-n2j: {params["jport"]}{Fmt.END}')
 
-        # (i) zita will use 2 consecutive ports, so let's space by 10
+        # (i) zita will use 2 consecutive ports, so let's space by 10 for simplicity
         UDP_PORT += 10
 
     # (**) Saving the zita's UDP PORTS for future use because
@@ -339,7 +338,8 @@ def start():
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
         # Zita network to jack (Linux)
-        start_zita_links()
+        zljob = threading.Thread(target=prepare_zita_links)
+        zljob.start()
 
         # Rewire CamillaDSP ONLY with Linux JACK
         rewire_camilladsp()

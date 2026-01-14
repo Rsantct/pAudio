@@ -561,7 +561,7 @@ def set_source(sname):
             if do_track_level:
                 send_cmd('hello', host=remote_ip, port=remote_port + 5)
 
-            # Remote zita-j2n sender. We force to restart zita-j2n at sender end.
+            # Remote zita-j2n sender. We force to restart zita-j2n at the sender end.
             # (the local zita-n2j is supposed to be listening from start up)
             raddr, rport, rudpport = find_zita_link_ports(sname)
 
@@ -589,14 +589,21 @@ def set_source(sname):
                 else:
                     source_is_available = False
 
-            # Local zita-n2j receiver. If a new buffer setting is found
-            # under config.yml, then we restart the local zita-n2j
-            init_buff = CONFIG["jack"]["zita_buffer_ms"]
-            if zita_buff != init_buff:
+            # Local zita-n2j receiver.
+            #
+            # If a new buffer setting is found under the current config.yml,
+            # then we restart the local zita-n2j
+            if zita_buff != CONFIG["jack"]["zita_buffer_ms"]:
                 print(f'{Fmt.BLUE}zita-n2j appliyng new buffer: {zita_buff} ms{Fmt.END}')
                 zita_local_restart(raddr, rudpport, zita_buff)
                 CONFIG["jack"]["zita_buffer_ms"] = zita_buff
                 write_pAudio_cfg(CONFIG)
+            #
+            # Anyway we check if the local zita-n2j receiver is listening from start up.
+            else:
+                pattern = f'zita_n2j_{ remote_ip.split(".")[-1] }'
+                if not process_is_running( pattern ):
+                    zita_local_restart(raddr, rudpport, zita_buff)
 
         # Delay ms (optional)
         delay = SOURCES[sname].get('local_delay', 0.0)
