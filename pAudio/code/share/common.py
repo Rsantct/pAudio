@@ -886,6 +886,20 @@ def wait4jackports( pattern, timeout=5 ):
         return False
 
 
+def ip_is_reachable(ip):
+    """ ip (str) responds to a ping request.
+        (boolean)
+    """
+    param = '-n' if sys.platform.lower().startswith('win') else '-c'
+
+    command = ['ping', param, '1', ip]
+
+    # Run the command and redirect output to DEVNULL to keep the console clean
+    result = sp.run(command, stdout=sp.DEVNULL, stderr=sp.DEVNULL).returncode == 0
+
+    return result
+
+
 def is_IP(s):
     """ Validate if a given string is a valid IP address
         (bool)
