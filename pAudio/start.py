@@ -244,7 +244,7 @@ def start_zita_links():
         # Trying to RUN THE REMOTE SENDER zita-j2n (**)
         if VERBOSE:
             print(f'{Fmt.GRAY}(start) starting remote zita-j2n at: {params["ip"]}{Fmt.END}')
-        remote_zita_restart(params["ip"], params["port"], UDP_PORT)
+        zita_remote_restart(params["ip"], params["port"], UDP_PORT)
 
         # Append the UPD_PORT to zita_link_udp_ports
         zita_link_udp_ports[source_name] = { 'addr':    params["ip"],
@@ -254,7 +254,7 @@ def start_zita_links():
         # RUN LOCAL RECEIVER:
         if VERBOSE:
             print(f'{Fmt.GRAY}(start) running local zita-n2j: {params["jport"]}{Fmt.END}')
-        local_zita_restart( params["ip"], UDP_PORT, BUFF_MS )
+        zita_local_restart( params["ip"], UDP_PORT, BUFF_MS )
 
         # (i) zita will use 2 consecutive ports, so let's space by 10
         UDP_PORT += 10
@@ -275,10 +275,10 @@ def stop_zita_link():
             continue
 
         # REMOTE
-        remote_zita_restart(params["ip"], params["port"], mode='stop')
+        zita_remote_restart(params["ip"], params["port"], mode='stop')
 
         # LOCAL
-        local_zita_restart(jport=params["jport"], mode='stop')
+        zita_local_restart(jport=params["jport"], mode='stop')
 
 
 def stop():
