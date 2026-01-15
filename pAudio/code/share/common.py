@@ -578,26 +578,24 @@ def read_json_file(fpath, timeout=1, quiet=False):
     return d
 
 
-def save_json_file(d, fpath, timeout=1):
+def save_json_file(d, fpath, timeout=.5):
     """ Some json files cannot be ready to write because concurrency,
         so let's retry
     """
-
     period = 0.1
-    tries = int(timeout / period)
+    tries = int( round(timeout / period) )
+
     while tries:
         try:
             with open(fpath, 'w') as f:
+                d['timestamp'] = get_timestamp()
                 f.write( json.dumps(d, indent=2) )
-            break
+            return True
         except:
             tries -= 1
             sleep(period)
 
-    if tries:
-        return True
-    else:
-        return False
+    return False
 
 
 def read_yaml_file(fpath):
