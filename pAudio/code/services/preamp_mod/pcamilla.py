@@ -317,7 +317,7 @@ def init_camilladsp(pAudio_config):
         # Check CPAL jack ports
         if pAudio_config.get('jack'):
             if not cpal_ports_ok():
-                return f'problems with Camilla DSP CPAL ports'
+                return f'problems with CamillaDSP CPAL ports'
 
         # ALL IS OK
         return 'done'
