@@ -42,9 +42,11 @@ chmod +x ~/pAudio/code/share/plugins/*
 # Restore config
 cp ~/pAudio/config.yml.BAK ~/pAudio/config.yml 1>/dev/null 2>&1
 
-# Stop any audio backend
+# Stop the server, CamillaDSP, www and control
 pkill -f "server.py paudio "        1>/dev/null 2>&1
 pkill -f "camilladsp"               1>/dev/null 2>&1
+pkill -f "nodejs_www_server"        1>/dev/null 2>&1
+pkill -f "server.py paudio_ctrl"    1>/dev/null 2>&1
 
 echo
 
@@ -55,8 +57,10 @@ if [[ $(uname) == "Darwin" ]]; then
         cp pAudio/code/share/macOS/com.pAudio.* ~/Library/LaunchAgents/
         echo "pAudio plist files copied to "$HOME"/Library/LaunchAgents/"
     fi
-
 fi
 
 echo
 echo "Done, bye!"
+echo
+# Restart pAudio
+python3 ~/bin/paudio_restart.sh
