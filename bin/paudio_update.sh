@@ -60,7 +60,7 @@ if [[ $(uname) == "Darwin" ]]; then
 fi
 
 echo
-echo "Done, bye!"
+echo "Done, restarting pAudio ..."
 echo
 
 # Restart pAudio
