@@ -92,11 +92,17 @@ def save_aux_info():
             warning_expire(10)
 
 
-    # Adding Loudness Monitor to .aux_info
-    AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
 
     # Adding CamillaDSP state to .aux_info
     AUXINFO["CamillaDSP_state"] = get_camilladsp_state()
+
+    # Adding Loudness Monitor to .aux_info
+    if not 'running' in AUXINFO["CamillaDSP_state"].lower():
+        # This clears residual values
+        AUXINFO["loudness_monitor"]["LU_I"] = -99
+        AUXINFO["loudness_monitor"]["LU_M"] = -99
+    else:
+        AUXINFO["loudness_monitor"] = read_json_file(LDMON_PATH)
 
     # Threading the .aux_info file saving
     save_job = threading.Thread( target=save_json_file, args=(AUXINFO, AUXINFO_PATH) )
