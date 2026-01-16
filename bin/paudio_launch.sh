@@ -37,11 +37,12 @@ elif [[ $arg == 'reload' ]]; then
     do_launch
 
 else
+    echo
     echo "Usage: paudio_launch.sh   load | unload | reload"
     echo
 fi
 
 # List state
-echo "List of pAudio agents:"
+echo "List of pAudio agents (ctrl, www, camilladsp):"
 echo
 launchctl list | grep pAudio
