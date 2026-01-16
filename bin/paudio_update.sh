@@ -64,4 +64,4 @@ echo "Done, bye!"
 echo
 
 # Restart pAudio
-python3 ~/bin/paudio_restart.sh
+~/bin/paudio_restart.sh
