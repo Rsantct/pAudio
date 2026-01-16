@@ -91,8 +91,6 @@ def save_aux_info():
             AUXINFO["warning"] = curr_cdsp_error["error"]
             warning_expire(10)
 
-
-
     # Adding CamillaDSP state to .aux_info
     AUXINFO["CamillaDSP_state"] = get_camilladsp_state()
 
