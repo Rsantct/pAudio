@@ -100,8 +100,6 @@ function do_start {
 
     if [[ $(uname) == "Linux" ]]; then                  # Jack
         start_jack
-    elif [[ $(uname) == "Darwin" ]]; then               # MacOS
-        ~/bin/paudio_launch.sh reload
     fi
 
     start_camilladsp                                    # CamillaDSP
