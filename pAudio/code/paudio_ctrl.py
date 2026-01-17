@@ -11,6 +11,7 @@
 from    subprocess  import Popen
 import  os
 import  sys
+import  threading
 from    camilladsp  import  CamillaClient
 
 UHOME = os.path.expanduser("~")
@@ -19,7 +20,7 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 from common import *
 
 
-CAMILLADSP_LAST_ERROR = {}
+CAMILLADSP_LAST_ERROR  = {}
 
 LOGFNAME = f'{LOGFOLDER}/paudio_ctrl.log'
 if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
@@ -47,6 +48,7 @@ def init():
 
     # CamillaDSP monitoring
     CAMILLADSP_LAST_ERROR = get_camilladsp_last_error()
+    loop_camilladsp_state2disk()
 
     # Aux info file
     AUXINFO = {
@@ -107,23 +109,41 @@ def save_aux_info():
     save_job.start()
 
 
+def loop_camilladsp_state2disk(period=3):
+
+    def do_loop():
+
+        while True:
+
+            CC = CamillaClient('127.0.0.1', CAMILLADSP_PORT)
+
+            try:
+                CC.connect()
+                st = CC.general.state().name
+                CC.disconnect()
+
+            except:
+                st = 'NOT_AVAILABLE'
+
+            with open(f'{LOGFOLDER}/camilladsp_state', 'w') as f:
+                f.write( st )
+
+            del(CC)
+
+            sleep(period)
+
+
+    jloop = threading.Thread( target=do_loop )
+    jloop.start()
+
+
 def get_camilladsp_state():
 
-    camilladsp_port = 1234
-
-    CC = CamillaClient('127.0.0.1', camilladsp_port)
-
     try:
-        CC.connect()
-        st = CC.general.state().name
-        CC.disconnect()
-
+        with open(f'{LOGFOLDER}/camilladsp_state', 'r') as f:
+            return f.read()
     except:
-        st = 'NOT_AVAILABLE'
-
-    del(CC)
-
-    return st
+        return 'NOT_AVAILABLE'
 
 
 def run_macro(mname):
