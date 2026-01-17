@@ -19,20 +19,21 @@ fi
 # argument to lower case
 arg=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
-if [[ $arg == 'off' || $arg == 'unload' ]]; then
+if [[ $arg == 'off' || $arg == 'unload' || $arg == 'stop' ]]; then
 
     mode='unload'
     do_launch
 
-elif [[ $arg == 'on' || $arg == 'launch' ]]; then
+elif [[ $arg == 'on' || $arg == 'load' || $arg == 'start' ]]; then
 
     mode='load'
     do_launch
 
-elif [[ $arg == 'reload' ]]; then
+elif [[ $arg == 'reload' || $arg == 'restart' ]]; then
 
     mode='unload'
     do_launch
+    sleep 1
     mode='load'
     do_launch
 
