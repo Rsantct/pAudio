@@ -35,9 +35,7 @@ if sys.platform == 'linux' and CONFIG.get('jack'):
 
 
 # The CamillaDSP client
-HOST = '127.0.0.1'
-PORT = 1234
-CC   = CamillaClient(HOST, PORT)
+CC   = CamillaClient('127.0.0.1', CAMILLADSP_PORT)
 
 # Optional to dump active config to disk
 DUMP_ACTIVE = True
