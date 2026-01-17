@@ -76,7 +76,7 @@ function start_camilladsp {
             echo "(paudio_restart) Running CamillaDSP in wait mode ..."
         fi
         $HOME/bin/camilladsp --wait --mute \
-            --address 127.0.0.1 --port 1234 \
+            --address 127.0.0.1 --port $CAMILLADSP_PORT \
             --logfile $HOME/pAudio/log/camilladsp.log &
         sleep 2
     fi
@@ -124,9 +124,14 @@ if [[ ! $VIRTUAL_ENV ]]; then
     fi
 fi
 
+# CamillaDSP port
+CAMILLADSP_PORT=$(awk '/^camilladsp_port:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
+if [[ ! $CAMILLADSP_PORT ]]; then
+    CAMILLADSP_PORT=1234
+fi
 
 # pAudio port
-PA_PORT=$(awk '/^paudio_portx:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
+PA_PORT=$(awk '/^paudio_port:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
 if [[ ! $PA_PORT ]]; then
     PA_PORT=9990
 fi

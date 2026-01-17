@@ -47,9 +47,7 @@ def check_cdsp_running():
     """
 
     # Temporay CamillaDSP client
-    HOST = '127.0.0.1'
-    PORT = 1234
-    CC   = CamillaClient(HOST, PORT)
+    CC = CamillaClient('127.0.0.1', CAMILLADSP_PORT)
 
     try:
         CC.connect()

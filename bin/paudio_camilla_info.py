@@ -5,9 +5,12 @@
 
 import  os
 import  sys
+import  yaml
 from    time import sleep
 import  platform
 from    camilladsp import CamillaClient
+
+UHOME = os.path.expanduser('~')
 
 
 def print_header():
@@ -94,11 +97,21 @@ def camillacdsp_connect():
         return False
 
 
+def load_pAudio_cfg():
+
+    try:
+        with open(f'{UHOME}/pAudio/config.yml', 'r') as f:
+            return yaml.safe_load( f.read() )
+
+    except:
+        return {}
+
+
 if __name__ == "__main__":
 
-    camilladsp_port = 1234
+    PORT  = load_pAudio_cfg().get('camilladsp_port', 1234)
 
-    CC = CamillaClient('127.0.0.1', camilladsp_port)
+    CC = CamillaClient('127.0.0.1', PORT)
 
     if camillacdsp_connect():
 

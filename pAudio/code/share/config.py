@@ -64,35 +64,6 @@ except:
 
 def _init():
 
-    def set_CamillaDSP_activation_wait(seconds=0.1):
-        """"
-        Default is 0.1 s
-
-        If you experience problems with CamillaDSP on JACK in slow machines, like
-
-            BDB2034 unable to allocate memory for mutex; resize mutex region
-
-        then slightly increase this value under pAudio/config.yml, for example:
-
-            camilladsp_activation_wait: 0.2
-
-        """
-
-        tmp = CONFIG.get('camilladsp_activation_wait', seconds)
-
-        CONFIG['camilladsp_activation_wait'] = tmp
-
-        return None
-
-
-    def get_pAudio_addr_port():
-
-        addr = CONFIG.get('paudio_addr', 'localhost')
-        port = CONFIG.get('paudio_port', 9990)
-
-        return addr, port
-
-
     def complete_jack_params():
 
         if not 'device' in CONFIG["jack"] or not CONFIG["jack"]["device"]:
@@ -358,7 +329,8 @@ def _init():
         return LSPK_CONFIG
 
 
-    global PAUDIO_ADDR, PAUDIO_PORT, CONFIG, LOUDSPEAKER, LSPKFOLDER
+    global PAUDIO_ADDR, PAUDIO_PORT, CAMILLADSP_PORT, \
+           CONFIG, LOUDSPEAKER, LSPKFOLDER
 
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
@@ -372,12 +344,20 @@ def _init():
     except:
         pass
 
+
     CONFIG["mainfolder"]        = MAINFOLDER
-    PAUDIO_ADDR, PAUDIO_PORT    = get_pAudio_addr_port()
 
-    # Default values if omited parameters
+    # Default addressing unless config.yml
+    PAUDIO_ADDR     = CONFIG.get('paudio_addr',     '0.0.0.0')
+    PAUDIO_PORT     = CONFIG.get('paudio_port',     9990)
+    CAMILLADSP_PORT = CONFIG.get('camilladsp_port', 1234)
 
-    set_CamillaDSP_activation_wait()
+    # CamillaDSP activation wait (default 0.1 s)
+    # If you experience problems with CamillaDSP on JACK in slow machines, like
+    #     BDB2034 unable to allocate memory for mutex; resize mutex region
+    # then slightly increase this value under pAudio/config.yml.
+    CONFIG['camilladsp_activation_wait'] = CONFIG.get('camilladsp_activation_wait', 0.1)
+
 
     if "jack" in CONFIG:
         complete_jack_params()

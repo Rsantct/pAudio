@@ -35,9 +35,7 @@ if sys.platform == 'linux' and CONFIG.get('jack'):
 
 
 # The CamillaDSP client
-HOST = '127.0.0.1'
-PORT = 1234
-CC   = CamillaClient(HOST, PORT)
+CC   = CamillaClient('127.0.0.1', CAMILLADSP_PORT)
 
 # Optional to dump active config to disk
 DUMP_ACTIVE = True
@@ -317,7 +315,7 @@ def init_camilladsp(pAudio_config):
         # Check CPAL jack ports
         if pAudio_config.get('jack'):
             if not cpal_ports_ok():
-                return f'problems with Camilla DSP CPAL ports'
+                return f'problems with CamillaDSP CPAL ports'
 
         # ALL IS OK
         return 'done'

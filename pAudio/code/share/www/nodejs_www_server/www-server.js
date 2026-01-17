@@ -16,7 +16,7 @@ const os    = require('os');
 
 // Command line option '-v' VERBOSE -vv VERY VERBOSE
 let PA_ADDR     = '0.0.0.0';
-let PA_PORT     = 9980;
+let PA_PORT     = 9990;
 let NODEJS_ADDR = "0.0.0.0";
 let NODEJS_PORT = 8088;
 let verbose     = false;
