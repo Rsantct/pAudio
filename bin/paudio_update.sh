@@ -1,5 +1,22 @@
 #!/bin/bash
 
+function update_camilladsp_plist {
+
+    # Update CamillaDSP port if set under config.yml
+
+    CAMILLADSP_PORT=$(awk '/^camilladsp_port:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
+    if [[ ! $CAMILLADSP_PORT ]]; then
+        CAMILLADSP_PORT=1234
+    fi
+
+    old="--port 1234"
+    new="--port "$CAMILLADSP_PORT
+    fname=$HOME"/Library/LaunchAgents/com.pAudio.camilladsp.plist"
+
+    sed -i '' "s|$old|$new|g" "$fname"
+}
+
+
 GITSITE=Rsantct
 
 echo
@@ -53,6 +70,7 @@ echo
 if [[ $(uname) == "Darwin" ]]; then
     echo "Updating pAudio .plist files to ~/Library/LaunchAgents/"
     cp pAudio/code/share/macOS/com.pAudio.* ~/Library/LaunchAgents/
+    update_camilladsp_plist
 fi
 
 echo
