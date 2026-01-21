@@ -387,6 +387,11 @@ def _init():
     if not "tones_span_dB" in CONFIG:
         CONFIG["tones_span_dB"] = 6.0
 
+    if not "compressors" in CONFIG:
+        CONFIG["compressors"] = ['1.0:1', '2.0:1', '3.0:1']
+    if not 'off' in CONFIG["compressors"]:
+        CONFIG["compressors"].insert(0, 'off')
+
     #-----------------------------------------------
     # Expert zone
     if not CONFIG.get('expert_zone', {}):
