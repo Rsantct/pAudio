@@ -446,26 +446,33 @@ def set_polarity(mode):
 
 
 def rotate_compressor():
+    """ returns a new compressor setting,
+        within the COMPRESSOR_CYCLE values
+    """
 
-        COMPRESSOR_CYCLE = CONFIG["compressors"]
-        current          = STATE["compressor"]
+    COMPRESSOR_CYCLE = CONFIG["compressors"]
 
+    current          = STATE["compressor"]
+
+    # current setting may be not within the COMPRESSOR_CYCLE values
+    if current in COMPRESSOR_CYCLE:
         cur_index   = COMPRESSOR_CYCLE.index(current)
+    else:
+        cur_index = -1
 
-        next_index  = (cur_index + 1) % len(COMPRESSOR_CYCLE)
+    next_index  = (cur_index + 1) % len(COMPRESSOR_CYCLE)
 
-        new = COMPRESSOR_CYCLE[next_index]
+    new = COMPRESSOR_CYCLE[next_index]
 
-        if new == 'off':
-            pass
-            #bypass('compressor', True)
-
-        else:
-            #bypass('compressor', False)
-            set_compressor(new)
+    if set_compressor(new) == 'done':
+        return new
+    else:
+        return current
 
 
 def set_compressor(mode):
+    """ returns 'done' or an error description
+    """
     return CAM.set_compressor(mode)
 
 
@@ -844,6 +851,17 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 # Entry function
 def do(cmd, args, add):
 
+    def get_compressor_status():
+        """ returns 'off' or a ratio descriptor 'x.y:1'
+        """
+        cc = CAM.get_config()
+        if cc["pipeline"][0].get('bypassed', False):
+            return 'off'
+        else:
+            factor = cc["processors"]["movies_compressor"]["parameters"]["factor"]
+            return f'{factor}:1'
+
+
     def normalize_cmd(cmd):
         """ Some alias are accepted for some commands """
         try:
@@ -1001,19 +1019,24 @@ def do(cmd, args, add):
                     STATE["xo_set"] = new
 
         case 'compressor':
+            # notice that the status file stores
+            # 'off' or a ratio id, for example '2.5:1'
 
-            new = args
+            new    = args
 
             if new == 'rotate':
-                result = rotate_compressor()
 
+                # rotate returns a new setting ratio or 'off'
+                STATE["compressor"] = rotate_compressor()
+                result = 'done'
+
+            # off | on | x.y:1
             else:
 
-                if STATE["compressor"] != new:
-                    result = set_compressor(new)
-
-            if result == 'done':
-                STATE["compressor"] = new
+                # set_compressor returns 'done' or an error descriptor
+                result = set_compressor(new)
+                if result == 'done':
+                    STATE["compressor"] = get_compressor_status()
 
         # Level related commands
         # NOTICE that STATE will be updated by do_levels()
