@@ -49,19 +49,21 @@ def set_config_sync(cfg, wait=CONFIG['camilladsp_activation_wait']):
     """
 
     try:
-
-        res = CC.config.set_active(cfg)
+        CC.config.set_active(cfg)
+        res = 'done'
 
     except Exception as e:
 
         print(f'{Fmt.BOLD}(pcamilla) Error in config.set_active(): {str(e)}{Fmt.END}')
-        return
+        res = str(e)
 
-    if DUMP_ACTIVE:
+    if res == 'done' and DUMP_ACTIVE:
         with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
             yaml.safe_dump(cfg, f)
 
     sleep(wait)
+
+    return res
 
 
 def _connect_to_camilla():
@@ -587,6 +589,76 @@ def set_polarity(mode):
     set_config_sync(c)
 
     return "done"
+
+
+def set_compressor(mode):
+    """ <mode> can be 'off' or a ratio indicator
+        for example '2.0:1'
+    """
+
+    def set_ratio(ratio):
+        """ ratio format must be 'float:1', example:  '3.0:1'
+        """
+
+        def check_ratio_format(ratio):
+
+            if not ':' in ratio:
+                return False
+
+            try:
+                float( ratio.split(':')[0] )
+                return True
+
+            except Exception as e:
+                print(f'{Fmt.RED}(pcamilla) set_compressor error: {str(e)}{Fmt.END}')
+                return False
+
+
+        def calc_makeup_gain(fac, th=60):
+            """ Estimates the make up gain for a given compression factor, that is
+                a compressor ratio of "fac:1", assuming a "quasi full scale compressor"
+                (threshold = -60 dB)
+            """
+
+            experimetal_divider = 1.5
+
+            return round( -(th - th / fac) / experimetal_divider, 1)
+
+
+        if not check_ratio_format(ratio):
+            return False
+
+        factor      = round( float( ratio.split(':')[0] ), 1)
+        threshold   = -60
+        makeup_gain = calc_makeup_gain(factor, threshold)
+
+        c = CC.config.active()
+        pms = c["processors"]["movies_compressor"]["parameters"]
+        pms["threshold"]   = threshold
+        pms["factor"]      = factor
+        pms["makeup_gain"] = makeup_gain
+
+        return set_config_sync(c)
+
+
+    def bypass(mode):
+
+        bypassed = True
+        if mode == 'on':
+            bypassed = False
+
+        c = CC.config.active()
+
+        c["pipeline"][0]["bypassed"] = bypassed
+
+        return set_config_sync(c)
+
+
+    if mode in ('on', 'off'):
+        return bypass(mode)
+    else:
+        bypass('off')
+        return set_ratio(mode)
 
 
 def set_balance(dB):
