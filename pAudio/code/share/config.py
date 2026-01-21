@@ -56,12 +56,6 @@ CDDA_META_TEMPLATE = {
 AMP_STATE_PATH      = f'{UHOME}/.amplifier'
 
 
-try:
-    os.mkdir(LOGFOLDER)
-except:
-    pass
-
-
 def _init():
 
     def complete_jack_params():
@@ -344,8 +338,9 @@ def _init():
     except:
         pass
 
-
-    CONFIG["mainfolder"]        = MAINFOLDER
+    # prepare LOG folder
+    if not os.path.isdir(LOGFOLDER):
+        os.mkdir(LOGFOLDER)
 
     # Default addressing unless config.yml
     PAUDIO_ADDR     = CONFIG.get('paudio_addr',     '0.0.0.0')
