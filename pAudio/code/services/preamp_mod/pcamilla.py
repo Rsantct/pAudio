@@ -594,15 +594,19 @@ def set_polarity(mode):
 def set_compressor(mode):
     """ <mode> can be 'off' or a ratio indicator
         for example '2.0:1'
+
+        returns: 'done' or an error description string
     """
 
     def set_ratio(ratio):
         """ ratio format must be 'float:1', example:  '3.0:1'
+
+            returns: 'done' or an error description string
         """
 
         def check_ratio_format(ratio):
 
-            if not ':' in ratio:
+            if not ratio.endswith(':1'):
                 return False
 
             try:
@@ -626,39 +630,48 @@ def set_compressor(mode):
 
 
         if not check_ratio_format(ratio):
-            return False
+            return 'bad ratio'
 
         factor      = round( float( ratio.split(':')[0] ), 1)
         threshold   = -60
         makeup_gain = calc_makeup_gain(factor, threshold)
 
         c = CC.config.active()
-        pms = c["processors"]["movies_compressor"]["parameters"]
-        pms["threshold"]   = threshold
-        pms["factor"]      = factor
-        pms["makeup_gain"] = makeup_gain
+        params = c["processors"]["movies_compressor"]["parameters"]
+        params["threshold"]   = threshold
+        params["factor"]      = factor
+        params["makeup_gain"] = makeup_gain
 
         return set_config_sync(c)
 
 
-    def bypass(mode):
-
-        bypassed = True
-        if mode == 'on':
-            bypassed = False
-
+    def bypass_compressor_step(mode):
+        """ bool
+            returns: 'done' or an error description string
+        """
         c = CC.config.active()
 
-        c["pipeline"][0]["bypassed"] = bypassed
+        c["pipeline"][0]["bypassed"] = mode
 
         return set_config_sync(c)
 
 
-    if mode in ('on', 'off'):
-        return bypass(mode)
+    if mode in ('on', 'off', True, False):
+
+        if mode == 'on' or mode == True:
+            bypassed = False
+        else:
+            bypassed = True
+
+        return bypass_compressor_step(bypassed)
+
     else:
-        bypass('off')
-        return set_ratio(mode)
+
+        ans = set_ratio(mode)
+        if ans == 'done':
+            bypass_compressor_step(False)
+
+        return ans
 
 
 def set_balance(dB):
