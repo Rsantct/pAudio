@@ -288,7 +288,7 @@ def init():
     STATE["loudspeaker"]    = CONFIG["loudspeaker"]
     STATE["fs"]             = CONFIG["samplerate"]
     STATE["polarity"]       = '++'
-
+    STATE["compressor"]     = 'off'
 
     # Update state with both input and output devices
     #
@@ -443,6 +443,30 @@ def set_midside(mode):
 
 def set_polarity(mode):
     return CAM.set_polarity(mode)
+
+
+def rotate_compressor():
+
+        COMPRESSOR_CYCLE = CONFIG["compressors"]
+        current          = STATE["compressor"]
+
+        cur_index   = COMPRESSOR_CYCLE.index(current)
+
+        next_index  = (cur_index + 1) % len(COMPRESSOR_CYCLE)
+
+        new = COMPRESSOR_CYCLE[next_index]
+
+        if new == 'off':
+            pass
+            #bypass('compressor', True)
+
+        else:
+            #bypass('compressor', False)
+            set_compressor(new)
+
+
+def set_compressor(mode):
+    return CAM.set_compressor(mode)
 
 
 def set_loudness(mode, level=STATE["level"]):
@@ -976,6 +1000,21 @@ def do(cmd, args, add):
                 if result == 'done':
                     STATE["xo_set"] = new
 
+        case 'compressor':
+
+            new = args
+
+            if new == 'rotate':
+                result = rotate_compressor()
+
+            else:
+
+                if STATE["compressor"] != new:
+                    result = set_compressor(new)
+
+            if result == 'done':
+                STATE["compressor"] = new
+
         # Level related commands
         # NOTICE that STATE will be updated by do_levels()
         case 'level' | 'lu_offset' | 'bass' | 'treble' | 'balance':
@@ -1004,7 +1043,7 @@ def do(cmd, args, add):
                 result = do_levels('tone_defeat', tone_defeat=new)
 
 
-        # Special commands when using cammillaDSP
+        # Special for cammillaDSP
         case 'get_cdsp_config':
             result = CAM.get_config()
 
