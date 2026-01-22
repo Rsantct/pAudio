@@ -553,10 +553,18 @@ def set_solo(mode):
     c = CC.config.active()
 
     match mode:
-        case 'l' | 'L': m = make_mixer_preamp(midside_mode='solo_L')
-        case 'r' | 'R': m = make_mixer_preamp(midside_mode='solo_R')
-        case 'off':     m = make_mixer_preamp(midside_mode='normal')
-        case _:         return 'solo mode must be in: L | R | off'
+
+        case 'l' | 'L':
+            m = make_mixer_preamp(midside_mode='solo_L')
+
+        case 'r' | 'R':
+            m = make_mixer_preamp(midside_mode='solo_R')
+
+        case 'off':
+            m = make_mixer_preamp(midside_mode='normal')
+
+        case _:
+            return 'solo mode must be in: L | R | off'
 
     c["mixers"]["preamp_mixer"] = m
 
