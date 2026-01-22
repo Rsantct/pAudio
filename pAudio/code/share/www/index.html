@@ -168,6 +168,19 @@
                 </button>
             </td>
           </tr>
+          <tr id="extra_row">
+            <td id="extra_buttons11">
+                <button type="button" id="bt_compressor" style="display:none;font-size:0.7em"
+                        title="Compressor"
+                        onmousedown="control_cmd('preamp compressor rotate')">
+                        COMP.
+                </button>
+            <td id="extra_buttons12">
+            </td>
+            <td id="extra_buttons13">
+                <select id="samplerateSelector"  style="display:none" onchange="oc_restart_samplerate(this.value)" ></select>
+            </td>
+          </tr>
         </table>
     </div>
 
