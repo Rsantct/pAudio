@@ -77,6 +77,9 @@
     td#level_buttons21   { border-style: none; width:18%; }
     td#level_buttons22   { border-style: none; width:64%; }
     td#level_buttons23   { border-style: none; width:18%; }
+    td#extra_buttons11   { border-style: none; width:18%; }
+    td#extra_buttons12   { border-style: none; width:18%; }
+    td#extra_buttons13   { border-style: none; width:18%; }
 
     /* --- LU OFFSET CELLS --- */
     td#LU_meter_scope    { width:18%; border-style:none ; font-size:.8em; vertical-align: middle;}
