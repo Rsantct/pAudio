@@ -852,6 +852,7 @@ function page_update() {
         buttonSubsonicHighlight()
         buttonAODHighlight()
         levelInfoHighlight()
+        buttonCompressorHighlight()
 
         // Used by the delay toggle button
         if (state.extra_delay !== 0) {
@@ -1296,29 +1297,31 @@ function ck_display_advanced(mode) {
 
     if ( show_advanced == true ) {
         document.getElementById("format_file").style.display = "table-row";
-        document.getElementById( "div_advanced_controls").style.display = "block";
-        document.getElementById( "level_buttons13").style.display = "table-cell";
-        document.getElementById( "but_restart").style.display = "inline-block";
-        document.getElementById( "but_help").style.display = "none";
-        document.getElementById( "SoloInfo").style.display = "table-cell";
-        document.getElementById( "PolarityInfo").style.display = "table-cell";
-        document.getElementById( "buttAOD").style.display = "inline-block";
-        document.getElementById( "subsonic").style.display = "inline-block";
-        document.getElementById( "tone_defeat").style.display = "inline-block";
+        document.getElementById("div_advanced_controls").style.display = "block";
+        document.getElementById("level_buttons13").style.display = "table-cell";
+        document.getElementById("but_restart").style.display = "inline-block";
+        document.getElementById("but_help").style.display = "none";
+        document.getElementById("SoloInfo").style.display = "table-cell";
+        document.getElementById("PolarityInfo").style.display = "table-cell";
+        document.getElementById("buttAOD").style.display = "inline-block";
+        document.getElementById("subsonic").style.display = "inline-block";
+        document.getElementById("tone_defeat").style.display = "inline-block";
+        document.getElementById("bt_compressor").style.display = "inline-block";
     }
     else {
         document.getElementById("format_file").style.display = "none";
-        document.getElementById( "div_advanced_controls").style.display = "none";
-        document.getElementById( "level_buttons13").style.display = "none";
-        document.getElementById( "but_restart").style.display = "none";
-        document.getElementById( "but_help").style.display = "inline-block";
-        document.getElementById( "SoloInfo").style.display = "none";
-        document.getElementById( "PolarityInfo").style.display = "none";
+        document.getElementById("div_advanced_controls").style.display = "none";
+        document.getElementById("level_buttons13").style.display = "none";
+        document.getElementById("but_restart").style.display = "none";
+        document.getElementById("but_help").style.display = "inline-block";
+        document.getElementById("SoloInfo").style.display = "none";
+        document.getElementById("PolarityInfo").style.display = "none";
         if ( state.extra_delay === 0 ) {
-            document.getElementById( "buttAOD").style.display = "none";
+            document.getElementById("buttAOD").style.display = "none";
         }
-        document.getElementById( "subsonic").style.display = "none";
-        document.getElementById( "tone_defeat").style.display = "none";
+        document.getElementById("subsonic").style.display = "none";
+        document.getElementById("tone_defeat").style.display = "none";
+        document.getElementById("bt_compressor").style.display = "none";
     }
 }
 
@@ -1670,4 +1673,19 @@ function levelInfoHighlight() {
         document.getElementById("levelInfo").style.borderWidth = "thin";
         document.getElementById("levelInfo").style.borderColor = "white";
    }
+}
+
+function buttonCompressorHighlight(){
+    if ( state.compressor === 'off' ) {
+        document.getElementById("bt_compressor").innerHTML = 'comp.<br>OFF';
+        document.getElementById("bt_compressor").style.border = "2px solid rgb(100, 100, 100)";
+        document.getElementById("bt_compressor").style.background = "rgb(100, 100, 100)";
+        document.getElementById("bt_compressor").style.color = "rgb(180, 180, 180)";
+    } else {
+        document.getElementById("bt_compressor").innerHTML = 'COMP.<br>' + state.compressor;
+        document.getElementById("bt_compressor").style.border = "3px solid rgb(160, 160, 160)";
+        document.getElementById("bt_compressor").style.background = "rgb(100, 0, 0)";
+        document.getElementById("bt_compressor").style.color = "rgb(255, 200, 200)";
+        document.getElementById("bt_compressor").style.display = 'inline-block';
+    }
 }
