@@ -21,10 +21,8 @@ UHOME           = os.path.expanduser("~")
 MAINFOLDER      = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
-
-PREAMP_STATE_PATH = f'{MAINFOLDER}/.preamp_state'
-from common import  CONFIG, LDMON_PATH, LDCTRL_PATH
-from common import  read_json_file
+from common import  Fmt, CONFIG, LDMON_PATH, LDCTRL_PATH, \
+                    PREAMP_STATE_PATH, read_json_file
 
 
 # AUXILIAR for Coreaudio multi capture device syntax (see doc)
@@ -78,7 +76,7 @@ def prepare_control_fifo(fname):
     try:
         if os.path.exists(fname):
             os.remove(fname)
-        sleep(.1)
+        sleep(.2)
         os.mkfifo(fname)
     except:
         print(f'(loudness_monitor.py) ERROR preparing fifo {fname}')
