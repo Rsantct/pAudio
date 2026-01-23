@@ -6,8 +6,8 @@ You can use the provided **`~/config/autostart/pAudio.desktop`** file
 
 You can use `/etc/rc.local`
 
-    sleep 5 && su -l paudio -c "/home/paudio/bin/paudio_restart.sh"
+    sleep 10 && su -l paudio -c "/home/paudio/bin/paudio_restart.sh" &
 
 Or you can add a crontab job:
 
-    @ reboot  su -l paudio -c "/home/paudio/bin/paudio_restart.sh"
+    @ reboot  su -l paudio -c "/home/paudio/bin/paudio_restart.sh" &
