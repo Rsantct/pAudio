@@ -1,6 +1,6 @@
 ## autostart pAudio in a Desktop
 
-You can use the provided **`~/config/autostart/pAudio.desktop`** file
+You can put the provided file **`pAudio/doc/linux/.config/autostart/pAudio.desktop`** under your personal directory `~/.config/autostart/`
 
 ## autostart pAudio in a headless machine
 
