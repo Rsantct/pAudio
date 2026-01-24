@@ -632,9 +632,6 @@ def set_source(sname):
                         print(f'{Fmt.GREEN2}{Fmt.BOLD}    restore on_init:', setting, on_init_value, Fmt.END)
                         STATE[setting] = on_init_value
 
-        # save the state in the same way as in 'do()'
-        save_json_file(STATE, PREAMP_STATE_PATH)
-
 
     source_is_available = True
     result = 'no changes'
@@ -654,7 +651,6 @@ def set_source(sname):
         # Extra in coreaudio update STATE.input_dev
         config_yml         = yaml.safe_load( open(CONFIG_PATH, 'r') )
         STATE["input_dev"] = config_yml["coreaudio"]["devices"]["capture"][sname]["device"]
-        save_json_file(STATE, PREAMP_STATE_PATH)
 
 
     # JACK
@@ -745,7 +741,6 @@ def set_source(sname):
     # if not coreaudio or jack
     else:
         result = 'bad config.yml'
-
 
     return result
 
