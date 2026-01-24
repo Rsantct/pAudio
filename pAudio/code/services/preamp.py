@@ -231,7 +231,7 @@ def init():
 
         valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
                        'lu_offset', 'equal_loudness', 'target', 'drc_set',
-                       'mid_side', 'mono' )
+                       'midside', 'mono' )
 
         if not prop in valid_props:
             print(f'{Fmt.BOLD}(on_init) NOT valid: `{prop}`{Fmt.END}')
@@ -257,13 +257,13 @@ def init():
                 else:
                     print(f'{Fmt.BOLD}(on_init) ERROR in drc_set{Fmt.END}')
 
-            case 'mid_side':
+            case 'midside':
 
-                mid_side_values = ('off', 'mid', 'side', 'solo_L', 'solo_R')
-                if value in mid_side_values:
+                midside_values = ('off', 'mid', 'side', 'solo_L', 'solo_R')
+                if value in midside_values:
                     STATE["midside"] = value
                 else:
-                    print(f'{Fmt.BOLD}(on_init) ERROR mid_side must be in: {mid_side_values}{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR midside must be in: {midside_values}{Fmt.END}')
 
             case 'mono':
 
@@ -555,6 +555,87 @@ def set_source(sname):
         return rem_cfg
 
 
+    def do_source_settings():
+        """ will order specific source settings as configured,
+            otherwise will restore on_init settings if current differs
+        """
+
+        def do_setting(setting, value):
+
+            ans = ''
+
+            if setting == 'midside':
+                ans = set_midside(value)
+
+            elif setting == 'target':
+                ans = do_levels('target', tID=value)
+
+            elif setting == 'lu_offset':
+                ans = do_levels('lu_offset', dB=value)
+
+            elif setting == 'equal_loudness':
+                ans = set_loudness(value)
+
+            return ans
+
+
+        if sname == 'none' or not sname:
+            return
+
+        print(f'{Fmt.MAGENTA}checking specific source settings for: {sname}{Fmt.END}')
+
+        valid_source_settings = (
+            'mono', 'target', 'lu_offset', 'equal_loudness'
+        )
+
+        for setting in valid_source_settings:
+
+            # Check if specific setting is configured:
+            source_value = CONFIG["jack"]["sources"][sname].get(setting, None)
+
+            if source_value:
+
+                if setting == 'mono':
+                    setting = 'midside'
+                    if source_value == True:
+                        source_value = 'mid'
+                    else:
+                        source_value = 'off'
+
+                if do_setting(setting, source_value) == 'done':
+                    print(f'{Fmt.MAGENTA}    source specific:', setting, source_value, Fmt.END)
+                    STATE[setting] = source_value
+
+
+            # if not, do restore the generic on_init setting if the current one differs:
+            else:
+
+                # 'mono' is a human readable alias for 'midside'
+                if setting == 'mono':
+
+                    setting = 'midside'
+
+                    tmp = CONFIG.get('on_init', {}).get('mono', 'off')
+                    if tmp in (True, 'on'):
+                        on_init_value = 'mid'
+                    else:
+                        on_init_value = 'off'
+
+                else:
+                    on_init_value = CONFIG.get('on_init', {}).get(setting, None)
+
+                curr_value    = STATE.get(setting, None)
+
+                if (on_init_value != None) and (curr_value != on_init_value):
+
+                    if do_setting(setting, on_init_value) == 'done':
+                        print(f'{Fmt.GREEN2}{Fmt.BOLD}    restore on_init:', setting, on_init_value, Fmt.END)
+                        STATE[setting] = on_init_value
+
+        # save the state in the same way as in 'do()'
+        save_json_file(STATE, PREAMP_STATE_PATH)
+
+
     source_is_available = True
     result = 'no changes'
 
@@ -654,6 +735,9 @@ def set_source(sname):
                     STATE["source_gain_offset"] = gain
             except Exception as e:
                 result = f'cannot set gain {gain} dB for source: {sname}'
+
+            # Other source specific settings
+            do_source_settings()
 
         else:
             result = 'source not available'
