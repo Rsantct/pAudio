@@ -49,19 +49,21 @@ def set_config_sync(cfg, wait=CONFIG['camilladsp_activation_wait']):
     """
 
     try:
-
-        res = CC.config.set_active(cfg)
+        CC.config.set_active(cfg)
+        res = 'done'
 
     except Exception as e:
 
         print(f'{Fmt.BOLD}(pcamilla) Error in config.set_active(): {str(e)}{Fmt.END}')
-        return
+        res = str(e)
 
-    if DUMP_ACTIVE:
+    if res == 'done' and DUMP_ACTIVE:
         with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
             yaml.safe_dump(cfg, f)
 
     sleep(wait)
+
+    return res
 
 
 def _connect_to_camilla():
@@ -551,10 +553,18 @@ def set_solo(mode):
     c = CC.config.active()
 
     match mode:
-        case 'l' | 'L': m = make_mixer_preamp(midside_mode='solo_L')
-        case 'r' | 'R': m = make_mixer_preamp(midside_mode='solo_R')
-        case 'off':     m = make_mixer_preamp(midside_mode='normal')
-        case _:         return 'solo mode must be in: L | R | off'
+
+        case 'l' | 'L':
+            m = make_mixer_preamp(midside_mode='solo_L')
+
+        case 'r' | 'R':
+            m = make_mixer_preamp(midside_mode='solo_R')
+
+        case 'off':
+            m = make_mixer_preamp(midside_mode='normal')
+
+        case _:
+            return 'solo mode must be in: L | R | off'
 
     c["mixers"]["preamp_mixer"] = m
 
@@ -587,6 +597,90 @@ def set_polarity(mode):
     set_config_sync(c)
 
     return "done"
+
+
+def set_compressor(mode):
+    """ <mode> can be 'off' or a ratio indicator
+        for example '2.0:1'
+
+        returns: 'done' or an error description string
+    """
+
+    def set_ratio(ratio):
+        """ ratio format must be 'float:1', example:  '3.0:1'
+
+            returns: 'done' or an error description string
+        """
+
+        def check_ratio_format(ratio):
+
+            if not ratio.endswith(':1'):
+                return False
+
+            try:
+                float( ratio.split(':')[0] )
+                return True
+
+            except Exception as e:
+                print(f'{Fmt.RED}(pcamilla) set_compressor error: {str(e)}{Fmt.END}')
+                return False
+
+
+        def calc_makeup_gain(fac, th=60):
+            """ Estimates the make up gain for a given compression factor, that is
+                a compressor ratio of "fac:1", assuming a "quasi full scale compressor"
+                (threshold = -60 dB)
+            """
+
+            #experimetal_divider = 1.5
+            experimetal_divider = 2.0
+
+            return round( -(th - th / fac) / experimetal_divider, 1)
+
+
+        if not check_ratio_format(ratio):
+            return 'bad ratio'
+
+        factor      = round( float( ratio.split(':')[0] ), 1)
+        threshold   = -60
+        makeup_gain = calc_makeup_gain(factor, threshold)
+
+        c = CC.config.active()
+        params = c["processors"]["movies_compressor"]["parameters"]
+        params["threshold"]   = threshold
+        params["factor"]      = factor
+        params["makeup_gain"] = makeup_gain
+
+        return set_config_sync(c)
+
+
+    def bypass_compressor_step(mode):
+        """ bool
+            returns: 'done' or an error description string
+        """
+        c = CC.config.active()
+
+        c["pipeline"][0]["bypassed"] = mode
+
+        return set_config_sync(c)
+
+
+    if mode in ('on', 'off', True, False):
+
+        if mode == 'on' or mode == True:
+            bypassed = False
+        else:
+            bypassed = True
+
+        return bypass_compressor_step(bypassed)
+
+    else:
+
+        ans = set_ratio(mode)
+        if ans == 'done':
+            bypass_compressor_step(False)
+
+        return ans
 
 
 def set_balance(dB):

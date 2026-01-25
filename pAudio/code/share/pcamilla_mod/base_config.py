@@ -70,7 +70,6 @@ def prepare_base_config(pAudio_config, cam_config):
             cam_config["devices"]["silence_timeout"] = 30
 
 
-
     def prepare_filters():
 
         cam_config["filters"] =    {
@@ -110,9 +109,39 @@ def prepare_base_config(pAudio_config, cam_config):
         cam_config["mixers"]["preamp_mixer"] = make_mixer_preamp()
 
 
+    def prepare_processors():
+
+        cam_config["processors"] = {
+
+            'movies_compressor':
+                {   'type': 'Compressor',
+                    'description': 'a compressor for watching movies',
+                    'parameters':
+                        {   'channels': 2,
+                            'monitor_channels': None,
+                            'process_channels': None,
+                            'attack': 0.025,
+                            'release': 1.0,
+                            'threshold': -60.0,
+                            'factor': 1.0,
+                            'makeup_gain': -0.0,
+                            'soft_clip': True,
+                            'clip_limit': 0.0
+                        }
+                }
+        }
+
+
     def prepare_pipeline():
 
         cam_config["pipeline"] = [
+
+            # Optional compressor for watching movies
+            {   'type':         'Processor',
+                'name':         'movies_compressor',
+                'description':  cam_config["processors"]["movies_compressor"]["description"],
+                'bypassed':     True
+            },
 
             # Input stereo preamp mixer
             {   'type': 'Mixer', 'name': 'preamp_mixer'
@@ -134,9 +163,13 @@ def prepare_base_config(pAudio_config, cam_config):
         ]
 
 
+    cam_config["title"] = 'pAudio'
+    cam_config["description"] = 'A PC based advanced preamplifier, with FIR based EQ and active loudspeaker XOVER management'
+
     prepare_devices()
     prepare_filters()
     prepare_mixers()
+    prepare_processors()
     prepare_pipeline()
 
 

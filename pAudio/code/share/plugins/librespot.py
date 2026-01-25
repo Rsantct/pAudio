@@ -24,6 +24,7 @@
 import  sys
 import  os
 import  subprocess as sp
+import  psutil
 from    socket import gethostname
 from    getpass import getuser
 import  threading
@@ -59,29 +60,6 @@ class Fmt:
     GRAY    = '\033[90m'
     BOLD    = '\033[1m'
     END     = '\033[0m'
-
-
-def kill_previous(pattern):
-    """ Kill previous instances as per the given process pattern
-    """
-
-    if not pattern:
-        return
-
-    current_ps = []
-
-    try:
-        current_ps = sp.check_output(['pgrep', '-f', pattern]).decode()
-        current_ps = [x for x in current_ps.split('\n') if x]
-    except:
-        pass
-
-    if len(current_ps) > 1:
-
-        print(f'{Fmt.GRAY}(librespot) Killing previous `{pattern}` ...{Fmt.END}')
-
-        for p in current_ps[:-1]:
-            sp.call( f'kill -KILL {p}'.split() )
 
 
 def run_watchdog(period=10):
@@ -126,6 +104,41 @@ def start():
 
     job = threading.Thread(target=run_watchdog)
     job.start()
+
+
+def kill_previous(pattern):
+    """ Kill previous instances as per the given process pattern
+    """
+
+    def get_cmd_line(pid):
+        try:
+            process = psutil.Process(pid)
+            cmdline = " ".join(process.cmdline())
+            return cmdline
+        except:
+            return ''
+
+
+    if not pattern:
+        return
+
+    curr_pids = []
+
+    try:
+        curr_pids = sp.check_output(['pgrep', '-f', pattern]).decode()
+        curr_pids = [x for x in curr_pids.split('\n') if x]
+    except:
+        pass
+
+    #print(f'{Fmt.GRAY}(librespot) Found PIDs: {curr_pids}{Fmt.END}')
+
+    if len(curr_pids) > 1:
+
+        print(f'{Fmt.GRAY}(librespot) Killing previous PIDs: {curr_pids[:-1]} ...{Fmt.END}')
+
+        for pid in curr_pids[:-1]:
+            #print(f'{Fmt.GRAY}(librespot) Killing PID: {pid} {get_cmd_line(pid)}{Fmt.END}')
+            sp.call( f'kill -KILL {pid}'.split() )
 
 
 def stop():

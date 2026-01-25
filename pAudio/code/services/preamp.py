@@ -231,7 +231,7 @@ def init():
 
         valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
                        'lu_offset', 'equal_loudness', 'target', 'drc_set',
-                       'mid_side', 'mono' )
+                       'midside', 'mono' )
 
         if not prop in valid_props:
             print(f'{Fmt.BOLD}(on_init) NOT valid: `{prop}`{Fmt.END}')
@@ -257,13 +257,13 @@ def init():
                 else:
                     print(f'{Fmt.BOLD}(on_init) ERROR in drc_set{Fmt.END}')
 
-            case 'mid_side':
+            case 'midside':
 
-                mid_side_values = ('off', 'mid', 'side', 'solo_L', 'solo_R')
-                if value in mid_side_values:
+                midside_values = ('off', 'mid', 'side', 'solo_L', 'solo_R')
+                if value in midside_values:
                     STATE["midside"] = value
                 else:
-                    print(f'{Fmt.BOLD}(on_init) ERROR mid_side must be in: {mid_side_values}{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR midside must be in: {midside_values}{Fmt.END}')
 
             case 'mono':
 
@@ -288,7 +288,7 @@ def init():
     STATE["loudspeaker"]    = CONFIG["loudspeaker"]
     STATE["fs"]             = CONFIG["samplerate"]
     STATE["polarity"]       = '++'
-
+    STATE["compressor"]     = 'off'
 
     # Update state with both input and output devices
     #
@@ -445,6 +445,37 @@ def set_polarity(mode):
     return CAM.set_polarity(mode)
 
 
+def rotate_compressor():
+    """ returns a new compressor setting,
+        within the COMPRESSOR_CYCLE values
+    """
+
+    COMPRESSOR_CYCLE = CONFIG["compressors"]
+
+    current          = STATE["compressor"]
+
+    # current setting may be not within the COMPRESSOR_CYCLE values
+    if current in COMPRESSOR_CYCLE:
+        cur_index   = COMPRESSOR_CYCLE.index(current)
+    else:
+        cur_index = -1
+
+    next_index  = (cur_index + 1) % len(COMPRESSOR_CYCLE)
+
+    new = COMPRESSOR_CYCLE[next_index]
+
+    if set_compressor(new) == 'done':
+        return new
+    else:
+        return current
+
+
+def set_compressor(mode):
+    """ returns 'done' or an error description
+    """
+    return CAM.set_compressor(mode)
+
+
 def set_loudness(mode, level=STATE["level"]):
     result = CAM.set_loudness(
         mode,
@@ -524,6 +555,84 @@ def set_source(sname):
         return rem_cfg
 
 
+    def do_source_settings():
+        """ will order specific source settings as configured,
+            otherwise will restore on_init settings if current differs
+        """
+
+        def do_setting(setting, value):
+
+            ans = ''
+
+            if setting == 'midside':
+                ans = set_midside(value)
+
+            elif setting == 'target':
+                ans = do_levels('target', tID=value)
+
+            elif setting == 'lu_offset':
+                ans = do_levels('lu_offset', dB=value)
+
+            elif setting == 'equal_loudness':
+                ans = set_loudness(value)
+
+            return ans
+
+
+        if sname == 'none' or not sname:
+            return
+
+        print(f'{Fmt.MAGENTA}checking specific source settings for: {sname}{Fmt.END}')
+
+        valid_source_settings = (
+            'mono', 'target', 'lu_offset', 'equal_loudness'
+        )
+
+        for setting in valid_source_settings:
+
+            # Check if specific setting is configured:
+            source_value = CONFIG["jack"]["sources"][sname].get(setting, None)
+
+            if source_value:
+
+                if setting == 'mono':
+                    setting = 'midside'
+                    if source_value == True:
+                        source_value = 'mid'
+                    else:
+                        source_value = 'off'
+
+                if do_setting(setting, source_value) == 'done':
+                    print(f'{Fmt.MAGENTA}    source specific:', setting, source_value, Fmt.END)
+                    STATE[setting] = source_value
+
+
+            # if not, do restore the generic on_init setting if the current one differs:
+            else:
+
+                # 'mono' is a human readable alias for 'midside'
+                if setting == 'mono':
+
+                    setting = 'midside'
+
+                    tmp = CONFIG.get('on_init', {}).get('mono', 'off')
+                    if tmp in (True, 'on'):
+                        on_init_value = 'mid'
+                    else:
+                        on_init_value = 'off'
+
+                else:
+                    on_init_value = CONFIG.get('on_init', {}).get(setting, None)
+
+                curr_value    = STATE.get(setting, None)
+
+                if (on_init_value != None) and (curr_value != on_init_value):
+
+                    if do_setting(setting, on_init_value) == 'done':
+                        print(f'{Fmt.GREEN2}{Fmt.BOLD}    restore on_init:', setting, on_init_value, Fmt.END)
+                        STATE[setting] = on_init_value
+
+
     source_is_available = True
     result = 'no changes'
 
@@ -542,7 +651,6 @@ def set_source(sname):
         # Extra in coreaudio update STATE.input_dev
         config_yml         = yaml.safe_load( open(CONFIG_PATH, 'r') )
         STATE["input_dev"] = config_yml["coreaudio"]["devices"]["capture"][sname]["device"]
-        save_json_file(STATE, PREAMP_STATE_PATH)
 
 
     # JACK
@@ -624,13 +732,15 @@ def set_source(sname):
             except Exception as e:
                 result = f'cannot set gain {gain} dB for source: {sname}'
 
+            # Other source specific settings
+            do_source_settings()
+
         else:
             result = 'source not available'
 
     # if not coreaudio or jack
     else:
         result = 'bad config.yml'
-
 
     return result
 
@@ -820,6 +930,17 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
 # Entry function
 def do(cmd, args, add):
 
+    def get_compressor_status():
+        """ returns 'off' or a ratio descriptor 'x.y:1'
+        """
+        cc = CAM.get_config()
+        if cc["pipeline"][0].get('bypassed', False):
+            return 'off'
+        else:
+            factor = cc["processors"]["movies_compressor"]["parameters"]["factor"]
+            return f'{factor}:1'
+
+
     def normalize_cmd(cmd):
         """ Some alias are accepted for some commands """
         try:
@@ -976,6 +1097,26 @@ def do(cmd, args, add):
                 if result == 'done':
                     STATE["xo_set"] = new
 
+        case 'compressor':
+            # notice that the status file stores
+            # 'off' or a ratio id, for example '2.5:1'
+
+            new    = args
+
+            if new == 'rotate':
+
+                # rotate returns a new setting ratio or 'off'
+                STATE["compressor"] = rotate_compressor()
+                result = 'done'
+
+            # off | on | x.y:1
+            else:
+
+                # set_compressor returns 'done' or an error descriptor
+                result = set_compressor(new)
+                if result == 'done':
+                    STATE["compressor"] = get_compressor_status()
+
         # Level related commands
         # NOTICE that STATE will be updated by do_levels()
         case 'level' | 'lu_offset' | 'bass' | 'treble' | 'balance':
@@ -1004,7 +1145,7 @@ def do(cmd, args, add):
                 result = do_levels('tone_defeat', tone_defeat=new)
 
 
-        # Special commands when using cammillaDSP
+        # Special for cammillaDSP
         case 'get_cdsp_config':
             result = CAM.get_config()
 
