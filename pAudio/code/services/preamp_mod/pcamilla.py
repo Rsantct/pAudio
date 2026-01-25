@@ -632,7 +632,8 @@ def set_compressor(mode):
                 (threshold = -60 dB)
             """
 
-            experimetal_divider = 1.5
+            #experimetal_divider = 1.5
+            experimetal_divider = 2.0
 
             return round( -(th - th / fac) / experimetal_divider, 1)
 
