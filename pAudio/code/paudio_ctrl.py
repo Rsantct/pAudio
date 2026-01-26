@@ -27,13 +27,22 @@ if os.path.exists(LOGFNAME) and os.path.getsize(LOGFNAME) > 10e6:
     print ( f"{Fmt.RED}(paudio_ctrl) log file exceeds ~ 10 MB '{LOGFNAME}'{Fmt.END}" )
 print ( f"{Fmt.BLUE}(paudio_ctrl) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
+# The .aux_info file content
+AUXINFO = {
+    "loudspeaker":      CONFIG.get('loudspeaker', ''),
+    "loudness_monitor": read_json_file(LDMON_PATH),
+    "last_macro":       "",
+    "warning":          "",
+    "new_eq_graph":     False
+}
+
 
 def init():
     """ The .aux_info file can be used by others, for example
         preamp.py will alert there for eq_graph changes
     """
 
-    global AUXINFO, ONOFF_MODE, CAMILLADSP_LAST_ERROR
+    global ONOFF_MODE, CAMILLADSP_LAST_ERROR
 
     # Reset paudio_ctrl.log
     logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
@@ -50,14 +59,9 @@ def init():
     CAMILLADSP_LAST_ERROR = get_camilladsp_last_error()
     loop_camilladsp_state2disk()
 
-    # Aux info file
-    AUXINFO = {
-        "loudspeaker":      CONFIG.get('loudspeaker', ''),
-        "loudness_monitor": read_json_file(LDMON_PATH),
-        "last_macro":       "",
-        "warning":          "",
-        "new_eq_graph":     False
-    }
+    # Monitor changes on eq.png
+    loop_file_changed( f'{UHOME}/pAudio/code/share/www/images/eq.png',
+                       flag_new_eq_graph )
 
     save_aux_info()
 
@@ -107,6 +111,14 @@ def save_aux_info():
     # Threading the .aux_info file saving
     save_job = threading.Thread( target=save_json_file, args=(AUXINFO, AUXINFO_PATH) )
     save_job.start()
+
+
+def flag_new_eq_graph():
+    AUXINFO['new_eq_graph'] = True
+    save_json_file(AUXINFO, AUXINFO_PATH)
+    sleep(2)
+    AUXINFO['new_eq_graph'] = False
+    save_json_file(AUXINFO, AUXINFO_PATH)
 
 
 def loop_camilladsp_state2disk(period=3):
