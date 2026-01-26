@@ -85,12 +85,20 @@ function start_camilladsp {
 
 function do_stop {
 
-    python3 $HOME/pAudio/start.py stop                  # pAudio server
+    python3 $HOME/pAudio/start.py stop                      # pAudio server
 
     if [[ $(uname) == "Linux" ]]; then
-        pkill -KILL -f camilladsp 1>/dev/null 2>&1      # CamillaDSP
+        pkill -KILL -f camilladsp 1>/dev/null 2>&1          # CamillaDSP
         sleep 1
-        pkill -KILL -f 'jackd'    1>/dev/null 2>&1      # Jack
+        pkill -KILL -f 'jackd'    1>/dev/null 2>&1          # Jack
+
+    elif [[ $(uname) == "Darwin" ]]; then
+        $HOME/bin/paudio_launchagents.sh unload camilladsp  # CamillaDSP
+
+    else
+        echo "Only works on Linux or macOS"
+        exit -1
+
     fi
     sleep 1
 }
@@ -98,17 +106,21 @@ function do_stop {
 
 function do_start {
 
-    if [[ $(uname) == "Linux" ]]; then                  # Jack
-        start_jack
+    if [[ $(uname) == "Linux" ]]; then
+        start_jack                                          # Jack
+        start_camilladsp                                    # CamillaDSP
+        start_www                                           # Node WWW server
+        start_ctrl                                          # pAudio control server
+
+    elif [[ $(uname) == "Darwin" ]]; then
+        $HOME/bin/paudio_launchagents.sh load camilladsp    # CamillaDSP
+
+    else
+        echo "Only works on Linux or macOS"
+        exit -1
     fi
 
-    start_camilladsp                                    # CamillaDSP
-
-    start_www                                           # Node WWW server
-
-    start_ctrl                                          # pAudio control server
-
-    if [[ $VERBOSE == 'true' ]]; then                   # pAudio server
+    if [[ $VERBOSE == 'true' ]]; then                       # pAudio server
         python3 $HOME/pAudio/start.py start $VERBOSE &
     else
         python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
