@@ -6,6 +6,8 @@
 import  subprocess as sp
 import  psutil
 import  threading
+from    watchdog.observers  import Observer
+from    watchdog.events     import FileSystemEventHandler
 import  socket
 from    time        import sleep, strftime
 from    datetime    import datetime
@@ -23,6 +25,32 @@ if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
     macos.CONFIG = CONFIG.copy()
 
 USER = getuser()
+
+
+def loop_file_changed(filepath, what_to_do):
+
+    class MyFileHandler(FileSystemEventHandler):
+
+        def on_modified(self, event):
+            # we monitor directories, so we filter for our specific file
+            if event.src_path == os.path.abspath(filepath):
+                #print(f"✨ Event: {filepath} was modified!")
+                self.do_something()
+
+
+        def do_something(self):
+            what_to_do()
+
+
+    # FSEvents is optimized for directory-level tracking.
+    folder_to_watch = os.path.dirname(os.path.abspath(filepath))
+
+    event_handler = MyFileHandler()
+    observer = Observer()
+    observer.schedule(event_handler, folder_to_watch, recursive=False)
+
+    print(f"(common) 👀  watching for changes to: {filepath}")
+    observer.start()
 
 
 def write_pAudio_cfg(c):
