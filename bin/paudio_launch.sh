@@ -1,9 +1,16 @@
 #!/bin/bash
 
 function do_launch {
-    launchctl $mode $HOME/Library/LaunchAgents/com.pAudio.ctrl.plist        2>/dev/null
-    launchctl $mode $HOME/Library/LaunchAgents/com.pAudio.www.plist         2>/dev/null
-    launchctl $mode $HOME/Library/LaunchAgents/com.pAudio.camilladsp.plist  2>/dev/null
+
+    if [[ $arg2 == 'cam'* ]]; then
+        launchctl $mode $HOME/Library/LaunchAgents/com.pAudio.camilladsp.plist  2>/dev/null
+
+    else
+        launchctl $mode $HOME/Library/LaunchAgents/com.pAudio.ctrl.plist        2>/dev/null
+        launchctl $mode $HOME/Library/LaunchAgents/com.pAudio.www.plist         2>/dev/null
+        launchctl $mode $HOME/Library/LaunchAgents/com.pAudio.camilladsp.plist  2>/dev/null
+
+    fi
 }
 
 
@@ -16,20 +23,22 @@ if [[ $SO != "Darwin" ]]; then
 fi
 
 
-# argument to lower case
-arg=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+# arguments to lower case
+arg1=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+arg2=$(echo "$2" | tr '[:upper:]' '[:lower:]')
 
-if [[ $arg == 'off' || $arg == 'unload' || $arg == 'stop' ]]; then
+
+if [[ $arg1 == 'off' || $arg1 == 'unload' || $arg1 == 'stop' ]]; then
 
     mode='unload'
     do_launch
 
-elif [[ $arg == 'on' || $arg == 'load' || $arg == 'start' ]]; then
+elif [[ $arg1 == 'on' || $arg1 == 'load' || $arg1 == 'start' ]]; then
 
     mode='load'
     do_launch
 
-elif [[ $arg == 'reload' || $arg == 'restart' ]]; then
+elif [[ $arg1 == 'reload' || $arg1 == 'restart' ]]; then
 
     mode='unload'
     do_launch
@@ -39,11 +48,12 @@ elif [[ $arg == 'reload' || $arg == 'restart' ]]; then
 
 else
     echo
-    echo "Usage: paudio_launch.sh   load | unload | reload"
+    echo "Usage: paudio_launchagents.sh   load | unload | reload  [camilladsp]"
+    echo ""
+    echo "                                with 'camilladsp' skip others"
     echo
 fi
 
 # List state
-echo "List of pAudio agents (ctrl, www, camilladsp):"
-echo
+echo "Loaded agents (ctrl, www, camilladsp):"
 launchctl list | grep pAudio
