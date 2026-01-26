@@ -376,47 +376,11 @@ def init():
 
 
 def eq2png():
-    """  Dumping EQ to .png file and alerting clients to let them know
+    """  Dumping EQ to .png file non blocking
     """
-
-    def alert_new_eq_graph(timeout=1):
-        """ This sets the 'new_eq_graph' field to True for a while
-            so that the web page can realize when the graph is dumped.
-            This helps on slow machines because the PNG graph takes a while
-            after the 'done' is received when issuing some audio command.
-        """
-
-        def new_eq_graph(mode):
-            aux_info = read_json_file(AUXINFO_PATH)
-            aux_info['new_eq_graph'] = mode
-            save_json_file(aux_info, AUXINFO_PATH)
-
-        def mytimer(timeout):
-            sleep(timeout)
-            new_eq_graph(False)
-
-        new_eq_graph(True)
-
-        job = threading.Thread(target=mytimer, args=(timeout,))
-        job.start()
-
-
-    def do_graph(e):
-        fir2png()
-        e.set()
-
-
-    def flag_to_aux_info(e):
-        e.wait()    # waits until set flag is true
-        alert_new_eq_graph()
-
-
     # Threading because saving the PNG file can take too long
-    e  = threading.Event()
-    j1 = threading.Thread(target=do_graph,         args=(e,))
-    j2 = threading.Thread(target=flag_to_aux_info, args=(e,))
+    j1 = threading.Thread(target=fir2png)
     j1.start()
-    j2.start()
 
 
 # Interface functions with the underlying modules
