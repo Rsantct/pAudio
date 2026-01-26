@@ -106,46 +106,11 @@ def start():
     job.start()
 
 
-def kill_previous(pattern):
-    """ Kill previous instances as per the given process pattern
-    """
-
-    def get_cmd_line(pid):
-        try:
-            process = psutil.Process(pid)
-            cmdline = " ".join(process.cmdline())
-            return cmdline
-        except:
-            return ''
-
-
-    if not pattern:
-        return
-
-    curr_pids = []
-
-    try:
-        curr_pids = sp.check_output(['pgrep', '-f', pattern]).decode()
-        curr_pids = [x for x in curr_pids.split('\n') if x]
-    except:
-        pass
-
-    #print(f'{Fmt.GRAY}(librespot) Found PIDs: {curr_pids}{Fmt.END}')
-
-    if len(curr_pids) > 1:
-
-        print(f'{Fmt.GRAY}(librespot) Killing previous PIDs: {curr_pids[:-1]} ...{Fmt.END}')
-
-        for pid in curr_pids[:-1]:
-            #print(f'{Fmt.GRAY}(librespot) Killing PID: {pid} {get_cmd_line(pid)}{Fmt.END}')
-            sp.call( f'kill -KILL {pid}'.split() )
-
-
 def stop():
 
     print(f'{Fmt.GRAY}(librespot) stopping all stuff ...{Fmt.END}')
-    kill_previous( os.path.basename(__file__) )
     sp.call( ['pkill', '-u', USER, '-KILL', '-f',  'bin/librespot']  )
+    sp.call( ['pkill', '--older', '3', '-u', USER, '-KILL', '-f',  'librespot.py']  )
 
 
 if __name__ == "__main__":
