@@ -791,11 +791,11 @@ function page_update() {
         }
 
 
-        if ( hide_graphs == false ) {
+        if ( ! hide_graphs ) {
         // The temporary 'new_eq_graph' flag helps on slow machines because the new PNG graph
         // can take a while after the 'done' is received when issuing some audio command.
             if (eq_changed() == true || aux_info.new_eq_graph == true) {
-                // Artifice to avoid using cached image by adding an offset timestamp
+                // A trick to avoid using the cached image by adding an offset timestamp
                 // inside the  http.GET image source request
                 document.getElementById("eq_img").src = 'images/eq.png?'
                                                           + Math.floor(Date.now());
