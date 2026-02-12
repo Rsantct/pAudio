@@ -325,7 +325,8 @@ def start():
 
     sp.Popen( srv_cmd.split() )
 
-    if wait4server(timeout=30):
+    # RPI3 B (not +) needs more than 30 sec
+    if wait4server(timeout=45):
         if VERBOSE:
             print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
     else:
