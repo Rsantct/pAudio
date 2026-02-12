@@ -62,8 +62,12 @@ https://github.com/HEnquist/camilladsp/releases
 
 MORE INFO [here](https://github.com/HEnquist/camilladsp/tree/master?tab=readme-ov-file#building)
 
-## Configure pAudio
+## Configure pAudio to use Jack
 
 When using JACK, please see **`doc/config_examples`**
 
 MORE INFO [here](https://github.com/HEnquist/camilladsp/tree/master?tab=readme-ov-file#jack) 
+
+## Install the pAudio application
+
+Go to doc/README.md to continue
