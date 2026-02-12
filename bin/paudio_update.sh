@@ -16,6 +16,11 @@ function update_camilladsp_plist {
     sed -i '' "s|$old|$new|g" "$fname"
 }
 
+if [[ -f ~/pAudio/config.yml ]]; then
+    CONFIG_EXISTS='yes'
+else
+    CONFIG_EXISTS='no'
+fi
 
 GITSITE=Rsantct
 
@@ -47,12 +52,6 @@ rm -f $BRANCH.zip
 cd
 
 # Backup config
-if [[ -f ~/pAudio/config.yml ]]; then
-    CONFIG_EXISTS='yes'
-else
-    CONFIG_EXISTS='no'
-fi
-
 if [[ $CONFIG_EXISTS == 'yes' ]]; then
     cp ~/pAudio/config.yml ~/pAudio/config.yml.BAK
 fi
@@ -84,7 +83,7 @@ if [[ $(uname) == "Darwin" ]]; then
 fi
 
 
-if [[ $CONFIG_EXISTS != 'yes' ]]; then
+if [[ $CONFIG_EXISTS == 'yes' ]]; then
     echo
     echo "restarting pAudio ..."
     echo
