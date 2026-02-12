@@ -34,6 +34,15 @@ from    time import sleep
 UHOME       = os.path.expanduser("~")
 USER        = getuser()
 
+class Fmt:
+    RED     = '\033[31m'
+    BLUE    = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN    = '\033[36m'
+    GRAY    = '\033[90m'
+    BOLD    = '\033[1m'
+    END     = '\033[0m'
+
 try:
     BINARY = sp.check_output('which librespot'.split()).decode().strip()
 except Exception as e:
@@ -51,15 +60,6 @@ OTHER_OPTS = [
 # Librespot --onevent program
 ONEVENT_PROGRAM = os.path.dirname(__file__) + '/librespot/event_handler.py'
 EVENTS_PATH     = f'{UHOME}/pAudio/log/librespot_events'
-
-class Fmt:
-    RED     = '\033[31m'
-    BLUE    = '\033[34m'
-    MAGENTA = '\033[35m'
-    CYAN    = '\033[36m'
-    GRAY    = '\033[90m'
-    BOLD    = '\033[1m'
-    END     = '\033[0m'
 
 
 def run_watchdog(period=10):
