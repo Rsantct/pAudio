@@ -8,7 +8,7 @@ This is for a black box Linux machine (say a little Raspberry Pi 3B+ and up), or
 
 ### Generic tools and control web page software:
 
-    sudo apt install alsa-utils alsa-ucm-conf xdotool cdtool libportaudio2 libffi-dev git nodejs node-js-yaml
+    sudo apt install alsa-utils alsa-ucm-conf jackd2 xdotool cdtool libportaudio2 libffi-dev git nodejs node-js-yaml
 
 ### Python packages from Debian:
 
@@ -53,8 +53,7 @@ https://github.com/HEnquist/camilladsp/releases
 
 ### Install compiler dependencies
 
-    sudo apt-get install pkg-config libasound2-dev openssl libssl-dev \
-                 jackd2 libjack-jackd2-dev
+    sudo apt-get install pkg-config libasound2-dev openssl libssl-dev libjack-jackd2-dev
 
 ### Compile
 
