@@ -19,7 +19,7 @@
 
 import  sys
 import  os
-from    time        import sleep
+from    time        import sleep, time
 from    camilladsp  import CamillaClient
 
 UHOME       = os.path.expanduser('~')
@@ -321,14 +321,15 @@ def start():
         srv_cmd += ' -v'
     else:
         srv_cmd += f' 1>{LOGFOLDER}/paudio.log 2>{LOGFOLDER}/paudio.err'
-        print("(start) The pAudio server will run in background ...")
+        print(f"{Fmt.BLUE}(start) Waiting for the the pAudio server to run in background ...{Fmt.END}")
 
+    t_srv_start = time()
     sp.Popen( srv_cmd.split() )
 
-    # RPI3 B (not +) needs more than 30 sec
-    if wait4server(timeout=45):
-        if VERBOSE:
-            print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
+    if wait4server(timeout=60):
+        t_srv_lapse = round(time() - t_srv_start, 1)
+        print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
+
     else:
         print(f'{Fmt.RED}(start) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
         stop()
