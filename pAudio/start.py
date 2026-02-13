@@ -293,14 +293,16 @@ def stop():
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon(mode='stop')
 
+    # The server
+    sp.Popen(['pkill', '-f',  'server.py paudio '])
+
+    # Linux: Jack
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
         # Zita network to jack (Linux)
         stop_zita_link()
         sleep(.25)
-
-    # The server
-    sp.Popen(['pkill', '-f',  'server.py paudio '])
+        sp.Popen(['pkill', '-f',  'jackd'])
 
     sleep(1)
 
@@ -316,17 +318,18 @@ def start():
 
     # Run the pAudio main server 'paudio.py' to listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {PAUDIO_ADDR} {PAUDIO_PORT}'
+    server_timeout = estimate_server_delay() + 10
 
     if VERBOSE:
         srv_cmd += ' -v'
     else:
         srv_cmd += f' 1>{LOGFOLDER}/paudio.log 2>{LOGFOLDER}/paudio.err'
-        print(f"{Fmt.BLUE}(start) Waiting for the the pAudio server to run in background ...{Fmt.END}")
+        print(f"{Fmt.BLUE}(start) Waiting {server_timeout} s for the the pAudio server to run in background ...{Fmt.END}")
 
     t_srv_start = time()
     sp.Popen( srv_cmd.split() )
 
-    if wait4server(timeout=60):
+    if wait4server(timeout=server_timeout):
         t_srv_lapse = round(time() - t_srv_start, 1)
         print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
 
