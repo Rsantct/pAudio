@@ -16,7 +16,7 @@
                   samplerate as pAudio, as mine does (ESI UDJ6 only works at 48 KHz)
 
     How to prepare pAudio config.yml:
-        
+
         jack:
             ...
             sources:
@@ -24,8 +24,8 @@
                     jport:  librespot   (normal usage with Jack backend)
                          -OR-
                     jport:  PipeWire    (if you need to resample as explained above)
-    
-    
+
+
     2025-01: librespot 0.4.0 suddently crashes, so will use a watchdog here
     2025-11: Crashes stopped with libresport 0.8.0, but will keep the watchgog.
              Also jack ports remains stable when track changes, so the '--onevent'
@@ -34,6 +34,7 @@
 """
 import  sys
 import  os
+import  stat
 import  subprocess as sp
 import  psutil
 from    socket import gethostname
@@ -45,20 +46,6 @@ from    time import sleep
 UHOME       = os.path.expanduser("~")
 USER        = getuser()
 
-class Fmt:
-    RED     = '\033[31m'
-    BLUE    = '\033[34m'
-    MAGENTA = '\033[35m'
-    CYAN    = '\033[36m'
-    GRAY    = '\033[90m'
-    BOLD    = '\033[1m'
-    END     = '\033[0m'
-
-try:
-    BINARY = sp.check_output('which librespot'.split()).decode().strip()
-except Exception as e:
-    print(f'{Fmt.RED}(librespot) error getting librespot binary: {str(e)}{Fmt.END}')
-    sys.exit()
 
 # libresport options list (do not configure here: bitrate, name, backend, device)
 OTHER_OPTS = [
@@ -71,6 +58,36 @@ OTHER_OPTS = [
 # Librespot --onevent program
 ONEVENT_PROGRAM = os.path.dirname(__file__) + '/librespot/event_handler.py'
 EVENTS_PATH     = f'{UHOME}/pAudio/log/librespot_events'
+
+
+class Fmt:
+    RED     = '\033[31m'
+    BLUE    = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN    = '\033[36m'
+    GRAY    = '\033[90m'
+    BOLD    = '\033[1m'
+    END     = '\033[0m'
+
+
+def _init():
+
+    global BINARY
+
+    # Check librespot binary
+    try:
+        BINARY = sp.check_output('which librespot'.split()).decode().strip()
+    except Exception as e:
+        print(f'{Fmt.RED}(librespot) error getting librespot binary: {str(e)}{Fmt.END}')
+        sys.exit()
+
+    # Ensure +x for librespot/evenhandler.py
+    try:
+        curr_permissions = os.stat(ONEVENT_PROGRAM).st_mode
+        # S_IXUSR (owner). Optional S_IXGRP (group) or S_IXOTH (others)
+        os.chmod(ONEVENT_PROGRAM, curr_permissions | stat.S_IXUSR)
+    except Exception as e:
+        print(f'{Fmt.RED}(librespot) cannot chmod +x to: {ONEVENT_PROGRAM} {str(e)}{Fmt.END}')
 
 
 def run_watchdog(period=10):
@@ -125,6 +142,8 @@ def stop():
 
 
 if __name__ == "__main__":
+
+    _init()
 
     with open(EVENTS_PATH, 'w') as dummy:
         pass
