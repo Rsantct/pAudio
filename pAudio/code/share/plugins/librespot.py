@@ -11,10 +11,21 @@
 
     Usage:  librespot.py   start [pulseaudio] | stop
 
-    'pulseaudio' uses Pulseaudio as backend instead of direct output to Jack.
-    This is useful if your sound card cannot run at the same samplerate as
-    pe.audio.sys, as mine does (ESI UDJ6 only works at 48 KHz)
+    pulseaudio:   Uses Pulseaudio as backend instead of direct output to Jack.
+                  This is useful if your pAudio sound card cannot run at the same
+                  samplerate as pAudio, as mine does (ESI UDJ6 only works at 48 KHz)
 
+    How to prepare pAudio config.yml:
+        
+        jack:
+            ...
+            sources:
+                librespot:
+                    jport:  librespot   (normal usage with Jack backend)
+                         -OR-
+                    jport:  PipeWire    (if you need to resample as explained above)
+    
+    
     2025-01: librespot 0.4.0 suddently crashes, so will use a watchdog here
     2025-11: Crashes stopped with libresport 0.8.0, but will keep the watchgog.
              Also jack ports remains stable when track changes, so the '--onevent'
