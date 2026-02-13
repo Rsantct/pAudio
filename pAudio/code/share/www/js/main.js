@@ -318,6 +318,8 @@ function manage_main_cside( msg = '' ){
 
     } else if( ! CamillaDSP_is_ready() ) {
         msg = 'DSP unloaded, needs restart';
+        document.getElementById("but_restart").style.display = "inline-block";
+        document.getElementById("but_help").style.display = "none";
 
     } else {
 
@@ -325,6 +327,9 @@ function manage_main_cside( msg = '' ){
             hold_cside_msg -= 1;
 
         } else {
+
+            document.getElementById("but_restart").style.display = "none";
+            document.getElementById("but_help").style.display = "inline-block";
 
             if (state.loudspeaker){
                 if (state.drc_set == 'none'){
