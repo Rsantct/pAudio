@@ -9,7 +9,7 @@ import  threading
 from    watchdog.observers  import Observer
 from    watchdog.events     import FileSystemEventHandler
 import  socket
-from    time        import sleep, strftime
+from    time        import sleep, strftime, perf_counter
 from    datetime    import datetime
 import  yaml
 import  json
@@ -910,6 +910,37 @@ def wait4jackports( pattern, timeout=5 ):
         return True
     else:
         return False
+
+
+def estimate_server_delay():
+
+    my_bm = get_benkmarch(n=500e3)
+
+    delay = 5.14 * my_bm ** -0.62
+
+    return int(round(delay, 1))
+
+
+def get_benkmarch(n=500e3):
+
+    start = perf_counter()
+    _ = sum(i**2 for i in range(int(n)))
+    end = perf_counter()
+
+    cpu_score = end - start
+
+    #                   delay   bench       time to run
+    #                   500e3   500e3       the pAudio server
+    #                   -----   -----       -----
+    # RPI 3 B           0.895   0.05        32 s
+    # RPI 3 B+          0.450   0.11        22 s
+    # Asus Atinker      0.225   0.22        14 s
+    # Core i3           0.049   1.0          4 s
+    # Apple M1          0.032   1.5          1 s
+
+    reference_score = 0.049
+
+    return 1 / (cpu_score / reference_score)
 
 
 def ip_is_reachable(ip):
