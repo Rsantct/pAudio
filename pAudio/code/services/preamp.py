@@ -557,7 +557,7 @@ def set_source(sname):
             # Check if specific setting is configured:
             source_value = CONFIG["jack"]["sources"][sname].get(setting, None)
 
-            if source_value:
+            if source_value != None:
 
                 if setting == 'mono':
                     setting = 'midside'
