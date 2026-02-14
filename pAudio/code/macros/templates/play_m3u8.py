@@ -24,14 +24,37 @@ from    time import sleep
 import  datetime
 
 UHOME = os.path.expanduser("~")
-sys.path.append( f'{UHOME}/pe.audio.sys/share/miscel' )
 
-from miscel import kill_bill
-
-MPD_PORT = 6600
-LOG_PATH = f'{UHOME}/pe.audio.sys/log/play_m3u8.log'
+MPD_PORT      = 6600
+LOG_PATH      = f'{UHOME}/pAudio/log/play_m3u8.log'
+ISTREAMS_PATH = f'{UHOME}/pAudio/istreams.yml'
 
 mpdcli = mpd.MPDClient()
+
+
+def kill_others_than_me():
+    """ Kill all processes matching my basename
+        except my self.
+    """
+    pid = os.getpid()
+    my_basename = os.path.basename( __file__ )
+
+    for proc in psutil.process_iter(['pid', 'cmdline']):
+
+        try:
+            cmdline = proc.info['cmdline']
+
+            if proc.info['pid'] != pid and cmdline and my_basename in " ".join(cmdline):
+                # terminate() -> elegant (SIGTERM); kill() -> force (SIGKILL)
+                proc.kill()
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            # Ignore if the process disappeared on its own
+            # or if we don't have permissions
+            continue
+
+        except:
+            continue
 
 
 def mpd_connect(port=MPD_PORT):
@@ -79,22 +102,15 @@ def get_m3u8_uris(url):
 def get_url(station_name):
 
     def load_istreams():
-
-        istreams_path = f'{UHOME}/pe.audio.sys/config/istreams.yml'
-
         try:
-            with open(istreams_path, 'r') as f:
+            with open(ISTREAMS_PATH, 'r') as f:
                 return yaml.safe_load(f.read())
         except:
             return {}
 
+    istreams = load_istreams()
 
-    url = ''
-    for k, v in load_istreams().items():
-        if station_name == v["name"]:
-            url = v["url"]
-            break
-    return url
+    return istreams.get(station_name, '')
 
 
 def do_log(msg, to_console=True):
@@ -112,10 +128,9 @@ def do_log(msg, to_console=True):
 
 if __name__ == "__main__":
 
-    # Kills any previous instance of this loop
-    kill_bill( os.getpid() )
 
-    print()
+    # Kills any previous instance of this
+    kill_others_than_me()
 
     # Reading the desired station
     if not sys.argv[1:]:
