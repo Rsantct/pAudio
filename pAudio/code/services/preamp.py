@@ -555,7 +555,7 @@ def set_source(sname):
         for setting in valid_source_settings:
 
             # Check if specific setting is configured:
-            source_value = CONFIG["jack"]["sources"][sname].get(setting, None)
+            source_value = CONFIG["sources"].get(sname, {}).get(setting, None)
 
             if source_value != None:
 
