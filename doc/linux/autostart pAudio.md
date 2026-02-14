@@ -26,7 +26,7 @@ After=network-online.target
 Wants=network-online.target
 
 # Retries limit
-StartLimitBurst=3
+StartLimitBurst=1
 StartLimitIntervalSec=60
 
 [Service]
