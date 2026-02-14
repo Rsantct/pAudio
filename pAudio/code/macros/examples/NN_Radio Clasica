@@ -1,0 +1,7 @@
+#!/bin/bash
+
+STATION="Radio Clasica"
+
+python3 $HOME/pAudio/code/macros/templates/play_m3u8.py "$STATION"  &
+paudio_control input mpd
+paudio_control lu_offset 9
