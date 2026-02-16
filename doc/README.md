@@ -26,6 +26,12 @@ In order to automatically switch the Mac system-wide audio playback to the pAudi
 - [AdjustVolume](https://github.com/jonomuller/device-volume-adjuster) This is comes as a ZIP file. Copy to `/usr/local/bin/` or just to `$HOME/bin/`
 - [SwitchAudioSource](https://github.com/deweller/switchaudio-osx) This installs via Homebrew, If you still don’t have Homebrew, please go to https://brew.sh
 
+NOTICE:
+To alow the binary **AdjustVolume** to be executed, you'll need to unblock it, open a terminal and run:
+
+    xattr -d com.apple.quarantine ~/bin/AdjustVolume
+
+
 ## CamillaDSP
 
 [CamillaDSP](https://github.com/HEnquist/camilladsp#readme) is a powerful audio processing tool.
@@ -49,7 +55,7 @@ If the binary was downloaded using Safari, then macOS most likely won't allow it
 
 The solution is to remove the "quarantine" attribute from the binary using the xattr command.
 
-Open a a terminal and run:
+Open a terminal and run:
 
     xattr -d com.apple.quarantine ~/bin/camilladsp
 
