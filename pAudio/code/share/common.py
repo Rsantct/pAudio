@@ -277,8 +277,14 @@ def get_web_config():
                 'user_macros':          get_macros()
     }
 
-    for item, value in CONFIG.get('web_config', {}).items():
-        result[item] = value
+    try:
+        cfg = read_yaml_file(CONFIG_PATH)
+
+        for item, value in cfg.get('web_config', {}).items():
+            result[item] = value
+
+    except Exception as e:
+        print(f'{Fmt.RED}(common.get_web_config) ERROR: {str(e)}{Fmt.END}' )
 
     return result
 
