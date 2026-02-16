@@ -5,31 +5,69 @@
 """
     Plays an akamaized 'm3u8' playlist througby MPD
 
-    Usage:  play_m3u8.py    station_name (*)
+    Usage:  play_m3u8.py    station_name*  [-n]
 
         (*) as per configured in config/istreams.yml
 
+        -n  disables the watchdog, see below.
 
     This program is a loop that feeds the m3u8 chunks into the MPD playlist.
-    If someone modifies the MPD playlist, then this loop will end.
+
+    The loop will end:
+        - if someone modifies the MPD playlist
+        - if the watchdog detects a not 'radio' or 'mpd' pAudio source
 """
 
 import  psutil
 import  sys
 import  os
 import  yaml
+import  json
 import  mpd
 import  m3u8
 from    time import sleep
 import  datetime
+import  threading
 
 UHOME = os.path.expanduser("~")
 
-MPD_PORT      = 6600
-LOG_PATH      = f'{UHOME}/pAudio/log/play_m3u8.log'
-ISTREAMS_PATH = f'{UHOME}/pAudio/istreams.yml'
+MPD_PORT        = 6600
+LOG_PATH        = f'{UHOME}/pAudio/log/play_m3u8.log'
+ISTREAMS_PATH   = f'{UHOME}/pAudio/istreams.yml'
+
+# Timeout the terminate if the selected source is not 'radio' or 'mpd'
+WATCHDOG_TIMEOUT = 6
 
 mpdcli = mpd.MPDClient()
+
+terminate_by_source = threading.Event()
+
+
+def source_watchdog(timeout=60):
+    """ loop that sets the terminate flag when
+        a preamp source is not ~ 'radio' or ~ 'mpd'
+    """
+
+    def read_state():
+
+        try:
+            with open(f'{UHOME}/pAudio/.preamp_state', 'r') as f:
+                tmp = f.read()
+                return json.loads( tmp )
+
+        except Exception as e:
+            print(f'(play_m3u8) ERROR reading pAudio state: {str(e)}')
+            result = {'source': 'ERROR'}
+
+    print('starting watchdog for source changes')
+
+    while not terminate_by_source.is_set():
+
+        sleep(timeout)
+
+        source = read_state().get('source', '')
+        if not ('mpd' in source.lower() or 'radio' in source.lower()):
+            terminate_by_source.set()
 
 
 def kill_others_than_me():
@@ -132,12 +170,18 @@ if __name__ == "__main__":
     # Kills any previous instance of this
     kill_others_than_me()
 
-    # Reading the desired station
     if not sys.argv[1:]:
         print(__doc__)
         sys.exit()
 
+    # Reading the desired station
     station_name = sys.argv[1]
+
+    # disable watchdog
+    run_wd = True
+    if sys.argv[2:]:
+        if '-n' in sys.argv[2]:
+            run_wd = False
 
     radio_url = get_url(station_name)
 
@@ -176,10 +220,15 @@ if __name__ == "__main__":
     mpdcli.random(0)
 
 
+    # Source watchdog
+    if run_wd:
+        job_wd = threading.Thread( target=source_watchdog, args=(WATCHDOG_TIMEOUT,) )
+        job_wd.start()
+
+
     # At least 2 URIs will be kept loaded in the playlist
 
-    loop_waiting = (number_of_uris - 2) * ts_duration
-
+    loop_sleep = (number_of_uris - 2) * ts_duration
     try:
 
         do_log(f'MPD playing `{station_name}`')
@@ -214,12 +263,18 @@ if __name__ == "__main__":
                 end_reason = 'MPD connection lost'
                 break
 
-            sleep(loop_waiting)
+            if terminate_by_source.is_set():
+                end_reason = 'selected source is not ~ \'radio\' neither ~ \'mpd\''
+                break
+
+            sleep(loop_sleep)
 
         if end_reason:
             do_log(f'{end_reason}')
         else:
-            do_log(f'MPD playlist loop failed :-/')
+            do_log(f'MPD playlist loop ended :-/')
+
+
 
     except KeyboardInterrupt:
         mpdcli.clear()
@@ -229,3 +284,5 @@ if __name__ == "__main__":
 
     except Exception as e:
         do_log(f'\nException: {str(e)}')
+
+    print('bye!')
