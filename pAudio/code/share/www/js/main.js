@@ -1177,7 +1177,7 @@ function ck_help() {
 
     let msg = HELP_EN;
 
-    if ( lang.toLowerCase().includes('sp') ){
+    if ( lang.toLowerCase().includes('sp') ||  lang.toLowerCase() == 'es' ){
         msg = HELP_SP
     }
     if ( lang.toLowerCase().includes('cat') ){
