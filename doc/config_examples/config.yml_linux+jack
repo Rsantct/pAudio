@@ -11,6 +11,8 @@ jack:
     nperiods:       2
     dither:         true
     softmode:       false
+    16bit:          false        # alias of  "shorts:  false"
+
     sources:
         analog:
             jport:  system
