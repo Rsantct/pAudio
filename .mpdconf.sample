@@ -1,0 +1,10 @@
+audio_output {
+    type            "jack"
+    enabled         "yes"
+    name            "jack"
+    client_name     "mpd"
+    always_on       "no"
+    source_ports    "out_0,out_1"
+    # (!) MUST declare destination_ports to avoid autoconnect to system
+    destination_ports    "mpd_loop:input_1,mpd_loop:input_2"
+}
