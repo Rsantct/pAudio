@@ -261,7 +261,13 @@ def get_player_from_source():
         player = source
 
     else:
-        player = ''
+        jport = CONFIG["sources"].get(source, {}).get('jport', '')
+
+        if 'mpd' in jport:
+            player = 'mpd'
+
+        else:
+            player = ''
 
     return player
 
