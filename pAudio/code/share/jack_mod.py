@@ -30,7 +30,7 @@ def _jcli_activate(cli_name = 'jack_mod'):
 
 
 def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=2,
-                jloops_list=[], dither=False, softmode=False ):
+                jloops_list=[], dither=False, softmode=False, shorts=False ):
     """ Run JACK in a separate process, including jack_loops
     """
 
@@ -47,6 +47,12 @@ def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=
     else:
         sm = ''
 
+    if shorts:
+        sh = '--shorts'
+    else:
+        sh = ''
+
+
     if 'rec' in io_mode and 'play' in io_mode:
         mode = 'd'
 
@@ -60,7 +66,7 @@ def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=
         return False
 
     jack_cmd = f'jackd -d alsa -{mode} {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
-               f' {sm} 1>{LOGFOLDER}/jackd.log 2>&1'
+               f' {sm} {sh} 1>{LOGFOLDER}/jackd.log 2>&1'
 
     with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
         f.write('JACKD COMMAND LINE:\n')

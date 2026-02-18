@@ -53,7 +53,7 @@ def read_cdda_meta_from_disk():
 
 
 def _ping_mpd():
-    """ (i) Do not use ping() because some times crash:
+    """ (i) Do not use ping() because it sometimes crash:
             Got unexpected return value: <...a sringify state...>
 
         Use status() instead.
@@ -360,7 +360,7 @@ def get_info():
     pi['player'] = 'MPD'
 
     if not _ping_mpd():
-        print(f'{Fmt.RED}(mpd_mod.py) mpd_meta not connected to MPD{Fmt.END}')
+        print(f'{Fmt.RED}(mpd_mod.py) get_info not connected to MPD{Fmt.END}')
         return  pi
 
     try:

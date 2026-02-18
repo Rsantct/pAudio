@@ -555,9 +555,9 @@ def set_source(sname):
         for setting in valid_source_settings:
 
             # Check if specific setting is configured:
-            source_value = CONFIG["jack"]["sources"][sname].get(setting, None)
+            source_value = CONFIG["sources"].get(sname, {}).get(setting, None)
 
-            if source_value:
+            if source_value != None:
 
                 if setting == 'mono':
                     setting = 'midside'
@@ -602,6 +602,11 @@ def set_source(sname):
 
     if not sname in SOURCES:
         return f'must be in: { list( SOURCES.keys() ) }'
+
+    # Deactivate compressor on change the source,
+    # regardless source specific settings
+    if set_compressor('off') == 'done':
+        STATE["compressor"] = 'off'
 
     # COREAUDIO
     if CONFIG.get('coreaudio'):
@@ -705,6 +710,7 @@ def set_source(sname):
     # if not coreaudio or jack
     else:
         result = 'bad config.yml'
+
 
     return result
 

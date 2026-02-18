@@ -25,11 +25,16 @@ function start_www {
 
 function start_ctrl {
 
-    if [[ $(pgrep -f "server.py paudio_ctrl") ]]; then
-        if [[ $VERBOSE == 'true' ]]; then
-            echo "(paudio_restart) pAudio_ctrl server is already running."
+    if [[ $(uname) == "Linux" ]]; then
+
+        if [[ $(pgrep -f "server.py paudio_ctrl") ]]; then
+            if [[ $VERBOSE == 'true' ]]; then
+                echo "(paudio_restart) Restarting the paudio_ctrl server"
+            fi
         fi
-    else
+
+        pkill -f paudio_ctrl
+        sleep .5
         python3 $HOME/pAudio/code/share/server.py paudio_ctrl 0.0.0.0 $CTRL_PORT 1>/dev/null 2>&1 &
 
     fi
@@ -121,7 +126,7 @@ function do_start {
     fi
 
     if [[ $VERBOSE == 'true' ]]; then                       # pAudio server
-        python3 $HOME/pAudio/start.py start $VERBOSE &
+        python3 $HOME/pAudio/start.py start -v &
     else
         python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
                                             2> $HOME/pAudio/log/start.err &

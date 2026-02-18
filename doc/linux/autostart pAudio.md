@@ -4,10 +4,15 @@ You can put the provided file **`pAudio/doc/linux/.config/autostart/pAudio.deskt
 
 ## autostart pAudio in a headless machine
 
-You can use `/etc/rc.local`
+--- You can use `/etc/rc.local`
 
-    sleep 10 && su -l paudio -c "/home/paudio/bin/paudio_restart.sh" &
+    #!/bin/bash
+    
+    # pAudio
+    sleep 10 && su -l paudio -c "/home/paudio/bin/paudio_restart.sh start" &
+    
+    exit 0
 
-Or you can add a crontab job:
+--- OR you can add a crontab job:
 
     @ reboot  su -l paudio -c "/home/paudio/bin/paudio_restart.sh" &

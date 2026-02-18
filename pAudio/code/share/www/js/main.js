@@ -286,6 +286,17 @@ function fill_in_page_statics(){
 }
 
 
+function but_restart_display(mode){
+    if ( mode == 'on' ){
+        document.getElementById("but_restart").style.display = "inline-block";
+        document.getElementById("but_help").style.display = "none";
+    }else{
+        document.getElementById("but_restart").style.display = "none";
+        document.getElementById("but_help").style.display = "inline-block";
+    }
+}
+
+
 function manage_main_cside( msg = '' ){
 
     function CamillaDSP_is_ready() {
@@ -318,6 +329,7 @@ function manage_main_cside( msg = '' ){
 
     } else if( ! CamillaDSP_is_ready() ) {
         msg = 'DSP unloaded, needs restart';
+        but_restart_display('on');
 
     } else {
 
@@ -326,7 +338,11 @@ function manage_main_cside( msg = '' ){
 
         } else {
 
-            if (state.loudspeaker){
+            if ( ! show_advanced ){
+                but_restart_display('off');
+            }
+
+            if ( state.loudspeaker ){
                 if (state.drc_set == 'none'){
                     msg = state.loudspeaker;
 
@@ -893,6 +909,7 @@ function page_update() {
     if ( Object.keys(state).length == 0 ){
         document.getElementById("levelInfo").innerHTML  = '--';
         main_cside_msg = ':: pAudio :: not connected';
+        but_restart_display('on');
         player_info_clear();
         player_controls_clear();
         return;
@@ -1160,7 +1177,7 @@ function ck_help() {
 
     let msg = HELP_EN;
 
-    if ( lang.toLowerCase().includes('sp') ){
+    if ( lang.toLowerCase().includes('sp') ||  lang.toLowerCase() == 'es' ){
         msg = HELP_SP
     }
     if ( lang.toLowerCase().includes('cat') ){

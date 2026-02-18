@@ -16,6 +16,11 @@ function update_camilladsp_plist {
     sed -i '' "s|$old|$new|g" "$fname"
 }
 
+if [[ -f ~/pAudio/config.yml ]]; then
+    CONFIG_EXISTS='yes'
+else
+    CONFIG_EXISTS='no'
+fi
 
 GITSITE=Rsantct
 
@@ -47,7 +52,9 @@ rm -f $BRANCH.zip
 cd
 
 # Backup config
-cp ~/pAudio/config.yml ~/pAudio/config.yml.BAK 1>/dev/null 2>&1
+if [[ $CONFIG_EXISTS == 'yes' ]]; then
+    cp ~/pAudio/config.yml ~/pAudio/config.yml.BAK
+fi
 
 # Copy all stuff
 cp -r ~/tmp/pAudio-$BRANCH/pAudio  ~/
@@ -57,7 +64,9 @@ chmod +x ~/pAudio/start*
 chmod +x ~/pAudio/code/share/plugins/*
 
 # Restore config
-cp ~/pAudio/config.yml.BAK ~/pAudio/config.yml 1>/dev/null 2>&1
+if [[ $CONFIG_EXISTS == 'yes' ]]; then
+    cp ~/pAudio/config.yml.BAK ~/pAudio/config.yml
+fi
 
 # Stop the server, CamillaDSP, www and control
 pkill -f "server.py paudio "        1>/dev/null 2>&1
@@ -73,9 +82,15 @@ if [[ $(uname) == "Darwin" ]]; then
     update_camilladsp_plist
 fi
 
-echo
-echo "Done, restarting pAudio ..."
-echo
 
-# Restart pAudio
-~/bin/paudio_restart.sh
+if [[ $CONFIG_EXISTS == 'yes' ]]; then
+    echo
+    echo "restarting pAudio ..."
+    echo
+    ~/bin/paudio_restart.sh
+fi
+
+echo
+echo "Done."
+echo
+exit 0

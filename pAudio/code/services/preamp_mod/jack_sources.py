@@ -23,7 +23,7 @@ def _init():
 def get_sources():
     """
         - Scan for well known plugins then prepare
-          their corresponding sources
+          their corresponding source
 
         - Read other configured sources under jack: in config.yml
     """
@@ -60,12 +60,11 @@ def get_sources():
 
     sources = { 'none': {} }
 
-    # Scan well known plugins
+    # Scan for well known plugins and prepare the appropriate source
     for plugin in CONFIG.get('plugins'):
 
-        # MPD
+        # Create an 'mpd' pAudio soure
         if 'mpd' in plugin:
-
             sources["mpd"] = { 'jport': 'mpd_loop'}
 
         # TODO
@@ -75,26 +74,28 @@ def get_sources():
     # Other user defined sources
     if CONFIG["jack"].get('sources'):
 
-        for source, params in CONFIG["jack"].get('sources').items():
+        for jsource, params in CONFIG["jack"].get('sources').items():
 
-            if not source in sources:
+            if not jsource in sources:
 
-                sources[source] = params
+                sources[jsource] = params
 
                 # Complete other parameters for remote sources
-                if 'remote' in source:
+                if 'remote' in jsource:
 
                     ip, port = get_remote_source_addr_port(params["remote_addr"])
                     jport = f'zita_n2j_{ip.split(".")[-1]}'
-                    sources[source]["ip"]    = ip
-                    sources[source]["port"]  = port
-                    sources[source]["jport"] = jport
+                    sources[jsource]["ip"]    = ip
+                    sources[jsource]["port"]  = port
+                    sources[jsource]["jport"] = jport
 
-                    del sources[source]["remote_addr"]
+                    del sources[jsource]["remote_addr"]
 
+            # It is a predefined source because we created it before
+            # for well-known sources, for example for the mpd.py plugin
             else:
-                print(f'{Fmt.BOLD}Jack source `{source}` is not needed when the plugin is used{Fmt.END}')
-
+                for k, v in params.items():
+                    sources[jsource][k] = v
 
     SOURCES = sources
 

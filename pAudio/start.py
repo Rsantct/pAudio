@@ -19,7 +19,7 @@
 
 import  sys
 import  os
-from    time        import sleep
+from    time        import sleep, time
 from    camilladsp  import CamillaClient
 
 UHOME       = os.path.expanduser('~')
@@ -83,17 +83,19 @@ def prepare_jack_stuff():
 
     fs       = CONFIG["samplerate"]
     alsa_dev = CONFIG["jack"]["device"]
-    period   = CONFIG["jack"]["period"]
-    nperiods = CONFIG["jack"]["nperiods"]
-    dither   = CONFIG["jack"]["dither"]
-    softmode = CONFIG["jack"]["softmode"]
+    period   = CONFIG["jack"].get("period", 1024)
+    nperiods = CONFIG["jack"].get("nperiods", 2)
+    dither   = CONFIG["jack"].get("dither", True)
+    softmode = CONFIG["jack"].get("softmode", True)
+    shorts   = CONFIG["jack"].get("shorts", False) or CONFIG["jack"].get("16bit", False)
 
     io_mode  = detect_sound_card_io(alsa_dev)
 
     if not jack_mod.run_jackd(  alsa_dev=alsa_dev, io_mode=io_mode,
                                 fs=fs, period=period, nperiods=nperiods,
                                 jloops_list=jloops_list,
-                                dither=dither, softmode=softmode):
+                                dither=dither, softmode=softmode,
+                                shorts=shorts):
 
         print(f'{Fmt.BOLD}(start) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
@@ -293,14 +295,16 @@ def stop():
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon(mode='stop')
 
+    # The server
+    sp.Popen(['pkill', '-f',  'server.py paudio '])
+
+    # Linux: Jack
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
         # Zita network to jack (Linux)
         stop_zita_link()
         sleep(.25)
-
-    # The server
-    sp.Popen(['pkill', '-f',  'server.py paudio '])
+        sp.Popen(['pkill', '-f',  'jackd'])
 
     sleep(1)
 
@@ -310,24 +314,27 @@ def start():
     # restore Sound Card settings (currently only for Linux-ALSA)
     restore_sound_card()
 
-    # Check if CamillaDPS is available
+    # Check if CamillaDSP is available
     if not check_cdsp_running():
         return
 
     # Run the pAudio main server 'paudio.py' to listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {PAUDIO_ADDR} {PAUDIO_PORT}'
+    server_timeout = estimate_server_delay() + 15
 
     if VERBOSE:
         srv_cmd += ' -v'
     else:
         srv_cmd += f' 1>{LOGFOLDER}/paudio.log 2>{LOGFOLDER}/paudio.err'
-        print("(start) The pAudio server will run in background ...")
+        print(f"{Fmt.BLUE}(start) Waiting {server_timeout} s for the the pAudio server to run in background ...{Fmt.END}")
 
+    t_srv_start = time()
     sp.Popen( srv_cmd.split() )
 
-    if wait4server(timeout=30):
-        if VERBOSE:
-            print(f'{Fmt.BLUE}(start) pAudio server is running :-){Fmt.END}')
+    if wait4server(timeout=server_timeout):
+        t_srv_lapse = round(time() - t_srv_start, 1)
+        print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
+
     else:
         print(f'{Fmt.RED}(start) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
         stop()
