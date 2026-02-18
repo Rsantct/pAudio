@@ -83,17 +83,19 @@ def prepare_jack_stuff():
 
     fs       = CONFIG["samplerate"]
     alsa_dev = CONFIG["jack"]["device"]
-    period   = CONFIG["jack"]["period"]
-    nperiods = CONFIG["jack"]["nperiods"]
-    dither   = CONFIG["jack"]["dither"]
-    softmode = CONFIG["jack"]["softmode"]
+    period   = CONFIG["jack"].get("period", 1024)
+    nperiods = CONFIG["jack"].get("nperiods", 2)
+    dither   = CONFIG["jack"].get("dither", True)
+    softmode = CONFIG["jack"].get("softmode", True)
+    shorts   = CONFIG["jack"].get("shorts", False) or CONFIG["jack"].get("16bit", False)
 
     io_mode  = detect_sound_card_io(alsa_dev)
 
     if not jack_mod.run_jackd(  alsa_dev=alsa_dev, io_mode=io_mode,
                                 fs=fs, period=period, nperiods=nperiods,
                                 jloops_list=jloops_list,
-                                dither=dither, softmode=softmode):
+                                dither=dither, softmode=softmode,
+                                shorts=shorts):
 
         print(f'{Fmt.BOLD}(start) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
@@ -312,7 +314,7 @@ def start():
     # restore Sound Card settings (currently only for Linux-ALSA)
     restore_sound_card()
 
-    # Check if CamillaDPS is available
+    # Check if CamillaDSP is available
     if not check_cdsp_running():
         return
 
