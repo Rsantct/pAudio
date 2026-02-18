@@ -126,7 +126,7 @@ function do_start {
     fi
 
     if [[ $VERBOSE == 'true' ]]; then                       # pAudio server
-        python3 $HOME/pAudio/start.py start $VERBOSE &
+        python3 $HOME/pAudio/start.py start -v &
     else
         python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
                                             2> $HOME/pAudio/log/start.err &
