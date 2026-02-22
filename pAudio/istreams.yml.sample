@@ -1,0 +1,8 @@
+
+# M3U8 urls to be played by MPD, running the script code/macros/templates/play_m3u8.py,
+# see "macros/examples/NN_Radio Clasica"
+
+# Radio Nacional de España (Spanish public broadcast)
+RNE:                https://rtvelivestream.rtve.es/rtvesec/rne/rne_r1_main.m3u8
+Radio Clasica:      https://rtvelivestream.rtve.es/rtvesec/rne/rne_r2_main.m3u8
+Radio 3:            https://rtvelivestream.rtve.es/rtvesec/rne/rne_r3_main.m3u8
