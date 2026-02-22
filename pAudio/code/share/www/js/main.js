@@ -1,20 +1,5 @@
-/*
-    Copyright (c) Rafael Sánchez
-    This file is part of 'pAudio', a PC based personal audio system.
-*/
+import * as mc from "./miscel.js";
 
-/*
-   (i) debug trick: console.log(something);
-       NOTICE: remember do not leaving any console.log active
-*/
-
-
-//////// CONFIGURABLE ITEMS ////////
-//
-//  (i) Set URL_PREFIX ='/' if you use the provided nodejs/www_server.js script,
-//      or set it '/php/main.php' if you use Apache+PHP at server side.
-//
-const URL_PREFIX = '/';
 const AUTO_UPDATE_INTERVAL = 1000;      // Auto-update interval millisec
 
 const HELP_EN = `
@@ -150,12 +135,12 @@ function fill_in_page_statics(){
 
     function fill_in_main_selector(){
 
-        function fill_in_main_as_sources() {
+        async function fill_in_main_as_sources() {
             // MAIN SELECTOR manages sources:
 
             // getting sources names
             try{
-                var sources = JSON.parse( control_cmd( 'get_sources' ) );
+                var sources = JSON.parse( await mc.send_cmd( 'get_sources' ) );
             }catch(e){
                 console.log( e.name, e.message );
                 return;
@@ -212,9 +197,9 @@ function fill_in_page_statics(){
         }
     }
 
-    function fill_in_xo_selector() {
+    async function fill_in_xo_selector() {
         try{
-            var xo_sets = JSON.parse( control_cmd( 'get_xo_sets' ) );
+            var xo_sets = JSON.parse( await mc.send_cmd( 'get_xo_sets' ) );
         }catch(e){
             console.log( e.name, e.message );
             return;
@@ -238,9 +223,9 @@ function fill_in_page_statics(){
         }
     }
 
-    function fill_in_target_selector() {
+    async function fill_in_target_selector() {
         try{
-            var target_files = JSON.parse( control_cmd( 'get_target_sets' ) );
+            var target_files = JSON.parse( await mc.send_cmd( 'get_target_sets' ) );
         }catch(e){
             console.log( e.name, e.message );
             return;
@@ -286,17 +271,6 @@ function fill_in_page_statics(){
 }
 
 
-function but_restart_display(mode){
-    if ( mode == 'on' ){
-        document.getElementById("but_restart").style.display = "inline-block";
-        document.getElementById("but_help").style.display = "none";
-    }else{
-        document.getElementById("but_restart").style.display = "none";
-        document.getElementById("but_help").style.display = "inline-block";
-    }
-}
-
-
 function manage_main_cside( msg = '' ){
 
     function CamillaDSP_is_ready() {
@@ -329,7 +303,8 @@ function manage_main_cside( msg = '' ){
 
     } else if( ! CamillaDSP_is_ready() ) {
         msg = 'DSP unloaded, needs restart';
-        but_restart_display('on');
+        document.getElementById("but_restart").style.display = "inline-block";
+        document.getElementById("but_help").style.display = "none";
 
     } else {
 
@@ -338,11 +313,10 @@ function manage_main_cside( msg = '' ){
 
         } else {
 
-            if ( ! show_advanced ){
-                but_restart_display('off');
-            }
+            document.getElementById("but_restart").style.display = "none";
+            document.getElementById("but_help").style.display = "inline-block";
 
-            if ( state.loudspeaker ){
+            if (state.loudspeaker){
                 if (state.drc_set == 'none'){
                     msg = state.loudspeaker;
 
@@ -378,9 +352,9 @@ function init(){
     }
 
 
-    function get_web_config(){
+    async function get_web_config(){
         try{
-            web_config      = JSON.parse( control_cmd('ctrl get_web_config') );
+            web_config = await mc.send_cmd('ctrl get_web_config');
             mFnames         = web_config.user_macros;
         }catch(e){
             console.log('response error to \'ctrl get_web_config\'', e.message);
@@ -507,9 +481,9 @@ function init(){
 
 function page_update() {
 
-    function player_get(){
+    async function player_get(){
         try{
-            const tmp = JSON.parse( control_cmd('player get_all_info') );
+            const tmp = JSON.parse( await mc.send_cmd('player get_all_info') );
             if (tmp != "null"){
                 player_info = tmp;
             }else{
@@ -647,10 +621,10 @@ function page_update() {
         }
 
 
-        function fill_in_track_selector() {
+        async function fill_in_track_selector() {
             // getting tracks
             try{
-                var tracks = JSON.parse( control_cmd( 'player list_playlist' ) );
+                var tracks = JSON.parse( await mc.send_cmd( 'player list_playlist' ) );
             }catch(e){
                 console.log( e.name, e.message );
                 return;
@@ -718,10 +692,10 @@ function page_update() {
     }
 
 
-    function aux_info_refresh(){
+    async function aux_info_refresh(){
 
         try{
-            aux_info = JSON.parse( control_cmd('ctrl aux_info') );
+            aux_info = await mc.send_cmd('ctrl aux_info');
         }catch(e){
             console.log('response error to \'ctrl aux_info\'', e.message);
             aux_info.onoff = '--';
@@ -909,7 +883,6 @@ function page_update() {
     if ( Object.keys(state).length == 0 ){
         document.getElementById("levelInfo").innerHTML  = '--';
         main_cside_msg = ':: pAudio :: not connected';
-        but_restart_display('on');
         player_info_clear();
         player_controls_clear();
         return;
@@ -964,15 +937,15 @@ function oc_main_select(itemName){
     main_cside_msg = 'Please wait for "' + itemName + '"';
 
     // (i) The arrow syntax '=>' fails on Safari iPad 1 (old version)
-    // setTimeout( () => { control_cmd('source ' + itemName); }, 200 );
-    function tmp(itemName){
+    // setTimeout( () => { await mc.send_cmd('source ' + itemName); }, 200 );
+    async function tmp(itemName){
         // regular behavior managing preamp sourcess
         if ( web_config.main_selector == 'sources' ){
-            control_cmd('source ' + itemName);
+            await mc.send_cmd('source ' + itemName);
         // alternative behavior managing macros
         }else{
             mName = find_macroName(itemName);
-            control_cmd( 'ctrl run_macro ' + mName );
+            await mc.send_cmd( 'ctrl run_macro ' + mName );
         }
     }
     setTimeout( tmp, 200, itemName );  // 'itemName' is given as argument for 'tmp'
@@ -983,35 +956,35 @@ function oc_main_select(itemName){
 }
 
 
-function oc_drc_select(drcName){
-    control_cmd('set_drc ' + drcName);
+async function oc_drc_select(drcName){
+    await mc.send_cmd('set_drc ' + drcName);
     clear_highlighteds();
     document.getElementById('drcSelector').style.color = "white";
 }
 
 
-function oc_xo_select(xoName){
-    control_cmd('set_xo ' + xoName);
+async function oc_xo_select(xoName){
+    await mc.send_cmd('set_xo ' + xoName);
     clear_highlighteds();
     document.getElementById('xoSelector').style.color = "white";
 }
 
 
-function oc_target_select(xoName){
-    control_cmd('set_target ' + xoName);
+async function oc_target_select(xoName){
+    await mc.send_cmd('set_target ' + xoName);
     clear_highlighteds();
     document.getElementById('targetSelector').style.color = "white";
 }
 
 
-function oc_LU_scope_select(scope){
-    control_cmd('ctrl set_loudness_monitor_scope ' + scope);
+async function oc_LU_scope_select(scope){
+    await mc.send_cmd('ctrl set_loudness_monitor_scope ' + scope);
     clear_highlighteds();
     document.getElementById('LUscopeSelector').style.color = "white";
 }
 
 
-function omd_audio_change(param, value) {
+async function omd_audio_change(param, value) {
     state[param] += value;
     if ( param == 'level') {
         document.getElementById( 'levelInfo'  ).innerHTML =
@@ -1032,35 +1005,35 @@ function omd_audio_change(param, value) {
     else{
         return;
     }
-    control_cmd( param + ' ' + value + ' ' + 'add' );
+    await mc.send_cmd( param + ' ' + value + ' ' + 'add' );
 }
 
 
-function omd_mute_toggle() {
-    control_cmd( 'mute toggle' );
+async function omd_mute_toggle() {
+    await mc.send_cmd( 'mute toggle' );
     state.muted = ! state.muted;
     buttonMuteHighlight();
 }
 
 
-function omd_equal_loudness_toggle() {
-    control_cmd( 'equal_loudness toggle' );
+async function omd_equal_loudness_toggle() {
+    await mc.send_cmd( 'equal_loudness toggle' );
     state.equal_loudness = ! state.equal_loudness;
     buttonLoudHighlight();
 }
 
 
-function omd_mono_toggle() {
+async function omd_mono_toggle() {
 
     // normal: only stereo/mono (off/mid)
     if (!show_advanced){
 
         if (state.midside == "mid" || state.midside == "side"){
             state.midside = "off";
-            control_cmd( 'midside off' );
+            await mc.send_cmd( 'midside off' );
         }else{
             state.midside = "mid";
-            control_cmd( 'midside mid' );
+            await mc.send_cmd( 'midside mid' );
         }
 
     // advanced-controls: rotate stereo/mono/L-R (off/mid/side)
@@ -1068,13 +1041,13 @@ function omd_mono_toggle() {
 
         if (state.midside == "off"){
             state.midside = "mid";
-            control_cmd( 'midside mid' );
+            await mc.send_cmd( 'midside mid' );
         }else if (state.midside == "mid"){
             state.midside = "side";
-            control_cmd( 'midside side' );
+            await mc.send_cmd( 'midside side' );
         }else if (state.midside == "side"){
             state.midside = "off";
-            control_cmd( 'midside off' );
+            await mc.send_cmd( 'midside off' );
         }
     }
 
@@ -1082,33 +1055,33 @@ function omd_mono_toggle() {
 }
 
 
-function omd_solo_rotate() {
+async function omd_solo_rotate() {
 
     if (state.solo == "off"){
-        control_cmd( 'solo L' );
+        await mc.send_cmd( 'solo L' );
     }else if(state.solo == "l"){
-        control_cmd( 'solo R' );
+        await mc.send_cmd( 'solo R' );
     }else if(state.solo == "r"){
-        control_cmd( 'solo off' );
+        await mc.send_cmd( 'solo off' );
     }
 
     // Solo highlight falls on the Mono/Stereo Button
 }
 
 
-function omd_polarity_rotate() {
+async function omd_polarity_rotate() {
 
     if (state.polarity == "++"){
-        control_cmd( 'polarity +-' );
+        await mc.send_cmd( 'polarity +-' );
 
     }else if(state.polarity == "+-"){
-        control_cmd( 'polarity -+' );
+        await mc.send_cmd( 'polarity -+' );
 
     }else if(state.polarity == "-+"){
-        control_cmd( 'polarity --' );
+        await mc.send_cmd( 'polarity --' );
 
     }else if(state.polarity == "--"){
-        control_cmd( 'polarity ++' );
+        await mc.send_cmd( 'polarity ++' );
 
     }
 
@@ -1116,54 +1089,54 @@ function omd_polarity_rotate() {
 }
 
 
-function omd_delay_toggle() {
+async function omd_delay_toggle() {
     if (state.extra_delay !== 0) {
-        control_cmd('preamp add_delay 0');
+        await mc.send_cmd('preamp add_delay 0');
     }else{
-        control_cmd('preamp add_delay ' + last_delay.toString());
+        await mc.send_cmd('preamp add_delay ' + last_delay.toString());
     }
 }
 
 
 //////// HANDLERS: PLAYER 'onchange' 'onmousedown' 'onclick' ////////
 
-function omd_playerCtrl(action) {
+async function omd_playerCtrl(action) {
     if (action == 'random_toggle') {
-        control_cmd( 'player random_mode toggle' );
+        await mc.send_cmd( 'player random_mode toggle' );
     } else {
-        control_cmd( 'player ' + action );
+        await mc.send_cmd( 'player ' + action );
     }
 }
 
 
-function oc_load_playlist(plistname) {
+async function oc_load_playlist(plistname) {
     if (plistname == '-CLEAR-') {
-        control_cmd( 'player clear_playlist ' );
+        await mc.send_cmd( 'player clear_playlist ' );
     } else if (plistname != '--') {
-        control_cmd( 'player clear_playlist ' );
-        control_cmd( 'player load_playlist ' + plistname );
+        await mc.send_cmd( 'player clear_playlist ' );
+        await mc.send_cmd( 'player load_playlist ' + plistname );
     }
 }
 
 
-function omd_select_track_number_dialog() {
+async function omd_select_track_number_dialog() {
     var tracknum = prompt('Enter track number to play:');
     if ( true ) {
-        control_cmd( 'player play_track ' + tracknum );
+        await mc.send_cmd( 'player play_track ' + tracknum );
     }
 }
 
 
-function oc_play_track_number(N) {
-    control_cmd( 'player play_track ' + N );
+async function oc_play_track_number(N) {
+    await mc.send_cmd( 'player play_track ' + N );
     hold_selected_track = 10;
 }
 
 
-function ck_play_url() {
+async function ck_play_url() {
     var url = prompt('Enter url to play:');
     if ( url.slice(0,5) == 'http:' || url.slice(0,6) == 'https:' ) {
-        control_cmd( 'ctrl play_url ' + url );
+        await mc.send_cmd( 'ctrl play_url ' + url );
     }
 }
 
@@ -1177,7 +1150,7 @@ function ck_help() {
 
     let msg = HELP_EN;
 
-    if ( lang.toLowerCase().includes('sp') ||  lang.toLowerCase() == 'es' ){
+    if ( lang.toLowerCase().includes('sp') ){
         msg = HELP_SP
     }
     if ( lang.toLowerCase().includes('cat') ){
@@ -1188,14 +1161,14 @@ function ck_help() {
 }
 
 
-function ck_paudio_restart() {
+async function ck_paudio_restart() {
 
     // RESTART mode
     if (web_config["monkey_button"].includes('start')){
 
         if ( confirm('Are you sure to RESTART pAudio?') ){
 
-            ans = control_cmd('ctrl restart_paudio restart');
+            ans = await mc.send_cmd('ctrl restart_paudio restart');
             alert(ans);
             ck_display_advanced('off');
         }
@@ -1207,7 +1180,7 @@ function ck_paudio_restart() {
     let msg = 'Are you sure to START pAudio?';
     let mode = 'start'
 
-    const curr = control_cmd('ctrl restart_paudio state');
+    const curr = await mc.send_cmd('ctrl restart_paudio state');
 
     if (curr == 'true') {
         msg = 'Are you sure to STOP pAudio?';
@@ -1218,7 +1191,7 @@ function ck_paudio_restart() {
         return
     }
 
-    ans = control_cmd('ctrl restart_paudio ' + mode);
+    ans = await mc.send_cmd('ctrl restart_paudio ' + mode);
 
     alert(ans);
 
@@ -1226,7 +1199,7 @@ function ck_paudio_restart() {
 }
 
 
-function omd_onoff(mode) {
+async function omd_onoff(mode) {
 
     let msg = ('Are you sure to ' + mode.toUpperCase() + ' pAudio?');
     let cmd = 'ctrl restart_paudio'
@@ -1238,7 +1211,7 @@ function omd_onoff(mode) {
 
     ays = window.confirm( msg );
     if (ays){
-        const ans = control_cmd( cmd + ' ' + mode );
+        const ans = await mc.send_cmd( cmd + ' ' + mode );
         if (ans){
             window.alert( ans );
         }
@@ -1246,8 +1219,8 @@ function omd_onoff(mode) {
 }
 
 
-function oi_LU_slider_action(slider_value){
-    control_cmd( 'lu_offset ' + (15 - parseInt(slider_value) ).toString() )
+async function oi_LU_slider_action(slider_value){
+    await mc.send_cmd( 'lu_offset ' + (15 - parseInt(slider_value) ).toString() )
 }
 
 
@@ -1260,9 +1233,9 @@ function highlight_macro_button(id){
 }
 
 
-function oc_run_macro(mFname){
+async function oc_run_macro(mFname){
 
-    control_cmd( 'ctrl run_macro ' + mFname );
+    await mc.send_cmd( 'ctrl run_macro ' + mFname );
 
     const mName = mFname.slice(mFname.indexOf('_') + 1, mFname.length);
 
@@ -1369,54 +1342,12 @@ function omd_graphs_toggle() {
 
 ////////  MISCEL INTERNALS  ////////
 
-function control_cmd( cmd ) {
-    // Communicate with the pAudio server through the php socket
 
-    /*
-    We need synchronous mode (async=false), althougt it is deprecated
-    and not recommended in the main JS thread.
-    https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest
-    https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest
-    https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Synchronous_and_Asynchronous_Requests
-    */
-
-
-    // Encoding special chars in the value of the 'command' parameter
-    const url = URL_PREFIX + '?command=' + encodeURIComponent(cmd);
-
-    const myREQ = new XMLHttpRequest();
-
-    // open(method, url, async_mode)
-    myREQ.open("GET", url, false);
-
-    // (i) send() is blocking because async=false, so no handlers
-    //     on myREQ status changes are needed because of this.
-    try{
-        myREQ.send();
-    }catch(e){
-        server_available = false;
-        return '';
-    }
-
-    let ans = myREQ.responseText;
-    //console.log('httpTX: ' + cmd);
-    //console.log('httpRX: ' + ans);
-
-    if ( ans.indexOf('socket_connect\(\) failed' ) == -1 ){
-        server_available = true;
-        return ans;
-    }else{
-        server_available = false;
-        return '';
-    }
-}
-
-
-function get_drc_sets() {
+async function get_drc_sets() {
 
     let res = [];
 
-    const tmp = control_cmd( 'get_drc_sets' )
+    const tmp = await mc.send_cmd( 'get_drc_sets' )
 
     try {
         res = JSON.parse( tmp );
@@ -1430,9 +1361,9 @@ function get_drc_sets() {
 }
 
 
-function state_get() {
+async function state_get() {
     try{
-        state = JSON.parse( control_cmd('preamp state') );
+        state = JSON.parse( await mc.send_cmd('preamp state') );
         server_available = true;
     }catch(e){
         state = {};
@@ -1442,12 +1373,12 @@ function state_get() {
 }
 
 
-function fill_in_playlists_selector() {
+async function fill_in_playlists_selector() {
 
     // getting playlists
     var plists = [];
     try{
-        plists = JSON.parse( control_cmd( 'player get_playlists' ) );
+        plists = JSON.parse( await mc.send_cmd( 'player get_playlists' ) );
     }catch(e){
         console.log( 'response error to \'get_playlists\'', e.message );
         return plists;
@@ -1705,4 +1636,12 @@ function buttonCompressorHighlight(){
         document.getElementById("bt_compressor").style.color = "rgb(255, 200, 200)";
         document.getElementById("bt_compressor").style.display = 'inline-block';
     }
+}
+
+
+// INIT
+if (document.readyState === 'complete') {
+    init();
+} else {
+    window.addEventListener('load', init);
 }
