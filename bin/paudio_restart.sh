@@ -17,8 +17,9 @@ function start_www {
         fi
 
     else
-        node $HOME/pAudio/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1 &
-
+        cd $HOME/pAudio/code/share/www
+        node www-server.js 1>/dev/null 2>&1 &
+        cd
     fi
 }
 
