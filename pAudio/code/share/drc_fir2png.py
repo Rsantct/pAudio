@@ -4,7 +4,7 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 """
-    Dumps all DRC sets tp png images under to www/images/<LOUDSPEAKER>
+    Dumps all DRC sets tp png images under to www/public/images/<LOUDSPEAKER>
 
     usage:      drc_fir2png.py [--quiet]
 
@@ -25,7 +25,7 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import *
 
-IMGFOLDER   = f'{MAINFOLDER}/code/share/www/images/{LOUDSPEAKER}'
+IMGFOLDER   = f'{MAINFOLDER}/code/share/www/public/images/{LOUDSPEAKER}'
 
 
 # ----------------------    Plot config      -----------------------------------
