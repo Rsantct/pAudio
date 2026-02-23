@@ -374,7 +374,8 @@ def do( cmd_phrase):
 
         case 'amp_switch':
             result = amp_switch( args )
-            do_log = True
+            if args and not 'state' in args:
+                do_log = True
 
         case 'get_web_config':
             result = get_web_config()
@@ -405,7 +406,7 @@ def do( cmd_phrase):
 
 
     if do_log:
-        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd} {args}; {result}'
         with open(LOGFNAME, 'a') as FLOG:
                 FLOG.write(f'{logline}\n')
 
