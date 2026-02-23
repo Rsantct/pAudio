@@ -140,7 +140,7 @@ function fill_in_page_statics(){
 
             // getting sources names
             try{
-                var sources = JSON.parse( await mc.send_cmd( 'get_sources' ) );
+                var sources = await mc.send_cmd( 'get_sources' );
             }catch(e){
                 console.log( e.name, e.message );
                 return;
@@ -199,7 +199,7 @@ function fill_in_page_statics(){
 
     async function fill_in_xo_selector() {
         try{
-            var xo_sets = JSON.parse( await mc.send_cmd( 'get_xo_sets' ) );
+            var xo_sets = await mc.send_cmd( 'get_xo_sets' ) ;
         }catch(e){
             console.log( e.name, e.message );
             return;
@@ -225,7 +225,7 @@ function fill_in_page_statics(){
 
     async function fill_in_target_selector() {
         try{
-            var target_files = JSON.parse( await mc.send_cmd( 'get_target_sets' ) );
+            var target_files = await mc.send_cmd( 'get_target_sets' );
         }catch(e){
             console.log( e.name, e.message );
             return;
@@ -483,7 +483,7 @@ function page_update() {
 
     async function player_get(){
         try{
-            const tmp = JSON.parse( await mc.send_cmd('player get_all_info') );
+            const tmp = await mc.send_cmd('player get_all_info');
             if (tmp != "null"){
                 player_info = tmp;
             }else{
@@ -624,7 +624,7 @@ function page_update() {
         async function fill_in_track_selector() {
             // getting tracks
             try{
-                var tracks = JSON.parse( await mc.send_cmd( 'player list_playlist' ) );
+                var tracks = await mc.send_cmd( 'player list_playlist' );
             }catch(e){
                 console.log( e.name, e.message );
                 return;
@@ -1209,7 +1209,7 @@ async function omd_onoff(mode) {
         cmd = 'ctrl amp_switch'
     }
 
-    ays = window.confirm( msg );
+    const ays = window.confirm( msg );
     if (ays){
         const ans = await mc.send_cmd( cmd + ' ' + mode );
         if (ans){
@@ -1345,25 +1345,17 @@ function omd_graphs_toggle() {
 
 async function get_drc_sets() {
 
-    let res = [];
-
-    const tmp = await mc.send_cmd( 'get_drc_sets' )
-
     try {
-        res = JSON.parse( tmp );
+        drc_sets = await mc.send_cmd( 'get_drc_sets' );
     }catch(e){
         console.log('(i) cannot get drc sets')
     }
-
-    drc_sets = res;
-
-    return res
 }
 
 
 async function state_get() {
     try{
-        state = JSON.parse( await mc.send_cmd('preamp state') );
+        state = await mc.send_cmd('preamp state');
         server_available = true;
     }catch(e){
         state = {};
@@ -1378,7 +1370,7 @@ async function fill_in_playlists_selector() {
     // getting playlists
     var plists = [];
     try{
-        plists = JSON.parse( await mc.send_cmd( 'player get_playlists' ) );
+        plists = await mc.send_cmd( 'player get_playlists' );
     }catch(e){
         console.log( 'response error to \'get_playlists\'', e.message );
         return plists;
@@ -1637,6 +1629,79 @@ function buttonCompressorHighlight(){
         document.getElementById("bt_compressor").style.display = 'inline-block';
     }
 }
+
+
+/**
+ * Inicialización de eventos para pAudio
+ */
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- Utilidad para asignar eventos de forma masiva ---
+    const addListener = (id, event, fn) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(event, fn);
+    };
+
+    // --- BOTONES CON CLICK ---
+    addListener('but_restart', 'click', () => ck_paudio_restart());
+    addListener('but_help', 'click', () => ck_help());
+    addListener('advanced_switch', 'click', () => ck_display_advanced('toggle'));
+    addListener('url_button', 'click', () => ck_play_url());
+
+    // --- BOTONES CON MOUSEDOWN ---
+    addListener('OnOffButton', 'mousedown', () => omd_onoff('toggle'));
+    addListener('buttonLoud', 'mousedown', () => omd_equal_loudness_toggle());
+    addListener('buttonSolo', 'mousedown', () => omd_solo_rotate());
+    addListener('track_number_button', 'mousedown', () => omd_select_track_number_dialog());
+    addListener('buttonMono', 'mousedown', () => omd_mono_toggle());
+    addListener('buttonPolarity', 'mousedown', () => omd_polarity_rotate());
+
+    // Preamp y filtros
+    addListener('subsonic', 'mousedown', () => control_cmd('preamp subsonic rotate'));
+    addListener('buttonMute', 'mousedown', () => omd_mute_toggle());
+    addListener('tone_defeat', 'mousedown', () => control_cmd('preamp tone_defeat toggle'));
+    addListener('buttAOD', 'mousedown', () => omd_delay_toggle());
+    addListener('bt_compressor', 'mousedown', () => control_cmd('preamp compressor rotate'));
+    addListener('buttonLoudMonReset', 'mousedown', () => control_cmd('ctrl reset_loudness_monitor'));
+
+    // Cambios de Audio (Bass, Bal, Treb, Level)
+    addListener('level_m1', 'mousedown', () => omd_audio_change('level', -1));
+    addListener('level_p1', 'mousedown', () => omd_audio_change('level', 1));
+    addListener('level_m3', 'mousedown', () => omd_audio_change('level', -3));
+    addListener('level_p3', 'mousedown', () => omd_audio_change('level', 3));
+
+    addListener('bass-', 'mousedown', () => omd_audio_change('bass', -1));
+    addListener('bass+', 'mousedown', () => omd_audio_change('bass', 1));
+    addListener('bal-', 'mousedown', () => omd_audio_change('balance', -1));
+    addListener('bal+', 'mousedown', () => omd_audio_change('balance', 1));
+    addListener('treb-', 'mousedown', () => omd_audio_change('treble', -1));
+    addListener('treb+', 'mousedown', () => omd_audio_change('treble', 1));
+
+    // Graficos y Player
+    addListener('button_toggleEQgraphs', 'mousedown', () => omd_graphs_toggle());
+    addListener('buttonPrevious', 'mousedown', () => omd_playerCtrl('previous'));
+    addListener('buttonRew', 'mousedown', () => omd_playerCtrl('rew'));
+    addListener('buttonFF', 'mousedown', () => omd_playerCtrl('ff'));
+    addListener('buttonNext', 'mousedown', () => omd_playerCtrl('next'));
+    addListener('random_toggle_button', 'mousedown', () => omd_playerCtrl('random_toggle'));
+    addListener('buttonEject', 'mousedown', () => omd_playerCtrl('eject'));
+    addListener('buttonStop', 'mousedown', () => omd_playerCtrl('stop'));
+    addListener('buttonPause', 'mousedown', () => omd_playerCtrl('pause'));
+    addListener('buttonPlay', 'mousedown', () => omd_playerCtrl('play'));
+    addListener('macros_toggle_button', 'mousedown', () => omd_macro_buttons_display_toggle());
+
+    // --- SELECTS (CHANGE) E INPUTS ---
+    addListener('playlist_selector', 'change', (e) => oc_load_playlist(e.target.value));
+    addListener('track_selector', 'change', (e) => oc_play_track_number(e.target.selectedIndex));
+    addListener('mainSelector', 'change', (e) => oc_main_select(e.target.value));
+    addListener('samplerateSelector', 'change', (e) => oc_restart_samplerate(e.target.value));
+    addListener('LUscopeSelector', 'change', (e) => oc_LU_scope_select(e.target.value));
+    addListener('targetSelector', 'change', (e) => oc_target_select(e.target.value));
+    addListener('xoSelector', 'change', (e) => oc_xo_select(e.target.value));
+    addListener('drcSelector', 'change', (e) => oc_drc_select(e.target.value));
+
+    addListener('LU_slider', 'input', (e) => oi_LU_slider_action(e.target.value));
+});
 
 
 // INIT
