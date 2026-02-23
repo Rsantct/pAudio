@@ -45,9 +45,11 @@ def init():
     global ONOFF_MODE, CAMILLADSP_LAST_ERROR
 
     # Reset paudio_ctrl.log
-    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
     with open(LOGFNAME, 'w') as FLOG:
-            FLOG.write(f'{logline}\n')
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
+        FLOG.write(f'{logline}\n')
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; (i) will log only the commands that make changes.'
+        FLOG.write(f'{logline}\n')
 
     # ON/OFF button behavior (default pAudio)
     ONOFF_MODE = 'pAudio'
