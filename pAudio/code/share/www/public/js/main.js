@@ -73,7 +73,7 @@ Algunos ajustes de LU_offset:
 
 
 //////// GLOBAL VARIABLES ////////
-var state               = {};       // The preamp-convolver state
+var STATE               = {};       // The preamp-convolver state
 
 var player_info         = {};
 
@@ -85,14 +85,13 @@ var aux_info            = { 'onoff': '',
 
 var web_config          = { 'main_selector':      'sources',
                             'hide_LU':            false,
-                            'LU_monitor_enabled': false,
                             'show_graphs':        false,
                             'user_macros':        []
 };
 
 var drc_sets            = [];
 
-var mFnames             = web_config.user_macros; // Macro file names
+var mFnames             = [];
 
 var macro_button_list   = [];
 
@@ -251,12 +250,12 @@ function fill_in_page_statics(){
     }
 
 
-    manage_main_cside( ':: pAudio :: ' + state.loudspeaker );
+    manage_main_cside( ':: pAudio :: ' + STATE.loudspeaker );
 
 
     // updates level cell info with ref_SPL
     document.getElementById("levelInfo").title = 'Target volume ref@' +
-                                                 state.loudspeaker_ref_SPL + 'dBSPL';
+                                                 STATE.loudspeaker_ref_SPL + 'dBSPL';
 
     fill_in_main_selector();
     ////
@@ -298,7 +297,7 @@ function manage_main_cside( msg = '' ){
     if ( aux_info.warning !== '') {
         msg = aux_info.warning;
 
-    } else if (state.convolver_runs==false) {
+    } else if (STATE.convolver_runs==false) {
         msg = '( sleeping )';
 
     } else if( ! CamillaDSP_is_ready() ) {
@@ -316,12 +315,12 @@ function manage_main_cside( msg = '' ){
             document.getElementById("but_restart").style.display = "none";
             document.getElementById("but_help").style.display = "inline-block";
 
-            if (state.loudspeaker){
-                if (state.drc_set == 'none'){
-                    msg = state.loudspeaker;
+            if (STATE.loudspeaker){
+                if (STATE.drc_set == 'none'){
+                    msg = STATE.loudspeaker;
 
                 } else {
-                    msg = state.loudspeaker + ' (' + state.drc_set + ')';
+                    msg = STATE.loudspeaker + ' (' + STATE.drc_set + ')';
                 }
             }
         }
@@ -331,7 +330,7 @@ function manage_main_cside( msg = '' ){
 }
 
 
-function init(){
+async function init(){
 
     function download_drc_graphs(){
         if (web_config.show_graphs==false){
@@ -340,14 +339,14 @@ function init(){
         // geat all drc_xxxx.png at once at start, so them will remain in cache.
         for (const i in drc_sets){
             document.getElementById("drc_img").src =  'images/'
-                                                    + state.loudspeaker
+                                                    + STATE.loudspeaker
                                                     + '/drc_' + drc_sets[i]
                                                     + '.png';
 
 
         }
         document.getElementById("drc_img").src =  'images/'
-                                                + state.loudspeaker
+                                                + STATE.loudspeaker
                                                 + '/drc_none.png';
     }
 
@@ -355,7 +354,7 @@ function init(){
     async function get_web_config(){
         try{
             web_config = await mc.send_cmd('ctrl get_web_config');
-            mFnames         = web_config.user_macros;
+            mFnames = web_config.user_macros;
         }catch(e){
             console.log('response error to \'ctrl get_web_config\'', e.message);
         }
@@ -379,9 +378,7 @@ function init(){
             document.getElementById("LU_monitor").style.display = 'none';
         }else{
             document.getElementById("LU_offset").style.display = 'block';
-            if ( web_config.LU_monitor_enabled == true ){
-                document.getElementById("LU_monitor").style.display = 'block';
-            }
+            document.getElementById("LU_monitor").style.display = 'block';
         }
     }
 
@@ -457,11 +454,11 @@ function init(){
 
     console.log('Preparing page');
 
-    get_web_config();
+    await get_web_config();
 
     get_drc_sets();
 
-    state_get();
+    await update_STATE();
 
     download_drc_graphs();
 
@@ -657,18 +654,18 @@ function page_update() {
         }
 
         // Updates the playlist loader when source changed, keep hidden if empty.
-        //if (last_source != state.source){
+        //if (last_source != STATE.source){
         //    const plists = fill_in_playlists_selector();
         //    if ( plists.length > 0 ) {
         //        document.getElementById( "playlist_selector").style.display = "inline";
         //    }else{
         //        document.getElementById( "playlist_selector").style.display = "none";
         //    }
-        //    last_source = state.source;
+        //    last_source = STATE.source;
         //}
 
         // Displays the track selector if source == 'cd'
-        if ( state.source == "cd") {
+        if ( STATE.source == "cd") {
             document.getElementById( "track_selector").style.display = "inline";
         }
         else {
@@ -682,8 +679,8 @@ function page_update() {
         }
 
         // Displays the [url] button if source == 'iradio' or 'istreams'
-        if (state.source == "iradio" ||
-            state.source == "istreams") {
+        if (STATE.source == "iradio" ||
+            STATE.source == "istreams") {
             document.getElementById( "url_button").style.display = "inline";
         }
         else {
@@ -728,9 +725,9 @@ function page_update() {
 
     function LU_refresh(){
         // Updates the LU offset slider
-        document.getElementById("LU_slider").value           = (15 - state.lu_offset);
+        document.getElementById("LU_slider").value           = (15 - STATE.lu_offset);
         document.getElementById("LU_offset_value").innerText =
-                                            'LU offset: ' + -1 * state.lu_offset;
+                                            'LU offset: ' + -1 * STATE.lu_offset;
         // Updates the Integrated LU monitor
         const LU_I  = aux_info.loudness_monitor.LU_I
         let scope   = aux_info.loudness_monitor.scope
@@ -753,9 +750,9 @@ function page_update() {
         function eq_changed(){
             // evaluates if the set of params that determines an eq curve contour has changed
             let result = false;
-            const eq_params = { 'level':    state.level,    'eq_loud':  state.equal_loudness,
-                                'bass':     state.bass,     'treb':     state.treble,
-                                'target':   state.target,   'tone_defeat': state.tone_defeat
+            const eq_params = { 'level':    STATE.level,    'eq_loud':  STATE.equal_loudness,
+                                'bass':     STATE.bass,     'treb':     STATE.treble,
+                                'target':   STATE.target,   'tone_defeat': STATE.tone_defeat
                             };
             if ( JSON.stringify(eq_params) !== JSON.stringify(last_eq_params) ) {
                 //console.log('eq changed');
@@ -770,9 +767,9 @@ function page_update() {
 
         function drc_changed(){
             let result = false;
-            if ( state.drc_set !== last_drc ) {
+            if ( STATE.drc_set !== last_drc ) {
                 //console.log('drc changed');
-                last_drc = state.drc_set;
+                last_drc = STATE.drc_set;
                 result = true;
             }else{
                 result = false;
@@ -793,8 +790,8 @@ function page_update() {
             if (drc_changed() == true) {
                 // Here we can use cached images because drc graphs does not change
                 document.getElementById("drc_img").src =  'images/'
-                                                        + state.loudspeaker
-                                                        + '/drc_' + state.drc_set
+                                                        + STATE.loudspeaker
+                                                        + '/drc_' + STATE.drc_set
                                                         + '.png';
             }
         }
@@ -803,19 +800,19 @@ function page_update() {
 
     function state_refresh(){
 
-        if ( Object.keys(state).length <= 5 ){
+        if ( Object.keys(STATE).length <= 5 ){
             return
         }
 
         // Updates level, balance, tone and delay info
-        document.getElementById("levelInfo").innerHTML  = state.level.toFixed(1);
-        document.getElementById("balInfo").innerHTML    = 'BAL: '  + state.balance;
-        document.getElementById("bassInfo").innerText   = 'BASS: ' + state.bass;
-        document.getElementById("trebleInfo").innerText = 'TREB: ' + state.treble;
-        document.getElementById("buttAOD").innerText = state.extra_delay + ' ms';
+        document.getElementById("levelInfo").innerHTML  = STATE.level.toFixed(1);
+        document.getElementById("balInfo").innerHTML    = 'BAL: '  + STATE.balance;
+        document.getElementById("bassInfo").innerText   = 'BASS: ' + STATE.bass;
+        document.getElementById("trebleInfo").innerText = 'TREB: ' + STATE.treble;
+        document.getElementById("buttAOD").innerText = STATE.extra_delay + ' ms';
 
         // Delete level info if convolver off
-        if (state.convolver_runs == false){
+        if (STATE.convolver_runs == false){
             document.getElementById("levelInfo").innerHTML  = '--';
         }
 
@@ -825,11 +822,11 @@ function page_update() {
             document.getElementById("mainSelector").value =
                                 mName.slice(mName.indexOf('_') + 1, mName.length);
         }else{
-            document.getElementById("mainSelector").value = state.source;
+            document.getElementById("mainSelector").value = STATE.source;
         }
-        document.getElementById("xoSelector").value     = state.xo_set;
-        document.getElementById("drcSelector").value    = state.drc_set;
-        document.getElementById("targetSelector").value = state.target;
+        document.getElementById("xoSelector").value     = STATE.xo_set;
+        document.getElementById("drcSelector").value    = STATE.drc_set;
+        document.getElementById("targetSelector").value = STATE.target;
 
         // Highlights activated buttons and related indicators accordingly
         buttonMuteHighlight()
@@ -845,8 +842,8 @@ function page_update() {
         buttonCompressorHighlight()
 
         // Used by the delay toggle button
-        if (state.extra_delay !== 0) {
-            last_delay = state.extra_delay;
+        if (STATE.extra_delay !== 0) {
+            last_delay = STATE.extra_delay;
         }
     }
 
@@ -877,10 +874,10 @@ function page_update() {
     manage_main_cside();
 
     // PREAMP STUFF
-    state_get();
+    update_STATE();
 
     //  Cancel updating if not answer
-    if ( Object.keys(state).length == 0 ){
+    if ( Object.keys(STATE).length == 0 ){
         document.getElementById("levelInfo").innerHTML  = '--';
         main_cside_msg = ':: pAudio :: not connected';
         player_info_clear();
@@ -895,9 +892,9 @@ function page_update() {
     }
 
     //  Refresh static stuff if loudspeaker's audio processes has changed
-    if ( last_loudspeaker != state.loudspeaker ){
+    if ( last_loudspeaker != STATE.loudspeaker ){
         fill_in_page_statics();
-        last_loudspeaker = state.loudspeaker;
+        last_loudspeaker = STATE.loudspeaker;
     }
 
     state_refresh();
@@ -985,22 +982,22 @@ async function oc_LU_scope_select(scope){
 
 
 async function omd_audio_change(param, value) {
-    state[param] += value;
+    STATE[param] += value;
     if ( param == 'level') {
         document.getElementById( 'levelInfo'  ).innerHTML =
-                                    state[param].toFixed(1);
+                                    STATE[param].toFixed(1);
     }
     else if( param == 'bass'){
         document.getElementById( 'bassInfo'   ).innerHTML =
-                         'BASS: ' + state[param].toFixed(0);
+                         'BASS: ' + STATE[param].toFixed(0);
     }
     else if( param == 'treble'){
         document.getElementById( 'trebleInfo' ).innerHTML =
-                         'TREB: ' + state[param].toFixed(0);
+                         'TREB: ' + STATE[param].toFixed(0);
     }
     else if( param == 'balance'){
         document.getElementById( 'balInfo'    ).innerHTML =
-                         'BAL: '  + state[param].toFixed(0);
+                         'BAL: '  + STATE[param].toFixed(0);
     }
     else{
         return;
@@ -1011,14 +1008,14 @@ async function omd_audio_change(param, value) {
 
 async function omd_mute_toggle() {
     await mc.send_cmd( 'mute toggle' );
-    state.muted = ! state.muted;
+    STATE.muted = ! STATE.muted;
     buttonMuteHighlight();
 }
 
 
 async function omd_equal_loudness_toggle() {
     await mc.send_cmd( 'equal_loudness toggle' );
-    state.equal_loudness = ! state.equal_loudness;
+    STATE.equal_loudness = ! STATE.equal_loudness;
     buttonLoudHighlight();
 }
 
@@ -1028,25 +1025,25 @@ async function omd_mono_toggle() {
     // normal: only stereo/mono (off/mid)
     if (!show_advanced){
 
-        if (state.midside == "mid" || state.midside == "side"){
-            state.midside = "off";
+        if (STATE.midside == "mid" || STATE.midside == "side"){
+            STATE.midside = "off";
             await mc.send_cmd( 'midside off' );
         }else{
-            state.midside = "mid";
+            STATE.midside = "mid";
             await mc.send_cmd( 'midside mid' );
         }
 
     // advanced-controls: rotate stereo/mono/L-R (off/mid/side)
     }else{
 
-        if (state.midside == "off"){
-            state.midside = "mid";
+        if (STATE.midside == "off"){
+            STATE.midside = "mid";
             await mc.send_cmd( 'midside mid' );
-        }else if (state.midside == "mid"){
-            state.midside = "side";
+        }else if (STATE.midside == "mid"){
+            STATE.midside = "side";
             await mc.send_cmd( 'midside side' );
-        }else if (state.midside == "side"){
-            state.midside = "off";
+        }else if (STATE.midside == "side"){
+            STATE.midside = "off";
             await mc.send_cmd( 'midside off' );
         }
     }
@@ -1057,11 +1054,11 @@ async function omd_mono_toggle() {
 
 async function omd_solo_rotate() {
 
-    if (state.solo == "off"){
+    if (STATE.solo == "off"){
         await mc.send_cmd( 'solo L' );
-    }else if(state.solo == "l"){
+    }else if(STATE.solo == "l"){
         await mc.send_cmd( 'solo R' );
-    }else if(state.solo == "r"){
+    }else if(STATE.solo == "r"){
         await mc.send_cmd( 'solo off' );
     }
 
@@ -1071,16 +1068,16 @@ async function omd_solo_rotate() {
 
 async function omd_polarity_rotate() {
 
-    if (state.polarity == "++"){
+    if (STATE.polarity == "++"){
         await mc.send_cmd( 'polarity +-' );
 
-    }else if(state.polarity == "+-"){
+    }else if(STATE.polarity == "+-"){
         await mc.send_cmd( 'polarity -+' );
 
-    }else if(state.polarity == "-+"){
+    }else if(STATE.polarity == "-+"){
         await mc.send_cmd( 'polarity --' );
 
-    }else if(state.polarity == "--"){
+    }else if(STATE.polarity == "--"){
         await mc.send_cmd( 'polarity ++' );
 
     }
@@ -1090,7 +1087,7 @@ async function omd_polarity_rotate() {
 
 
 async function omd_delay_toggle() {
-    if (state.extra_delay !== 0) {
+    if (STATE.extra_delay !== 0) {
         await mc.send_cmd('preamp add_delay 0');
     }else{
         await mc.send_cmd('preamp add_delay ' + last_delay.toString());
@@ -1306,7 +1303,7 @@ function ck_display_advanced(mode) {
         document.getElementById("but_help").style.display = "inline-block";
         document.getElementById("SoloInfo").style.display = "none";
         document.getElementById("PolarityInfo").style.display = "none";
-        if ( state.extra_delay === 0 ) {
+        if ( STATE.extra_delay === 0 ) {
             document.getElementById("buttAOD").style.display = "none";
         }
         document.getElementById("subsonic").style.display = "none";
@@ -1353,12 +1350,11 @@ async function get_drc_sets() {
 }
 
 
-async function state_get() {
+async function update_STATE() {
     try{
-        state = await mc.send_cmd('preamp state');
+        STATE = await mc.send_cmd('preamp state');
         server_available = true;
     }catch(e){
-        state = {};
         server_available = false;
         main_cside_msg = ':: pAudio :: not connected';
     }
@@ -1430,7 +1426,7 @@ function allAreTrue(arr) {
 //////// ELEMENTS HIGHLIGHT ////////
 
 function toneDefeatHighlight(){
-    if (state.tone_defeat){
+    if (STATE.tone_defeat){
         document.getElementById("tone_defeat").style.border = "3px solid rgb(160, 160, 160)";
         document.getElementById("tone_defeat").style.background = "rgb(100, 0, 0)";
         document.getElementById("tone_defeat").style.color = "rgb(255, 200, 200)";
@@ -1447,30 +1443,30 @@ function toneDefeatHighlight(){
 
 
 function buttonsToneBalanceHighlight(){
-    if ( state.bass < 0 ){
+    if ( STATE.bass < 0 ){
         document.getElementById("bass-").style.border = "3px solid rgb(160, 160, 160)";
         document.getElementById("bass+").style.border = "2px solid rgb(100, 100, 100)";
-    }else if ( state.bass > 0 ){
+    }else if ( STATE.bass > 0 ){
         document.getElementById("bass-").style.border = "2px solid rgb(100, 100, 100)";
         document.getElementById("bass+").style.border = "3px solid rgb(160, 160, 160)";
     }else{
         document.getElementById("bass-").style.border = "2px solid rgb(100, 100, 100)";
         document.getElementById("bass+").style.border = "2px solid rgb(100, 100, 100)";
     }
-    if ( state.treble < 0 ){
+    if ( STATE.treble < 0 ){
         document.getElementById("treb-").style.border = "3px solid rgb(160, 160, 160)";
         document.getElementById("treb+").style.border = "2px solid rgb(100, 100, 100)";
-    }else if ( state.treble > 0 ){
+    }else if ( STATE.treble > 0 ){
         document.getElementById("treb-").style.border = "2px solid rgb(100, 100, 100)";
         document.getElementById("treb+").style.border = "3px solid rgb(160, 160, 160)";
     }else{
         document.getElementById("treb-").style.border = "2px solid rgb(100, 100, 100)";
         document.getElementById("treb+").style.border = "2px solid rgb(100, 100, 100)";
     }
-    if ( state.balance < 0 ){
+    if ( STATE.balance < 0 ){
         document.getElementById("bal-").style.border = "3px solid rgb(160, 160, 160)";
         document.getElementById("bal+").style.border = "2px solid rgb(100, 100, 100)";
-    }else if ( state.balance > 0 ){
+    }else if ( STATE.balance > 0 ){
         document.getElementById("bal-").style.border = "2px solid rgb(100, 100, 100)";
         document.getElementById("bal+").style.border = "3px solid rgb(160, 160, 160)";
     }else{
@@ -1481,7 +1477,7 @@ function buttonsToneBalanceHighlight(){
 
 
 function buttonMuteHighlight(){
-    if ( state.muted == true ) {
+    if ( STATE.muted == true ) {
         document.getElementById("buttonMute").style.background = "rgb(185, 185, 185)";
         document.getElementById("buttonMute").style.color = "white";
         document.getElementById("buttonMute").style.fontWeight = "bolder";
@@ -1496,11 +1492,11 @@ function buttonMuteHighlight(){
 
 
 function buttonMonoHighlight(){
-    if ( state.midside == 'mid' ) {
+    if ( STATE.midside == 'mid' ) {
         document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
         document.getElementById("buttonMono").style.color = "rgb(255, 200, 200)";
         document.getElementById("buttonMono").innerText = 'MO';
-    } else if ( state.midside == 'side' ) {
+    } else if ( STATE.midside == 'side' ) {
         document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
         document.getElementById("buttonMono").style.color = "rgb(255, 200, 200)";
         document.getElementById("buttonMono").innerText = 'L-R';
@@ -1511,16 +1507,16 @@ function buttonMonoHighlight(){
     }
 
     // 'solo' setting will override displaying mono stereo
-    if ( state.solo == 'l' ) {
+    if ( STATE.solo == 'l' ) {
         document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
         document.getElementById("buttonMono").innerText = 'L_';
-    } else if ( state.solo == 'r' ) {
+    } else if ( STATE.solo == 'r' ) {
         document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
         document.getElementById("buttonMono").innerText = '_R';
     }
 
     // 'polarity' setting will modify the button border
-    if ( state.polarity != '++' ) {
+    if ( STATE.polarity != '++' ) {
         document.getElementById("buttonMono").style.border = "3px solid rgb(200, 10, 10)";
     } else {
         document.getElementById("buttonMono").style.border = "2px solid rgb(120, 120, 120)";
@@ -1530,15 +1526,15 @@ function buttonMonoHighlight(){
 
 function buttonSoloHighlight(){
 
-    if ( state.solo == 'off' ) {
+    if ( STATE.solo == 'off' ) {
         document.getElementById("buttonSolo").style = "button";
         document.getElementById("buttonSolo").innerText = 'L|R';
 
-    } else if ( state.solo == 'l' ) {
+    } else if ( STATE.solo == 'l' ) {
         document.getElementById("buttonSolo").style.background = "rgb(100, 0, 0)";
         document.getElementById("buttonSolo").innerText = 'L_';
 
-    } else if ( state.solo == 'r' ) {
+    } else if ( STATE.solo == 'r' ) {
         document.getElementById("buttonSolo").style.background = "rgb(100, 0, 0)";
         document.getElementById("buttonSolo").innerText = '_R';
     }
@@ -1548,19 +1544,19 @@ function buttonSoloHighlight(){
 
 function buttonPolarityHighlight(){
 
-    if ( state.polarity != '++' ) {
+    if ( STATE.polarity != '++' ) {
         document.getElementById("buttonPolarity").style.background = "rgb(100, 0, 0)";
 
     } else {
         document.getElementById("buttonPolarity").style = "button";
     }
 
-    document.getElementById("buttonPolarity").innerText = state.polarity;
+    document.getElementById("buttonPolarity").innerText = STATE.polarity;
 }
 
 
 function buttonLoudHighlight(){
-    if ( state.equal_loudness == true ) {
+    if ( STATE.equal_loudness == true ) {
         document.getElementById("buttonLoud").style.background = "rgb(0, 90, 0)";
         document.getElementById("buttonLoud").style.color = "white";
     } else {
@@ -1571,7 +1567,7 @@ function buttonLoudHighlight(){
 
 
 function buttonAODHighlight(){
-    if ( state.extra_delay === 0 ) {
+    if ( STATE.extra_delay === 0 ) {
         document.getElementById("buttAOD").style.border = "2px solid rgb(100, 100, 100)";
         document.getElementById("buttAOD").style.background = "rgb(100, 100, 100)";
         document.getElementById("buttAOD").style.color = "rgb(180, 180, 180)";
@@ -1585,17 +1581,17 @@ function buttonAODHighlight(){
 
 
 function buttonSubsonicHighlight(){
-    if ( state.subsonic == 'off' ) {
+    if ( STATE.subsonic == 'off' ) {
         document.getElementById("subsonic").style.border = "2px solid rgb(100, 100, 100)";
         document.getElementById("subsonic").style.background = "rgb(100, 100, 100)";
         document.getElementById("subsonic").style.color = "rgb(180, 180, 180)";
         document.getElementById("subsonic").innerText = 'SUBS\n-';
-    } else if ( state.subsonic == 'mp' ) {
+    } else if ( STATE.subsonic == 'mp' ) {
         document.getElementById("subsonic").style.border = "3px solid rgb(160, 160, 160)";
         document.getElementById("subsonic").style.background = "rgb(100, 0, 0)";
         document.getElementById("subsonic").style.color = "rgb(255, 200, 200)";
         document.getElementById("subsonic").innerText = 'SUBS\nmp';
-    } else if ( state.subsonic == 'lp' ) {
+    } else if ( STATE.subsonic == 'lp' ) {
         document.getElementById("subsonic").style.border = "3px solid rgb(160, 160, 160)";
         document.getElementById("subsonic").style.background = "rgb(150, 0, 0)";
         document.getElementById("subsonic").style.color = "rgb(255, 200, 200)";
@@ -1606,7 +1602,7 @@ function buttonSubsonicHighlight(){
 
 function levelInfoHighlight() {
     // currently only indicates subsonic filter activated
-    if (state.subsonic != 'off' ){
+    if (STATE.subsonic != 'off' ){
         document.getElementById("levelInfo").style.borderWidth = "thick";
         document.getElementById("levelInfo").style.borderColor = "DarkRed";
     }else{
@@ -1616,13 +1612,13 @@ function levelInfoHighlight() {
 }
 
 function buttonCompressorHighlight(){
-    if ( state.compressor === 'off' ) {
+    if ( STATE.compressor === 'off' ) {
         document.getElementById("bt_compressor").innerHTML = 'comp.<br>OFF';
         document.getElementById("bt_compressor").style.border = "2px solid rgb(100, 100, 100)";
         document.getElementById("bt_compressor").style.background = "rgb(100, 100, 100)";
         document.getElementById("bt_compressor").style.color = "rgb(180, 180, 180)";
     } else {
-        document.getElementById("bt_compressor").innerHTML = 'COMP.<br>' + state.compressor;
+        document.getElementById("bt_compressor").innerHTML = 'COMP.<br>' + STATE.compressor;
         document.getElementById("bt_compressor").style.border = "3px solid rgb(160, 160, 160)";
         document.getElementById("bt_compressor").style.background = "rgb(100, 0, 0)";
         document.getElementById("bt_compressor").style.color = "rgb(255, 200, 200)";
@@ -1657,12 +1653,12 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('buttonPolarity', 'mousedown', () => omd_polarity_rotate());
 
     // Preamp y filtros
-    addListener('subsonic', 'mousedown', () => control_cmd('preamp subsonic rotate'));
+    addListener('subsonic', 'mousedown', () => mc.send_cmd('preamp subsonic rotate'));
     addListener('buttonMute', 'mousedown', () => omd_mute_toggle());
-    addListener('tone_defeat', 'mousedown', () => control_cmd('preamp tone_defeat toggle'));
+    addListener('tone_defeat', 'mousedown', () => mc.send_cmd('preamp tone_defeat toggle'));
     addListener('buttAOD', 'mousedown', () => omd_delay_toggle());
-    addListener('bt_compressor', 'mousedown', () => control_cmd('preamp compressor rotate'));
-    addListener('buttonLoudMonReset', 'mousedown', () => control_cmd('ctrl reset_loudness_monitor'));
+    addListener('bt_compressor', 'mousedown', () => mc.send_cmd('preamp compressor rotate'));
+    addListener('buttonLoudMonReset', 'mousedown', () => mc.send_cmd('ctrl reset_loudness_monitor'));
 
     // Cambios de Audio (Bass, Bal, Treb, Level)
     addListener('level_m1', 'mousedown', () => omd_audio_change('level', -1));
