@@ -20,7 +20,7 @@ import  audiotools.audio_eq_cook_book as eqbook
 
 FACECOLOR = (.15, .15, .15)     # like pAudio web page
 
-IMGFOLDER = f'{MAINFOLDER}/code/share/www/images/{LOUDSPEAKER}'
+IMGFOLDER = f'{MAINFOLDER}/code/share/www/public/images/{LOUDSPEAKER}'
 
 VERBOSE   = False
 
