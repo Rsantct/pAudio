@@ -27,7 +27,7 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 from common import *
 
 EQFIR_PATH  = f'{EQFOLDER}/eq.pcm'
-IMGFOLDER   = f'{MAINFOLDER}/code/share/www/images'
+IMGFOLDER   = f'{MAINFOLDER}/code/share/www/public/images'
 EQPNG_PATH  = f'{IMGFOLDER}/eq.png'
 
 # ----------------------    Plot config      -----------------------------------
