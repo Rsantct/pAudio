@@ -1,5 +1,10 @@
+/*
+    Copyright (c) Rafael Sánchez
+    This file is part of 'pAudio', a PC based personal audio system.
+*/
+
 export async function send_cmd(cmd) {
-    // Si la petición tarda más de 4 segundos, la cancelamos
+    // Cancel if it takes more than 4 seconds
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
 
@@ -22,7 +27,7 @@ export async function send_cmd(cmd) {
 
         } catch {
             if (respuTxt.toLowerCase().includes('refused')){
-                return 'server error'
+                return 'refused from server'
             }else{
                 return respuTxt;
             }
@@ -33,7 +38,7 @@ export async function send_cmd(cmd) {
         if (err.name === 'AbortError') {
             return 'server timeout';
         }
-        return JSON.stringify({ error: true, reason: err.message });
+        return 'error: ' + err.message;
     }
 }
 
