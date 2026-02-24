@@ -66,9 +66,9 @@ export function allAreTrue(arr) {
 }
 
 
-export function flash_element(e){
+export function flash_element(e, timeout=950){
     e.classList.add('btn-flash');
     setTimeout(() => {
         e.classList.remove('btn-flash');
-    }, 950);
+    }, timeout);
 }
