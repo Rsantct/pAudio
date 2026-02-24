@@ -120,8 +120,24 @@ Check in a terminal if you can run the **`wget`** tool. If necessary, do install
 
 You don't have to worry about preparing CamillaDSP configuration files.
 
+## `config.yml`
+
 All settings are done inside **`pAudio/config.yml`**
 
+See the provided sample files.
+
+## Web server
+
+The Node.js web server needs to be prepared before running it.
+
+Please run in a terminal:
+
+    cd ~/pAudio/code/share/www
+    npm init -y                    # Prepares the internal framework of the project.
+    npm install express js-yaml    # Install express (the web server engine)
+                                   # and the node YAML library
+
+            
 ## Sound Device
 
 Set the output device name to be used in **`~/pAudio/config.yml`**, for example:
