@@ -21,6 +21,12 @@
                 font-size:0.95em;   /* smaller than usual */
             }
 
+    .btn-flash {
+      background-color: #4CAF50 !important;
+      transition: all 0.3s ease;
+      transform: scale(1.05);
+    }
+
     /* GLOBAL TABLES behavior */
     table   {   width: 100%;
             }
