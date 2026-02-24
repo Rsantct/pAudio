@@ -20,19 +20,19 @@ export async function send_cmd(cmd) {
 
         if (!response.ok) throw new Error('backend error');
 
-        const respuTxt = await response.text();
+        const responseTxt = await response.text();
 
         try {
             // response as JSON Object
-            return JSON.parse(respuTxt.replaceAll(': null', ': ""'));
+            return JSON.parse(responseTxt.replaceAll(': null', ': ""'));
 
         } catch {
             // response as plain text
-            return respuTxt;
+            return responseTxt;
         }
 
     } catch (err) {
-        // Differ on timeout or network error
+        // distinguishes between timeout and network error
         if (err.name === 'AbortError') {
             console.log('server timeout:', err.message)
             return 'server timeout';
@@ -43,8 +43,32 @@ export async function send_cmd(cmd) {
 }
 
 
+export async function get_state() {
+
+    const ans = await send_cmd('preamp state');
+
+    if ( typeof ans != 'object' ){
+        console.log("'preamp state' not a dict", typeof ans, ans)
+        return {}
+    }
+
+    if ( Object.keys(ans).length <= 5 ){
+        console.log("'preamp state' not valid:", typeof ans, ans)
+        return {}
+    }
+
+    return ans
+}
+
+
 export function allAreTrue(arr) {
   return arr.every(element => element === true);
 }
 
 
+export function flash_element(e){
+    e.classList.add('btn-flash');
+    setTimeout(() => {
+        e.classList.remove('btn-flash');
+    }, 950);
+}
