@@ -1196,8 +1196,8 @@ async function oc_target_select(xoName){
 
 
 async function omd_lu_mon_reset(){
-    mc.send_cmd('ctrl reset_loudness_monitor');
     mc.flash_element( document.getElementById('buttonLoudMonReset') );
+    mc.send_cmd('ctrl reset_loudness_monitor');
 }
 
 
@@ -1215,7 +1215,8 @@ async function oi_LU_slider_action(slider_value){
 }
 
 
-async function omd_audio_change(param, value) {
+async function omd_audio_change(element, param, value) {
+    mc.flash_element(element, 400);
     STATE[param] += value;
     await mc.send_cmd( param + ' ' + value + ' ' + 'add' );
 }
@@ -1311,27 +1312,28 @@ async function omd_delay_toggle() {
 
 
 async function omd_subsonic(){
-    mc.send_cmd('preamp subsonic rotate');
     mc.flash_element( document.getElementById('subsonic') );
+    mc.send_cmd('preamp subsonic rotate');
 }
 
 
 async function omd_tone_defeat(){
-    mc.send_cmd('preamp tone_defeat toggle');
     mc.flash_element( document.getElementById('tone_defeat') );
+    mc.send_cmd('preamp tone_defeat toggle');
 }
 
 
 async function omd_compressor(){
-    mc.send_cmd('preamp compressor rotate');
     mc.flash_element( document.getElementById('bt_compressor') );
+    mc.send_cmd('preamp compressor rotate');
 }
 
 
 
 //////// HANDLERS: PLAYER 'onchange' 'onmousedown' 'onclick' ////////
 
-async function omd_playerCtrl(action) {
+async function omd_playerCtrl(button, action) {
+    mc.flash_element(button, 400);
     if (action == 'random_toggle') {
         await mc.send_cmd( 'player random_mode toggle' );
     } else {
@@ -1594,27 +1596,27 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('bt_compressor', 'mousedown',           () => omd_compressor());
     addListener('buttonLoudMonReset', 'mousedown',      () => omd_lu_mon_reset());
 
-    addListener('level_m1', 'mousedown',                () => omd_audio_change('level', -1));
-    addListener('level_p1', 'mousedown',                () => omd_audio_change('level', 1));
-    addListener('level_m3', 'mousedown',                () => omd_audio_change('level', -3));
-    addListener('level_p3', 'mousedown',                () => omd_audio_change('level', 3));
+    addListener('level_m1', 'mousedown',                (e) => omd_audio_change(e.target, 'level', -1));
+    addListener('level_p1', 'mousedown',                (e) => omd_audio_change(e.target, 'level', 1));
+    addListener('level_m3', 'mousedown',                (e) => omd_audio_change(e.target, 'level', -3));
+    addListener('level_p3', 'mousedown',                (e) => omd_audio_change(e.target, 'level', 3));
 
-    addListener('bass-', 'mousedown',                   () => omd_audio_change('bass', -1));
-    addListener('bass+', 'mousedown',                   () => omd_audio_change('bass', 1));
-    addListener('bal-', 'mousedown',                    () => omd_audio_change('balance', -1));
-    addListener('bal+', 'mousedown',                    () => omd_audio_change('balance', 1));
-    addListener('treb-', 'mousedown',                   () => omd_audio_change('treble', -1));
-    addListener('treb+', 'mousedown',                   () => omd_audio_change('treble', 1));
+    addListener('bass-', 'mousedown',                   (e) => omd_audio_change(e.target, 'bass', -1));
+    addListener('bass+', 'mousedown',                   (e) => omd_audio_change(e.target, 'bass', 1));
+    addListener('bal-', 'mousedown',                    (e) => omd_audio_change(e.target, 'balance', -1));
+    addListener('bal+', 'mousedown',                    (e) => omd_audio_change(e.target, 'balance', 1));
+    addListener('treb-', 'mousedown',                   (e) => omd_audio_change(e.target, 'treble', -1));
+    addListener('treb+', 'mousedown',                   (e) => omd_audio_change(e.target, 'treble', 1));
 
-    addListener('buttonPrevious', 'mousedown',          () => omd_playerCtrl('previous'));
-    addListener('buttonRew', 'mousedown',               () => omd_playerCtrl('rew'));
-    addListener('buttonFF', 'mousedown',                () => omd_playerCtrl('ff'));
-    addListener('buttonNext', 'mousedown',              () => omd_playerCtrl('next'));
-    addListener('random_toggle_button', 'mousedown',    () => omd_playerCtrl('random_toggle'));
-    addListener('buttonEject', 'mousedown',             () => omd_playerCtrl('eject'));
-    addListener('buttonStop', 'mousedown',              () => omd_playerCtrl('stop'));
-    addListener('buttonPause', 'mousedown',             () => omd_playerCtrl('pause'));
-    addListener('buttonPlay', 'mousedown',              () => omd_playerCtrl('play'));
+    addListener('buttonPrevious', 'mousedown',          (e) => omd_playerCtrl(e.target, 'previous'));
+    addListener('buttonRew', 'mousedown',               (e) => omd_playerCtrl(e.target, 'rew'));
+    addListener('buttonFF', 'mousedown',                (e) => omd_playerCtrl(e.target, 'ff'));
+    addListener('buttonNext', 'mousedown',              (e) => omd_playerCtrl(e.target, 'next'));
+    addListener('random_toggle_button', 'mousedown',    (e) => omd_playerCtrl(e.target, 'random_toggle'));
+    addListener('buttonEject', 'mousedown',             (e) => omd_playerCtrl(e.target, 'eject'));
+    addListener('buttonStop', 'mousedown',              (e) => omd_playerCtrl(e.target, 'stop'));
+    addListener('buttonPause', 'mousedown',             (e) => omd_playerCtrl(e.target, 'pause'));
+    addListener('buttonPlay', 'mousedown',              (e) => omd_playerCtrl(e.target, 'play'));
 
     addListener('url_button', 'click',                  () => ck_play_url());
     addListener('playlist_selector', 'change',          (e) => oc_load_playlist(e.target.value));
