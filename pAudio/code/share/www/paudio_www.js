@@ -73,7 +73,8 @@ function backendSocket(cmd, backend_port) {
 }
 
 // Static files are found in the 'public/' folder
-app.use(express.static('public'));
+app.use( express.static( path.join(__dirname, 'public') ) );
+
 // we need json to listen commands in API RESTful style
 app.use(express.json());
 
