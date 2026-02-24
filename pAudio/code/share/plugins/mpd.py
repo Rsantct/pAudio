@@ -4,16 +4,19 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 """
-    usage:  mpd.py      start | stop **
+    usage:  mpd.py      start | stop
 
-    Notice:
+    Notices:
 
-        (**) 'stop' will have NO EFFECT
-
+        1.
         Some Desktop autostarts MPD when user logins, because of the packaged file:
             /etc/xdg/autostart/mpd.desktop
 
         If so, please set "X-GNOME-Autostart-enabled=false" inside that file.
+
+        2.
+        MPD needs to be restarted after a new jack server is running
+
 """
 
 import sys
@@ -35,8 +38,8 @@ def mpd_is_running():
 
 
 def stop():
-    #run( f'killall -KILL mpd', shell=True )
-    print(f'{GRAY}(plugins/mpd.py) will not stop MPD anymore{END}')
+    run( f'killall -KILL mpd', shell=True )
+    print(f'{GRAY}(plugins/mpd.py) stopping MPD{END}')
 
 
 def start():
