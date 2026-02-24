@@ -24,7 +24,20 @@ try {
     const fileContents = fs.readFileSync(CONFIG_PATH, 'utf8');
     CONFIG = yaml.load(fileContents);
     //console.log(CONFIG);
-    WEB_PORT = CONFIG.web_port;
+
+    if ( 'web_port' in CONFIG ){
+        if (
+            typeof CONFIG.web_port === 'number' &&
+            Number.isInteger(CONFIG.web_port) &&
+            CONFIG.web_port !== 80 &&
+            CONFIG.web_port > 1000
+        ){
+            WEB_PORT = CONFIG.web_port;
+
+        }else{
+            console.log("CONFIG.web_port must be > 1000");
+        }
+    }
 
 } catch (e) {
     console.error("error reading YAML:", e);
