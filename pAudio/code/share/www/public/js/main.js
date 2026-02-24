@@ -937,11 +937,6 @@ function clear_macro_buttons_highlight(){
 }
 
 
-function allAreTrue(arr) {
-  return arr.every(element => element === true);
-}
-
-
 //////// ELEMENTS HIGHLIGHT ////////
 
 function toneDefeatHighlight(){
@@ -1555,9 +1550,7 @@ function omd_graphs_toggle() {
 }
 
 
-/**
- * Inicialización de eventos para pAudio
- */
+/////// EVENT HANDLERS FOR BUTTONS, SELECTORS AND SLIDERS
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Utilidad para asignar eventos de forma masiva ---
@@ -1566,13 +1559,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el) el.addEventListener(event, fn);
     };
 
-    // --- BOTONES CON CLICK ---
     addListener('but_restart', 'click',                 () => ck_paudio_restart());
     addListener('but_help', 'click',                    () => ck_help());
     addListener('advanced_switch', 'click',             () => ck_display_advanced('toggle'));
-    addListener('url_button', 'click',                  () => ck_play_url());
+    addListener('button_toggleEQgraphs', 'mousedown',   () => omd_graphs_toggle());
 
-    // --- BOTONES CON MOUSEDOWN ---
+    addListener('macros_toggle_button', 'mousedown',    () => omd_macro_buttons_display_toggle());
+
     addListener('OnOffButton', 'mousedown',             () => omd_onoff('toggle'));
     addListener('buttonLoud', 'mousedown',              () => omd_equal_loudness_toggle());
     addListener('buttonSolo', 'mousedown',              () => omd_solo_rotate());
@@ -1580,7 +1573,6 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('buttonMono', 'mousedown',              () => omd_mono_toggle());
     addListener('buttonPolarity', 'mousedown',          () => omd_polarity_rotate());
 
-    // Preamp y filtros
     addListener('subsonic', 'mousedown',                () => mc.send_cmd('preamp subsonic rotate'));
     addListener('buttonMute', 'mousedown',              () => omd_mute_toggle());
     addListener('tone_defeat', 'mousedown',             () => mc.send_cmd('preamp tone_defeat toggle'));
@@ -1588,7 +1580,6 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('bt_compressor', 'mousedown',           () => mc.send_cmd('preamp compressor rotate'));
     addListener('buttonLoudMonReset', 'mousedown',      () => mc.send_cmd('ctrl reset_loudness_monitor'));
 
-    // Cambios de Audio (Bass, Bal, Treb, Level)
     addListener('level_m1', 'mousedown',                () => omd_audio_change('level', -1));
     addListener('level_p1', 'mousedown',                () => omd_audio_change('level', 1));
     addListener('level_m3', 'mousedown',                () => omd_audio_change('level', -3));
@@ -1601,8 +1592,6 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('treb-', 'mousedown',                   () => omd_audio_change('treble', -1));
     addListener('treb+', 'mousedown',                   () => omd_audio_change('treble', 1));
 
-    // Graficos y Player
-    addListener('button_toggleEQgraphs', 'mousedown',   () => omd_graphs_toggle());
     addListener('buttonPrevious', 'mousedown',          () => omd_playerCtrl('previous'));
     addListener('buttonRew', 'mousedown',               () => omd_playerCtrl('rew'));
     addListener('buttonFF', 'mousedown',                () => omd_playerCtrl('ff'));
@@ -1612,9 +1601,8 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('buttonStop', 'mousedown',              () => omd_playerCtrl('stop'));
     addListener('buttonPause', 'mousedown',             () => omd_playerCtrl('pause'));
     addListener('buttonPlay', 'mousedown',              () => omd_playerCtrl('play'));
-    addListener('macros_toggle_button', 'mousedown',    () => omd_macro_buttons_display_toggle());
 
-    // --- SELECTS (CHANGE) E INPUTS ---
+    addListener('url_button', 'click',                  () => ck_play_url());
     addListener('playlist_selector', 'change',          (e) => oc_load_playlist(e.target.value));
     addListener('track_selector', 'change',             (e) => oc_play_track_number(e.target.selectedIndex));
     addListener('mainSelector', 'change',               (e) => oc_main_select(e.target.value));
