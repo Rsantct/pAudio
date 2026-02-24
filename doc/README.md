@@ -1,4 +1,4 @@
-# Install on macOS
+# A. Install on macOS
 
 ## Audio software
 
@@ -94,11 +94,11 @@ pAudio needs some additional modules to work. In most recent Python versions, th
     $
 
 
-# Install on Linux
+# B. Install on Linux
 
 see `Linux.md`
 
-# Install the pAudio application
+# C. Install the pAudio application (macOS and Linux)
 
 **pAudio** is given in a folder to be located under your HOME directory.
 
