@@ -6,12 +6,6 @@
 
 - [Node.js](https://nodejs.org/en) to serve the control web page (Choose the recommended `LTS` version).
 
-- Node.js YAML parser:
-
-    ```
-    npm install js-yaml
-    ```
-
 - [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools (this includes the [git](https://git-scm.com) tool).
 
     ```
