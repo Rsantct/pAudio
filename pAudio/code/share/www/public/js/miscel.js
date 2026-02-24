@@ -23,22 +23,22 @@ export async function send_cmd(cmd) {
         const respuTxt = await response.text();
 
         try {
+            // response as JSON Object
             return JSON.parse(respuTxt.replaceAll(': null', ': ""'));
 
         } catch {
-            if (respuTxt.toLowerCase().includes('refused')){
-                return 'refused from server'
-            }else{
-                return respuTxt;
-            }
+            // response as plain text
+            return respuTxt;
         }
 
     } catch (err) {
         // Differ on timeout or network error
         if (err.name === 'AbortError') {
+            console.log('server timeout:', err.message)
             return 'server timeout';
         }
-        return 'error: ' + err.message;
+        console.log('network error:', err.message)
+        return 'network error: ' + err.message;
     }
 }
 
