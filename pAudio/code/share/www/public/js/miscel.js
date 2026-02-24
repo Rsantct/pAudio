@@ -42,3 +42,9 @@ export async function send_cmd(cmd) {
     }
 }
 
+
+export function allAreTrue(arr) {
+  return arr.every(element => element === true);
+}
+
+
