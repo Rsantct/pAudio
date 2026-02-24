@@ -6,15 +6,18 @@
 */
 
 const express = require('express');
-const net = require('net');
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
-const os = require('os');
+const net     = require('net');
+const fs      = require('fs');
+const path    = require('path');
+const yaml    = require('js-yaml');
+const os      = require('os');
 
 const app = express();
-var   WEB_PORT = 8088;
-const BACKEND_TIMEOUT = 500
+
+var   WEB_PORT        = 8088;
+var   PAUDIO_ADDR     = '0.0.0.0';
+var   PAUDIO_PORT     = 9990;
+const PAUDIO_TIMEOUT  = 500;
 
 const CONFIG_PATH = path.join(os.homedir(), 'pAudio/config.yml');
 var   CONFIG = {}
@@ -39,10 +42,33 @@ try {
         }
     }
 
+    if ( 'paudio_port' in CONFIG ){
+        if (
+            typeof CONFIG.paudio_port === 'number' &&
+            Number.isInteger(CONFIG.paudio_port) &&
+            CONFIG.paudio_port > 1000
+        ){
+            PAUDIO_PORT = CONFIG.paudio_port;
+
+        }else{
+            console.log("CONFIG.paudio_port must be > 1000");
+        }
+    }
+
+    if ( 'paudio_addr' in CONFIG ){
+        if ( typeof CONFIG.paudio_addr === 'string' ){
+            PAUDIO_ADDR = CONFIG.paudio_addr;
+
+        }else{
+            console.log("CONFIG.paudio_addr bad  value");
+        }
+    }
+
 } catch (e) {
     console.error("error reading YAML:", e);
     return null;
 }
+
 
 
 // Command line option '-v' VERBOSE
@@ -56,16 +82,16 @@ process.argv.slice(2).forEach(opt => {
 
 
 // tcp bridge (promised to use async/await)
-function backendSocket(cmd, backend_port) {
+function backendSocket(cmd, PAUDIO_PORT) {
 
     return new Promise((resolve, reject) => {
 
         const client = new net.Socket();
         let response = '';
 
-        client.setTimeout(BACKEND_TIMEOUT);
+        client.setTimeout(PAUDIO_TIMEOUT);
 
-        client.connect(backend_port, CONFIG.paudio_addr, () => {
+        client.connect(PAUDIO_PORT, PAUDIO_ADDR, () => {
             client.write(cmd);
         });
 
@@ -101,7 +127,7 @@ app.post('/api/command', async (req, res) => {
         return res.status(400).json({ error: "no command found" });
     }
 
-    let backend_port = CONFIG.paudio_port;
+    let backend_port = PAUDIO_PORT;
 
     // Divert "ctrl ...." to paudio_ctrl
     const prefix = command.trim().split(' ')[0]
@@ -110,7 +136,7 @@ app.post('/api/command', async (req, res) => {
     }
 
     try {
-        const result = await backendSocket(command, backend_port);
+        const result = await backendSocket(command, PAUDIO_PORT);
         if (verbose) {
             console.log('Rx:',  command);
             console.log('Tx:',  result);
