@@ -6,11 +6,12 @@
 import * as mc  from "./miscel.js";
 import * as hlp from "./help.js";
 
-// Auto-update interval millisec
-const AUTO_UPDATE_INTERVAL = 1000;
+// REFRESH interval millisec
+const REFRESH_INTERVAL = 1000;
 
 //////// GLOBAL VARIABLES ////////
-var STATE               = {};       // The preamp-convolver state
+var STATE               = {};       // The pAudio state, updated every REFRESH_INTERVAL
+var server_available    = false;    // crontrolled inside update_STATE()
 
 var player_info         = {};
 
@@ -47,7 +48,6 @@ var metablank           = {         // A player's metadata blank dict
 };
 
 
-var server_available    = false;
 var show_advanced       = false;    // defaults for display advanced controls
 var hide_graphs         = true;     // defaults for displaying graphs
 
@@ -58,7 +58,6 @@ var last_source         = '';       // Helps on refreshing sources playlits
 var last_loudspeaker    = '';       // Will detect if audio processes has beeen
                                     // restarted with new loudspeaker configuration.
 var last_delay          = 0;        // A helper for the delay toggle button
-
 
 var hold_selected_track = 0;        // A counter to keep the selected cd track during updates
 var main_cside_msg      = '';       // The message displayed on page header
@@ -399,6 +398,7 @@ async function init(){
 
     get_drc_sets();
 
+    // await is needed for next steps
     await update_STATE();
 
     download_drc_graphs();
@@ -413,11 +413,11 @@ async function init(){
 
     // SCHEDULES THE PAGE_UPDATE (only runtime variable items)
     console.log('Looping to page_update ...');
-    setInterval( page_update, AUTO_UPDATE_INTERVAL );
+    setInterval( page_update, REFRESH_INTERVAL );
 }
 
 
-function page_update() {
+async function page_update() {
 
     async function player_get(){
         try{
@@ -741,16 +741,6 @@ function page_update() {
 
     function state_refresh(){
 
-        if ( typeof STATE != 'object' ){
-            console.log('bad STATE:', STATE)
-            return
-        }
-
-        if ( Object.keys(STATE).length <= 5 ){
-            console.log('BAD STATE:', STATE)
-            return
-        }
-
         // Updates level, balance, tone and delay info
         document.getElementById("levelInfo").innerHTML  = STATE.level.toFixed(1);
         document.getElementById("balInfo").innerHTML    = 'BAL: '  + STATE.balance;
@@ -823,15 +813,6 @@ function page_update() {
     // PREAMP STUFF
     update_STATE();
 
-    //  Cancel updating if not answer
-    if ( Object.keys(STATE).length == 0 ){
-        document.getElementById("levelInfo").innerHTML  = '--';
-        main_cside_msg = ':: pAudio :: not connected';
-        player_info_clear();
-        player_controls_clear();
-        return;
-    }
-
     // Try retrieving the drc_sets
     if ( drc_sets.length == 0 ){
         console.log('Retrying get_drc_sets')
@@ -870,13 +851,23 @@ async function get_drc_sets() {
 
 
 async function update_STATE() {
-    try{
-        STATE = await mc.send_cmd('preamp state');
-        server_available = true;
-    }catch(e){
+
+    const tmp = await mc.send_cmd('preamp state');
+
+    if ( typeof tmp != 'object' ){
+        console.log("'preamp state' not a dict", typeof tmp, tmp)
         server_available = false;
-        main_cside_msg = ':: pAudio :: not connected';
+        return
     }
+
+    if ( Object.keys(tmp).length <= 5 ){
+        console.log("'preamp state' not valid:", typeof tmp, tmp)
+        server_available = false;
+        return
+    }
+
+    STATE = tmp;
+    server_available = true;
 }
 
 
