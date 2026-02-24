@@ -47,7 +47,17 @@
 
     td#OnOff            { width:   5%; text-align: center; border: none; }
 
-    td#levelInfo        { width:   5%; text-align: center; border: 1px solid white; border-radius: 10px/10px; }
+    td#levelInfo {
+        width: 50px;
+        min-width: 50px;
+        text-align: center;
+        border: 1px solid white;
+        border-radius: 10px;
+        font-weight: bold;
+        /* Evita que la celda desaparezca si está vacía */
+        empty-cells: show;
+        white-space: nowrap;
+    }
 
     td#LoudnessInfo     { width: 7%; border: none; font-size:0.6em;}
     td#MonoInfo         { width: 7%; border: none; font-size:0.6em;}
