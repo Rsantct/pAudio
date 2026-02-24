@@ -11,15 +11,13 @@
 
 function start_www {
 
-    if [[ $(pgrep -f "nodejs_www_server/www-server.js") ]]; then
+    if [[ $(pgrep -f "paudio_www.js") ]]; then
         if [[ $VERBOSE == 'true' ]]; then
             echo "(paudio_restart) pAudio web server is already running."
         fi
 
     else
-        cd $HOME/pAudio/code/share/www
-        node www-server.js 1>/dev/null 2>&1 &
-        cd
+        node $HOME/pAudio/code/share/www/paudio_www.js 1>/dev/null 2>&1 &
     fi
 }
 
