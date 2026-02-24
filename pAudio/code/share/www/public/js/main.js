@@ -398,7 +398,7 @@ async function init(){
 
     get_drc_sets();
 
-    // await is needed for next steps
+    // needs await to next steps to work
     await update_STATE();
 
     download_drc_graphs();
@@ -852,22 +852,14 @@ async function get_drc_sets() {
 
 async function update_STATE() {
 
-    const tmp = await mc.send_cmd('preamp state');
+    const tmp = await mc.get_state();
 
-    if ( typeof tmp != 'object' ){
-        console.log("'preamp state' not a dict", typeof tmp, tmp)
+    if (tmp.loudspeaker){
+        STATE = tmp;
+        server_available = true;
+    }else{
         server_available = false;
-        return
     }
-
-    if ( Object.keys(tmp).length <= 5 ){
-        console.log("'preamp state' not valid:", typeof tmp, tmp)
-        server_available = false;
-        return
-    }
-
-    STATE = tmp;
-    server_available = true;
 }
 
 
@@ -1160,12 +1152,17 @@ function oc_main_select(itemName){
     // (i) The arrow syntax '=>' fails on Safari iPad 1 (old version)
     // setTimeout( () => { await mc.send_cmd('source ' + itemName); }, 200 );
     async function tmp(itemName){
+
         // regular behavior managing preamp sourcess
         if ( web_config.main_selector == 'sources' ){
+            document.getElementById('mainSelector').value = itemName;
+            STATE.source = itemName;
             await mc.send_cmd('source ' + itemName);
+
         // alternative behavior managing macros
         }else{
             mName = find_macroName(itemName);
+            document.getElementById('mainSelector').value = mName;
             await mc.send_cmd( 'ctrl run_macro ' + mName );
         }
     }
@@ -1198,10 +1195,23 @@ async function oc_target_select(xoName){
 }
 
 
+async function omd_lu_mon_reset(){
+    mc.send_cmd('ctrl reset_loudness_monitor');
+    mc.flash_element( document.getElementById('buttonLoudMonReset') );
+}
+
+
 async function oc_LU_scope_select(scope){
     await mc.send_cmd('ctrl set_loudness_monitor_scope ' + scope);
     clear_highlighteds();
     document.getElementById('LUscopeSelector').style.color = "white";
+}
+
+
+async function oi_LU_slider_action(slider_value){
+    document.getElementById("LU_slider").value = slider_value;
+    STATE.lu_offset = 15 - parseInt(slider_value);
+    await mc.send_cmd( 'lu_offset ' + (15 - parseInt(slider_value) ).toString() )
 }
 
 
@@ -1300,6 +1310,25 @@ async function omd_delay_toggle() {
 }
 
 
+async function omd_subsonic(){
+    mc.send_cmd('preamp subsonic rotate');
+    mc.flash_element( document.getElementById('subsonic') );
+}
+
+
+async function omd_tone_defeat(){
+    mc.send_cmd('preamp tone_defeat toggle');
+    mc.flash_element( document.getElementById('tone_defeat') );
+}
+
+
+async function omd_compressor(){
+    mc.send_cmd('preamp compressor rotate');
+    mc.flash_element( document.getElementById('bt_compressor') );
+}
+
+
+
 //////// HANDLERS: PLAYER 'onchange' 'onmousedown' 'onclick' ////////
 
 async function omd_playerCtrl(action) {
@@ -1343,7 +1372,7 @@ async function ck_play_url() {
 }
 
 
-//////// HANDLERS: AUX 'onmousedown' 'onclick' 'oninput' ////////
+//////// HANDLERS: CTRL 'onmousedown' 'onclick' 'oninput' ////////
 
 function ck_help() {
 
@@ -1418,11 +1447,6 @@ async function omd_onoff(mode) {
             window.alert( ans );
         }
     }
-}
-
-
-async function oi_LU_slider_action(slider_value){
-    await mc.send_cmd( 'lu_offset ' + (15 - parseInt(slider_value) ).toString() )
 }
 
 
@@ -1544,7 +1568,6 @@ function omd_graphs_toggle() {
 /////// EVENT HANDLERS FOR BUTTONS, SELECTORS AND SLIDERS
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- Utilidad para asignar eventos de forma masiva ---
     const addListener = (id, event, fn) => {
         const el = document.getElementById(id);
         if (el) el.addEventListener(event, fn);
@@ -1564,12 +1587,12 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('buttonMono', 'mousedown',              () => omd_mono_toggle());
     addListener('buttonPolarity', 'mousedown',          () => omd_polarity_rotate());
 
-    addListener('subsonic', 'mousedown',                () => mc.send_cmd('preamp subsonic rotate'));
+    addListener('subsonic', 'mousedown',                () => omd_subsonic());
     addListener('buttonMute', 'mousedown',              () => omd_mute_toggle());
-    addListener('tone_defeat', 'mousedown',             () => mc.send_cmd('preamp tone_defeat toggle'));
+    addListener('tone_defeat', 'mousedown',             () => omd_tone_defeat());
     addListener('buttAOD', 'mousedown',                 () => omd_delay_toggle());
-    addListener('bt_compressor', 'mousedown',           () => mc.send_cmd('preamp compressor rotate'));
-    addListener('buttonLoudMonReset', 'mousedown',      () => mc.send_cmd('ctrl reset_loudness_monitor'));
+    addListener('bt_compressor', 'mousedown',           () => omd_compressor());
+    addListener('buttonLoudMonReset', 'mousedown',      () => omd_lu_mon_reset());
 
     addListener('level_m1', 'mousedown',                () => omd_audio_change('level', -1));
     addListener('level_p1', 'mousedown',                () => omd_audio_change('level', 1));
