@@ -118,7 +118,7 @@ app.use( express.static( path.join(__dirname, 'public') ) );
 app.use(express.json());
 
 
-// API RESTful style
+// Backend API RESTful style
 app.post('/api/command', async (req, res) => {
 
     const { command } = req.body;
@@ -127,19 +127,19 @@ app.post('/api/command', async (req, res) => {
         return res.status(400).json({ error: "no command found" });
     }
 
-    let backend_port = PAUDIO_PORT;
+    let port = PAUDIO_PORT;
 
     // Divert "ctrl ...." to paudio_ctrl
     const prefix = command.trim().split(' ')[0]
     if ( prefix == 'ctrl' ){
-        backend_port += 1;
+        port += 1;
     }
 
     try {
-        const result = await backendSocket(command, PAUDIO_PORT);
+        const result = await backendSocket(command, port);
         if (verbose) {
-            console.log('Rx:',  command);
-            console.log('Tx:',  result);
+            console.log(`Rx:${port}:`,  command);
+            console.log(`Tx:${port}:`,  result);
         }
 
         // if backend is JSON, try to return JSON to frontend
