@@ -3,7 +3,7 @@
     This file is part of 'pAudio', a PC based personal audio system.
 */
 
-export async function send_cmd(cmd) {
+export async function send_cmd(cmd, verbose=false) {
     // Cancel if it takes more than 4 seconds
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
@@ -18,7 +18,7 @@ export async function send_cmd(cmd) {
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) throw new Error('backend error');
+        if (!response.ok) throw new Error('(send_cmd) backend error');
 
         const responseTxt = await response.text();
 
@@ -34,26 +34,30 @@ export async function send_cmd(cmd) {
     } catch (err) {
         // distinguishes between timeout and network error
         if (err.name === 'AbortError') {
-            console.log('server timeout:', err.message)
+            if (verbose) { console.log('(send_cmd) server timeout:', err.message) }
             return 'server timeout';
         }
-        console.log('network error:', err.message)
+        if (verbose) { console.log('(send_cmd) network error:', err.message) }
         return 'network error: ' + err.message;
     }
 }
 
 
-export async function get_state() {
+// Aux function to stop the execution
+export const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+
+export async function get_state( verbose=false ) {
 
     const ans = await send_cmd('preamp state');
 
     if ( typeof ans != 'object' ){
-        console.log("'preamp state' not a dict", typeof ans, ans)
+        if (verbose) { console.log("(get_state) not a dict:", ans) }
         return {}
     }
 
     if ( Object.keys(ans).length <= 5 ){
-        console.log("'preamp state' not valid:", typeof ans, ans)
+        if (verbose) { console.log("(get_state) not valid:", ans) }
         return {}
     }
 
@@ -71,4 +75,56 @@ export function flash_element(e, timeout=950){
     setTimeout(() => {
         e.classList.remove('btn-flash');
     }, timeout);
+}
+
+
+export async function do_until_function_istrue( my_function, period, verbose=true ) {
+
+    if (!period){
+        period = 5000;
+    }
+
+    let test_ok = false;
+
+    while ( !test_ok ) {
+
+        const now = new Date().toLocaleTimeString();
+
+        if (verbose) {
+            const segundos = Math.round(period / 1000);
+            console.log(`${now} Waiting ${segundos} s for <${my_function.name}> response`);
+        }
+
+        test_ok = await my_function();
+
+        if (test_ok) {
+            if (verbose) {
+                console.log(`<${my_function.name}> OK`);
+            }
+            break;
+        }
+
+        await sleep(period);
+    }
+}
+
+
+export function player_controls_clear() {
+    document.getElementById("buttonStop").style.background  = "rgb(100, 100, 100)";
+    document.getElementById("buttonStop").style.color       = "lightgray";
+    document.getElementById("buttonPause").style.background = "rgb(100, 100, 100)";
+    document.getElementById("buttonPause").style.color      = "lightgray";
+    document.getElementById("buttonPlay").style.background  = "rgb(100, 100, 100)";
+    document.getElementById("buttonPlay").style.color       = "lightgray";
+}
+
+
+export function player_info_clear() {
+    document.getElementById("bitrate").innerText = "-\nkbps"
+    document.getElementById("artist").innerText = "-"
+    document.getElementById("track_info").innerText = "-"
+    document.getElementById("track_info").innerText += "\n-"
+    document.getElementById("time").innerText = "-"
+    document.getElementById("album").innerText = "-"
+    document.getElementById("title").innerText = "-"
 }
