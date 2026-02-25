@@ -6,12 +6,11 @@
 import * as mc  from "./miscel.js";
 import * as hlp from "./help.js";
 
-// REFRESH interval millisec
-const REFRESH_INTERVAL = 1000;
 
 //////// GLOBAL VARIABLES ////////
+
+const REFRESH_INTERVAL  = 1000;     // millisec
 var STATE               = {};       // The pAudio state, updated every REFRESH_INTERVAL
-var server_available    = false;    // crontrolled inside update_STATE()
 
 var player_info         = {};
 
@@ -634,7 +633,6 @@ async function page_update() {
         }catch(e){
             console.log('response error to \'ctrl aux_info\'', e.message);
             aux_info.onoff = '--';
-            server_available = false;
         }
 
         if ( aux_info.loudspeaker ) {
@@ -834,11 +832,9 @@ async function update_STATE() {
 
     if (tmp.loudspeaker){
         STATE = tmp;
-        server_available = true;
         return true
 
     }else{
-        server_available = false;
         return false
     }
 }
