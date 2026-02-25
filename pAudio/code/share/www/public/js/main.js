@@ -66,6 +66,67 @@ var hold_cside_msg      = 0;        // A counter to keep main_cside_msg during u
 
 //////// PAGE MANAGEMENT ////////
 
+function manage_main_cside( msg = '' ){
+
+    function CamillaDSP_is_ready() {
+
+        const c = aux_info.CamillaDSP_state;
+
+        if ( ! c ) {
+            return false
+        }
+
+        if ( c.includes('NOT') || c.includes('INACTIVE') ) {
+            return false
+
+        }else{
+            return true
+        }
+    }
+
+
+    if ( ! msg ){
+        msg = main_cside_msg;
+    }
+
+    // Server warnings overrides any message
+    if ( aux_info.warning !== '') {
+        msg = aux_info.warning;
+
+    } else if (STATE.convolver_runs==false) {
+        msg = '( sleeping )';
+
+    } else if( ! CamillaDSP_is_ready() ) {
+        msg = 'DSP unloaded, needs restart';
+        document.getElementById("but_restart").style.display = "inline-block";
+        document.getElementById("but_help").style.display = "none";
+        mc.player_info_clear();
+
+    } else {
+
+        if (hold_cside_msg > 0){
+            hold_cside_msg -= 1;
+
+        } else {
+
+            document.getElementById("but_restart").style.display = "none";
+            document.getElementById("but_help").style.display = "inline-block";
+
+            if (STATE.loudspeaker){
+                if (STATE.drc_set == 'none'){
+                    msg = STATE.loudspeaker;
+
+                } else {
+                    msg = STATE.loudspeaker + ' (' + STATE.drc_set + ')';
+                }
+            }
+        }
+    }
+
+    document.getElementById("main_cside").innerText = msg;
+}
+
+
 function fill_in_page_statics(){
 
     function fill_in_main_selector(){
@@ -197,75 +258,14 @@ function fill_in_page_statics(){
                                                  STATE.loudspeaker_ref_SPL + 'dBSPL';
 
     fill_in_main_selector();
-    ////
+
     fill_in_target_selector();
-    ////
+
     fill_in_xo_selector();
-    ////
+
     fill_in_drc_selector();
-    ////
+
     fill_in_LUscope_selector();
-
-}
-
-
-function manage_main_cside( msg = '' ){
-
-    function CamillaDSP_is_ready() {
-
-        const c = aux_info.CamillaDSP_state;
-
-        if ( ! c ) {
-            return false
-        }
-
-        if ( c.includes('NOT') || c.includes('INACTIVE') ) {
-            return false
-
-        }else{
-            return true
-        }
-    }
-
-
-    if ( ! msg ){
-        msg = main_cside_msg;
-    }
-
-    // Server warnings overrides any message
-    if ( aux_info.warning !== '') {
-        msg = aux_info.warning;
-
-    } else if (STATE.convolver_runs==false) {
-        msg = '( sleeping )';
-
-    } else if( ! CamillaDSP_is_ready() ) {
-        msg = 'DSP unloaded, needs restart';
-        document.getElementById("but_restart").style.display = "inline-block";
-        document.getElementById("but_help").style.display = "none";
-
-    } else {
-
-        if (hold_cside_msg > 0){
-            hold_cside_msg -= 1;
-
-        } else {
-
-            document.getElementById("but_restart").style.display = "none";
-            document.getElementById("but_help").style.display = "inline-block";
-
-            if (STATE.loudspeaker){
-                if (STATE.drc_set == 'none'){
-                    msg = STATE.loudspeaker;
-
-                } else {
-                    msg = STATE.loudspeaker + ' (' + STATE.drc_set + ')';
-                }
-            }
-        }
-    }
-
-    document.getElementById("main_cside").innerText = msg;
 }
 
 
@@ -290,35 +290,31 @@ async function init(){
     }
 
 
-    async function get_web_config(){
-        try{
-            web_config = await mc.send_cmd('ctrl get_web_config');
-            mFnames = web_config.user_macros;
-        }catch(e){
-            console.log('response error to \'ctrl get_web_config\'', e.message);
+    async function update_web_config(){
+
+        document.getElementById("OnOffButton").title = "pAudio ON/OFF";
+        document.getElementById("OnOffButton").innerHTML = "OFF";
+
+        const tmp = await mc.send_cmd('ctrl get_web_config');
+
+        // bad response
+        if ( !tmp.onoff ){
+            return false
         }
 
-        if (web_config.show_graphs==false){
+        web_config = tmp;
+
+        mFnames = web_config.user_macros;
+
+        if (web_config.show_graphs == false){
             document.getElementById("button_toggleEQgraphs").style.display = "none";
         }
 
         if ( web_config["onoff"].includes('amp') ){
             document.getElementById("OnOffButton").title = "Amplifier ON/OFF";
-        }else if ( web_config["onoff"].includes('udio') ){
-            document.getElementById("OnOffButton").title = "pAudio ON/OFF";
         }
 
-    }
-
-
-    function show_hide_LU_frame(){
-        if ( web_config.hide_LU == true ){
-            document.getElementById("LU_offset").style.display = 'none';
-            document.getElementById("LU_monitor").style.display = 'none';
-        }else{
-            document.getElementById("LU_offset").style.display = 'block';
-            document.getElementById("LU_monitor").style.display = 'block';
-        }
+        return true
     }
 
 
@@ -392,14 +388,17 @@ async function init(){
     }
 
 
-    console.log('Preparing page');
+    console.log('Preparing UI');
 
-    await get_web_config();
+    document.getElementById("main_cside").innerHTML = ":: pAudio not connected ::";
+    document.getElementById("but_help").style.display = 'none';
+    document.getElementById("but_restart").style.display = 'block';
+
+    await mc.do_until_function_istrue( update_web_config )
+
+    await mc.do_until_function_istrue( update_STATE )
 
     get_drc_sets();
-
-    // needs await to next steps to work
-    await update_STATE();
 
     download_drc_graphs();
 
@@ -408,8 +407,6 @@ async function init(){
     fill_in_macro_buttons();
 
     //fill_in_playlists_selector();
-
-    show_hide_LU_frame();
 
     // SCHEDULES THE PAGE_UPDATE (only runtime variable items)
     console.log('Looping to page_update ...');
@@ -785,33 +782,15 @@ async function page_update() {
     }
 
 
-    function player_controls_clear() {
-        document.getElementById("buttonStop").style.background  = "rgb(100, 100, 100)";
-        document.getElementById("buttonStop").style.color       = "lightgray";
-        document.getElementById("buttonPause").style.background = "rgb(100, 100, 100)";
-        document.getElementById("buttonPause").style.color      = "lightgray";
-        document.getElementById("buttonPlay").style.background  = "rgb(100, 100, 100)";
-        document.getElementById("buttonPlay").style.color       = "lightgray";
-    }
-
-
-    function player_info_clear() {
-        document.getElementById("bitrate").innerText = "-\nkbps"
-        document.getElementById("artist").innerText = "-"
-        document.getElementById("track_info").innerText = "-"
-        document.getElementById("track_info").innerText += "\n-"
-        document.getElementById("time").innerText = "-"
-        document.getElementById("album").innerText = "-"
-        document.getElementById("title").innerText = "-"
-    }
-
-
     //// AUX STUFF
     aux_info_refresh();
+
     manage_main_cside();
 
     // PREAMP STUFF
-    update_STATE();
+
+    //                                              period verbose
+    await mc.do_until_function_istrue( update_STATE, 5000, false )
 
     // Try retrieving the drc_sets
     if ( drc_sets.length == 0 ){
@@ -839,7 +818,6 @@ async function page_update() {
 
 ////////  MISCEL INTERNALS  ////////
 
-
 async function get_drc_sets() {
 
     try {
@@ -857,8 +835,11 @@ async function update_STATE() {
     if (tmp.loudspeaker){
         STATE = tmp;
         server_available = true;
+        return true
+
     }else{
         server_available = false;
+        return false
     }
 }
 
@@ -1397,16 +1378,16 @@ function ck_help() {
 async function ck_paudio_restart() {
 
     // RESTART mode
-    if (web_config["monkey_button"].includes('start')){
+    if ( web_config.monkey_button && web_config["monkey_button"].includes('start')){
 
         if ( confirm('Are you sure to RESTART pAudio?') ){
 
-            ans = await mc.send_cmd('ctrl restart_paudio restart');
+            const ans = await mc.send_cmd('ctrl restart_paudio restart');
             alert(ans);
             ck_display_advanced('off');
         }
 
-        return;
+        return
     }
 
     // START / STOP mode (toggle)
@@ -1424,7 +1405,7 @@ async function ck_paudio_restart() {
         return
     }
 
-    ans = await mc.send_cmd('ctrl restart_paudio ' + mode);
+    const ans = await mc.send_cmd('ctrl restart_paudio ' + mode);
 
     alert(ans);
 
