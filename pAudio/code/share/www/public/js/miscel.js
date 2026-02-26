@@ -16,16 +16,12 @@ export async function send_cmd(cmd, verbose=false) {
             signal: controller.signal
         });
 
-        clearTimeout(timeoutId);
-
         if (!response.ok) throw new Error('(send_cmd) backend error');
 
         const responseTxt = await response.text();
-
         try {
             // response as JSON Object
             return JSON.parse(responseTxt.replaceAll(': null', ': ""'));
-
         } catch {
             // response as plain text
             return responseTxt;
@@ -42,6 +38,10 @@ export async function send_cmd(cmd, verbose=false) {
         if (verbose) { console.log('(send_cmd) network error:', err.message) }
 
         return '(send_cmd) network error: ' + err.message;
+
+    } finally {
+        // hygienically cleaned
+        clearTimeout(timeoutId);
     }
 }
 
