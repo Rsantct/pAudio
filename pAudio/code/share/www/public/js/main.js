@@ -65,67 +65,6 @@ var hold_cside_msg      = 0;        // A counter to keep main_cside_msg during u
 
 //////// PAGE MANAGEMENT ////////
 
-function manage_main_cside( msg = '' ){
-
-    function CamillaDSP_is_ready() {
-
-        const c = aux_info.CamillaDSP_state;
-
-        if ( ! c ) {
-            return false
-        }
-
-        if ( c.includes('NOT') || c.includes('INACTIVE') ) {
-            return false
-
-        }else{
-            return true
-        }
-    }
-
-
-    if ( ! msg ){
-        msg = main_cside_msg;
-    }
-
-    // Server warnings overrides any message
-    if ( aux_info.warning !== '') {
-        msg = aux_info.warning;
-
-    } else if (STATE.convolver_runs==false) {
-        msg = '( sleeping )';
-
-    } else if( ! CamillaDSP_is_ready() ) {
-        msg = 'DSP unloaded, needs restart';
-        document.getElementById("but_restart").style.display = "inline-block";
-        document.getElementById("but_help").style.display = "none";
-        mc.player_info_clear();
-
-    } else {
-
-        if (hold_cside_msg > 0){
-            hold_cside_msg -= 1;
-
-        } else {
-
-            document.getElementById("but_restart").style.display = "none";
-            document.getElementById("but_help").style.display = "inline-block";
-
-            if (STATE.loudspeaker){
-                if (STATE.drc_set == 'none'){
-                    msg = STATE.loudspeaker;
-
-                } else {
-                    msg = STATE.loudspeaker + ' (' + STATE.drc_set + ')';
-                }
-            }
-        }
-    }
-
-    document.getElementById("main_cside").innerText = msg;
-}
-
-
 function fill_in_page_statics(){
 
     function fill_in_main_selector(){
@@ -796,14 +735,12 @@ async function page_update() {
     manage_main_cside();
 
     // PREAMP STUFF
-
-    //
-    const state_works = await mc.do_until_function_istrue( update_STATE, 1000, false )
+    const state_works = await update_STATE();
     if ( state_works ){
         POLLING_DELAY = 1000;
     }else{
         POLLING_DELAY = 5000;
-        return false
+        return
     }
     // Try retrieving the drc_sets
     if ( drc_sets.length == 0 ){
@@ -826,22 +763,10 @@ async function page_update() {
     LU_refresh();
     //
     graphs_update();
-
-    return true
 }
 
 
 ////////  MISCEL INTERNALS  ////////
-
-async function get_drc_sets() {
-
-    try {
-        drc_sets = await mc.send_cmd( 'get_drc_sets' );
-    }catch(e){
-        console.log('(i) cannot get drc sets')
-    }
-}
-
 
 async function update_STATE() {
 
@@ -854,6 +779,77 @@ async function update_STATE() {
     }else{
         return false
     }
+}
+
+
+async function get_drc_sets() {
+
+    try {
+        drc_sets = await mc.send_cmd( 'get_drc_sets' );
+    }catch(e){
+        console.log('(i) cannot get drc sets')
+    }
+}
+
+
+function manage_main_cside( msg = '' ){
+
+    function CamillaDSP_is_ready() {
+
+        const c = aux_info.CamillaDSP_state;
+
+        if ( ! c ) {
+            return false
+        }
+
+        if ( c.includes('NOT') || c.includes('INACTIVE') ) {
+            return false
+
+        }else{
+            return true
+        }
+    }
+
+
+    if ( ! msg ){
+        msg = main_cside_msg;
+    }
+
+    // Server warnings overrides any message
+    if ( aux_info.warning !== '') {
+        msg = aux_info.warning;
+
+    } else if (STATE.convolver_runs==false) {
+        msg = '( sleeping )';
+
+    } else if( ! CamillaDSP_is_ready() ) {
+        msg = 'DSP unloaded, needs restart';
+        document.getElementById("but_restart").style.display = "inline-block";
+        document.getElementById("but_help").style.display = "none";
+        mc.player_info_clear();
+
+    } else {
+
+        if (hold_cside_msg > 0){
+            hold_cside_msg -= 1;
+
+        } else {
+
+            document.getElementById("but_restart").style.display = "none";
+            document.getElementById("but_help").style.display = "inline-block";
+
+            if (STATE.loudspeaker){
+                if (STATE.drc_set == 'none'){
+                    msg = STATE.loudspeaker;
+
+                } else {
+                    msg = STATE.loudspeaker + ' (' + STATE.drc_set + ')';
+                }
+            }
+        }
+    }
+
+    document.getElementById("main_cside").innerText = msg;
 }
 
 
