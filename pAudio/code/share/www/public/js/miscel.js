@@ -32,13 +32,16 @@ export async function send_cmd(cmd, verbose=false) {
         }
 
     } catch (err) {
+
         // distinguishes between timeout and network error
         if (err.name === 'AbortError') {
             if (verbose) { console.log('(send_cmd) server timeout:', err.message) }
-            return 'server timeout';
+            return '(send_cmd) server timeout';
         }
+
         if (verbose) { console.log('(send_cmd) network error:', err.message) }
-        return 'network error: ' + err.message;
+
+        return '(send_cmd) network error: ' + err.message;
     }
 }
 
@@ -49,7 +52,7 @@ export const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function get_state( verbose=false ) {
 
-    const ans = await send_cmd('preamp state');
+    const ans = await send_cmd('preamp state', verbose);
 
     if ( typeof ans != 'object' ){
         if (verbose) { console.log("(get_state) not a dict:", ans) }
@@ -78,34 +81,36 @@ export function flash_element(e, timeout=950){
 }
 
 
-export async function do_until_function_istrue( my_function, period, verbose=true ) {
+export async function do_until_function_istrue( my_function, period_ms, verbose=true ) {
 
-    if (!period){
-        period = 5000;
+    if (!period_ms){
+        period_ms = 5000;
     }
 
-    let test_ok = false;
+    let istrue = false;
 
-    while ( !test_ok ) {
+    while ( !istrue ) {
 
         const now = new Date().toLocaleTimeString();
 
         if (verbose) {
-            const segundos = Math.round(period / 1000);
+            const segundos = Math.round(period_ms / 1000);
             console.log(`${now} Waiting ${segundos} s for <${my_function.name}> response`);
         }
 
-        test_ok = await my_function();
+        istrue = await my_function();
 
-        if (test_ok) {
+        if (istrue) {
             if (verbose) {
                 console.log(`<${my_function.name}> OK`);
             }
             break;
         }
 
-        await sleep(period);
+        await sleep(period_ms);
     }
+
+    return istrue;
 }
 
 
