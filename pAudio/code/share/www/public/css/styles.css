@@ -166,14 +166,19 @@
 
 
     table#player_info   { text-align: left; }
-    td#file             { border: 1px solid grey; border-radius: 10px/10px; width: 5%; font-size:0.6em;}
-    td#format           { border: 1px solid grey; border-radius: 10px/10px; width: 5%; font-size:0.6em;}
-    td#bitrate          { border: 1px solid grey; border-radius: 10px/10px; width: 5%; font-size:0.6em;}
-    td#artist           { border: 1px solid grey; border-radius: 10px/10px; }
-    td#track_info       { border: 1px solid grey; border-radius: 10px/10px; width: 3%; font-size:0.6em;}
-    td#time             { border: 1px solid grey; border-radius: 10px/10px; width: 7%; font-size:0.6em;}
-    td#album            { border: 1px solid grey; border-radius: 10px/10px; }
-    td#title            { border: 1px solid grey; border-radius: 10px/10px; }
+    #player_info td {
+        height: 1em;
+        border: 1px solid grey;
+        border-radius: 10px/10px;
+    }
+    td#file             { width: 5%; font-size:0.6em;}
+    td#format           { width: 5%; font-size:0.6em;}
+    td#bitrate          { width: 5%; font-size:0.6em;}
+    td#artist           { }
+    td#track_info       { width: 3%; font-size:0.6em;}
+    td#time             { width: 7%; font-size:0.6em;}
+    td#album            { }
+    td#title            { }
 
 
     table#playback_control{ border-style: none; }
