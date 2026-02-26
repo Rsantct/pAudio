@@ -9,8 +9,8 @@ import * as hlp from "./help.js";
 
 //////// GLOBAL VARIABLES ////////
 
-const REFRESH_INTERVAL  = 1000;     // millisec
-var STATE               = {};       // The pAudio state, updated every REFRESH_INTERVAL
+var POLLING_DELAY       = 1000;     // millisec
+var STATE               = {};
 
 var player_info         = {};
 
@@ -270,6 +270,13 @@ function fill_in_page_statics(){
 
 async function init(){
 
+    function preparare_UI(){
+        document.getElementById("but_help").style.display = 'none';
+        document.getElementById("but_restart").style.display = 'block';
+        document.getElementById("main_cside").innerHTML = ":: pAudio not connected ::";
+        document.getElementById("levelInfo").innerHTML = "--";
+    }
+
     function download_drc_graphs(){
         if (web_config.show_graphs==false){
             return;
@@ -388,12 +395,11 @@ async function init(){
 
 
     console.log('Preparing UI');
-
-    document.getElementById("main_cside").innerHTML = ":: pAudio not connected ::";
-    document.getElementById("but_help").style.display = 'none';
-    document.getElementById("but_restart").style.display = 'block';
+    preparare_UI()
 
     await mc.do_until_function_istrue( update_web_config )
+
+    fill_in_macro_buttons();
 
     await mc.do_until_function_istrue( update_STATE )
 
@@ -403,13 +409,17 @@ async function init(){
 
     manage_main_cside();
 
-    fill_in_macro_buttons();
-
     //fill_in_playlists_selector();
 
-    // SCHEDULES THE PAGE_UPDATE (only runtime variable items)
     console.log('Looping to page_update ...');
-    setInterval( page_update, REFRESH_INTERVAL );
+    loop_page_update();
+}
+
+
+async function loop_page_update() {
+    console.log(`updating in ${POLLING_DELAY} ms ...`)
+    await page_update();
+    setTimeout(loop_page_update, POLLING_DELAY)
 }
 
 
@@ -787,9 +797,14 @@ async function page_update() {
 
     // PREAMP STUFF
 
-    //                                              period verbose
-    await mc.do_until_function_istrue( update_STATE, 5000, false )
-
+    //
+    const state_works = await mc.do_until_function_istrue( update_STATE, 1000, false )
+    if ( state_works ){
+        POLLING_DELAY = 1000;
+    }else{
+        POLLING_DELAY = 5000;
+        return false
+    }
     // Try retrieving the drc_sets
     if ( drc_sets.length == 0 ){
         console.log('Retrying get_drc_sets')
@@ -811,6 +826,8 @@ async function page_update() {
     LU_refresh();
     //
     graphs_update();
+
+    return true
 }
 
 
