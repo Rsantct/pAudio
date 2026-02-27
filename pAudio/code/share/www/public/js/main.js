@@ -597,8 +597,8 @@ async function page_update() {
             clear_macro_buttons_highlight();
 
         }else{
-            const x = aux_info.last_macro;
-            const mName = x.slice(x.indexOf('_') + 1, x.length);
+            const tmp = aux_info.last_macro;
+            const mName = tmp.slice(x.indexOf('_') + 1, tmp.length);
             clear_macro_buttons_highlight();
             highlight_macro_button(mName)
         }
@@ -606,6 +606,11 @@ async function page_update() {
 
 
     function LU_refresh(){
+
+        if ( ! aux_info.loudness_monitor ){
+            return
+        }
+
         // Updates the LU offset slider
         document.getElementById("LU_slider").value           = (15 - STATE.lu_offset);
         document.getElementById("LU_offset_value").innerText =
