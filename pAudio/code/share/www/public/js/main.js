@@ -577,15 +577,12 @@ async function page_update() {
 
     async function aux_info_refresh(){
 
-        try{
-            aux_info = await mc.send_cmd('ctrl aux_info');
-        }catch(e){
-            console.log('response error to \'ctrl aux_info\'', e.message);
-            aux_info.onoff = '--';
-        }
+        aux_info = await mc.get_aux_info();
 
         if ( aux_info.loudspeaker ) {
             document.title = 'pAudio ' + aux_info.loudspeaker;
+        }else{
+            aux_info.onoff = '--';
         }
 
         if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
