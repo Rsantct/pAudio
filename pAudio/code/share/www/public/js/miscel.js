@@ -3,6 +3,12 @@
     This file is part of 'pAudio', a PC based personal audio system.
 */
 
+
+// Aux function to stop the execution
+export const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+
+// Main function to send commands to the backend
 export async function send_cmd(cmd, verbose=false) {
     // Cancel if it takes more than 4 seconds
     const controller = new AbortController();
@@ -46,13 +52,27 @@ export async function send_cmd(cmd, verbose=false) {
 }
 
 
-// Aux function to stop the execution
-export const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-
 export async function get_state( verbose=false ) {
 
     const ans = await send_cmd('preamp state', verbose);
+
+    if ( typeof ans != 'object' ){
+        if (verbose) { console.log("(get_state) not a dict:", ans) }
+        return {}
+    }
+
+    if ( Object.keys(ans).length <= 5 ){
+        if (verbose) { console.log("(get_state) not valid:", ans) }
+        return {}
+    }
+
+    return ans
+}
+
+
+export async function get_aux_info( verbose=false ) {
+
+    const ans = await send_cmd('ctrl aux_info');
 
     if ( typeof ans != 'object' ){
         if (verbose) { console.log("(get_state) not a dict:", ans) }
