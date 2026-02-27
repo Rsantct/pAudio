@@ -31,8 +31,6 @@ var drc_sets            = [];
 
 var mFnames             = [];
 
-var macro_button_list   = [];
-
 var metablank           = {         // A player's metadata blank dict
                             'player':       '',
                             'time_pos':     '',
@@ -46,7 +44,6 @@ var metablank           = {         // A player's metadata blank dict
                             'track_num':    '',
                             'tracks_tot':   ''
 };
-
 
 var show_advanced       = false;    // defaults for display advanced controls
 var hide_graphs         = true;     // defaults for displaying graphs
@@ -313,7 +310,6 @@ async function init(){
             const btn = document.createElement('button');
             btn.type = "button";
             btn.className = "macro_button";
-            macro_button_list.push(mName);
 
             if ( found == true ){
                 btn.id = mName;
