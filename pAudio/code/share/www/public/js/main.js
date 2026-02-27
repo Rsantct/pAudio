@@ -598,7 +598,7 @@ async function page_update() {
 
         }else{
             const tmp = aux_info.last_macro;
-            const mName = tmp.slice(x.indexOf('_') + 1, tmp.length);
+            const mName = tmp.slice(tmp.indexOf('_') + 1, tmp.length);
             clear_macro_buttons_highlight();
             highlight_macro_button(mName)
         }
