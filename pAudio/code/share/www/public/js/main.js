@@ -4,6 +4,7 @@
 */
 
 import * as mc  from "./miscel.js";
+import * as hl  from "./highlight.js";
 import * as hlp from "./help.js";
 
 
@@ -594,13 +595,13 @@ async function page_update() {
         }
 
         if ( ! aux_info.last_macro ){
-            clear_macro_buttons_highlight();
+           hl.clear_macro_buttons_highlight();
 
         }else{
             const tmp = aux_info.last_macro;
             const mName = tmp.slice(tmp.indexOf('_') + 1, tmp.length);
-            clear_macro_buttons_highlight();
-            highlight_macro_button(mName)
+            hl.clear_macro_buttons_highlight();
+            hl.highlight_macro_button(mName)
         }
     }
 
@@ -712,17 +713,17 @@ async function page_update() {
         document.getElementById("targetSelector").value = STATE.target;
 
         // Highlights activated buttons and related indicators accordingly
-        buttonMuteHighlight()
-        buttonMonoHighlight()
-        buttonSoloHighlight()
-        buttonPolarityHighlight()
-        buttonLoudHighlight()
-        buttonsToneBalanceHighlight()
-        toneDefeatHighlight()
-        buttonSubsonicHighlight()
-        buttonAODHighlight()
-        levelInfoHighlight()
-        buttonCompressorHighlight()
+        hl.buttonMuteHighlight()
+        hl.buttonMonoHighlight()
+        hl.buttonSoloHighlight()
+        hl.buttonPolarityHighlight()
+        hl.buttonLoudHighlight()
+        hl.buttonsToneBalanceHighlight()
+        hl.toneDefeatHighlight()
+        hl.buttonSubsonicHighlight()
+        hl.buttonAODHighlight()
+        hl.levelInfoHighlight()
+        hl.buttonCompressorHighlight()
 
         // Used by the delay toggle button
         if (STATE.extra_delay !== 0) {
@@ -776,6 +777,7 @@ async function update_STATE() {
 
     if (tmp.loudspeaker){
         STATE = tmp;
+        hl.set_STATE(STATE);
         return true
 
     }else{
@@ -897,226 +899,6 @@ function select_clear_options(ElementId){
 }
 
 
-function clear_highlighteds(){
-    document.getElementById('mainSelector').style.color     = "rgb(200,200,200)";
-    document.getElementById('drcSelector').style.color      = "rgb(200,200,200)";
-    document.getElementById('xoSelector').style.color       = "rgb(200,200,200)";
-    document.getElementById('targetSelector').style.color   = "rgb(200,200,200)";
-}
-
-
-function clear_macro_buttons_highlight(){
-    for (let i = 0; i < macro_button_list.length; i++) {
-        document.getElementById(macro_button_list[i]).className = 'macro_button';
-    }
-}
-
-
-//////// ELEMENTS HIGHLIGHT ////////
-
-function toneDefeatHighlight(){
-    if (STATE.tone_defeat){
-        document.getElementById("tone_defeat").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("tone_defeat").style.background = "rgb(100, 0, 0)";
-        document.getElementById("tone_defeat").style.color = "rgb(255, 200, 200)";
-        document.getElementById("bassInfo").style.color = "grey";
-        document.getElementById("trebleInfo").style.color = "grey";
-    }else{
-        document.getElementById("tone_defeat").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("tone_defeat").style.background = "rgb(100, 100, 100)";
-        document.getElementById("tone_defeat").style.color = "rgb(180, 180, 180)";
-        document.getElementById("bassInfo").style.color = "white";
-        document.getElementById("trebleInfo").style.color = "white";
-    }
-}
-
-
-function buttonsToneBalanceHighlight(){
-    if ( STATE.bass < 0 ){
-        document.getElementById("bass-").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("bass+").style.border = "2px solid rgb(100, 100, 100)";
-    }else if ( STATE.bass > 0 ){
-        document.getElementById("bass-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bass+").style.border = "3px solid rgb(160, 160, 160)";
-    }else{
-        document.getElementById("bass-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bass+").style.border = "2px solid rgb(100, 100, 100)";
-    }
-    if ( STATE.treble < 0 ){
-        document.getElementById("treb-").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("treb+").style.border = "2px solid rgb(100, 100, 100)";
-    }else if ( STATE.treble > 0 ){
-        document.getElementById("treb-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("treb+").style.border = "3px solid rgb(160, 160, 160)";
-    }else{
-        document.getElementById("treb-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("treb+").style.border = "2px solid rgb(100, 100, 100)";
-    }
-    if ( STATE.balance < 0 ){
-        document.getElementById("bal-").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("bal+").style.border = "2px solid rgb(100, 100, 100)";
-    }else if ( STATE.balance > 0 ){
-        document.getElementById("bal-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bal+").style.border = "3px solid rgb(160, 160, 160)";
-    }else{
-        document.getElementById("bal-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bal+").style.border = "2px solid rgb(100, 100, 100)";
-    }
-}
-
-
-function buttonMuteHighlight(){
-    if ( STATE.muted == true ) {
-        document.getElementById("buttonMute").style.background = "rgb(185, 185, 185)";
-        document.getElementById("buttonMute").style.color = "white";
-        document.getElementById("buttonMute").style.fontWeight = "bolder";
-        document.getElementById("levelInfo").style.color = "rgb(150, 90, 90)";
-    } else {
-        document.getElementById("buttonMute").style.background = "rgb(100, 100, 100)";
-        document.getElementById("buttonMute").style.color = "lightgray";
-        document.getElementById("buttonMute").style.fontWeight = "normal";
-        document.getElementById("levelInfo").style.color = "white";
-    }
-}
-
-
-function buttonMonoHighlight(){
-    if ( STATE.midside == 'mid' ) {
-        document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonMono").style.color = "rgb(255, 200, 200)";
-        document.getElementById("buttonMono").innerText = 'MO';
-    } else if ( STATE.midside == 'side' ) {
-        document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonMono").style.color = "rgb(255, 200, 200)";
-        document.getElementById("buttonMono").innerText = 'L-R';
-    } else {
-        document.getElementById("buttonMono").style = "button";
-        document.getElementById("buttonMono").style.background = "rgb(0, 90, 0)";
-        document.getElementById("buttonMono").innerText = 'ST';
-    }
-
-    // 'solo' setting will override displaying mono stereo
-    if ( STATE.solo == 'l' ) {
-        document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonMono").innerText = 'L_';
-    } else if ( STATE.solo == 'r' ) {
-        document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonMono").innerText = '_R';
-    }
-
-    // 'polarity' setting will modify the button border
-    if ( STATE.polarity != '++' ) {
-        document.getElementById("buttonMono").style.border = "3px solid rgb(200, 10, 10)";
-    } else {
-        document.getElementById("buttonMono").style.border = "2px solid rgb(120, 120, 120)";
-    }
-}
-
-
-function buttonSoloHighlight(){
-
-    if ( STATE.solo == 'off' ) {
-        document.getElementById("buttonSolo").style = "button";
-        document.getElementById("buttonSolo").innerText = 'L|R';
-
-    } else if ( STATE.solo == 'l' ) {
-        document.getElementById("buttonSolo").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonSolo").innerText = 'L_';
-
-    } else if ( STATE.solo == 'r' ) {
-        document.getElementById("buttonSolo").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonSolo").innerText = '_R';
-    }
-
-}
-
-
-function buttonPolarityHighlight(){
-
-    if ( STATE.polarity != '++' ) {
-        document.getElementById("buttonPolarity").style.background = "rgb(100, 0, 0)";
-
-    } else {
-        document.getElementById("buttonPolarity").style = "button";
-    }
-
-    document.getElementById("buttonPolarity").innerText = STATE.polarity;
-}
-
-
-function buttonLoudHighlight(){
-    if ( STATE.equal_loudness == true ) {
-        document.getElementById("buttonLoud").style.background = "rgb(0, 90, 0)";
-        document.getElementById("buttonLoud").style.color = "white";
-    } else {
-        document.getElementById("buttonLoud").style.background = "rgb(100, 100, 100)";
-        document.getElementById("buttonLoud").style.color = "rgb(150, 150, 150)";
-    }
-}
-
-
-function buttonAODHighlight(){
-    if ( STATE.extra_delay === 0 ) {
-        document.getElementById("buttAOD").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("buttAOD").style.background = "rgb(100, 100, 100)";
-        document.getElementById("buttAOD").style.color = "rgb(180, 180, 180)";
-    } else {
-        document.getElementById("buttAOD").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("buttAOD").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttAOD").style.color = "rgb(255, 200, 200)";
-        document.getElementById("buttAOD").style.display = 'inline-table';
-    }
-}
-
-
-function buttonSubsonicHighlight(){
-    if ( STATE.subsonic == 'off' ) {
-        document.getElementById("subsonic").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("subsonic").style.background = "rgb(100, 100, 100)";
-        document.getElementById("subsonic").style.color = "rgb(180, 180, 180)";
-        document.getElementById("subsonic").innerText = 'SUBS\n-';
-    } else if ( STATE.subsonic == 'mp' ) {
-        document.getElementById("subsonic").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("subsonic").style.background = "rgb(100, 0, 0)";
-        document.getElementById("subsonic").style.color = "rgb(255, 200, 200)";
-        document.getElementById("subsonic").innerText = 'SUBS\nmp';
-    } else if ( STATE.subsonic == 'lp' ) {
-        document.getElementById("subsonic").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("subsonic").style.background = "rgb(150, 0, 0)";
-        document.getElementById("subsonic").style.color = "rgb(255, 200, 200)";
-        document.getElementById("subsonic").innerText = 'SUBS\nlp';
-    }
-}
-
-
-function levelInfoHighlight() {
-    // currently only indicates subsonic filter activated
-    if (STATE.subsonic != 'off' ){
-        document.getElementById("levelInfo").style.borderWidth = "thick";
-        document.getElementById("levelInfo").style.borderColor = "DarkRed";
-    }else{
-        document.getElementById("levelInfo").style.borderWidth = "thin";
-        document.getElementById("levelInfo").style.borderColor = "white";
-   }
-}
-
-
-function buttonCompressorHighlight(){
-    if ( STATE.compressor === 'off' ) {
-        document.getElementById("bt_compressor").innerHTML = 'comp.<br>OFF';
-        document.getElementById("bt_compressor").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bt_compressor").style.background = "rgb(100, 100, 100)";
-        document.getElementById("bt_compressor").style.color = "rgb(180, 180, 180)";
-    } else {
-        document.getElementById("bt_compressor").innerHTML = 'COMP.<br>' + STATE.compressor;
-        document.getElementById("bt_compressor").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("bt_compressor").style.background = "rgb(100, 0, 0)";
-        document.getElementById("bt_compressor").style.color = "rgb(255, 200, 200)";
-        document.getElementById("bt_compressor").style.display = 'inline-block';
-    }
-}
-
-
 //////// HANDLERS: AUDIO 'onchange' 'onmousedown' ////////
 
 function oc_main_select(itemName){
@@ -1160,7 +942,7 @@ function oc_main_select(itemName){
     }
     setTimeout( tmp, 200, itemName );  // 'itemName' is given as argument for 'tmp'
 
-    clear_macro_buttons_highlight();
+   hl.clear_macro_buttons_highlight();
     document.getElementById('mainSelector').style.color = "white";
 
 }
@@ -1217,14 +999,16 @@ async function omd_audio_change(element, param, value) {
 async function omd_mute_toggle() {
     await mc.send_cmd( 'mute toggle' );
     STATE.muted = ! STATE.muted;
-    buttonMuteHighlight();
+    hl.set_STATE(STATE);
+    hl.buttonMuteHighlight();
 }
 
 
 async function omd_equal_loudness_toggle() {
     await mc.send_cmd( 'equal_loudness toggle' );
     STATE.equal_loudness = ! STATE.equal_loudness;
-    buttonLoudHighlight();
+    hl.set_STATE(STATE);
+    hl.buttonLoudHighlight();
 }
 
 
@@ -1256,7 +1040,9 @@ async function omd_mono_toggle() {
         }
     }
 
-    buttonMonoHighlight();
+    hl.set_STATE(STATE);
+
+    hl.buttonMonoHighlight();
 }
 
 
@@ -1290,7 +1076,7 @@ async function omd_polarity_rotate() {
 
     }
 
-    buttonPolarityHighlight();
+    hl.buttonPolarityHighlight();
 }
 
 
@@ -1444,29 +1230,20 @@ async function omd_onoff(mode) {
 }
 
 
-function highlight_macro_button(id){
-    try{
-        document.getElementById(id).className = 'macro_button_highlighted';
-    }catch(e){
-        console.log(e.message)
-    }
-}
-
-
 async function oc_run_macro(mFname){
 
     await mc.send_cmd( 'ctrl run_macro ' + mFname );
 
     const mName = mFname.slice(mFname.indexOf('_') + 1, mFname.length);
 
-    clear_macro_buttons_highlight();
+   hl.clear_macro_buttons_highlight();
 
     // (i) The arrow syntax '=>' fails on Safari iPad 1 (old version)
     // setTimeout(() => { highlight_macro_button(mName);}, 200);
-    function tmp(mName){
-        highlight_macro_button(mName);
+    function do_hl(mName){
+        hl.highlight_macro_button(mName);
     }
-    setTimeout( tmp, 200, mName );  // 'mName' is given as argument for 'tmp'
+    setTimeout( do_hl, 200, mName );
 
     hold_cside_msg = 3;
     main_cside_msg = 'Please wait for "' + mName + '"' ;
