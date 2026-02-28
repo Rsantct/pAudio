@@ -27,6 +27,12 @@ if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
 USER = getuser()
 
 
+class MyYamlIndent(yaml.SafeDumper):
+    def increase_indent(self, flow=False, indentless=False):
+        # Force lists having indentation relative to the parent, for readability
+        return super(MyYamlIndent, self).increase_indent(flow, False)
+
+
 def loop_file_changed(filepath, what_to_do):
 
     class MyFileHandler(FileSystemEventHandler):
