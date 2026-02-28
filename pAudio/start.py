@@ -311,6 +311,9 @@ def stop():
 
 def start():
 
+    # Plugins (stand-alone processes)
+    run_plugins()
+
     # restore Sound Card settings (currently only for Linux-ALSA)
     restore_sound_card()
 
@@ -351,9 +354,6 @@ def start():
 
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon()
-
-    # Plugins (stand-alone processes)
-    run_plugins()
 
 
 if __name__ == "__main__":
