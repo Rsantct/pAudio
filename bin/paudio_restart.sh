@@ -11,14 +11,13 @@
 
 function start_www {
 
-    if [[ $(pgrep -f "nodejs_www_server/www-server.js") ]]; then
+    if [[ $(pgrep -f "paudio_www.js") ]]; then
         if [[ $VERBOSE == 'true' ]]; then
             echo "(paudio_restart) pAudio web server is already running."
         fi
 
     else
-        node $HOME/pAudio/code/share/www/nodejs_www_server/www-server.js 1>/dev/null 2>&1 &
-
+        node $HOME/pAudio/code/share/www/paudio_www.js 1>/dev/null 2>&1 &
     fi
 }
 
@@ -50,10 +49,10 @@ function start_jack {
 
     # needs & for background running
     if [[ $VERBOSE == 'true' ]]; then
-        python3 $HOME/pAudio/start.py --jack &
+        python3 $HOME/pAudio/code/share/jack_mod.py --prepare &
 
     else
-        python3 $HOME/pAudio/start.py --jack 1>/dev/null 2>&1 &
+        python3 $HOME/pAudio/code/share/jack_mod.py --prepare 1>/dev/null 2>&1 &
 
     fi
 

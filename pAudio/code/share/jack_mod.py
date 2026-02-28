@@ -3,7 +3,12 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
-""" A JACK wrapper
+""" A JACK module for Linux based pAudio machines
+
+    Command line usage only to prepare the jack server,
+    as per the configuration under pAudio/config.yml:
+
+        jack_mod.py  --prepare
 """
 
 from    common import *
@@ -299,4 +304,59 @@ def clear_preamp():
     for preamp_port in preamp_ports:
         for client in JCLI.get_all_connections(preamp_port):
             connect( client, preamp_port, mode='off' )
+
+
+def prepare_jack_stuff():
+    """ Run JACK with the appropriate parameters and loops
+    """
+
+    if sys.platform != 'linux':
+        print(f'{Fmt.RED}(jack_mod) JACK only on Linux{Fmt.END}')
+        return
+
+    jloops_list = ['pre_in_loop']
+
+    if any('mpd' in p for p in CONFIG["plugins"]):
+        jloops_list.append('mpd_loop')
+
+    fs       = CONFIG["samplerate"]
+    alsa_dev = CONFIG["jack"]["device"]
+    period   = CONFIG["jack"].get("period", 1024)
+    nperiods = CONFIG["jack"].get("nperiods", 2)
+    dither   = CONFIG["jack"].get("dither", True)
+    softmode = CONFIG["jack"].get("softmode", True)
+    shorts   = CONFIG["jack"].get("shorts", False) or CONFIG["jack"].get("16bit", False)
+
+    io_mode  = detect_sound_card_io(alsa_dev)
+
+    if not run_jackd( alsa_dev=alsa_dev, io_mode=io_mode,
+                      fs=fs, period=period, nperiods=nperiods,
+                      jloops_list=jloops_list,
+                      dither=dither, softmode=softmode,
+                      shorts=shorts):
+
+        print(f'{Fmt.BOLD}(jack_mod) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
+        sys.exit()
+
+    # **PipeWire** needs to detect this new Jack and connect to it
+    if process_is_running('pipewire'):
+
+        try:
+            sp.call( 'systemctl --user restart pipewire', shell=True)
+            if VERBOSE:
+                print(f'{Fmt.BLUE}(jack_mod) Reloading PipeWire for jack-sink ...{Fmt.END}')
+
+        except Exception as e:
+            print(f'{Fmt.BOLD}(jack_mod) Problems restarting PipeWire: {str(e)}{Fmt.END}')
+
+
+if __name__ == "__main__":
+
+    for opc in sys.argv[1:]:
+
+        if 'prepare' in opc:
+            prepare_jack_stuff()
+
+        else:
+            print(__doc__)
 

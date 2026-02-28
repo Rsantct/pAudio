@@ -35,16 +35,18 @@ print ( f"{Fmt.BLUE}(paudio) logging commands in '{LOGFNAME}'{Fmt.END}" )
 
 def _init():
 
+    # Reset pAudio log
+    with open(LOGFNAME, 'w') as FLOG:
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING pAudio (preamp & players)'
+        FLOG.write(f'{logline}\n')
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; (i) will log only the commands that make changes.'
+        FLOG.write(f'{logline}\n')
+
     # Prepare DRC FIR graphs
     sp.Popen(['python3', f'{CODEFOLDER}/share/drc_fir2png.py'])
 
     # Prepare DRC IIR graphs
     sp.Popen(['python3', f'{CODEFOLDER}/share/drc_iir2png.py'])
-
-    # Reset pAudio log
-    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio'
-    with open(LOGFNAME, 'w') as FLOG:
-            FLOG.write(f'{logline}\n')
 
 
 def do(cmd_phrase):
@@ -68,11 +70,16 @@ def do(cmd_phrase):
             # This should never occur because preamp is the defaulted as prefix
             result = 'unknown service'
 
-    # LOG
-    if cmd != 'state':
-        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd_phrase}; {result}'
-        with open(LOGFNAME, 'a') as FLOG:
-                FLOG.write(f'{logline}\n')
+    # LOG (paudio_ctrl has its own)
+    if not prefix == 'ctrl':
+
+        if cmd != 'state' and \
+           not cmd.startswith('get_')  and not cmd.startswith('list_') and \
+           not cmd.startswith('hi') and not cmd.startswith('hello'):
+
+            logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {prefix} {cmd_phrase}; {result}'
+            with open(LOGFNAME, 'a') as FLOG:
+                    FLOG.write(f'{logline}\n')
 
     if type(result) != str:
         try:

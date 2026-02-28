@@ -45,9 +45,11 @@ def init():
     global ONOFF_MODE, CAMILLADSP_LAST_ERROR
 
     # Reset paudio_ctrl.log
-    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
     with open(LOGFNAME, 'w') as FLOG:
-            FLOG.write(f'{logline}\n')
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
+        FLOG.write(f'{logline}\n')
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; (i) will log only the commands that make changes.'
+        FLOG.write(f'{logline}\n')
 
     # ON/OFF button behavior (default pAudio)
     ONOFF_MODE = 'pAudio'
@@ -60,7 +62,7 @@ def init():
     loop_camilladsp_state2disk()
 
     # Monitor changes on eq.png
-    loop_file_changed( f'{UHOME}/pAudio/code/share/www/images/eq.png',
+    loop_file_changed( f'{UHOME}/pAudio/code/share/www/public/images/eq.png',
                        flag_new_eq_graph )
 
     save_aux_info()
@@ -352,6 +354,7 @@ def warning_msg_manager(arg):
 def do( cmd_phrase):
 
     result = 'bad command'
+    do_log = False
 
     prefix, cmd, args, _ = read_cmd_phrase(cmd_phrase)
 
@@ -369,9 +372,12 @@ def do( cmd_phrase):
 
         case 'restart_paudio':
             result = restart_paudio( args )
+            do_log = True
 
         case 'amp_switch':
             result = amp_switch( args )
+            if args and not 'state' in args:
+                do_log = True
 
         case 'get_web_config':
             result = get_web_config()
@@ -381,25 +387,30 @@ def do( cmd_phrase):
 
         case 'reset_loudness_monitor' | 'reset_lu_monitor':
             result = lu_monitor_manager('reset')
+            do_log = True
 
         case 'set_loudness_monitor_scope' | 'set_lu_monitor_scope':
             args = 'source' # FORCED to source
             result = lu_monitor_manager(f'scope={args}')
+            do_log = True
 
         case 'zita_j2n':
             result = zita_j2n(args)
+            do_log = True
 
         case 'run_macro':
             result = run_macro(args)
+            do_log = True
 
         case 'warning':
             result = warning_msg_manager(args)
+            do_log = True
 
 
-    logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd}; {result}'
-
-    with open(LOGFNAME, 'a') as FLOG:
-            FLOG.write(f'{logline}\n')
+    if do_log:
+        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd} {args}; {result}'
+        with open(LOGFNAME, 'a') as FLOG:
+                FLOG.write(f'{logline}\n')
 
     if type(result) != str:
         result = json.dumps(result)

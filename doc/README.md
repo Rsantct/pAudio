@@ -1,16 +1,10 @@
-# Install on macOS
+# A. Install on macOS
 
 ## Audio software
 
 - [BlackHole](https://github.com/ExistentialAudio/BlackHole) to route your audio. Please do not use the Homebrew installation method currently does not work, install it by downloading the [official package](https://existential.audio/blackhole).
 
 - [Node.js](https://nodejs.org/en) to serve the control web page (Choose the recommended `LTS` version).
-
-- Node.js YAML parser:
-
-    ```
-    npm install js-yaml
-    ```
 
 - [Apple Xcode](https://developer.apple.com/xcode/) Command Line Tools (this includes the [git](https://git-scm.com) tool).
 
@@ -100,11 +94,11 @@ pAudio needs some additional modules to work. In most recent Python versions, th
     $
 
 
-# Install on Linux
+# B. Install on Linux
 
 see `Linux.md`
 
-# Install the pAudio application
+# C. Install the pAudio application (macOS and Linux)
 
 **pAudio** is given in a folder to be located under your HOME directory.
 
@@ -126,8 +120,24 @@ Check in a terminal if you can run the **`wget`** tool. If necessary, do install
 
 You don't have to worry about preparing CamillaDSP configuration files.
 
+## `config.yml`
+
 All settings are done inside **`pAudio/config.yml`**
 
+See the provided sample files.
+
+## Web server
+
+The Node.js web server needs to be prepared before running it.
+
+Please run in a terminal:
+
+    cd ~/pAudio/code/share/www
+    npm init -y                    # Prepares the internal framework of the project.
+    npm install express js-yaml    # Install express (the web server engine)
+                                   # and the node YAML library
+
+            
 ## Sound Device
 
 Set the output device name to be used in **`~/pAudio/config.yml`**, for example:

@@ -1,0 +1,162 @@
+#!/usr/bin/env node
+
+/*
+    Copyright (c) Rafael Sánchez
+    This file is part of 'pAudio', a PC based personal audio system.
+*/
+
+const express = require('express');
+const net     = require('net');
+const fs      = require('fs');
+const path    = require('path');
+const yaml    = require('js-yaml');
+const os      = require('os');
+
+const app = express();
+
+var   WEB_PORT        = 8088;
+var   PAUDIO_ADDR     = '0.0.0.0';
+var   PAUDIO_PORT     = 9990;
+const PAUDIO_TIMEOUT  = 500;
+
+const CONFIG_PATH = path.join(os.homedir(), 'pAudio/config.yml');
+var   CONFIG = {}
+
+// Load config yaml
+try {
+    const fileContents = fs.readFileSync(CONFIG_PATH, 'utf8');
+    CONFIG = yaml.load(fileContents);
+    //console.log(CONFIG);
+
+    if ( 'web_port' in CONFIG ){
+        if (
+            typeof CONFIG.web_port === 'number' &&
+            Number.isInteger(CONFIG.web_port) &&
+            CONFIG.web_port !== 80 &&
+            CONFIG.web_port > 1000
+        ){
+            WEB_PORT = CONFIG.web_port;
+
+        }else{
+            console.log("CONFIG.web_port must be > 1000");
+        }
+    }
+
+    if ( 'paudio_port' in CONFIG ){
+        if (
+            typeof CONFIG.paudio_port === 'number' &&
+            Number.isInteger(CONFIG.paudio_port) &&
+            CONFIG.paudio_port > 1000
+        ){
+            PAUDIO_PORT = CONFIG.paudio_port;
+
+        }else{
+            console.log("CONFIG.paudio_port must be > 1000");
+        }
+    }
+
+    if ( 'paudio_addr' in CONFIG ){
+        if ( typeof CONFIG.paudio_addr === 'string' ){
+            PAUDIO_ADDR = CONFIG.paudio_addr;
+
+        }else{
+            console.log("CONFIG.paudio_addr bad  value");
+        }
+    }
+
+} catch (e) {
+    console.error("error reading YAML:", e);
+    return null;
+}
+
+
+
+// Command line option '-v' VERBOSE
+let verbose     = false;
+process.argv.slice(2).forEach(opt => {
+    if (opt === '-v') {
+        verbose = true;
+        console.log('(verbose mode)')
+    }
+});
+
+
+// tcp bridge (promised to use async/await)
+function backendSocket(cmd, PAUDIO_PORT) {
+
+    return new Promise((resolve, reject) => {
+
+        const client = new net.Socket();
+        let response = '';
+
+        client.setTimeout(PAUDIO_TIMEOUT);
+
+        client.connect(PAUDIO_PORT, PAUDIO_ADDR, () => {
+            client.write(cmd);
+        });
+
+        client.on('data', (data) => {
+            response += data.toString();
+        });
+
+        client.on('end', () => resolve(response));
+
+        client.on('error', (err) => reject(err.message));
+
+        client.on('timeout', () => {
+            client.destroy();
+            // we return whatever we have up to the timeout
+            resolve(response);
+        });
+    });
+}
+
+// Static files are found in the 'public/' folder
+app.use( express.static( path.join(__dirname, 'public') ) );
+
+// we need json to listen commands in API RESTful style
+app.use(express.json());
+
+
+// Backend API RESTful style
+app.post('/api/command', async (req, res) => {
+
+    const { command } = req.body;
+
+    if (!command) {
+        return res.status(400).json({ error: "no command found" });
+    }
+
+    let port = PAUDIO_PORT;
+
+    // Divert "ctrl ...." to paudio_ctrl
+    const prefix = command.trim().split(' ')[0]
+    if ( prefix == 'ctrl' ){
+        port += 1;
+    }
+
+    try {
+        const result = await backendSocket(command, port);
+        if (verbose) {
+            console.log(`Rx:${port}:`,  command);
+            console.log(`Tx:${port}:`,  result);
+        }
+
+        // if backend is JSON, try to return JSON to frontend
+        try {
+            res.json(JSON.parse(result));
+        // else plain text
+        } catch {
+            res.send(result);
+        }
+    } catch (error) {
+        console.log(command, error);
+        res.status(500).json({ error: "backend error" });
+    }
+});
+
+
+app.listen(WEB_PORT, () => {
+    console.log(`Node.js server active at port ${WEB_PORT}`);
+    console.log(`Reading config at: ${CONFIG_PATH}`);
+});

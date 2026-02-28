@@ -3,6 +3,8 @@
 # Please see doc/ and doc/config_examples for more features
 #
 
+web_port:       8088
+
 samplerate: 44100
 
 
