@@ -1,17 +1,12 @@
+    /*  .xxxx  --> user defined classes */
 
-    /* styles used from index.html */
-
-    /* (The .xxxxx refers to classes definitions) */
-
-
-    /* GLOBAL THEME */
+    /* Global modifications */
     body    {   color:white;
                 background-color: rgb(38, 38, 38);
                 font-family: Verdana, Helvetica, Arial;
                 font-weight:bold;
             }
 
-    /* GLOBAL BUTTONS STYLE */
     button  {   background-color: rgb(100, 100, 100);
                 border-radius: 5px/5px;
                 border:2px solid rgb(120,120,120);
@@ -21,36 +16,35 @@
                 font-size:0.95em;   /* smaller than usual */
             }
 
-    .btn-flash {
-      background-color: #4CAF50 !important;
-      transition: all 0.3s ease;
-      transform: scale(1.05);
-    }
-
-    /* GLOBAL TABLES behavior */
     table   {   width: 100%;
             }
 
-    /* GLOBAL TABLES CELLS behavior */
     th, td  {   padding: 5px;
                 text-align: center;
                 border: 1px solid gray;
                 font-size:1.0em;
             }
 
-    /* GLOBAL SELECT behavior */
-    /* (i) Initial font color is grey, will uptate to white when changed */
     select  {   font-size:          0.9em;
                 font-weight:        bold;
                 color:              rgb(200,200,200);
                 background-color:   rgb(25, 25, 25);
             }
 
+    /* Custom flashing button */
+    .btn-flash {
+      background-color: #4CAF50 !important;
+      transition: all 0.3s ease;
+      transform: scale(1.05);
+    }
 
+
+    /* Header main section */
     td#main_lside       { width:   5%; text-align: center; border: none; }
     td#main_cside       { width:  90%; text-align: center; border: 1px solid white; border-radius: 10px/10px; }
     td#main_rside       { width:   5%; text-align: center; border: none; }
 
+    /* Header 2nd row */
     td#OnOff            { width:   5%; text-align: center; border: none; }
 
     td#levelInfo {
@@ -73,36 +67,29 @@
     td#source           { width:  85%; text-align: right; border: none;}
 
 
-    td#treble           { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
-    td#bass             { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
-    td#balance          { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
-    td#target           { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
-
-
-    table#eq_table      { border: 1px solid grey; border-radius: 10px/10px; }
-    td#xo               { border: none; width: 32%; }
-    td#drc              { border: none; width: 32%; }
-    td#peq              { border: none; width: 32%; color:grey; }
-    td#graphs_toggle    { border: none; width: 4%; }
-
-
+    /* Level and extra buttons */
     table#level_buttons_table  { }
-    td#level_buttons11   { border-style: none; width:18%; }
-    td#level_buttons12   { border-style: none; width:64%; }
-    td#level_buttons13   { border-style: none; width:18%; }
-    td#level_buttons21   { border-style: none; width:18%; }
-    td#level_buttons22   { border-style: none; width:64%; }
-    td#level_buttons23   { border-style: none; width:18%; }
-    td#extra_buttons11   { border-style: none; width:18%; }
-    td#extra_buttons12   { border-style: none; width:18%; }
-    td#extra_buttons13   { border-style: none; width:18%; }
 
-    /* --- LU OFFSET CELLS --- */
+    #level_buttons_table td {
+        border-style: none;
+    }
+    td#level_buttons11   { width:18% }
+    td#level_buttons12   { width:64% }
+    td#level_buttons13   { width:18% }
+    td#level_buttons21   { width:18% }
+    td#level_buttons22   { width:64% }
+    td#level_buttons23   { width:18% }
+    td#extra_buttons11   { width:18% }
+    td#extra_buttons12   { width:18% }
+    td#extra_buttons13   { width:18% }
+
+
+    /* LU offset, cells */
     td#LU_meter_scope    { width:18%; border-style:none ; font-size:.8em; vertical-align: middle;}
     td#LU_offset_value   { width:32%; border: 1px solid grey; border-radius: 10px/10px; font-size:0.8em; vertical-align: middle;}
     td#LU_offset_slider  { width:50%; border-style:none; vertical-align: middle;}
 
-    /* --- LU OFFSET SLIDER class and handlers (type INPUT RANGE) */
+    /* LU offset, slider class and handlers, type: 'input range' */
     .LU_slider {
       -webkit-appearance:   none;
       width:                100%;
@@ -132,12 +119,12 @@
       cursor:               pointer;
     }
 
-    /* --- LU MONITOR CELLS--- */
+    /* LU monitor cells */
     td#LU_meter_reset    { width:18%; border-style:none ; font-size:.8em; vertical-align: middle;}
     td#LU_meter_value    { width:32%; border: 1px solid grey; border-radius: 10px/10px; font-size:.8em; vertical-align: middle;}
     td#LU_meter_bar      { width:50%; border-style:none; vertical-align: middle;}
 
-    /* --- LU METER class and handlers (type METER) --- */
+    /* LU METER class and handlers, type: 'meter' */
     .LU_meter { width: 100%; height: 1.0em; border: 2px solid rgb(100,100,100);
                 border-radius: 5px;
     }
@@ -164,7 +151,21 @@
         background-color: rgb(38, 38, 38);
     }
 
+    /* Advanced: tone, target*/
+    td#treble           { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
+    td#bass             { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
+    td#balance          { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
+    td#target           { width:50%; border: 1px solid grey; border-radius: 10px/10px; }
 
+    /* Advanced: xo, drc, graphs_toggle */
+    table#eq_table      { border: 1px solid grey; border-radius: 10px/10px; }
+    td#xo               { border: none; width: 32%; }
+    td#drc              { border: none; width: 32%; }
+    td#peq              { border: none; width: 32%; color:grey; }
+    td#graphs_toggle    { border: none; width: 4%; }
+
+
+    /* player info */
     table#player_info   { text-align: left; }
     #player_info td {
         height: 1em;
@@ -181,15 +182,21 @@
     td#title            { }
 
 
-    table#playback_control{ border-style: none; }
-    td#playback_control_11  { border-style: none; width:10%; display:table-cell; }
-    td#playback_control_12  { border-style: none; width:80%; display:table-cell; }
-    td#playback_control_13  { border-style: none; width:10%; display:table-cell; }
-    td#playback_control_21  { border-style: none; width:10%; display:table-cell; }
-    td#playback_control_22  { border-style: none; width:80%; display:table-cell; }
-    td#playback_control_23  { border-style: none; width:10%; display:table-cell; }
+    /* playback control */
+    table#playback_control { border-style: none; }
+    #playback_control td {
+        border-style: none;
+        display:table-cell;
+    }
+    td#playback_control_11  { width:10% }
+    td#playback_control_12  { width:80% }
+    td#playback_control_13  { width:10% }
+    td#playback_control_21  { width:10% }
+    td#playback_control_22  { width:80% }
+    td#playback_control_23  { width:10% }
 
 
+    /* macro buttons */
     table#macro_buttons{ border-style: none; }
     .macro_cell { border-style: none; width:30%; }
     .macro_button  {
