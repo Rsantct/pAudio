@@ -49,10 +49,10 @@ function start_jack {
 
     # needs & for background running
     if [[ $VERBOSE == 'true' ]]; then
-        python3 $HOME/pAudio/start.py --jack &
+        python3 $HOME/pAudio/code/share/jack_mod.py --prepare &
 
     else
-        python3 $HOME/pAudio/start.py --jack 1>/dev/null 2>&1 &
+        python3 $HOME/pAudio/code/share/jack_mod.py --prepare 1>/dev/null 2>&1 &
 
     fi
 
