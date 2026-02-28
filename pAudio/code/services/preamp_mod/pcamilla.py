@@ -8,7 +8,6 @@ import  sys
 import  shutil
 import  subprocess      as      sp
 from    time            import  sleep
-import  yaml
 import  json
 from    camilladsp      import  CamillaClient
 
@@ -58,8 +57,9 @@ def set_config_sync(cfg, wait=CONFIG['camilladsp_activation_wait']):
         res = str(e)
 
     if res == 'done' and DUMP_ACTIVE:
-        with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
-            yaml.safe_dump(cfg, f)
+        with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w', encoding='utf-8') as f:
+            yaml.dump( cfg, f, Dumper=MyYamlIndent,
+                       indent=2, default_flow_style=False)
 
     sleep(wait)
 
@@ -298,11 +298,13 @@ def init_camilladsp(pAudio_config):
 
     # Dumping init config
     with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
-        yaml.safe_dump(cfg_init, f)
+        yaml.dump( cfg_init, f, Dumper=MyYamlIndent,
+                   indent=2, default_flow_style=False)
 
     if DUMP_ACTIVE:
         with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
-            yaml.safe_dump(cfg_init, f)
+            yaml.dump( cfg_init, f, Dumper=MyYamlIndent,
+                       indent=2, default_flow_style=False)
 
     # Loading configuration
     try:
