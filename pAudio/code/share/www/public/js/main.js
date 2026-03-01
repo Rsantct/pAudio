@@ -992,7 +992,10 @@ async function omd_audio_change(element, param, value) {
 }
 
 
-async function omd_mute_toggle() {
+async function omd_mute_toggle(elem) {
+
+    mc.flash_element( elem );
+
     await mc.send_cmd( 'mute toggle' );
     STATE.muted = ! STATE.muted;
     hl.set_STATE(STATE);
@@ -1076,7 +1079,10 @@ async function omd_polarity_rotate() {
 }
 
 
-async function omd_delay_toggle() {
+async function omd_delay_toggle(elem) {
+
+    mc.flash_element( elem );
+
     if (STATE.extra_delay !== 0) {
         await mc.send_cmd('preamp add_delay 0');
     }else{
@@ -1085,23 +1091,22 @@ async function omd_delay_toggle() {
 }
 
 
-async function omd_subsonic(){
-    mc.flash_element( document.getElementById('subsonic') );
+function omd_subsonic(elem){
+    mc.flash_element( elem );
     mc.send_cmd('preamp subsonic rotate');
 }
 
 
-async function omd_tone_defeat(){
-    mc.flash_element( document.getElementById('tone_defeat') );
+function omd_tone_defeat(elem){
+    mc.flash_element( elem );
     mc.send_cmd('preamp tone_defeat toggle');
 }
 
 
-async function omd_compressor(){
-    mc.flash_element( document.getElementById('bt_compressor') );
+function omd_compressor(elem){
+    mc.flash_element( elem );
     mc.send_cmd('preamp compressor rotate');
 }
-
 
 
 //////// HANDLERS: PLAYER 'onchange' 'onmousedown' 'onclick' ////////
@@ -1354,11 +1359,11 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('buttonMono', 'mousedown',              () => omd_mono_toggle());
     addListener('buttonPolarity', 'mousedown',          () => omd_polarity_rotate());
 
-    addListener('subsonic', 'mousedown',                () => omd_subsonic());
-    addListener('buttonMute', 'mousedown',              () => omd_mute_toggle());
-    addListener('tone_defeat', 'mousedown',             () => omd_tone_defeat());
-    addListener('buttAOD', 'mousedown',                 () => omd_delay_toggle());
-    addListener('bt_compressor', 'mousedown',           () => omd_compressor());
+    addListener('subsonic', 'mousedown',                (e) => omd_subsonic(e.target));
+    addListener('buttonMute', 'mousedown',              (e) => omd_mute_toggle(e.target));
+    addListener('tone_defeat', 'mousedown',             (e) => omd_tone_defeat(e.target));
+    addListener('buttAOD', 'mousedown',                 (e) => omd_delay_toggle(e.target));
+    addListener('bt_compressor', 'mousedown',           (e) => omd_compressor(e.target));
     addListener('buttonLoudMonReset', 'mousedown',      (e) => omd_lu_mon_reset(e.target));
 
     addListener('level_m1', 'mousedown',                (e) => omd_audio_change(e.target, 'level', -1));
