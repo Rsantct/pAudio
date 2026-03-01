@@ -965,8 +965,8 @@ async function oc_target_select(xoName){
 }
 
 
-async function omd_lu_mon_reset(){
-    mc.flash_element( document.getElementById('buttonLoudMonReset') );
+async function omd_lu_mon_reset(elem){
+    mc.flash_element( elem );
     mc.send_cmd('ctrl reset_loudness_monitor');
 }
 
@@ -1359,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('tone_defeat', 'mousedown',             () => omd_tone_defeat());
     addListener('buttAOD', 'mousedown',                 () => omd_delay_toggle());
     addListener('bt_compressor', 'mousedown',           () => omd_compressor());
-    addListener('buttonLoudMonReset', 'mousedown',      () => omd_lu_mon_reset());
+    addListener('buttonLoudMonReset', 'mousedown',      (e) => omd_lu_mon_reset(e.target));
 
     addListener('level_m1', 'mousedown',                (e) => omd_audio_change(e.target, 'level', -1));
     addListener('level_p1', 'mousedown',                (e) => omd_audio_change(e.target, 'level', 1));
