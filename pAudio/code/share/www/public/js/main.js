@@ -720,6 +720,7 @@ async function page_update() {
         hl.buttonAODHighlight()
         hl.levelInfoHighlight()
         hl.buttonCompressorHighlight()
+        hl.buttonSwapLRHighlight()
 
         // Used by the delay toggle button
         if (STATE.extra_delay !== 0) {
@@ -1109,6 +1110,11 @@ function omd_compressor(elem){
 }
 
 
+function omd_swap_lr(elem) {
+    mc.flash_element( elem );
+    mc.send_cmd('preamp swap_lr toggle');
+}
+
 //////// HANDLERS: PLAYER 'onchange' 'onmousedown' 'onclick' ////////
 
 async function omd_playerCtrl(button, action) {
@@ -1295,6 +1301,7 @@ function ck_display_advanced(mode) {
         document.getElementById("subsonic").style.display = "inline-block";
         document.getElementById("tone_defeat").style.display = "inline-block";
         document.getElementById("bt_compressor").style.display = "inline-block";
+        document.getElementById("bt_swap_lr").style.display = "inline-block";
     }
     else {
         document.getElementById("format_file").style.display = "none";
@@ -1310,6 +1317,7 @@ function ck_display_advanced(mode) {
         document.getElementById("subsonic").style.display = "none";
         document.getElementById("tone_defeat").style.display = "none";
         document.getElementById("bt_compressor").style.display = "none";
+        document.getElementById("bt_swap_lr").style.display = "none";
     }
 }
 
@@ -1364,6 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('tone_defeat', 'mousedown',             (e) => omd_tone_defeat(e.target));
     addListener('buttAOD', 'mousedown',                 (e) => omd_delay_toggle(e.target));
     addListener('bt_compressor', 'mousedown',           (e) => omd_compressor(e.target));
+    addListener('bt_swap_lr', 'mousedown',              (e) => omd_swap_lr(e.target));
     addListener('buttonLoudMonReset', 'mousedown',      (e) => omd_lu_mon_reset(e.target));
 
     addListener('level_m1', 'mousedown',                (e) => omd_audio_change(e.target, 'level', -1));
