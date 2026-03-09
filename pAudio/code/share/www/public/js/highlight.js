@@ -225,11 +225,12 @@ export function buttonCompressorHighlight(){
 
 export function buttonSwapLRHighlight(){
 
-    if ( STATE.lr_swapped === true ) {
+    if ( STATE.lr_swapped == true ) {
         document.getElementById("bt_swap_lr").innerHTML = "R L";
         document.getElementById("bt_swap_lr").style.border = "3px solid rgb(160, 160, 160)";
         document.getElementById("bt_swap_lr").style.background = "rgb(100, 0, 0)";
         document.getElementById("bt_swap_lr").style.color = "rgb(255, 200, 200)";
+        document.getElementById("bt_swap_lr").style.display = 'inline-block';
 
     } else {
         document.getElementById("bt_swap_lr").innerHTML = "L R";
