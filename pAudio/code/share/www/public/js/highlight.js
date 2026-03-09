@@ -223,6 +223,24 @@ export function buttonCompressorHighlight(){
 }
 
 
+export function buttonSwapLRHighlight(){
+
+    if ( STATE.lr_swapped == true ) {
+        document.getElementById("bt_swap_lr").innerHTML = "R L";
+        document.getElementById("bt_swap_lr").style.border = "3px solid rgb(160, 160, 160)";
+        document.getElementById("bt_swap_lr").style.background = "rgb(100, 0, 0)";
+        document.getElementById("bt_swap_lr").style.color = "rgb(255, 200, 200)";
+        document.getElementById("bt_swap_lr").style.display = 'inline-block';
+
+    } else {
+        document.getElementById("bt_swap_lr").innerHTML = "L R";
+        document.getElementById("bt_swap_lr").style.border = "2px solid rgb(100, 100, 100)";
+        document.getElementById("bt_swap_lr").style.background = "rgb(100, 100, 100)";
+        document.getElementById("bt_swap_lr").style.color = "rgb(180, 180, 180)";
+    }
+}
+
+
 export function clear_macro_buttons_highlight(){
 
     const macro_buttons = document.querySelectorAll('.macro_button_highlighted');

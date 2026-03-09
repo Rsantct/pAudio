@@ -353,7 +353,7 @@ async function init(){
 
 
 async function loop_page_update() {
-    console.log(`updating in ${POLLING_DELAY} ms ...`)
+    //console.log(`updating in ${POLLING_DELAY} ms ...`)
     await page_update();
     setTimeout(loop_page_update, POLLING_DELAY)
 }
@@ -720,6 +720,7 @@ async function page_update() {
         hl.buttonAODHighlight()
         hl.levelInfoHighlight()
         hl.buttonCompressorHighlight()
+        hl.buttonSwapLRHighlight()
 
         // Used by the delay toggle button
         if (STATE.extra_delay !== 0) {
@@ -965,8 +966,8 @@ async function oc_target_select(xoName){
 }
 
 
-async function omd_lu_mon_reset(){
-    mc.flash_element( document.getElementById('buttonLoudMonReset') );
+async function omd_lu_mon_reset(elem){
+    mc.flash_element( elem );
     mc.send_cmd('ctrl reset_loudness_monitor');
 }
 
@@ -992,7 +993,10 @@ async function omd_audio_change(element, param, value) {
 }
 
 
-async function omd_mute_toggle() {
+async function omd_mute_toggle(elem) {
+
+    mc.flash_element( elem );
+
     await mc.send_cmd( 'mute toggle' );
     STATE.muted = ! STATE.muted;
     hl.set_STATE(STATE);
@@ -1000,7 +1004,10 @@ async function omd_mute_toggle() {
 }
 
 
-async function omd_equal_loudness_toggle() {
+async function omd_equal_loudness_toggle(elem) {
+
+    mc.flash_element( elem );
+
     await mc.send_cmd( 'equal_loudness toggle' );
     STATE.equal_loudness = ! STATE.equal_loudness;
     hl.set_STATE(STATE);
@@ -1008,7 +1015,9 @@ async function omd_equal_loudness_toggle() {
 }
 
 
-async function omd_mono_toggle() {
+async function omd_mono_toggle(elem) {
+
+    mc.flash_element( elem );
 
     // normal: only stereo/mono (off/mid)
     if (!show_advanced){
@@ -1042,7 +1051,9 @@ async function omd_mono_toggle() {
 }
 
 
-async function omd_solo_rotate() {
+async function omd_solo_rotate(elem) {
+
+    mc.flash_element( elem );
 
     if (STATE.solo == "off"){
         await mc.send_cmd( 'solo L' );
@@ -1056,7 +1067,9 @@ async function omd_solo_rotate() {
 }
 
 
-async function omd_polarity_rotate() {
+async function omd_polarity_rotate(elem) {
+
+    mc.flash_element( elem );
 
     if (STATE.polarity == "++"){
         await mc.send_cmd( 'polarity +-' );
@@ -1076,7 +1089,10 @@ async function omd_polarity_rotate() {
 }
 
 
-async function omd_delay_toggle() {
+async function omd_delay_toggle(elem) {
+
+    mc.flash_element( elem );
+
     if (STATE.extra_delay !== 0) {
         await mc.send_cmd('preamp add_delay 0');
     }else{
@@ -1085,24 +1101,28 @@ async function omd_delay_toggle() {
 }
 
 
-async function omd_subsonic(){
-    mc.flash_element( document.getElementById('subsonic') );
+function omd_subsonic(elem){
+    mc.flash_element( elem );
     mc.send_cmd('preamp subsonic rotate');
 }
 
 
-async function omd_tone_defeat(){
-    mc.flash_element( document.getElementById('tone_defeat') );
+function omd_tone_defeat(elem){
+    mc.flash_element( elem );
     mc.send_cmd('preamp tone_defeat toggle');
 }
 
 
-async function omd_compressor(){
-    mc.flash_element( document.getElementById('bt_compressor') );
+function omd_compressor(elem){
+    mc.flash_element( elem );
     mc.send_cmd('preamp compressor rotate');
 }
 
 
+function omd_swap_lr(elem) {
+    mc.flash_element( elem );
+    mc.send_cmd('preamp swap_lr toggle');
+}
 
 //////// HANDLERS: PLAYER 'onchange' 'onmousedown' 'onclick' ////////
 
@@ -1281,7 +1301,6 @@ function ck_display_advanced(mode) {
     if ( show_advanced == true ) {
         document.getElementById("format_file").style.display = "table-row";
         document.getElementById("div_advanced_controls").style.display = "block";
-        document.getElementById("level_buttons13").style.display = "table-cell";
         document.getElementById("but_restart").style.display = "inline-block";
         document.getElementById("but_help").style.display = "none";
         document.getElementById("SoloInfo").style.display = "table-cell";
@@ -1290,11 +1309,11 @@ function ck_display_advanced(mode) {
         document.getElementById("subsonic").style.display = "inline-block";
         document.getElementById("tone_defeat").style.display = "inline-block";
         document.getElementById("bt_compressor").style.display = "inline-block";
-    }
-    else {
+        document.getElementById("bt_swap_lr").style.display = "inline-block";
+
+    } else {
         document.getElementById("format_file").style.display = "none";
         document.getElementById("div_advanced_controls").style.display = "none";
-        document.getElementById("level_buttons13").style.display = "none";
         document.getElementById("but_restart").style.display = "none";
         document.getElementById("but_help").style.display = "inline-block";
         document.getElementById("SoloInfo").style.display = "none";
@@ -1305,6 +1324,7 @@ function ck_display_advanced(mode) {
         document.getElementById("subsonic").style.display = "none";
         document.getElementById("tone_defeat").style.display = "none";
         document.getElementById("bt_compressor").style.display = "none";
+        document.getElementById("bt_swap_lr").style.display = "none";
     }
 }
 
@@ -1348,18 +1368,19 @@ document.addEventListener('DOMContentLoaded', () => {
     addListener('macros_toggle_button', 'mousedown',    () => omd_macro_buttons_display_toggle());
 
     addListener('OnOffButton', 'mousedown',             () => omd_onoff('toggle'));
-    addListener('buttonLoud', 'mousedown',              () => omd_equal_loudness_toggle());
-    addListener('buttonSolo', 'mousedown',              () => omd_solo_rotate());
+    addListener('buttonLoud', 'mousedown',              (e) => omd_equal_loudness_toggle(e.target));
+    addListener('buttonSolo', 'mousedown',              (e) => omd_solo_rotate(e.target));
     addListener('track_number_button', 'mousedown',     () => omd_select_track_number_dialog());
-    addListener('buttonMono', 'mousedown',              () => omd_mono_toggle());
-    addListener('buttonPolarity', 'mousedown',          () => omd_polarity_rotate());
+    addListener('buttonMono', 'mousedown',              (e) => omd_mono_toggle(e.target));
+    addListener('buttonPolarity', 'mousedown',          (e) => omd_polarity_rotate(e.target));
 
-    addListener('subsonic', 'mousedown',                () => omd_subsonic());
-    addListener('buttonMute', 'mousedown',              () => omd_mute_toggle());
-    addListener('tone_defeat', 'mousedown',             () => omd_tone_defeat());
-    addListener('buttAOD', 'mousedown',                 () => omd_delay_toggle());
-    addListener('bt_compressor', 'mousedown',           () => omd_compressor());
-    addListener('buttonLoudMonReset', 'mousedown',      () => omd_lu_mon_reset());
+    addListener('subsonic', 'mousedown',                (e) => omd_subsonic(e.target));
+    addListener('buttonMute', 'mousedown',              (e) => omd_mute_toggle(e.target));
+    addListener('tone_defeat', 'mousedown',             (e) => omd_tone_defeat(e.target));
+    addListener('buttAOD', 'mousedown',                 (e) => omd_delay_toggle(e.target));
+    addListener('bt_compressor', 'mousedown',           (e) => omd_compressor(e.target));
+    addListener('bt_swap_lr', 'mousedown',              (e) => omd_swap_lr(e.target));
+    addListener('buttonLoudMonReset', 'mousedown',      (e) => omd_lu_mon_reset(e.target));
 
     addListener('level_m1', 'mousedown',                (e) => omd_audio_change(e.target, 'level', -1));
     addListener('level_p1', 'mousedown',                (e) => omd_audio_change(e.target, 'level', 1));
