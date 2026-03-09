@@ -144,21 +144,26 @@ def prepare_base_config(pAudio_config, cam_config):
             },
 
             # Input stereo preamp mixer
-            {   'type': 'Mixer', 'name': 'preamp_mixer'
+            {   'type':         'Mixer',
+                'name':         'preamp_mixer',
+                'description':  'source channels mapping and polarity',
+                'bypassed':     False
             },
 
             # Stereo filtering at preamp stage
-            {   'description':  'preamp.L',
+            {   'description':  'L gains, eq, delay',
                 'channels':     [0],
                 'type':         'Filter',
                 'names':        ['source_gain_offset', 'preamp_eq', 'flat_gain_drc',
-                                 'lu_offset', 'bal_pol_L', 'preamp_delay']
+                                 'lu_offset', 'bal_pol_L', 'preamp_delay'],
+                'bypassed':     False
             },
-            {   'description':  'preamp.R',
+            {   'description':  'R gains, eq, delay',
                 'channels':     [1],
                 'type':         'Filter',
                 'names':        ['source_gain_offset', 'preamp_eq', 'flat_gain_drc',
-                                 'lu_offset', 'bal_pol_R', 'preamp_delay']
+                                 'lu_offset', 'bal_pol_R', 'preamp_delay'],
+                'bypassed':     False
             }
         ]
 
