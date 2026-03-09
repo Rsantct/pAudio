@@ -353,7 +353,7 @@ async function init(){
 
 
 async function loop_page_update() {
-    console.log(`updating in ${POLLING_DELAY} ms ...`)
+    //console.log(`updating in ${POLLING_DELAY} ms ...`)
     await page_update();
     setTimeout(loop_page_update, POLLING_DELAY)
 }
