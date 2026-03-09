@@ -529,6 +529,35 @@ def set_mute(mode):
     return 'done'
 
 
+def set_swap_LR(mode):
+
+    match mode:
+
+        case 'off'  | False:
+            src_0 = 0
+            src_1 = 1
+
+        case 'on' | True:
+            src_0 = 1
+            src_1 = 0
+
+        case _:
+            return f'mode must be in: on | true | off | false'
+
+    c = CC.config.active()
+
+    curr_mapping = c["mixers"]["preamp_mixer"]["mapping"]
+
+    curr_mapping[0]["sources"][0]["channel"] = src_0
+    curr_mapping[0]["sources"][1]["channel"] = src_1
+    curr_mapping[1]["sources"][0]["channel"] = src_0
+    curr_mapping[1]["sources"][1]["channel"] = src_1
+
+    set_config_sync(c)
+
+    return 'done'
+
+
 def set_midside(mode):
 
     modes = ('off', 'mid', 'side', 'solo_L', 'solo_R')
@@ -552,8 +581,6 @@ def set_midside(mode):
 
 def set_solo(mode):
 
-    c = CC.config.active()
-
     match mode:
 
         case 'l' | 'L':
@@ -567,6 +594,8 @@ def set_solo(mode):
 
         case _:
             return 'solo mode must be in: L | R | off'
+
+    c = CC.config.active()
 
     c["mixers"]["preamp_mixer"] = m
 
