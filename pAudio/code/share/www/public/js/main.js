@@ -333,7 +333,10 @@ async function init(){
     console.log('Preparing UI');
     preparare_UI()
 
+    // query the paudio_ctrl server
     await mc.do_until_function_istrue( update_web_config )
+    //
+    aux_info_refresh()
 
     fill_in_macro_buttons();
 
@@ -572,36 +575,6 @@ async function page_update() {
     }
 
 
-    async function aux_info_refresh(){
-
-        aux_info = await mc.get_aux_info();
-
-        if ( aux_info.loudspeaker ) {
-            document.title = 'pAudio ' + aux_info.loudspeaker;
-        }else{
-            aux_info.onoff = '--';
-        }
-
-        if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
-            document.getElementById("OnOffButton").innerText = aux_info.onoff.toUpperCase();
-            document.getElementById("OnOffButton").style.display = 'block';
-
-        }else{
-            document.getElementById("OnOffButton").style.display = 'none';
-        }
-
-        if ( ! aux_info.last_macro ){
-           hl.clear_macro_buttons_highlight();
-
-        }else{
-            const tmp = aux_info.last_macro;
-            const mName = tmp.slice(tmp.indexOf('_') + 1, tmp.length);
-            hl.clear_macro_buttons_highlight();
-            hl.highlight_macro_button(mName)
-        }
-    }
-
-
     function LU_refresh(){
 
         if ( ! aux_info.loudness_monitor ){
@@ -779,6 +752,36 @@ async function update_STATE() {
 
     }else{
         return false
+    }
+}
+
+
+async function aux_info_refresh(){
+
+    aux_info = await mc.get_aux_info();
+
+    if ( aux_info.loudspeaker ) {
+        document.title = 'pAudio ' + aux_info.loudspeaker;
+    }else{
+        aux_info.onoff = '--';
+    }
+
+    if ( aux_info.onoff == 'off' || aux_info.onoff == 'on' ) {
+        document.getElementById("OnOffButton").innerText = aux_info.onoff.toUpperCase();
+        document.getElementById("OnOffButton").style.display = 'block';
+
+    }else{
+        document.getElementById("OnOffButton").style.display = 'none';
+    }
+
+    if ( ! aux_info.last_macro ){
+       hl.clear_macro_buttons_highlight();
+
+    }else{
+        const tmp = aux_info.last_macro;
+        const mName = tmp.slice(tmp.indexOf('_') + 1, tmp.length);
+        hl.clear_macro_buttons_highlight();
+        hl.highlight_macro_button(mName)
     }
 }
 
