@@ -53,4 +53,6 @@ web_config:
     help_lang:      en
 
 # 'onoff' user's command or script to toggle the amplifier (optional)
-amplifier_switch_cmd:   '~/bin/ampli.sh'
+amplifier_switch:
+    command:        '~/bin/ampli.sh'
+    manage_pAudio:  true
