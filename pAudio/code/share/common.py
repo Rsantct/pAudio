@@ -372,7 +372,7 @@ def amp_switch(mode):
         return res
 
 
-    AMP_CMD = CONFIG.get('amplifier_switch_cmd', '~/bin/ampli.sh')
+    AMP_CMD     = CONFIG.get('amplifier_switch', {}).get('command', '~/bin/ampli.sh')
 
     res = 'NAK'
 
