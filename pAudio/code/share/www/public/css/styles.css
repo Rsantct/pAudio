@@ -33,7 +33,7 @@
 
     /* Custom flashing button */
     .btn-flash {
-      background-color: #4CAF50 !important;
+      background-color: silver !important;
       transition: all 0.3s ease;
       transform: scale(1.05);
     }
