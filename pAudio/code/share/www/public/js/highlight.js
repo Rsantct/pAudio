@@ -248,12 +248,12 @@ export function buttonSwapLRHighlight(){
 
     if ( STATE.lr_swapped == true ) {
         e.innerHTML = "R L";
-        e.className = "btn-dimm-gray";
+        e.className = "btn-red";
         e.style.display = 'inline-block';
 
     } else {
         e.innerHTML = "L R";
-        e.className = "btn-red";
+        e.className = "btn-dimm-gray";
     }
 }
 
