@@ -7,15 +7,6 @@
                 font-weight:bold;
             }
 
-    button  {   background-color: rgb(100, 100, 100);
-                border-radius: 5px/5px;
-                border:2px solid rgb(120,120,120);
-                /* Text inside buttons: */
-                color: white;
-                font-weight:bold;
-                font-size:0.95em;   /* smaller than usual */
-            }
-
     table   {   width: 100%;
             }
 
@@ -31,13 +22,42 @@
                 background-color:   rgb(25, 25, 25);
             }
 
-    /* Custom flashing button */
+    button  {   background-color: rgb(100, 100, 100);
+                border-radius: 5px/5px;
+                border:2px solid rgb(120,120,120);
+                /* Text inside buttons: */
+                color: white;
+                font-weight:bold;
+                font-size:0.95em;   /* smaller than usual */
+            }
+
+    /* Custom buttons */
     .btn-flash {
       background-color: silver !important;
       transition: all 0.3s ease;
       transform: scale(1.05);
     }
 
+    .btn-green {
+        border:             2px solid rgb(120, 120, 120);
+        background-color:   rgb(0, 90, 0);
+        color:              white;
+    }
+    .btn-dimm-gray {
+        border:             2px solid rgb(120, 120, 120);
+        background-color:   rgb(100, 100, 100);
+        color:              rgb(180, 180, 180);
+    }
+    .btn-maroon {
+        border:             3px solid rgb(160, 160, 160);
+        background-color:   rgb(100, 0, 0);
+        color:              rgb(255, 200, 200);
+    }
+    .btn-red {
+        border:             3px solid rgb(160, 160, 160);
+        background-color:   rgb(150, 0, 0);
+        color:              rgb(255, 200, 200);
+    }
 
     /* Header main section */
     td#main_lside       { width:   5%; text-align: center; border: none; }
