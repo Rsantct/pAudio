@@ -271,7 +271,8 @@ def restart_paudio(mode):
         return 'Needs `start| stop | state`'
 
     if mode == 'state':
-        return process_is_running('server.py paudio ')  # trailing space is needed
+        # trailing space is needed  to avoid confusion with the paudio_ctrl server
+        return process_is_running('server.py paudio ')
 
     elif 'start' in mode:
         sp.Popen([f'{UHOME}/bin/paudio_restart.sh', 'start'])
@@ -350,6 +351,34 @@ def warning_msg_manager(arg):
     return result
 
 
+def manage_amp(amp_mode):
+
+    amp_result = amp_switch( amp_mode )
+
+    # Amplifier switch manages pAudio (default is True)
+
+    AMP_PAUDIO  = CONFIG.get('amplifier_switch', {}).get('manage_pAudio', True)
+
+    if amp_mode in ('on', 'off', 'toggle') and AMP_PAUDIO:
+
+        # boolean
+        paudio_curr = restart_paudio('state')
+
+        if paudio_curr:
+            if amp_result in ('off', '0', 0, False):
+                restart_paudio('stop')
+                warning_msg_manager('clear')
+                warning_msg_manager('set pAudio will STOP.')
+
+        else:
+            if amp_result in ('on', '1', 1, True):
+                restart_paudio('start')
+                warning_msg_manager('clear')
+                warning_msg_manager('set Please wait while starting pAudio ...')
+
+    return amp_result
+
+
 # Interface function for this module
 def do( cmd_phrase):
 
@@ -375,7 +404,7 @@ def do( cmd_phrase):
             do_log = True
 
         case 'amp_switch':
-            result = amp_switch( args )
+            result = manage_amp(args)
             if args and not 'state' in args:
                 do_log = True
 

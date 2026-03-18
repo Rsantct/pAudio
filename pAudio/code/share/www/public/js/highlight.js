@@ -21,16 +21,15 @@ export function clear_highlighteds(){
 
 
 export function toneDefeatHighlight(){
+
+    const btd = document.getElementById("tone_defeat");
+
     if (STATE.tone_defeat){
-        document.getElementById("tone_defeat").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("tone_defeat").style.background = "rgb(100, 0, 0)";
-        document.getElementById("tone_defeat").style.color = "rgb(255, 200, 200)";
+        btd.className = "btn-maroon";
         document.getElementById("bassInfo").style.color = "grey";
         document.getElementById("trebleInfo").style.color = "grey";
     }else{
-        document.getElementById("tone_defeat").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("tone_defeat").style.background = "rgb(100, 100, 100)";
-        document.getElementById("tone_defeat").style.color = "rgb(180, 180, 180)";
+        btd.className = "btn-dimm-gray";
         document.getElementById("bassInfo").style.color = "white";
         document.getElementById("trebleInfo").style.color = "white";
     }
@@ -38,100 +37,113 @@ export function toneDefeatHighlight(){
 
 
 export function buttonsToneBalanceHighlight(){
+
+    const thin  = "2px solid rgb(100, 100, 100)";
+    const thick = "3px solid rgb(160, 160, 160)";
+
     if ( STATE.bass < 0 ){
-        document.getElementById("bass-").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("bass+").style.border = "2px solid rgb(100, 100, 100)";
+        document.getElementById("bass-").style.border = thick;
+        document.getElementById("bass+").style.border = thin;
     }else if ( STATE.bass > 0 ){
-        document.getElementById("bass-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bass+").style.border = "3px solid rgb(160, 160, 160)";
+        document.getElementById("bass-").style.border = thin;
+        document.getElementById("bass+").style.border = thick;
     }else{
-        document.getElementById("bass-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bass+").style.border = "2px solid rgb(100, 100, 100)";
+        document.getElementById("bass-").style.border = thin;
+        document.getElementById("bass+").style.border = thin;
     }
+
     if ( STATE.treble < 0 ){
-        document.getElementById("treb-").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("treb+").style.border = "2px solid rgb(100, 100, 100)";
+        document.getElementById("treb-").style.border = thick;
+        document.getElementById("treb+").style.border = thin;
     }else if ( STATE.treble > 0 ){
-        document.getElementById("treb-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("treb+").style.border = "3px solid rgb(160, 160, 160)";
+        document.getElementById("treb-").style.border = thin;
+        document.getElementById("treb+").style.border = thick;
     }else{
-        document.getElementById("treb-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("treb+").style.border = "2px solid rgb(100, 100, 100)";
+        document.getElementById("treb-").style.border = thin;
+        document.getElementById("treb+").style.border = thin;
     }
+
     if ( STATE.balance < 0 ){
-        document.getElementById("bal-").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("bal+").style.border = "2px solid rgb(100, 100, 100)";
+        document.getElementById("bal-").style.border = thick;
+        document.getElementById("bal+").style.border = thin;
     }else if ( STATE.balance > 0 ){
-        document.getElementById("bal-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bal+").style.border = "3px solid rgb(160, 160, 160)";
+        document.getElementById("bal-").style.border = thin;
+        document.getElementById("bal+").style.border = thick;
     }else{
-        document.getElementById("bal-").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bal+").style.border = "2px solid rgb(100, 100, 100)";
+        document.getElementById("bal-").style.border = thin;
+        document.getElementById("bal+").style.border = thin;
     }
 }
 
 
 export function buttonMuteHighlight(){
+
+    const e_mute  = document.getElementById("buttonMute");
+    const e_level = document.getElementById("levelInfo");
+
     if ( STATE.muted == true ) {
-        document.getElementById("buttonMute").style.background = "rgb(185, 185, 185)";
-        document.getElementById("buttonMute").style.color = "white";
-        document.getElementById("buttonMute").style.fontWeight = "bolder";
-        document.getElementById("levelInfo").style.color = "rgb(150, 90, 90)";
+        e_mute .style.background = "rgb(185, 185, 185)";
+        e_mute .style.color = "white";
+        e_level.style.color = "rgb(150, 90, 90)";
+
     } else {
-        document.getElementById("buttonMute").style.background = "rgb(100, 100, 100)";
-        document.getElementById("buttonMute").style.color = "lightgray";
-        document.getElementById("buttonMute").style.fontWeight = "normal";
-        document.getElementById("levelInfo").style.color = "white";
+        e_mute .style.background = "rgb(100, 100, 100)";
+        e_mute .style.color = "lightgray";
+        e_level.style.color = "white";
     }
 }
 
 
 export function buttonMonoHighlight(){
-    if ( STATE.midside == 'mid' ) {
-        document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonMono").style.color = "rgb(255, 200, 200)";
-        document.getElementById("buttonMono").innerText = 'MO';
-    } else if ( STATE.midside == 'side' ) {
-        document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonMono").style.color = "rgb(255, 200, 200)";
-        document.getElementById("buttonMono").innerText = 'L-R';
-    } else {
-        document.getElementById("buttonMono").style = "button";
-        document.getElementById("buttonMono").style.background = "rgb(0, 90, 0)";
-        document.getElementById("buttonMono").innerText = 'ST';
-    }
 
-    // 'solo' setting will override displaying mono stereo
-    if ( STATE.solo == 'l' ) {
-        document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonMono").innerText = 'L_';
+    const e = document.getElementById("buttonMono");
+
+    if ( STATE.midside == 'mid' ) {
+        e.className = "btn-maroon";
+        e.innerText = 'MO';
+
+    } else if ( STATE.midside == 'side' ) {
+        e.className = "btn-maroon";
+        e.innerText = 'L-R';
+
+    } else if ( STATE.solo == 'l' ) {
+        e.className = "btn-maroon";
+        e.innerText = 'L_';
+
     } else if ( STATE.solo == 'r' ) {
-        document.getElementById("buttonMono").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonMono").innerText = '_R';
+        e.className = "btn-maroon";
+        e.innerText = '_R';
+
+    } else if ( STATE.solo == 'off' ) {
+        e.className = "btn-green";
+        e.innerText = 'ST';
     }
 
     // 'polarity' setting will modify the button border
     if ( STATE.polarity != '++' ) {
-        document.getElementById("buttonMono").style.border = "3px solid rgb(200, 10, 10)";
+        e.style.border = "3px solid rgb(200, 10, 10)";
+
     } else {
-        document.getElementById("buttonMono").style.border = "2px solid rgb(120, 120, 120)";
+        e.style.border = "2px solid rgb(120, 120, 120)";
     }
 }
 
 
 export function buttonSoloHighlight(){
 
+    const e = document.getElementById("buttonSolo");
+
     if ( STATE.solo == 'off' ) {
-        document.getElementById("buttonSolo").style = "button";
-        document.getElementById("buttonSolo").innerText = 'L|R';
+        e.style = "button";
+        e.innerText = 'L|R';
 
     } else if ( STATE.solo == 'l' ) {
-        document.getElementById("buttonSolo").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonSolo").innerText = 'L_';
+        e.style.background = "rgb(100, 0, 0)";
+        e.innerText = 'L_';
 
     } else if ( STATE.solo == 'r' ) {
-        document.getElementById("buttonSolo").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttonSolo").innerText = '_R';
+        e.style.background = "rgb(100, 0, 0)";
+        e.innerText = '_R';
     }
 
 }
@@ -139,104 +151,109 @@ export function buttonSoloHighlight(){
 
 export function buttonPolarityHighlight(){
 
+    const e = document.getElementById("buttonPolarity");
+
     if ( STATE.polarity != '++' ) {
-        document.getElementById("buttonPolarity").style.background = "rgb(100, 0, 0)";
+        e.style.background = "rgb(100, 0, 0)";
 
     } else {
-        document.getElementById("buttonPolarity").style = "button";
+        e.style = "button";
     }
 
-    document.getElementById("buttonPolarity").innerText = STATE.polarity;
+    e.innerText = STATE.polarity;
 }
 
 
 export function buttonLoudHighlight(){
+
+    const e = document.getElementById("buttonLoud");
+
     if ( STATE.equal_loudness == true ) {
-        document.getElementById("buttonLoud").style.background = "rgb(0, 90, 0)";
-        document.getElementById("buttonLoud").style.color = "white";
+        e.style.background = "rgb(0, 90, 0)";
+        e.style.color = "white";
     } else {
-        document.getElementById("buttonLoud").style.background = "rgb(100, 100, 100)";
-        document.getElementById("buttonLoud").style.color = "rgb(150, 150, 150)";
+        e.style.background = "rgb(100, 100, 100)";
+        e.style.color = "rgb(150, 150, 150)";
     }
 }
 
 
 export function buttonAODHighlight(){
+
+    const e = document.getElementById("buttAOD");
+
     if ( STATE.extra_delay === 0 ) {
-        document.getElementById("buttAOD").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("buttAOD").style.background = "rgb(100, 100, 100)";
-        document.getElementById("buttAOD").style.color = "rgb(180, 180, 180)";
+        e.className = "btn-dimm-gray";
+
     } else {
-        document.getElementById("buttAOD").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("buttAOD").style.background = "rgb(100, 0, 0)";
-        document.getElementById("buttAOD").style.color = "rgb(255, 200, 200)";
-        document.getElementById("buttAOD").style.display = 'inline-table';
+        e.className = "btn-maroon";
+        e.style.display = 'inline-table';
     }
 }
 
 
 export function buttonSubsonicHighlight(){
+
+    const e = document.getElementById("subsonic");
+
     if ( STATE.subsonic == 'off' ) {
-        document.getElementById("subsonic").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("subsonic").style.background = "rgb(100, 100, 100)";
-        document.getElementById("subsonic").style.color = "rgb(180, 180, 180)";
-        document.getElementById("subsonic").innerText = 'SUBS\n-';
+        e.className = "btn-dimm-gray";
+        e.innerText = 'SUBS\n-';
+
     } else if ( STATE.subsonic == 'mp' ) {
-        document.getElementById("subsonic").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("subsonic").style.background = "rgb(100, 0, 0)";
-        document.getElementById("subsonic").style.color = "rgb(255, 200, 200)";
-        document.getElementById("subsonic").innerText = 'SUBS\nmp';
+        e.className = "btn-maroon";
+        e.innerText = 'SUBS\nmp';
+
     } else if ( STATE.subsonic == 'lp' ) {
-        document.getElementById("subsonic").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("subsonic").style.background = "rgb(150, 0, 0)";
-        document.getElementById("subsonic").style.color = "rgb(255, 200, 200)";
-        document.getElementById("subsonic").innerText = 'SUBS\nlp';
+        e.className = "btn-red";
+        e.innerText = 'SUBS\nlp';
     }
 }
 
 
 export function levelInfoHighlight() {
-    // currently only indicates subsonic filter activated
+
+    const e = document.getElementById("levelInfo");
+
+    // curently only indicates if the subsonic filter is activated
     if (STATE.subsonic != 'off' ){
-        document.getElementById("levelInfo").style.borderWidth = "thick";
-        document.getElementById("levelInfo").style.borderColor = "DarkRed";
+        e.style.borderWidth = "thick";
+        e.style.borderColor = "DarkRed";
     }else{
-        document.getElementById("levelInfo").style.borderWidth = "thin";
-        document.getElementById("levelInfo").style.borderColor = "white";
+        e.style.borderWidth = "thin";
+        e.style.borderColor = "white";
    }
 }
 
 
 export function buttonCompressorHighlight(){
+
+    const e = document.getElementById("bt_compressor");
+
     if ( STATE.compressor === 'off' ) {
-        document.getElementById("bt_compressor").innerHTML = 'comp.<br>OFF';
-        document.getElementById("bt_compressor").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bt_compressor").style.background = "rgb(100, 100, 100)";
-        document.getElementById("bt_compressor").style.color = "rgb(180, 180, 180)";
+        e.innerHTML = 'comp.<br>OFF';
+        e.className = "btn-dimm-gray";
+
     } else {
-        document.getElementById("bt_compressor").innerHTML = 'COMP.<br>' + STATE.compressor;
-        document.getElementById("bt_compressor").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("bt_compressor").style.background = "rgb(100, 0, 0)";
-        document.getElementById("bt_compressor").style.color = "rgb(255, 200, 200)";
-        document.getElementById("bt_compressor").style.display = 'inline-block';
+        e.innerHTML = 'COMP.<br>' + STATE.compressor;
+        e.className = "btn-maroon";
+        e.style.display = 'inline-block';
     }
 }
 
 
 export function buttonSwapLRHighlight(){
 
+    const e = document.getElementById("bt_swap_lr");
+
     if ( STATE.lr_swapped == true ) {
-        document.getElementById("bt_swap_lr").innerHTML = "R L";
-        document.getElementById("bt_swap_lr").style.border = "3px solid rgb(160, 160, 160)";
-        document.getElementById("bt_swap_lr").style.background = "rgb(100, 0, 0)";
-        document.getElementById("bt_swap_lr").style.color = "rgb(255, 200, 200)";
-        document.getElementById("bt_swap_lr").style.display = 'inline-block';
+        e.innerHTML = "R L";
+        e.className = "btn-red";
+        e.style.display = 'inline-block';
 
     } else {
-        document.getElementById("bt_swap_lr").innerHTML = "L R";
-        document.getElementById("bt_swap_lr").style.border = "2px solid rgb(100, 100, 100)";
-        document.getElementById("bt_swap_lr").style.background = "rgb(100, 100, 100)";
-        document.getElementById("bt_swap_lr").style.color = "rgb(180, 180, 180)";
+        e.innerHTML = "L R";
+        e.className = "btn-dimm-gray";
     }
 }
 
