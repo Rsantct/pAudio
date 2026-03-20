@@ -990,8 +990,24 @@ async function oi_LU_slider_action(slider_value){
 
 
 async function omd_audio_change(element, param, value) {
+
     mc.flash_element(element, 400);
     STATE[param] += value;
+
+
+    if (param == 'level') {
+        document.getElementById("levelInfo") .innerHTML = STATE[param].toFixed(1);
+
+    }else if (param == 'bass') {
+        document.getElementById("bassInfo")  .innerHTML = 'BASS: ' + STATE[param].toFixed(0);
+
+    }else if (param == 'treble') {
+        document.getElementById("trebleInfo").innerHTML = 'TREB: ' + STATE[param].toFixed(0);
+
+    }else if (param == 'balance') {
+        document.getElementById("balInfo")   .innerHTML = 'BAL: ' + STATE[param].toFixed(0);
+    }
+
     await mc.send_cmd( param + ' ' + value + ' ' + 'add' );
 }
 
