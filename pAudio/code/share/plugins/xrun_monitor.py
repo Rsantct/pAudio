@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
-# This file is part of 'pe.audio.sys'
-# 'pe.audio.sys', a PC based personal audio system.
+# This file is part of 'pAudio', a PC based personal audio system.
 
 """ A monitor for PipeWire or Jack XRUNS
 
