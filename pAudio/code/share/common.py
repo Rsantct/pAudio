@@ -33,6 +33,29 @@ class MyYamlIndent(yaml.SafeDumper):
         return super(MyYamlIndent, self).increase_indent(flow, False)
 
 
+def dict_compare(d1, d2, static=True):
+    """ Compare dictionaries
+
+        static: boolean to find only static keys changes, it is FASTER
+    """
+
+    if static:
+        changes = {k: (d1[k], d2[k]) for k in d1 if k in d2 and d1[k] != d2[k]}
+        return changes
+
+
+    keys1 = set(d1.keys())
+    keys2 = set(d2.keys())
+
+    interseccion = keys1.intersection(keys2)
+
+    changed = {k: (d1[k], d2[k]) for k in interseccion if d1[k] != d2[k]}
+    added   = {k: d2[k] for k in keys2 - keys1}
+    removed = {k: d1[k] for k in keys1 - keys2}
+
+    return changed, added, removed
+
+
 def loop_file_changed(filepath, what_to_do):
 
     class MyFileHandler(FileSystemEventHandler):
