@@ -3,18 +3,21 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
-""" A monitor for PipeWire or Jack XRUNS
+"""
+    A monitor for both PipeWire and Jack XRUNS
 
-    For Pipewire, will poll periodically 'pw-top' utility
+    If PipeWire was detected, will poll periodically the 'pw-top' utility
 
     For Jack, will set a python-jack callback
 
-    Usage:  xrun_monitor.py [path/to/file.log] start|stop
+    Usage:  xrun_monitor.py  start|stop
 
-        (log file is optional)
+    PW configuration: just edit PWTOP_WANTED on this script
+
 """
 
 import  sys
+import  os
 import  subprocess  as sp
 import  threading
 from    time        import sleep
@@ -27,6 +30,9 @@ from    getpass     import getuser
 # (case insensitive)
 PWTOP_WANTED = ['jack_sink', 'spotify', 'librespot']
 PWTOP_PERIOD = 1
+
+UHOME   = os.path.expanduser('~')
+LOGPATH = f'{UHOME}/pAudio/log/xrun.log'
 
 
 def get_timestamp():
@@ -90,21 +96,14 @@ def do_pw_top_loop():
 
     while True:
 
+        tmp = ''
 
-        # list
-        errors = get_pw_top_errors()
-
-        if not errors:
-            do_log('PIPEWIRE pw-top NOT RESPONDING')
-
-        else:
-            tmp = ''
-            for node, nerr in errors:
-                if nerr > 0:
-                    tmp += f' {node}:{n},'
-            if tmp:
-                tmp = f'pw-top XRUNS:{tmp}'[:-1]
-                do_log(tmp)
+        for node, nerr in  get_pw_top_errors():
+            if nerr > 0:
+                tmp += f' {node}:{n},'
+        if tmp:
+            tmp = f'pw-top XRUNS:{tmp}'[:-1]
+            do_log(tmp)
 
         sleep(PWTOP_PERIOD)
 
@@ -126,16 +125,18 @@ def jack_xrun_handler(x):
 
 def do_log(msg, mode='a'):
 
+    msg = f'{get_timestamp()} {msg}'
+
+    print(msg)
+
     if LOGPATH:
         with open(LOGPATH, mode) as f:
-            f.write(f'{get_timestamp()} {msg}\n')
-    else:
-        print(f'{get_timestamp()} {msg}')
+            f.write(f'{msg}\n')
 
 
 def stop():
     do_log('stopping')
-    sp.call( ['pkill', '--older', '3', '-u', getuser(), '-KILL', '-f',  'paudio_xrun_monitor.py']  )
+    sp.call( ['pkill', '--older', '3', '-u', getuser(), '-KILL', '-f',  'xrun_monitor.py']  )
 
 
 def start():
@@ -147,33 +148,37 @@ def start():
         pw_top_job = threading.Thread(target=do_pw_top_loop)
         pw_top_job.start()
         do_log('waiting for xruns in both pw-top or jackd ...')
+
     else:
         do_log('waiting for xruns in jackd ...')
 
 
     # Jack monitoring
-    jcli = jack.Client('tmp', no_start_server=True)
-    jcli.set_xrun_callback(jack_xrun_handler)
+    try:
+        jcli = jack.Client('tmp', no_start_server=True)
+        jcli.set_xrun_callback(jack_xrun_handler)
 
-    with jcli:
-        jcli.activate()
+        with jcli:
+            jcli.activate()
 
-        try:
-            while True:
-                sleep(1)
+            try:
+                while True:
+                    sleep(1)
 
-        except KeyboardInterrupt:
-            print("Exiting Jack client...")
+            except KeyboardInterrupt:
+                print("Exiting Jack client...")
 
-        finally:
-            jcli.deactivate()
-            jcli.close()
-            print("Jack client exited.")
+            finally:
+                jcli.deactivate()
+                jcli.close()
+                print("Jack client exited.")
+
+    except Exception as e:
+        do_log(f'cannot connect to JACK: {str(e)}')
 
 
 if __name__ == "__main__":
 
-    LOGPATH = ''
     mode = ''
 
     for opc in sys.argv[1:]:
@@ -185,8 +190,6 @@ if __name__ == "__main__":
         elif opc == 'start' or  opc == 'stop':
             mode = opc
 
-        else:
-            LOGPATH = sys.argv[1]
 
     if mode == 'stop':
         stop()
