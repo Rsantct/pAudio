@@ -289,6 +289,7 @@ def init():
     STATE["fs"]             = CONFIG["samplerate"]
     STATE["polarity"]       = '++'
     STATE["compressor"]     = 'off'
+    STATE["lr_swapped"]     = False
 
     # Update state with both input and output devices
     #
@@ -407,6 +408,10 @@ def set_midside(mode):
 
 def set_polarity(mode):
     return CAM.set_polarity(mode)
+
+
+def set_swap_LR(mode):
+    return CAM.set_swap_LR(mode)
 
 
 def rotate_compressor():
@@ -922,9 +927,11 @@ def do(cmd, args, add):
                     'input':        'set_source',
                     'source':       'set_source',
             }[cmd]
+
         except:
             pass
-        return cmd
+
+        return cmd.lower()
 
 
     cmd     = normalize_cmd(cmd)
@@ -969,9 +976,31 @@ def do(cmd, args, add):
             if result in ('done', 'ordered'):
                 STATE["source"] = new
 
+        case 'swap' | 'swap_lr':
+
+            curr = STATE.get('lr_swapped', False)
+            new  = None
+
+            if args in ('on', 'true'):
+                new = True
+            elif args in ('off', 'false'):
+                new = False
+            elif args == 'toggle':
+                new = not curr
+
+            if new == None:
+                result = 'must indicate: toggle | on | off'
+
+            else:
+                if curr != new:
+                    result = set_swap_LR(new)
+
+                    if result == 'done':
+                        STATE["lr_swapped"] = new
+
         case 'mono':
 
-            # here we need to transate to internal `midside`
+            # here we need to translate to internal `midside`
 
             result = 'needs: on | off | toggle'
 

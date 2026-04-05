@@ -96,13 +96,13 @@ def make_delay_filter(delay=0.0, description=''):
     return f
 
 
-def make_mixer_preamp(midside_mode='normal'):
+def make_mixer_preamp(midside_mode='normal', swap_LR=False):
     r"""
         modes:
 
             normal
             mid     (mono)
-            side    (L-R)
+            side    (L - R)
             solo_L
             solo_R
 
@@ -153,23 +153,42 @@ def make_mixer_preamp(midside_mode='normal'):
             g01 =  0.0; i01 = False; m01 = True;     g11 =  0.0; i11 = False; m11 = False
 
 
+    match swap_LR:
+
+        case False:
+            src_0 = 0
+            src_1 = 1
+
+        case True:
+            src_0 = 1
+            src_1 = 0
+
+        case _:
+            raise ValueError('make_mixer_preamp swap_LR must be boolean')
+
+
     m = {
         'channels': { 'in': 2, 'out': 2 },
         'mapping': [
             {   'dest': 0,
                 'sources': [
-                    {'channel': 0, 'gain': g00, 'inverted': i00, 'mute': m00},
-                    {'channel': 1, 'gain': g10, 'inverted': i10, 'mute': m10},
+                    {'channel': src_0, 'gain': g00, 'inverted': i00, 'mute': m00},
+                    {'channel': src_1, 'gain': g10, 'inverted': i10, 'mute': m10},
                 ]
             },
             {   'dest': 1,
                 'sources': [
-                    {'channel': 0, 'gain': g01, 'inverted': i01, 'mute': m01},
-                    {'channel': 1, 'gain': g11, 'inverted': i11, 'mute': m11},
+                    {'channel': src_0, 'gain': g01, 'inverted': i01, 'mute': m01},
+                    {'channel': src_1, 'gain': g11, 'inverted': i11, 'mute': m11},
                 ]
             }
         ]
     }
+
+    m["description"] = f'midside-{midside_mode}'
+    if swap_LR:
+        m["description"] += ' (R <> L swapped)'
+
 
     return m
 
@@ -268,7 +287,7 @@ def make_mixer_multi_way(pAudio_outputs):
 
     m = {   'description':  description,
             'channels':     { 'in': 2, 'out': len( pAudio_outputs ) },
-            'mapping':      mapping,
+            'mapping':      mapping
         }
 
     return m
