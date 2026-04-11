@@ -34,7 +34,7 @@ def make_fir_filter(fir_path):
             "type": 'Conv',
             "parameters": {
                 "filename": fir_path,
-                "format":   'FLOAT32LE',
+                "format":   'F32_LE',
                 "type":     'Raw'
             }
         }
