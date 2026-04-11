@@ -68,7 +68,7 @@ See below, normal and alternative source selection syntax are shown:
 
                 channels: 2
                 device: BlackHole 2ch
-                format: FLOAT32LE
+                format: F32_LE
 
 
                 ---------------------------------------------------------------
@@ -77,12 +77,12 @@ See below, normal and alternative source selection syntax are shown:
                 Mac Desktop:
                     channels: 2
                     device: BlackHole 2ch
-                    format: FLOAT32LE
+                    format: F32_LE
 
                 TV:
                     channels: 2
                     device: UMC204HD 192k
-                    format: S24LE
+                    format: S24_LE
                 ---------------------------------------------------------------
 
 
@@ -90,4 +90,4 @@ See below, normal and alternative source selection syntax are shown:
 
                 channels: 2
                 device: Altavoces del MacBook Pro
-                format: FLOAT32LE
+                format: F32_LE
