@@ -58,8 +58,12 @@ https://github.com/HEnquist/camilladsp/releases
 
 ### Compile
 
+You need to adjust RUSTFLAGS for NEON on armv7 chips like Raspberry Pi, Asus Tinker Board, etc:
+
     RUSTFLAGS='-C target-feature=+neon -C target-cpu=native' \
     cargo build --release --features jack-backend
+
+Target-cpu native will autodetect the CPU profile when native compilation (compiling in the same machine)
 
 MORE INFO [here](https://github.com/HEnquist/camilladsp/tree/master?tab=readme-ov-file#building)
 
