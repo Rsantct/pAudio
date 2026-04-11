@@ -58,12 +58,24 @@ https://github.com/HEnquist/camilladsp/releases
 
 ### Compile
 
-You need to adjust RUSTFLAGS for NEON on armv7 chips like Raspberry Pi, Asus Tinker Board, etc:
+You need to adjust RUSTFLAGS for NEON on armv7 chips like Raspberry Pi, Asus Tinker Board, etc. Target-cpu native will autodetect the CPU profile when native compilation (compiling in the same machine). Ignore the below warning for 'neon', it is a simple Rust information.
 
-    RUSTFLAGS='-C target-feature=+neon -C target-cpu=native' \
-    cargo build --release --features jack-backend
+```
+RUSTFLAGS='-C target-feature=+neon -C target-cpu=native' cargo build --release --features jack-backend
+    Updating crates.io index
+    ...
+    ...
+    ...
+   Compiling CamillaDSP v4.1.3 (/home/paudio/tmp/camilladsp-4.1.3)
+warning: unstable feature specified for `-Ctarget-feature`: `neon`
+  |
+  = note: this feature is not stably supported; its behavior can change in the future
 
-Target-cpu native will autodetect the CPU profile when native compilation (compiling in the same machine)
+warning: `CamillaDSP` (lib) generated 1 warning
+warning: `CamillaDSP` (bin "camilladsp") generated 1 warning (1 duplicate)
+    Finished `release` profile [optimized] target(s) in 11m 55s
+```
+
 
 MORE INFO [here](https://github.com/HEnquist/camilladsp/tree/master?tab=readme-ov-file#building)
 
