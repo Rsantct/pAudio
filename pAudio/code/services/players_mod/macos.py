@@ -333,17 +333,25 @@ def get_player_info():
 
         player_info = _run_applescript(script, who=player)
 
-        if player_info:
 
-            # comillas estén bien formateadas para JSON
-            player_info = json_string_fix(player_info)
+        if player_info:
 
             try:
                 player_info = json.loads(player_info)
+
+            except Exception as e1:
+
+                try:
+                    # comillas, dos puntos, etc estén bien formateadas para JSON
+                    player_info = json_string_fix(player_info)
+                    player_info = json.loads(player_info)
+
+                except Exception as e:
+                    print(f'(players_macos) Error decoding JSON from {player}: {str(e)}')
+
+            if type( player_info ) == dict:
                 players_info.append( player_info )
 
-            except Exception as e:
-                print(f'(players_macos) Error decoding JSON from {player}: {str(e)}')
 
     # Orden inverso para quedarnos con el primero de los preferidos
     for player_info in players_info[::-1]:
