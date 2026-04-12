@@ -3,6 +3,18 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+import subprocess as sp
+
+CAMILLADSP_VERSION = 3
+try:
+    tmp = sp.check_output('camilladsp --version'.split()).decode().lower()
+    if 'camilladsp' in tmp:
+        tmp = tmp.split()[1][0]
+        if tmp.isdigit():
+            CAMILLADSP_VERSION = int(tmp)
+except Exception as e:
+    pass
+
 
 def make_gain_filter(gain, description=''):
     res =   {
@@ -30,11 +42,15 @@ def make_dither_filter(d_type, bits):
 
 def make_fir_filter(fir_path):
 
+    fmt = 'FLOAT32LE'
+    if CAMILLADSP_VERSION >= 4:
+       fmt = 'F32_LE'
+
     f = {
             "type": 'Conv',
             "parameters": {
                 "filename": fir_path,
-                "format":   'F32_LE',
+                "format":   fmt,
                 "type":     'Raw'
             }
         }
