@@ -187,9 +187,16 @@ def append_dither(pAudio_config, cam_config):
         """ retrieves the bit depth from a given audio sample format,
             e.g. F32_LE, S24_3_LE, ...
         """
-        digits = [x for x in fmt if x.isdigit()]
-        bd = ''.join(digits)
-        return int(bd)
+        if '16' in fmt:
+            return 16
+        elif '24' in fmt:
+            return 24
+        elif '32' in fmt:
+            return 32
+        elif '64' in fmt:
+            return 64
+        else:
+            return 16
 
 
     if not pAudio_config.get("coreaudio", {}).get("devices", {}).get("playback", {}).get("dither", False):
