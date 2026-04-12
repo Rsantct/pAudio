@@ -8,13 +8,13 @@ coreaudio:
 
             channels: 2
             device: BlackHole 2ch
-            format: F32_LE
+            format: F32
 
         playback:
 
             channels: 2
             device: Altavoces del MacBook Pro
-            format: F32_LE
+            format: F32
 
             # special example for the Behringer UCA 202 USB sound card
             #device: "USB Audio CODEC "     # notice the trailing space
