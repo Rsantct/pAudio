@@ -56,6 +56,25 @@ CDDA_META_TEMPLATE = {
 AMP_STATE_PATH      = f'{UHOME}/.amplifier'
 
 
+def find_key_value(data, key, value):
+    """ search recursively for 'key':value to exist in the given data
+    """
+
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if k == key and v == value:
+                return True
+            if find_key_value(v, key, value):
+                return True
+
+    elif isinstance(data, list):
+        for item in data:
+            if find_key_value(v, key, value):
+                return True
+
+    return False
+
+
 def _init():
 
     def complete_jack_params():
@@ -114,6 +133,10 @@ def _init():
 
                 except Exception as e:
                     print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
+
+
+            if find_key_value(res, 'type', 'fir'):
+                print(f'{Fmt.BOLD}(config.py) FLOAT32 is assumed for the FIR filters{Fmt.END}')
 
             return res
 
