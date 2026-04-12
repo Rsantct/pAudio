@@ -14,6 +14,7 @@ from    datetime    import datetime
 import  yaml
 import  json
 import  shlex
+import  re
 from    fmt         import Fmt
 import  sys
 import  ipaddress
@@ -87,34 +88,33 @@ def write_pAudio_cfg(c):
         f.write( json.dumps(c, indent=2) )
 
 
-def json_string_fix(cad):
+def json_string_fix(text):
     """ Example of a raw string that cannot be parsed by json.loads because nested double quotes (")
 
         {"app":"Spotify","state":"playing","track":"L'elisir d'amore / Act 1: "Signor sargente" - Excerpt","artist":"Gaetano Donizetti","album":"Donizetti:L'elisir d'amore - Highlights","elapsed":19,"duration":161266}'
+
+        This one has also confusing colon  "Funeral March":
+
+        {"app":"Spotify","state":"playing","track_num":"14","track":"Piano Sonata No. 12 in A-Flat Major, Op. 26 "Funeral March": IV. Allegro","track_uri":"spotify:track:0Nnnsk6DJ2CPRBYKCObGtQ","artist":"Ludwig van Beethoven","album":"Glenn Gould plays Beethoven: Piano Sonatas Nos. 1-3; 5-10; 12-14; 15-18; 23; 30-32","elapsed":151,"duration":159640}
     """
 
-    for i, c in enumerate(cad):
+    # 1. Buscamos el patrón "Clave":"Valor"
+    # Grupo 1: ("nombre_clave":")
+    # Grupo 2: (el contenido del valor)
+    # Grupo 3: (", o "}) -> El delimitador real
+    pattern = r'(".*?")\s*:\s*"(.*?)"(?=\s*[,}])'
 
-        if c == '"':
+    def clean(match):
+        key = match.group(1)
+        content = match.group(2)
+        # Escapamos todas las comillas dobles dentro del contenido
+        fixed_content = content.replace('"', '\\"')
+        return f'{key}:"{fixed_content}"'
 
-            if cad[i - 1] in ('{', '}', ':'):
-                continue
+    # Aplicamos la limpieza a los campos de texto
+    processed = re.sub(pattern, clean, text)
 
-            if cad[i + 1] in ('{', '}'):
-                continue
-
-            if cad[i - 2 : i] in ('",'):
-                continue
-
-            if cad[i - 1 : i + 1] in (',"'):
-                continue
-
-            if cad[i : i + 2] in ('":', '",'):
-                continue
-
-            cad = cad[ : i] + "'" + cad[i + 1 :]
-
-    return cad
+    return processed
 
 
 def get_macros(only_web_macros=True):
