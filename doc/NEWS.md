@@ -13,3 +13,9 @@
 
 - new code for players management: librespot (Spotify Connect client)
 - minor fixes
+
+## 2026-jan CamillaDSP v3
+- pycamilladsp volume commands changes
+
+## 2026-apr CamillaDSP v4
+- new format variants descriptors for devices an raw FIR filter encoding

@@ -152,7 +152,7 @@ def init():
 
                     channels: 2
                     device: BlackHole 2ch
-                    format: FLOAT32LE
+                    format: F32_LE
 
 
                     ---------------------------------------------------------------
@@ -161,12 +161,12 @@ def init():
                     Mac Desktop:
                         channels: 2
                         device: BlackHole 2ch
-                        format: FLOAT32LE
+                        format: F32_LE
 
                     TV:
                         channels: 2
                         device: UMC204HD 192k
-                        format: S24LE
+                        format: S24_3_LE
                     ---------------------------------------------------------------
 
 
@@ -174,7 +174,7 @@ def init():
 
                     channels: 2
                     device: Altavoces del MacBook Pro
-                    format: FLOAT32LE
+                    format: F32_LE
 
         --> If the ALTERNATIVE syntax was used, we complete the normal syntax here,
             taking the first device found.
