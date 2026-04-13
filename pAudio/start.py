@@ -45,7 +45,7 @@ def check_cdsp_running():
     """
 
     # Temporay CamillaDSP client
-    CC = CamillaClient('127.0.0.1', CAMILLADSP_PORT)
+    CC = CamillaClient('127.0.0.1', CONFIG["camilladsp_port"])
 
     try:
         CC.connect()
@@ -276,7 +276,7 @@ def start():
         return
 
     # Run the pAudio main server 'paudio.py' to listen for commands
-    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {PAUDIO_ADDR} {PAUDIO_PORT}'
+    srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {CONFIG["paudio_addr"]} {CONFIG["paudio_port"]}'
     server_timeout = estimate_server_delay() + 15
 
     if VERBOSE:
