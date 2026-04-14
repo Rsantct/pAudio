@@ -219,7 +219,7 @@ def append_dither(pAudio_config, cam_config):
 
     cam_config["filters"]["dither"] = make_dither_filter(d_type, dither_bits)
 
-    # Add dither to the last steps of the pipeline
+    # Add the dither in the final steps of the pipeline (by iterating from the end)
 
     step_type = ''
     last_step_type = ''
@@ -233,14 +233,17 @@ def append_dither(pAudio_config, cam_config):
                 step_type = 'xover'
 
             # Full Range can have PREAMP, and optionally EQ and/or DRC
-            else:
+            elif   step.get('description').lower().startswith('drc '):
+                step_type = 'drc'
 
-                if   step.get('description').lower().startswith('drc '):
-                    step_type = 'drc'
-                elif step.get('description').lower().startswith('eq '):
-                    step_type = 'eq'
-                elif step.get('description').lower().startswith('preamp.'):
-                    step_type = 'preamp'
+            elif step.get('description').lower().startswith('eq '):
+                step_type = 'eq'
+
+            elif step.get('description').lower().startswith('preamp.'):
+                step_type = 'preamp'
+
+            else:
+                continue
 
             if last_step_type and step_type != last_step_type:
                 break

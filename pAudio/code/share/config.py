@@ -5,31 +5,35 @@
 
 import  sys
 import  os
+from    time                    import time
 import  yaml
+import  json
 from    fmt                     import Fmt
 from    pcamilla_mod.do_makes   import *
 
 UHOME = os.path.expanduser('~')
-MAINFOLDER              = f'{UHOME}/pAudio'
+MAINFOLDER          = f'{UHOME}/pAudio'
 
-LSPKSFOLDER             = f'{MAINFOLDER}/loudspeakers'
-LSPKFOLDER              = f''
-LOUDSPEAKER             = f''   # to be found later
-LSPK_YML_PATH           = f''   #
+LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
+LSPKFOLDER          = f''
+LOUDSPEAKER         = f''   # to be found later
+LSPK_YML_PATH       = f''   #
 
-EQFOLDER                = f'{MAINFOLDER}/eq'
-CODEFOLDER              = f'{MAINFOLDER}/code'
-CONFIG_PATH             = f'{MAINFOLDER}/config.yml'
-LOGFOLDER               = f'{MAINFOLDER}/log'
-PLUGINSFOLDER           = f'{MAINFOLDER}/code/share/plugins'
-MACROSFOLDER            = f'{MAINFOLDER}/code/macros'
+EQFOLDER            = f'{MAINFOLDER}/eq'
+CODEFOLDER          = f'{MAINFOLDER}/code'
+CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
+LOGFOLDER           = f'{MAINFOLDER}/log'
+PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
+MACROSFOLDER        = f'{MAINFOLDER}/code/macros'
 
-PREAMP_STATE_PATH       = f'{MAINFOLDER}/.preamp_state'
-LDCTRL_PATH             = f'{MAINFOLDER}/.loudness_control'
-LDMON_PATH              = f'{MAINFOLDER}/.loudness_monitor'
-AUXINFO_PATH            = f'{MAINFOLDER}/.aux_info'
+PREAMP_STATE_PATH   = f'{MAINFOLDER}/.preamp_state'
+LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
+LDMON_PATH          = f'{MAINFOLDER}/.loudness_monitor'
+AUXINFO_PATH        = f'{MAINFOLDER}/.aux_info'
+PAUDIO_CFG_PATH     = f'{LOGFOLDER}/pAudio_cfg'
+AMP_STATE_PATH      = f'{UHOME}/.amplifier'
 
-PLAYER_INFO_PATH        = f'{MAINFOLDER}/.player_info'
+PLAYER_INFO_PATH    = f'{MAINFOLDER}/.player_info'
 PLAYERTEMPLATE = {
     'player':       '',
     'state':        '',
@@ -44,8 +48,8 @@ PLAYERTEMPLATE = {
     'tracks_tot':   ''
 }
 
-CDDA_MUSICBRAINZ_PATH   = f'{MAINFOLDER}/.cdda_musicbrainz'
-CDDA_META_PATH          = f'{MAINFOLDER}/.cdda_metadata'
+CDDA_MUSICBRAINZ_PATH = f'{MAINFOLDER}/.cdda_musicbrainz'
+CDDA_META_PATH        = f'{MAINFOLDER}/.cdda_metadata'
 CDDA_META_TEMPLATE = {
     'discid':   '',
     'artist':   '',
@@ -53,7 +57,27 @@ CDDA_META_TEMPLATE = {
     'tracks':   { }
 }
 
-AMP_STATE_PATH      = f'{UHOME}/.amplifier'
+
+def write_pAudio_cfg(data):
+    with open(PAUDIO_CFG_PATH, 'w') as f:
+        f.write( json.dumps(data, indent=2) )
+
+
+def read_pAudio_cfg():
+    with open(PAUDIO_CFG_PATH, 'r') as f:
+        c = json.loads( f.read() )
+    return c
+
+
+def pAudio_cfg_is_recent(seconds_old=30):
+
+    if os.path.exists(PAUDIO_CFG_PATH):
+        mtime = os.path.getmtime(PAUDIO_CFG_PATH)
+        now = time()
+        if (now - mtime) < seconds_old:
+            return True
+
+    return False
 
 
 def find_key_value(data, key, value):
@@ -75,12 +99,69 @@ def find_key_value(data, key, value):
     return False
 
 
-def _init():
+def complete_config():
+
+    def prepare_coreaudio_init_devices():
+        """
+        (i) THERE ARE TWO syntax options for Coreaudio capture device(s):
+
+        coreaudio:
+
+            devices:
+
+                capture:
+
+                    ---------------------------------------------------------------
+                    Normal coreaudio input device directly specified:
+
+                    channels: 2
+                    device: BlackHole 2ch
+                    format: F32_LE
+
+
+                    ---------------------------------------------------------------
+                    Alternative more than one section, to have source selection
+
+                    Mac Desktop:
+                        channels: 2
+                        device: BlackHole 2ch
+                        format: F32_LE
+
+                    TV:
+                        channels: 2
+                        device: UMC204HD 192k
+                        format: S24_3_LE
+                    ---------------------------------------------------------------
+
+
+                playback:
+
+                    channels: 2
+                    device: Altavoces del MacBook Pro
+                    format: F32_LE
+
+        --> If the ALTERNATIVE syntax was used, we complete the normal syntax here,
+            taking the first device found.
+
+        """
+
+
+        # If 'alternative' syntax was used,
+        # we need to generate a 'normal' capture section
+        if not CONFIG["coreaudio"]["devices"]["capture"].get('device'):
+
+            in_devices = CONFIG["coreaudio"]["devices"].get('capture')
+
+            _first_in_device, first_in_device_params = next( iter( in_devices.items() ) )
+
+            # Adding the 'normal' capture section
+            CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
+
 
     def complete_jack_params():
 
         if not 'device' in CONFIG["jack"] or not CONFIG["jack"]["device"]:
-            print(f'{Fmt.BOLD}BAD Jack config{Fmt.END}')
+            print(f'{Fmt.BOLD}(config) BAD Jack config{Fmt.END}')
             sys.exit()
 
         period   = CONFIG["jack"].get('period', 1024)
@@ -129,14 +210,14 @@ def _init():
                     with open(LSPK_YML_PATH, 'r') as f:
                         res = yaml.safe_load( f.read() )
                         if CONFIG["verbose"]:
-                            print(f'{Fmt.BLUE}Loudspeaker config file `{CONFIG["loudspeaker"]}/lspk.yml` was found{Fmt.END}')
+                            print(f'{Fmt.BLUE}(config) Loudspeaker config file `{CONFIG["loudspeaker"]}/lspk.yml` was found{Fmt.END}')
 
                 except Exception as e:
-                    print(f'{Fmt.RED}Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
+                    print(f'{Fmt.RED}(config) Cannot load {CONFIG["loudspeaker"]}/lspk.yml {str(e)}{Fmt.END}')
 
 
             if find_key_value(res, 'type', 'fir'):
-                print(f'{Fmt.BOLD}(config.py) FLOAT32 is assumed for the FIR filters{Fmt.END}')
+                print(f'{Fmt.RED}{Fmt.ITALIC}(config) FLOAT32 is assumed for raw pcm FIR files{Fmt.END}')
 
             return res
 
@@ -348,9 +429,7 @@ def _init():
         return LSPK_CONFIG
 
 
-    global PAUDIO_ADDR, PAUDIO_PORT, CAMILLADSP_PORT, \
-           CONFIG, LOUDSPEAKER, LSPKFOLDER
-
+    global CONFIG, LOUDSPEAKER, LSPKFOLDER
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
 
@@ -368,9 +447,9 @@ def _init():
         os.mkdir(LOGFOLDER)
 
     # Default addressing unless config.yml
-    PAUDIO_ADDR     = CONFIG.get('paudio_addr',     '0.0.0.0')
-    PAUDIO_PORT     = CONFIG.get('paudio_port',     9990)
-    CAMILLADSP_PORT = CONFIG.get('camilladsp_port', 1234)
+    CONFIG['paudio_addr']     = CONFIG.get('paudio_addr',     '0.0.0.0')
+    CONFIG['paudio_port']     = CONFIG.get('paudio_port',     9990)
+    CONFIG['camilladsp_port'] = CONFIG.get('camilladsp_port', 1234)
 
     # CamillaDSP activation wait (default 0.1 s)
     # If you experience problems with CamillaDSP on JACK in slow machines, like
@@ -382,9 +461,14 @@ def _init():
     if "jack" in CONFIG:
         complete_jack_params()
 
+    elif 'coreaudio' in CONFIG:
+        # We need to prepare Coreaudio capture section
+        prepare_coreaudio_init_devices()
+
+
     if not "samplerate" in CONFIG:
         CONFIG["samplerate"] = 44100
-        print(f'{Fmt.BOLD}\n!!! samplerate NOT configured, default to fs=44100\n{Fmt.END}')
+        print(f'{Fmt.BOLD}\n(config) !!! samplerate NOT configured, default to fs=44100\n{Fmt.END}')
 
     if not CONFIG.get("plugins"):
         CONFIG["plugins"] = []
@@ -474,10 +558,24 @@ def _init():
     if lspk_config.get('drc_gains'):
         CONFIG["drc_gains"] = lspk_config["drc_gains"]
 
+
+    write_pAudio_cfg(CONFIG)
+
     # DEBUG
     #print('--- pAudio ----')
     #print(CONFIG.keys())
     #print( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
 
 
-_init()
+if pAudio_cfg_is_recent():
+    print(f'{Fmt.GRAY}(config) loading pAudio_cfg from disk.{Fmt.END}')
+    try:
+        CONFIG = read_pAudio_cfg()
+    except Exception as e:
+        print(f'{Fmt.RED}{Fmt.BLINK}(config.py) PANIC reading: {PAUDIO_CFG_PATH}: {str(e)}{Fmt.END}')
+        sys.exit()
+
+else:
+    print(f'{Fmt.BLUE}(config) preparing pAudio_cfg ...{Fmt.END}')
+    complete_config()
+

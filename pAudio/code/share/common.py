@@ -33,29 +33,6 @@ class MyYamlIndent(yaml.SafeDumper):
         return super(MyYamlIndent, self).increase_indent(flow, False)
 
 
-def dict_compare(d1, d2, static=True):
-    """ Compare dictionaries
-
-        static: boolean to find only static keys changes, it is FASTER
-    """
-
-    if static:
-        changes = {k: (d1[k], d2[k]) for k in d1 if k in d2 and d1[k] != d2[k]}
-        return changes
-
-
-    keys1 = set(d1.keys())
-    keys2 = set(d2.keys())
-
-    interseccion = keys1.intersection(keys2)
-
-    changed = {k: (d1[k], d2[k]) for k in interseccion if d1[k] != d2[k]}
-    added   = {k: d2[k] for k in keys2 - keys1}
-    removed = {k: d1[k] for k in keys1 - keys2}
-
-    return changed, added, removed
-
-
 def loop_file_changed(filepath, what_to_do):
 
     class MyFileHandler(FileSystemEventHandler):
@@ -82,9 +59,26 @@ def loop_file_changed(filepath, what_to_do):
     observer.start()
 
 
-def write_pAudio_cfg(c):
-    with open(f'{LOGFOLDER}/pAudio_cfg', 'w') as f:
-        f.write( json.dumps(c, indent=2) )
+def dict_compare(d1, d2, static=True):
+    """ Compare dictionaries
+        static: boolean to find only static keys changes, it is FASTER
+    """
+
+    if static:
+        changes = {k: (d1[k], d2[k]) for k in d1 if k in d2 and d1[k] != d2[k]}
+        return changes
+
+
+    keys1 = set(d1.keys())
+    keys2 = set(d2.keys())
+
+    interseccion = keys1.intersection(keys2)
+
+    changed = {k: (d1[k], d2[k]) for k in interseccion if d1[k] != d2[k]}
+    added   = {k: d2[k] for k in keys2 - keys1}
+    removed = {k: d1[k] for k in keys1 - keys2}
+
+    return changed, added, removed
 
 
 def json_string_fix(cad):
@@ -543,7 +537,7 @@ def check_output(host, port, message, timeout=1.0, chunk_size=4096):
     return data.decode()
 
 
-def send_cmd( cmd, sender='', verbose=False, timeout=3, host=PAUDIO_ADDR, port=PAUDIO_PORT ):
+def send_cmd( cmd, sender='', verbose=False, timeout=3, host=CONFIG["paudio_addr"], port=CONFIG["paudio_port"] ):
     """ Sends a command to a pAudio server partner.
         Returns a string about the execution response or an error if so.
     """

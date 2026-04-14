@@ -64,7 +64,9 @@ def do(cmd_phrase):
 
         # forwarding to paudio_ctrl.py server
         case 'ctrl':
-            result = send_cmd( cmd_phrase, timeout=1, host=PAUDIO_ADDR, port=PAUDIO_PORT+1 )
+            result = send_cmd(  cmd_phrase, timeout=1,
+                                host=CONFIG["paudio_addr"],
+                                port=CONFIG["paudio_port"] + 1 )
 
         case _:
             # This should never occur because preamp is the defaulted as prefix

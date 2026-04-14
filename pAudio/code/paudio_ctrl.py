@@ -129,7 +129,7 @@ def loop_camilladsp_state2disk(period=3):
 
         while True:
 
-            CC = CamillaClient('127.0.0.1', CAMILLADSP_PORT)
+            CC = CamillaClient('127.0.0.1', CONFIG["camilladsp_port"])
 
             try:
                 CC.connect()

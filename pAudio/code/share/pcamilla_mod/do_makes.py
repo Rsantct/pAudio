@@ -270,6 +270,9 @@ def make_mixer_multi_way(pAudio_outputs):
 
     for dest, params in pAudio_outputs.items():
 
+        # This is because the configuration could be processed using json.dumps
+        dest = int(dest)
+
         way = params["name"]
 
         if way.endswith('.L') or way.endswith('.R'):
@@ -356,6 +359,9 @@ def make_xover_steps(pAudio_outputs, xo_filtername):
 
         if not out_params["name"]:
             continue
+
+        # This is because the configuration could be processed using json.dumps
+        out_idx = int(out_idx)
 
         if not 'sw' in out_params["name"]:
             # lo.R --> lo

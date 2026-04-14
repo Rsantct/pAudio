@@ -89,6 +89,8 @@ class Fmt:
     BRIGHTWHITE     = '\033[97m'
 
     BOLD            = '\033[1m'
+    ITALIC          = '\033[3m'
+    BOLD            = '\033[1m'
     UNDERLINE       = '\033[4m'
     BLINK           = '\033[5m'
     END             = '\033[0m'
