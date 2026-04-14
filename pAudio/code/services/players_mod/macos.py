@@ -12,7 +12,7 @@ import sys
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  json_string_fix, save_json_file, time_sec2hhmmss, \
+from common import  save_json_file, time_sec2hhmmss, \
                     read_json_file, PLAYER_INFO_PATH
 
 # List of players to be queried so that the response will be faster.
@@ -253,7 +253,7 @@ def loop_save_player_info(source=''):
 
 
 def _run_applescript(script='', who=''):
-    """ devuelve una cadena JSON o None
+    """ devuelve una cadena parseable por JSON o None
     """
 
     if not script:
@@ -318,6 +318,66 @@ def _info2paudio_metadata(info):
     return res
 
 
+def fix_osascript_info(txt):
+    """
+        oascript can provide double quotes or other simbols that will not work with json.loads, example:
+
+        {"app":"Spotify",
+            "state":"playing",
+            "track_num":"4",
+            "track":"Piano Sonata No. 17 in D Minor, Op. 31 No. 2 "Tempest": I. Largo - Allegro",
+            "track_uri":"spotify:track:5DUmA2IWnnmCOVJM4bIvP3",
+            "artist":"Ludwig van Beethoven",
+            "album":"Glenn Gould plays Beethoven: Piano Sonatas Nos. 1-3; 5-10; 12-14; 15-18; 23; 30-32",
+            "elapsed":24,
+            "duration":432826}
+
+        NOTICE
+            The above example txt has been splitted manually in lines for readability,
+            but it all arrives one after the other without separators
+
+        So we will manually process our matadata fields
+    """
+
+    result = {}
+
+    fields = ['"app":', '"state":', '"track_num":', '"track":', '"track_uri":', '"artist":', '"album":', '"elapsed":', '"duration":' ]
+
+    field_indices = []
+
+    for field in fields:
+
+        a = txt.index(field)
+        b = a + len(field)
+
+        field_indices.append( (field[1:-2], a, b) )
+
+    for n, i in enumerate(field_indices):
+
+
+        field = i[0]
+
+        ini = i[2]
+
+        if n  < len(field_indices) - 1:
+            end = field_indices[n+1][1] - 1
+
+        else:
+            end = -1
+
+        value = txt[ini:end]
+
+        if value.startswith('"') and value.endswith('"'):
+            value = value[1:-1]
+
+
+        # print(f'{field:12}', value) # debug
+
+        result[field] = value
+
+    return result
+
+
 def get_player_info():
     """
     """
@@ -333,7 +393,6 @@ def get_player_info():
 
         player_info = _run_applescript(script, who=player)
 
-
         if player_info:
 
             try:
@@ -343,8 +402,8 @@ def get_player_info():
 
                 try:
                     # comillas, dos puntos, etc estén bien formateadas para JSON
-                    player_info = json_string_fix(player_info)
-                    player_info = json.loads(player_info)
+                    tmp = fix_osascript_info(player_info)
+                    player_info = json.loads(tmp)
 
                 except Exception as e:
                     print(f'(players_macos) Error decoding JSON from {player}: {str(e)}')
