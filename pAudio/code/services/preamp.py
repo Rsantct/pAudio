@@ -137,63 +137,6 @@ def init():
         save_json_file(STATE, PREAMP_STATE_PATH)
 
 
-    def prepare_coreaudio_init_devices():
-        """
-        (i) THERE ARE TWO syntax options for Coreaudio capture device(s):
-
-        coreaudio:
-
-            devices:
-
-                capture:
-
-                    ---------------------------------------------------------------
-                    Normal coreaudio input device directly specified:
-
-                    channels: 2
-                    device: BlackHole 2ch
-                    format: F32_LE
-
-
-                    ---------------------------------------------------------------
-                    Alternative more than one section, to have source selection
-
-                    Mac Desktop:
-                        channels: 2
-                        device: BlackHole 2ch
-                        format: F32_LE
-
-                    TV:
-                        channels: 2
-                        device: UMC204HD 192k
-                        format: S24_3_LE
-                    ---------------------------------------------------------------
-
-
-                playback:
-
-                    channels: 2
-                    device: Altavoces del MacBook Pro
-                    format: F32_LE
-
-        --> If the ALTERNATIVE syntax was used, we complete the normal syntax here,
-            taking the first device found.
-
-        """
-
-
-        # If 'alternative' syntax was used,
-        # we need to generate a 'normal' capture section
-        if not CONFIG["coreaudio"]["devices"]["capture"].get('device'):
-
-            in_devices = CONFIG["coreaudio"]["devices"].get('capture')
-
-            first_in_device, first_in_device_params = next( iter( in_devices.items() ) )
-
-            # Adding the 'normal' capture section
-            CONFIG["coreaudio"]["devices"]["capture"] = first_in_device_params
-
-
     global STATE, CONFIG, SOURCES, TARGET_SETS, XO_SETS, DRC_SETS
 
 
@@ -319,9 +262,6 @@ def init():
 
     elif CONFIG.get('coreaudio'):
 
-        # 1st we need to prepare Coreaudio capture section, see above funcion
-        prepare_coreaudio_init_devices()
-
         STATE["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
         STATE["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
 
@@ -341,6 +281,7 @@ def init():
     # Force values
     STATE["dsp_buffer_size"] = 0
     STATE["extra_delay"] = 0
+
 
     # Initialize camillaDSP
     cdsp_init = CAM.init_camilladsp( pAudio_config=CONFIG )
@@ -370,8 +311,8 @@ def init():
 
         # set a WARNING message
         camilla_error = get_camilladsp_last_error() # {date:xxx, time:xxx, error:xxx}
-        send_cmd(f"ctrl warning clear", port=PAUDIO_PORT+1)
-        send_cmd(f"ctrl warning set {camilla_error['error']}", port=PAUDIO_PORT+1)
+        send_cmd(f"ctrl warning clear", port=CONFIG["paudio_port"]+1)
+        send_cmd(f"ctrl warning set {camilla_error['error']}", port=CONFIG["paudio_port"]+1)
 
         sys.exit()
 
