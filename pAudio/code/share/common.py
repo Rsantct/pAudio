@@ -14,7 +14,6 @@ from    datetime    import datetime
 import  yaml
 import  json
 import  shlex
-import  re
 from    fmt         import Fmt
 import  sys
 import  ipaddress
@@ -32,29 +31,6 @@ class MyYamlIndent(yaml.SafeDumper):
     def increase_indent(self, flow=False, indentless=False):
         # Force lists having indentation relative to the parent, for readability
         return super(MyYamlIndent, self).increase_indent(flow, False)
-
-
-def dict_compare(d1, d2, static=True):
-    """ Compare dictionaries
-
-        static: boolean to find only static keys changes, it is FASTER
-    """
-
-    if static:
-        changes = {k: (d1[k], d2[k]) for k in d1 if k in d2 and d1[k] != d2[k]}
-        return changes
-
-
-    keys1 = set(d1.keys())
-    keys2 = set(d2.keys())
-
-    interseccion = keys1.intersection(keys2)
-
-    changed = {k: (d1[k], d2[k]) for k in interseccion if d1[k] != d2[k]}
-    added   = {k: d2[k] for k in keys2 - keys1}
-    removed = {k: d1[k] for k in keys1 - keys2}
-
-    return changed, added, removed
 
 
 def loop_file_changed(filepath, what_to_do):
@@ -83,38 +59,34 @@ def loop_file_changed(filepath, what_to_do):
     observer.start()
 
 
-def write_pAudio_cfg(c):
-    with open(f'{LOGFOLDER}/pAudio_cfg', 'w') as f:
-        f.write( json.dumps(c, indent=2) )
-
-
-def json_string_fix(text):
+def json_string_fix(cad):
     """ Example of a raw string that cannot be parsed by json.loads because nested double quotes (")
 
         {"app":"Spotify","state":"playing","track":"L'elisir d'amore / Act 1: "Signor sargente" - Excerpt","artist":"Gaetano Donizetti","album":"Donizetti:L'elisir d'amore - Highlights","elapsed":19,"duration":161266}'
-
-        This one has also confusing colon  "Funeral March":
-
-        {"app":"Spotify","state":"playing","track_num":"14","track":"Piano Sonata No. 12 in A-Flat Major, Op. 26 "Funeral March": IV. Allegro","track_uri":"spotify:track:0Nnnsk6DJ2CPRBYKCObGtQ","artist":"Ludwig van Beethoven","album":"Glenn Gould plays Beethoven: Piano Sonatas Nos. 1-3; 5-10; 12-14; 15-18; 23; 30-32","elapsed":151,"duration":159640}
     """
 
-    # 1. Buscamos el patrón "Clave":"Valor"
-    # Grupo 1: ("nombre_clave":")
-    # Grupo 2: (el contenido del valor)
-    # Grupo 3: (", o "}) -> El delimitador real
-    pattern = r'(".*?")\s*:\s*"(.*?)"(?=\s*[,}])'
+    for i, c in enumerate(cad):
 
-    def clean(match):
-        key = match.group(1)
-        content = match.group(2)
-        # Escapamos todas las comillas dobles dentro del contenido
-        fixed_content = content.replace('"', '\\"')
-        return f'{key}:"{fixed_content}"'
+        if c == '"':
 
-    # Aplicamos la limpieza a los campos de texto
-    processed = re.sub(pattern, clean, text)
+            if cad[i - 1] in ('{', '}', ':'):
+                continue
 
-    return processed
+            if cad[i + 1] in ('{', '}'):
+                continue
+
+            if cad[i - 2 : i] in ('",'):
+                continue
+
+            if cad[i - 1 : i + 1] in (',"'):
+                continue
+
+            if cad[i : i + 2] in ('":', '",'):
+                continue
+
+            cad = cad[ : i] + "'" + cad[i + 1 :]
+
+    return cad
 
 
 def get_macros(only_web_macros=True):
@@ -543,7 +515,7 @@ def check_output(host, port, message, timeout=1.0, chunk_size=4096):
     return data.decode()
 
 
-def send_cmd( cmd, sender='', verbose=False, timeout=3, host=PAUDIO_ADDR, port=PAUDIO_PORT ):
+def send_cmd( cmd, sender='', verbose=False, timeout=3, host=CONFIG["paudio_addr"], port=CONFIG["paudio_port"] ):
     """ Sends a command to a pAudio server partner.
         Returns a string about the execution response or an error if so.
     """
