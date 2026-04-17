@@ -33,8 +33,8 @@ def print_header():
     load = round(CC.status.processing_load(), 1)
     print('LOAD:        ', load)
 
-    cap_dev = '--'
-    pbk_dev = '--'
+    cap_dev = '- not configured -'
+    pbk_dev = '- not configured -'
     chunksize = 0
 
     config = CC.config.active()
@@ -49,8 +49,8 @@ def print_header():
         if config.get('devices', {}).get('playback', {}):
             pbk_dev = config['devices']['playback']['device']
 
-    print('CAPTURE:     ', cap_dev)
-    print('PLAYBACK:    ', pbk_dev)
+    print('CAPTURE_DEV: ', cap_dev)
+    print('PLAYBK_DEV:  ', pbk_dev)
     print()
 
     CC.disconnect()
