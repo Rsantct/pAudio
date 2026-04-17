@@ -66,12 +66,13 @@ def update_lspk(pAudio_config, cam_config):
             # skip any other parameters (i.e. gains)
             if not param in ('L', 'R'):
                 continue
+
             else:
                 ch = param
 
             for filter_id, filter_params in filters.items():
 
-                tmp = f'drc_{set_name}_{filter_id:02}_{ch}'
+                tmp = f'drc_{set_name}_{filter_id:0>2}_{ch}'
 
                 cam_config["filters"][tmp] = filter_params
 
@@ -118,7 +119,7 @@ def update_lspk(pAudio_config, cam_config):
 
             for f in pAudio_config["drc"][first_drc_set][ch]:
 
-                tmp = f'drc_{first_drc_set}_{f:02}_{ch}'
+                tmp = f'drc_{first_drc_set}_{f:0>2}_{ch}'
 
                 if ch == 'L':
                     pipeline_drc_L_step_names.append(tmp)
