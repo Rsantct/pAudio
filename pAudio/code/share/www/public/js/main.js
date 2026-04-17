@@ -1247,17 +1247,20 @@ async function ck_paudio_restart() {
 
 async function omd_onoff(mode) {
 
-    let msg = ('Are you sure to ' + mode.toUpperCase() + ' pAudio?');
-    let cmd = 'ctrl restart_paudio'
+    let what = 'pAudio';
+    let cmd  = 'ctrl restart_paudio ' + mode
 
     if ( web_config["onoff"].includes('amp') ){
-                msg = 'Are you sure to ' + mode.toUpperCase() + ' the AMPLIFIER?'
-        cmd = 'ctrl amp_switch'
+        what = 'AMPLIFIER';
+        cmd  = 'ctrl amp_switch ' + mode
     }
+
+    const msg = 'Are you sure to ' + mode.toUpperCase() + ' ' + what;
+
 
     const ays = window.confirm( msg );
     if (ays){
-        const ans = await mc.send_cmd( cmd + ' ' + mode );
+        const ans = await mc.send_cmd( cmd  );
         if (ans){
             window.alert( ans );
         }
