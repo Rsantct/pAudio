@@ -22,11 +22,6 @@ if not raddr:
 # Stopping local players
 Popen('mpc pause 1>/dev/null 2>&1', shell=True)
 
-# Set remote XO => mp
-remote_ans = send_cmd('set_xo mp', host=raddr, port=rport)
-if not remote_ans == 'done':
-    print(f'{Fmt.RED}Cannot set XO to \'mp\' in {REM_SRC_NAME}{Fmt.END}')
-
 # Set local source
 local_ans = send_cmd(f'source {REM_SRC_NAME}', timeout=10)
 if not local_ans == 'ordered':
