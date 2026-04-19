@@ -16,7 +16,7 @@ REM_SRC_NAME = 'remoteSalon'
 # Getting remote address
 raddr, rport = get_remote_source_addr_port(REM_SRC_NAME)
 if not raddr:
-    print(f'({ME}) ERROR getting remote source: {REM_SRC_NAME}')
+    print(f'ERROR getting remote source: {REM_SRC_NAME}')
     sys.exit()
 
 # Stopping local players
