@@ -441,6 +441,16 @@ def set_source(sname):
     """ Jack and Coreaudio have different source management
     """
 
+    def get_remote_state(rhost, rport):
+        rstate = send_cmd(f'state', host=rhost, port=rport, timeout=1)
+        try:
+            rstate = json.loads(rstate)
+        except:
+            print(f'(preamp) error getting remote state')
+            rstate = {'xo_set':'mp', 'xo_latency':0}
+        return rstate
+
+
     def read_remote_source_config(sname):
         """ Reread the remote source config from the config.py file,
             so that on the fly configuration changes can be applied
@@ -573,12 +583,13 @@ def set_source(sname):
 
         # Remote source
         if 'remote' in sname:
-            remote_cfg     = read_remote_source_config(sname)
-            zita_buff      = remote_cfg.get('zita_buffer_ms')
-            remote_ip      = remote_cfg.get('remote_addr')
-            remote_port    = remote_cfg.get('remote_port', 9990)
-            remote_delay   = remote_cfg.get('remote_delay', 0)
-            do_track_level = remote_cfg.get('remote_track_level')
+            remote_cfg        = read_remote_source_config(sname)
+            zita_buff         = remote_cfg.get('zita_buffer_ms')
+            remote_ip         = remote_cfg.get('remote_addr')
+            remote_port       = remote_cfg.get('remote_port', 9990)
+            remote_delay      = remote_cfg.get('remote_delay', 0)
+            do_track_level    = remote_cfg.get('remote_track_level')
+            remote_xo_latency = get_remote_state(remote_ip, remote_port).get('xo_latency', 0)
 
             # Tell the remote to track its volume to the local end (optional)
             if do_track_level:
@@ -599,6 +610,7 @@ def set_source(sname):
 
                     # Remote delay (optional)
                     if remote_delay:
+                        remote_delay = int(round( remote_delay - remote_xo_latency ))
                         send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
 
                     # Balance the local volume as the remote side

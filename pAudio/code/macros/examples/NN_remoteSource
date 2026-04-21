@@ -16,16 +16,11 @@ REM_SRC_NAME = 'remoteSalon'
 # Getting remote address
 raddr, rport = get_remote_source_addr_port(REM_SRC_NAME)
 if not raddr:
-    print(f'({ME}) ERROR getting remote source: {REM_SRC_NAME}')
+    print(f'ERROR getting remote source: {REM_SRC_NAME}')
     sys.exit()
 
 # Stopping local players
 Popen('mpc pause 1>/dev/null 2>&1', shell=True)
-
-# Set remote XO => mp
-remote_ans = send_cmd('set_xo mp', host=raddr, port=rport)
-if not remote_ans == 'done':
-    print(f'{Fmt.RED}Cannot set XO to \'mp\' in {REM_SRC_NAME}{Fmt.END}')
 
 # Set local source
 local_ans = send_cmd(f'source {REM_SRC_NAME}', timeout=10)

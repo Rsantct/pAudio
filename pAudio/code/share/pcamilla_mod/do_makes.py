@@ -4,16 +4,20 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 import subprocess as sp
+import os
+
+UHOME = os.path.expanduser('~')
 
 CAMILLADSP_VERSION = 3
 try:
-    tmp = sp.check_output('camilladsp --version'.split()).decode().lower()
+    tmp = sp.check_output(f'{UHOME}/bin/camilladsp --version', shell=True).decode().lower()
     if 'camilladsp' in tmp:
         tmp = tmp.split()[1][0]
         if tmp.isdigit():
             CAMILLADSP_VERSION = int(tmp)
+
 except Exception as e:
-    pass
+    print(f'(do_makes) error getting the CamillaDSP version: {str(e)}')
 
 
 def make_gain_filter(gain, description=''):

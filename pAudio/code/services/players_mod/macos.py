@@ -295,21 +295,21 @@ def _info2paudio_metadata(info):
             track_format = f'{fs}:16:2'
             # 2025-11 spotify premium lossless
             bitrate = '1411'
-            time_tot = time_sec2hhmmss( info.get('duration') / 1000 )
+            time_tot = time_sec2hhmmss( int(info.get('duration')) / 1000 )
 
         case _:
-            time_tot = time_sec2hhmmss( info.get('duration') )
+            time_tot = time_sec2hhmmss( int(info.get('duration')) )
 
 
     res = { 'player':       info.get('app', ''),
             'state':        info.get('state', 'stop'),
-            'time_pos':     time_sec2hhmmss( info.get('elapsed') ),
-            'time_tot':     time_tot,
-            'bitrate':      bitrate,
+            'time_pos':     str( time_sec2hhmmss( int(info.get('elapsed')) ) ),
+            'time_tot':     str(time_tot),
+            'bitrate':      str(bitrate),
             'artist':       info.get('artist'),
             'album':        info.get('album'),
             'title':        info.get('track'),
-            'track_num':    info.get('track_num'),
+            'track_num':    str(info.get('track_num')),
             'track_uri':    info.get('track_uri'),
             'tracks_tot':   '',
             'format':       track_format
@@ -370,8 +370,8 @@ def fix_osascript_info(txt):
         if value.startswith('"') and value.endswith('"'):
             value = value[1:-1]
 
-
-        # print(f'{field:12}', value) # debug
+        # DEBUG
+        #print(type(value), f'{field:12}', value)
 
         result[field] = value
 
@@ -402,8 +402,7 @@ def get_player_info():
 
                 try:
                     # comillas, dos puntos, etc estén bien formateadas para JSON
-                    tmp = fix_osascript_info(player_info)
-                    player_info = json.loads(tmp)
+                    player_info = fix_osascript_info(player_info)
 
                 except Exception as e:
                     print(f'(players_macos) Error decoding JSON from {player}: {str(e)}')
