@@ -233,6 +233,7 @@ def init():
     STATE["polarity"]       = '++'
     STATE["compressor"]     = 'off'
     STATE["lr_swapped"]     = False
+    STATE["io_latency"]     = CONFIG.get('io_latency', 20)
 
     # Update state with both input and output devices
     #
@@ -452,25 +453,19 @@ def set_source(sname):
 
 
     def read_remote_source_config(sname):
-        """ Reread the remote source config from the config.py file,
+        """ Live read the remote source config from the config.py file,
             so that on the fly configuration changes can be applied
 
             Example:
-                { 'remote_addr': '192.168.1.57',
+                { 'remote_addr':        '192.168.1.57',
                   'remote_track_level': True,
-                  'remote_delay': 55,
-                  'local_delay': 0
+                  'zita_buffer_ms':     50
                 }
-
         """
         with open(f'{MAINFOLDER}/config.yml', 'r') as f:
             config = yaml.safe_load(f)
 
         rem_cfg = config["jack"]["sources"].get(sname, {})
-
-        # we also append the common zita buffer so that
-        # on-the-fly changes can be applied.
-        rem_cfg["zita_buffer_ms"] = config["jack"].get('zita_buffer_ms', 20)
 
         return rem_cfg
 
@@ -587,9 +582,15 @@ def set_source(sname):
             zita_buff         = remote_cfg.get('zita_buffer_ms')
             remote_ip         = remote_cfg.get('remote_addr')
             remote_port       = remote_cfg.get('remote_port', 9990)
-            remote_delay      = remote_cfg.get('remote_delay', 0)
             do_track_level    = remote_cfg.get('remote_track_level')
             remote_xo_latency = get_remote_state(remote_ip, remote_port).get('xo_latency', 0)
+            remote_io_latency = get_remote_state(remote_ip, remote_port).get('io_latency', 0)
+            local_xo_latency  = read_state_from_disk().get('xo_latency', 0)
+            local_io_latency  = read_state_from_disk().get('io_latency', 0)
+
+            local_latency  = local_io_latency  + local_xo_latency
+            remote_latency = remote_io_latency + remote_xo_latency + zita_buff
+            latency_compensation = local_latency - remote_latency
 
             # Tell the remote to track its volume to the local end (optional)
             if do_track_level:
@@ -608,9 +609,9 @@ def set_source(sname):
                     # Lower the local volume initially
                     do_levels( 'level', -30.0 )
 
-                    # Remote delay (optional)
-                    if remote_delay:
-                        remote_delay = int(round( remote_delay - remote_xo_latency ))
+                    # Remote delay
+                    if latency_compensation < 0:
+                        remote_delay = int(round( abs(latency_compensation) ))
                         send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
 
                     # Balance the local volume as the remote side
@@ -628,10 +629,10 @@ def set_source(sname):
             #
             # If a new buffer setting is found under the current config.yml,
             # then we restart the local zita-n2j
-            if zita_buff != CONFIG["jack"]["zita_buffer_ms"]:
+            if zita_buff != CONFIG["jack"]["sources"][sname]["zita_buffer_ms"]:
                 print(f'{Fmt.BLUE}zita-n2j appliyng new buffer: {zita_buff} ms{Fmt.END}')
                 zita_local_restart(raddr, rudpport, zita_buff)
-                CONFIG["jack"]["zita_buffer_ms"] = zita_buff
+                CONFIG["jack"]["sources"][sname]["zita_buffer_ms"] = zita_buff
                 write_pAudio_cfg(CONFIG)
             #
             # Anyway we check if the local zita-n2j receiver is listening from start up.
@@ -640,10 +641,11 @@ def set_source(sname):
                 if not process_is_running( pattern ):
                     zita_local_restart(raddr, rudpport, zita_buff)
 
-        # Delay ms (optional)
-        delay = SOURCES[sname].get('local_delay', 0.0)
-        if set_delay( delay ) == 'done':
-            STATE["extra_delay"] = delay
+            # Local delay
+            if latency_compensation > 0:
+                local_delay = int(round( latency_compensation ))
+                if set_delay( local_delay ) == 'done':
+                    STATE["extra_delay"] = local_delay
 
         if source_is_available:
 
