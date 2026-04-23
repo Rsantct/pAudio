@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-  for testing purposes
+  Monitor the  CamillaDSP signal level and status,
+  or gets the current whole configuration or the pipeline
+
+  Usage:    paudio_camilla_info.py [--config] [--pipeline]
 """
 
 import  os
@@ -8,6 +11,7 @@ import  sys
 import  yaml
 from    time import sleep
 import  platform
+import  json
 from    camilladsp import CamillaClient
 
 UHOME = os.path.expanduser('~')
@@ -85,7 +89,7 @@ def print_current():
     CC.disconnect()
 
 
-def camillacdsp_connect():
+def camilladsp_connect():
 
     try:
         CC.connect()
@@ -109,17 +113,45 @@ def load_pAudio_cfg():
 
 if __name__ == "__main__":
 
+    online = False
+    mode = 'monitor'
+    for opc in sys.argv[1:]:
+
+        if '-c' in opc:
+            mode = 'get_config'
+
+        elif '-p' in opc:
+            mode = 'get_pipeline'
+
+        elif '-h' in opc:
+            print(__doc__)
+            sys.exit()
+
     PORT  = load_pAudio_cfg().get('camilladsp_port', 1234)
 
     CC = CamillaClient('127.0.0.1', PORT)
 
-    if camillacdsp_connect():
-
-        print_header()
-
-    else:
+    # not available
+    if not camilladsp_connect():
         print('NOT_AVAILABLE')
+    else:
+        online = True
 
+    # config mode
+    if mode in ('get_config', 'get_pipeline'):
+        if not online:
+            sys.exit()
+        CC.connect()
+        c = CC.config.active()
+        if mode == 'get_config':
+            print( json.dumps(c, indent=2) )
+        elif mode == 'get_pipeline':
+            print( json.dumps(c["pipeline"], indent=2) )
+        sys.exit()
+
+    # loop status
+    if online:
+        print_header()
 
     while True:
 
@@ -130,4 +162,3 @@ if __name__ == "__main__":
             print('NOT_AVAILABLE')
 
         sleep(1.5)
-
