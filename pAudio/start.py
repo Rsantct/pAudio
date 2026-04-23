@@ -182,11 +182,9 @@ def prepare_zita_links():
 
         Further info at doc/80_Multiroom_pe.audio.sys.md
 
-        Here we just prepare the local receivers and the addresses
-        and ports mapping to use.
+        Here we just prepare the addresses and ports mapping to use.
     """
-    UDP_PORT = CONFIG["jack"]["zita_udp_base"]
-    BUFF_MS  = CONFIG["jack"]["zita_buffer_ms"]
+    udp_port = CONFIG["jack"].get('zita_udp_base', 65000)
 
     # Iterare remoteSOURCES
     zita_link_udp_ports = {}
@@ -201,16 +199,10 @@ def prepare_zita_links():
         # Append the UPD_PORT to zita_link_udp_ports
         zita_link_udp_ports[source_name] = { 'addr':    params["ip"],
                                              'port':    params["port"],
-                                             'udpport': UDP_PORT}
-
-        # Launch the local receiver:
-        if ip_is_reachable(params["ip"]):
-            zita_local_restart( params["ip"], UDP_PORT, BUFF_MS )
-            if VERBOSE:
-                print(f'{Fmt.GRAY}(start) running local zita-n2j: {params["jport"]}{Fmt.END}')
+                                             'udpport': udp_port}
 
         # (i) zita will use 2 consecutive ports, so let's space by 10 for simplicity
-        UDP_PORT += 10
+        udp_port += 10
 
     # (**) Saving the zita's UDP PORTS for future use because
     #     the remote sender could not be online at the moment ...
