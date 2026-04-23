@@ -3,6 +3,9 @@ paudio_port:    9990
 
 samplerate: 48000
 
+# io latency needs to be manually measured
+io_latency: 23.2
+
 # JACK
 jack:
 
