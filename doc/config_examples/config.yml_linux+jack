@@ -29,6 +29,7 @@ jack:
             zita_buffer_ms:     50
 
     # Optional config for zita-njbridge based multiroom remote sources
+    # (default is 65000)
     zita_udp_base:          65000
 
 
