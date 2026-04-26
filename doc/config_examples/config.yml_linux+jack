@@ -3,9 +3,6 @@ paudio_port:    9990
 
 samplerate: 48000
 
-# io latency needs to be manually measured
-io_latency: 23.2
-
 # JACK
 jack:
 
@@ -27,6 +24,12 @@ jack:
             remote_addr:        192.168.1.57
             remote_track_level: true
             zita_buffer_ms:     50
+            # Experimental value that depends on zita_buffer.
+            # It must be taken by selecting the minimum delay
+            # filtering sets available on both ends
+            # (if negative will be applied to the remote end)
+            compensation_delay: 13
+
 
     # Optional config for zita-njbridge based multiroom remote sources
     # (default is 65000)
