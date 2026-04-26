@@ -229,20 +229,19 @@ def init():
 
     # Forced init settings
     STATE["loudspeaker"]    = CONFIG["loudspeaker"]
-    STATE["fs"]             = CONFIG["samplerate"]
+    STATE["samplerate"]     = CONFIG["samplerate"]
     STATE["polarity"]       = '++'
     STATE["compressor"]     = 'off'
     STATE["lr_swapped"]     = False
-    STATE["io_latency"]     = CONFIG.get('io_latency', 20)
 
     # Update state with both input and output devices
     #
     if CONFIG.get('jack'):
 
-        STATE["jack_buffer_size"] = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
-        STATE["jack_buffer_ms"]   = int(round(STATE["jack_buffer_size"] / STATE["fs"] * 1000))
-        STATE["input_dev"]        = ''
-        STATE["output_dev"]       = ''
+        STATE["jack_buffer"]    = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
+        STATE["input_dev"]      = ''
+        STATE["output_dev"]     = ''
+        STATE["output_latency"] = round(STATE["jack_buffer"] / STATE["samplerate"] * 1000, 1)
 
         # open a temporary jack.Client
         try:
@@ -263,12 +262,15 @@ def init():
 
     elif CONFIG.get('coreaudio'):
 
-        STATE["input_dev"]  = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
-        STATE["output_dev"] = CONFIG["coreaudio"]["devices"]["playback"]["device"]
+        STATE["input_dev"]      = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
+        STATE["output_dev"]     = CONFIG["coreaudio"]["devices"]["playback"]["device"]
+        STATE["output_latency"] = 12   # PENDING TO ESTIMATE BY QUERYING COREAUDIO
 
     else:
+
         STATE["input_dev"]  = 'unknown'
         STATE["output_dev"] = 'unknown'
+        STATE["output_latency"] = 0
 
     # Update state with jack buffer if so
     if not CONFIG.get('jack'):
@@ -280,7 +282,6 @@ def init():
 
 
     # Force values
-    STATE["dsp_buffer_size"] = 0
     STATE["extra_delay"] = 0
 
 
@@ -289,8 +290,8 @@ def init():
 
     if cdsp_init == 'done':
 
-        STATE["dsp_buffer_size"] = CAM.CC.config.active()["devices"]["chunksize"]
-        STATE["dsp_buffer_ms"]   = int(round(STATE["dsp_buffer_size"] / STATE["fs"] * 1000))
+        STATE["dsp_buffer"]  = CAM.CC.config.active()["devices"]["chunksize"]
+        STATE["dsp_latency"] = round(STATE["dsp_buffer"] / STATE["samplerate"] * 1000, 1)
 
         # Resuming audio settings on the CAM
         resume_audio()
@@ -578,19 +579,18 @@ def set_source(sname):
 
         # Remote source
         if 'remote' in sname:
-            remote_cfg        = read_remote_source_config(sname)
-            zita_buff         = remote_cfg.get('zita_buffer_ms')
-            remote_ip         = remote_cfg.get('remote_addr')
-            remote_port       = remote_cfg.get('remote_port', 9990)
-            do_track_level    = remote_cfg.get('remote_track_level')
-            remote_xo_latency = get_remote_state(remote_ip, remote_port).get('xo_latency', 0)
-            remote_io_latency = get_remote_state(remote_ip, remote_port).get('io_latency', 0)
-            local_xo_latency  = read_state_from_disk().get('xo_latency', 0)
-            local_io_latency  = read_state_from_disk().get('io_latency', 0)
+            remote_cfg         = read_remote_source_config(sname)
+            zita_buff          = remote_cfg.get('zita_buffer_ms', 50)
+            remote_ip          = remote_cfg.get('remote_addr')
+            remote_port        = remote_cfg.get('remote_port', 9990)
+            do_track_level     = remote_cfg.get('remote_track_level', True)
+            compensation_delay = remote_cfg.get('compensation_delay', 0)
 
-            local_latency  = local_io_latency  + local_xo_latency
-            remote_latency = remote_io_latency + remote_xo_latency + zita_buff
-            latency_compensation = local_latency - remote_latency
+            remote_xo_latency   = get_remote_state(remote_ip, remote_port).get('xo_latency', 0)
+            local_xo_latency    = read_state_from_disk().get('xo_latency', 0)
+
+            latency_compensation = compensation_delay + remote_xo_latency - local_xo_latency
+            latency_compensation = round( abs(latency_compensation) )
 
             # Tell the remote to track its volume to the local end (optional)
             if do_track_level:
@@ -609,12 +609,13 @@ def set_source(sname):
                     # Lower the local volume initially
                     do_levels( 'level', -30.0 )
 
-                    # Remote delay
+                    # Remote delay, local delay = 0
                     if latency_compensation < 0:
-                        remote_delay = int(round( abs(latency_compensation) ))
-                        send_cmd(f'add_delay {remote_delay}', host=remote_ip, port=remote_port)
+                        send_cmd(f'add_delay {latency_compensation}', host=remote_ip, port=remote_port)
+                        if set_delay( 0 ) == 'done':
+                            STATE["extra_delay"] = 0
 
-                    # Balance the local volume as the remote side
+                    # Balance the local volume as that at the remote side
                     tmp = send_cmd(f'state', host=remote_ip, port=remote_port)
                     try:
                         rem_vol = tmp.get('level', -30)
@@ -641,11 +642,11 @@ def set_source(sname):
                 if not process_is_running( pattern ):
                     zita_local_restart(raddr, rudpport, zita_buff)
 
-            # Local delay
+            # Local delay, remmote delay = 0
             if latency_compensation > 0:
-                local_delay = int(round( latency_compensation ))
-                if set_delay( local_delay ) == 'done':
-                    STATE["extra_delay"] = local_delay
+                if set_delay( latency_compensation ) == 'done':
+                    STATE["extra_delay"] = latency_compensation
+                send_cmd(f'add_delay 0', host=remote_ip, port=remote_port)
 
         if source_is_available:
 
