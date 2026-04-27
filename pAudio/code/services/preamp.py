@@ -14,6 +14,7 @@ import  sys
 import  os
 import  subprocess as sp
 import  json
+import  threading
 
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
@@ -441,6 +442,9 @@ def set_xo(xoID):
 
 def set_source(sname):
     """ Jack and Coreaudio have different source management
+
+        NOTICE: for remote jack sources zita buffer and compensation delay
+                will be dynamically changed if config.yml has been modified
     """
 
     def get_remote_state(rhost, rport):
@@ -549,6 +553,27 @@ def set_source(sname):
                         STATE[setting] = on_init_value
 
 
+    def order_local_and_remote_delays(ld, rd):
+
+        def set_local():
+            if set_delay( ld ) == 'done':
+                STATE["extra_delay"] = ld
+                print(f'(preamp.py) set local delay: {ld}')
+            else:
+                print('(preamp.py) cannot set local delay')
+
+        def set_remote():
+            if send_cmd(f'add_delay {rd}', host=remote_ip, port=remote_port) == 'done':
+                print(f'(preamp.py) set remote delay: {rd}')
+            else:
+                print('(preamp.py) cannot set remote delay')
+
+        j1 = threading.Thread(target=set_local)
+        j2 = threading.Thread(target=set_remote)
+        j1.start()
+        j2.start()
+
+
     source_is_available = True
     result = 'no changes'
 
@@ -609,11 +634,15 @@ def set_source(sname):
                     # Lower the local volume initially
                     do_levels( 'level', -30.0 )
 
-                    # Remote delay, local delay = 0
+                    # Set local and remote delays
                     if latency_compensation < 0:
-                        send_cmd(f'add_delay {latency_compensation}', host=remote_ip, port=remote_port)
-                        if set_delay( 0 ) == 'done':
-                            STATE["extra_delay"] = 0
+                        order_local_and_remote_delays(0, latency_compensation)
+
+                    elif latency_compensation > 0:
+                        order_local_and_remote_delays(latency_compensation, 0)
+
+                    else:
+                        order_local_and_remote_delays(0, 0)
 
                     # Balance the local volume as that at the remote side
                     tmp = send_cmd(f'state', host=remote_ip, port=remote_port)
@@ -641,12 +670,6 @@ def set_source(sname):
                 pattern = f'zita_n2j_{ remote_ip.split(".")[-1] }'
                 if not process_is_running( pattern ):
                     zita_local_restart(raddr, rudpport, zita_buff)
-
-            # Local delay, remmote delay = 0
-            if latency_compensation > 0:
-                if set_delay( latency_compensation ) == 'done':
-                    STATE["extra_delay"] = latency_compensation
-                send_cmd(f'add_delay 0', host=remote_ip, port=remote_port)
 
         if source_is_available:
 
