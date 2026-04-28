@@ -85,9 +85,9 @@ fi
 
 if [[ $CONFIG_EXISTS == 'yes' ]]; then
     echo
-    echo "restarting pAudio ..."
+    echo "(i) You MUST restart pAudio."
     echo
-    ~/bin/paudio_restart.sh
+    #~/bin/paudio_restart.sh
 fi
 
 echo

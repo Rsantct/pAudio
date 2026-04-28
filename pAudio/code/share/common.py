@@ -1099,7 +1099,7 @@ def zita_remote_restart(raddr='', ctrl_port=0, zita_port=0, mode='restart'):
     return result
 
 
-def zita_local_restart(raddr='', udp_port=0, buff_size=20, mode='restart', jport=''):
+def zita_local_restart(raddr='', udp_port=65000, buff_size=20, mode='restart', jport=''):
     """
         Run zita-n2j listen ports on the multiroom receiver's end.
 
