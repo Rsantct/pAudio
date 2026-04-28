@@ -167,7 +167,7 @@ def init():
     DRC_SETS = ['none'] + list( CONFIG["drc"].keys() )
 
     # Default SOURCE set to 'Desktop' or 'none'
-    if not STATE["source"] in ('Desktop', 'none'):
+    if not STATE.get('source', '') in ('Desktop', 'none'):
         STATE["source"] = 'none'
 
     # ON_INIT optional user config settings having precedence over the saved state:
