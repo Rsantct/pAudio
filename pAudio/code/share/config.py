@@ -259,7 +259,10 @@ def complete_config():
 
                         fir_path = f'{LSPKFOLDER}/{fs}/drc.{ch}.{set_name}.pcm'
 
-                        channels[ch][1] = make_fir_filter(fir_path)
+                        if os.path.isfile(fir_path):
+                            channels[ch][1] = make_fir_filter(fir_path)
+                        else:
+                            raise Exception (f'DRC set file not found: {fir_path}')
 
                     LSPK_CONFIG["drc"][set_name] = channels
 
