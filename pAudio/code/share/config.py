@@ -17,7 +17,6 @@ MAINFOLDER          = f'{UHOME}/pAudio'
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
 LSPKFOLDER          = f''
 LOUDSPEAKER         = f''   # to be found later
-LSPK_YML_PATH       = f''   #
 
 EQFOLDER            = f'{MAINFOLDER}/eq'
 CODEFOLDER          = f'{MAINFOLDER}/code'
@@ -204,10 +203,11 @@ def complete_config():
 
             res = {}
 
-            if os.path.isfile(LSPK_YML_PATH):
+            lspk_yml_path = f'{LSPKFOLDER}/lspk.yml'
+            if os.path.isfile(lspk_yml_path):
 
                 try:
-                    with open(LSPK_YML_PATH, 'r') as f:
+                    with open(lspk_yml_path, 'r') as f:
                         res = yaml.safe_load( f.read() )
                         if CONFIG["verbose"]:
                             print(f'{Fmt.BLUE}(config) Loudspeaker config file `{CONFIG["loudspeaker"]}/lspk.yml` was found{Fmt.END}')
@@ -521,8 +521,6 @@ def complete_config():
     if not os.path.isdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}'):
         os.mkdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}')
 
-    LSPK_YML_PATH = f'{LSPKFOLDER}/lspk.yml'
-
     lspk_config = get_lspk_config()
     #
     # DEBUG
@@ -577,6 +575,9 @@ if pAudio_cfg_is_recent():
     except Exception as e:
         print(f'{Fmt.RED}{Fmt.BLINK}(config.py) PANIC reading: {PAUDIO_CFG_PATH}: {str(e)}{Fmt.END}')
         sys.exit()
+
+    LOUDSPEAKER   = CONFIG.get('loudspeaker', '')
+    LSPKFOLDER    = f'{LSPKSFOLDER}/{LOUDSPEAKER}'
 
 else:
     print(f'{Fmt.BLUE}(config) preparing pAudio_cfg ...{Fmt.END}')
