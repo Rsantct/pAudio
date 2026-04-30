@@ -887,21 +887,28 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
+def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 9990)):
 
+    elapsed = 0
     period = .5
     tries  = int(timeout / period)
+
+    print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}Wainting {timeout } s for server response ...{Fmt.END}')
 
     while tries:
 
         if check_output('localhost', port,' hello'):
             break
 
-        tries -= 1
+        if elapsed and not elapsed % verbose_seconds:
+            print(f'{Fmt.GRAY}{Fmt.ITALIC}elapsed {elapsed} s for server response ...{Fmt.END}')
+
         sleep(period)
-        #print(f'{Fmt.GRAY}waiting for server response ...{Fmt.END}')
+        elapsed += period
+        tries -= 1
 
     if tries:
+        print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}Server response was in {elapsed} s{Fmt.END}')
         return True
     else:
         return False
@@ -947,13 +954,29 @@ def wait4jackports( pattern, timeout=5 ):
         return False
 
 
-def estimate_server_delay():
+def estimate_server_response_delay():
+    """ See the table (experimental):
+
+                          delay   bench       time to run
+                          500e3   500e3       the pAudio server
+                          -----   -----       -----
+        RPI 3 B           0.895   0.05        32 s
+        RPI 3 B+          0.450   0.11        22 s
+        Asus Atinker      0.225   0.22        14 s
+        Core i3           0.049   1.0          4 s
+        Apple M1          0.032   1.5          1 s
+
+    """
 
     my_bm = get_benkmarch(n=500e3)
 
     delay = 5.14 * my_bm ** -0.62
 
-    return int(round(delay, 1))
+    estimated = int(round(delay, 1))
+
+    print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}(i) Estimated server response is {estimated} s about{Fmt.END}')
+
+    return estimated
 
 
 def get_benkmarch(n=500e3):
