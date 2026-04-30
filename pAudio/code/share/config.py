@@ -174,18 +174,16 @@ def complete_config():
         CONFIG["jack"]["softmode"]  = softmode
 
         tmp = CONFIG["jack"].get('zita_udp_base', None)
-
         if type(tmp) != int:
             CONFIG["jack"]["zita_udp_base"] = 65000
             if tmp:
                 print(f'{Fmt.RED}(config) Bad value zita_udp_base: {tmp}, using 65000{Fmt.END}')
 
         tmp = CONFIG["jack"].get('zita_buffer_ms', None)
-
         if type(tmp) != int:
-            CONFIG["jack"]["zita_buffer_ms"] = 20
+            CONFIG["jack"]["zita_buffer_ms"] = 10
             if tmp:
-                print(f'{Fmt.RED}(config) Bad value zita_buffer_ms: {tmp}, using 20{Fmt.END}')
+                print(f'{Fmt.RED}(config) Bad value zita_buffer_ms: {tmp}, using 10{Fmt.END}')
 
 
     def get_lspk_config():
