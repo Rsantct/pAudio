@@ -611,11 +611,15 @@ def set_source(sname):
             do_track_level     = remote_cfg.get('remote_track_level', True)
             compensation_delay = remote_cfg.get('compensation_delay', 0)
 
-            remote_xo_latency   = get_remote_state(remote_ip, remote_port).get('xo_latency', 0)
+            remote_state        = get_remote_state(remote_ip, remote_port)
+            remote_xo_latency   = remote_state.get('xo_latency',  0)
+            remote_extra_delay  = remote_state.get('extra_delay', 0)            # not used
             local_xo_latency    = read_state_from_disk().get('xo_latency', 0)
 
-            latency_compensation = compensation_delay + remote_xo_latency - local_xo_latency
-            latency_compensation = round( abs(latency_compensation) )
+            latency_compensation =   compensation_delay     \
+                                   + remote_xo_latency      \
+                                   - local_xo_latency
+            latency_compensation = round( latency_compensation, 1 )
 
             # Tell the remote to track its volume to the local end (optional)
             if do_track_level:
@@ -636,7 +640,7 @@ def set_source(sname):
 
                     # Set local and remote delays
                     if latency_compensation < 0:
-                        order_local_and_remote_delays(0, latency_compensation)
+                        order_local_and_remote_delays(0, abs(latency_compensation))
 
                     elif latency_compensation > 0:
                         order_local_and_remote_delays(latency_compensation, 0)
