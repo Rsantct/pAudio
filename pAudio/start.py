@@ -269,7 +269,7 @@ def start():
 
     # Run the pAudio main server 'paudio.py' to listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {CONFIG["paudio_addr"]} {CONFIG["paudio_port"]}'
-    server_timeout = estimate_server_delay() + 15
+    server_timeout = estimate_server_response_delay() + 20
 
     if VERBOSE:
         srv_cmd += ' -v'
@@ -280,7 +280,7 @@ def start():
     t_srv_start = time()
     sp.Popen( srv_cmd.split() )
 
-    if wait4server(timeout=server_timeout):
+    if wait4server(timeout=server_timeout, verbose_seconds=5):
         t_srv_lapse = round(time() - t_srv_start, 1)
         print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
 
