@@ -269,6 +269,7 @@ def start():
 
     # Run the pAudio main server 'paudio.py' to listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {CONFIG["paudio_addr"]} {CONFIG["paudio_port"]}'
+
     # Minimum timeout is 10 s
     server_timeout = max(10, estimate_server_response_delay() * 1.5)
 
@@ -290,13 +291,14 @@ def start():
         stop()
         return
 
+    # Linux with Jack
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
-        # Zita network to jack (Linux)
-        zljob = threading.Thread(target=prepare_zita_links)
-        zljob.start()
+        # Zita network to jack receivers
+        zitalink_job = threading.Thread(target=prepare_zita_links)
+        zitalink_job.start()
 
-        # Rewire CamillaDSP ONLY with Linux JACK
+        # Rewire CamillaDSP
         rewire_camilladsp()
 
     # The loudness_monitor daemon
