@@ -269,7 +269,8 @@ def start():
 
     # Run the pAudio main server 'paudio.py' to listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {CONFIG["paudio_addr"]} {CONFIG["paudio_port"]}'
-    server_timeout = estimate_server_response_delay() + 20
+    # Minimum timeout is 10 s
+    server_timeout = max(10, estimate_server_response_delay() * 1.5)
 
     if VERBOSE:
         srv_cmd += ' -v'
