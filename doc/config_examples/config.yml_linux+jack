@@ -20,6 +20,7 @@ jack:
         cd:
             jport:  mpd_loop
 
+        # A remote pAudio native source 
         remoteSalon:
             remote_addr:        192.168.1.57
             remote_track_level: true
@@ -32,6 +33,9 @@ jack:
             # If the value is negative, it will be applied at the remote end.
             compensation_delay: 12
 
+        # A special remote source based on JackTrip
+        MacBook Pro:
+            jacktrip: true
 
     # Optional config for zita-njbridge based multiroom remote sources
     # (default is 65000)
