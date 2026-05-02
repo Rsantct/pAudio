@@ -180,7 +180,11 @@ def init():
 
         valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
                        'lu_offset', 'equal_loudness', 'target', 'drc_set',
-                       'midside', 'mono' )
+                       'midside', 'mono')
+
+        # keep_muted is processed later in resume_audio()
+        if prop == 'keep_muted':
+            continue
 
         if not prop in valid_props:
             print(f'{Fmt.BOLD}(on_init) NOT valid: `{prop}`{Fmt.END}')
