@@ -91,7 +91,7 @@ function restore_macOS_default_output {
         }
     ')
 
-    osascript -e "set volume output volume 50"
+    osascript -e "set volume output volume 25"
     sleep 0.5
     SwitchAudioSource -s "$DEFAULT_OUT_DEV"
 }
