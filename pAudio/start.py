@@ -174,6 +174,42 @@ def manage_loudness_monitor_daemon(mode='start'):
         sp.Popen(tmp, shell=True)
 
 
+def prepare_jacktrip_server(iostat=False):
+    """ run jacktrip in hub server mode
+    """
+
+    def jacktrip_wanted():
+
+        jack_sources = CONFIG.get('jack', {}).get('sources', {})
+
+        result = False
+
+        for s, params in jack_sources.items():
+            if params.get('jacktrip', None) == True:
+                result = True
+
+        return result
+
+
+    if not jacktrip_wanted():
+        print(f'{Fmt.GRAY}(start) (i) JackTrip server not needed{Fmt.END}')
+        return
+
+    log_path   = f'{MAINFOLDER}/log/jacktrip_hubserver.log'
+    stats_path = f'{MAINFOLDER}/log/jacktrip_hubserver.stats'
+
+    iostat_cmd = f' --iostat 5 --iostatlog '
+
+    cmd = f'jacktrip --jacktripserver --numchannels 2 --nojackportsconnect'
+
+    if iostat:
+        cmd += iostat_cmd
+
+    with open(log_path, 'w') as flog:
+        print(f'{Fmt.GRAY}(start) (i) Running JackTrip server ...{Fmt.END}')
+        sp.Popen(cmd, shell=True, stdout=flog, stderr=flog)
+
+
 def prepare_zita_links():
     """ A LAN audio connection based on zita-njbridge from Fons Adriaensen.
 
@@ -294,12 +330,16 @@ def start():
     # Linux with Jack
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
+        # JackTrip HUB server if needed
+        prepare_jacktrip_server()
+
         # Zita network to jack receivers
         zitalink_job = threading.Thread(target=prepare_zita_links)
         zitalink_job.start()
 
         # Rewire CamillaDSP
         rewire_camilladsp()
+
 
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon()
