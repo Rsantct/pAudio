@@ -6,14 +6,29 @@ cat <<EOF
     Enviador de audio por LAN basado en JackTrip.
 
         Cambia la salida del escritorio a "BlackHole 2ch" y ejecuta JackTrip
-        capturando el audio de BlackHole y enviándolo a la IP_REMOTA
+        capturando el audio de BlackHole y enviándolo al HOST_REMOTO
 
     Uso:
 
-        iniciar:    paudio_macos_cli.sh   IP_REMOTA
+        iniciar:    paudio_macos_cli.sh   HOST_REMOTO [SAMPLE_RATE]
         detener:    paudio_macos_cli.sh   stop (restaura la salida de sonido del escritorio)
 
 EOF
+}
+
+
+function get_ip {
+
+    host=$1
+
+    # Ejecuta un solo ping y extrae la IP de los paréntesis
+    IP=$(ping -c 1 "$host" | head -1 | cut -d '(' -f 2 | cut -d ')' -f 1)
+
+    if [[ $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo $IP
+    else
+        echo "ERROR"
+    fi
 }
 
 
@@ -76,9 +91,9 @@ function restore_macOS_default_output {
         }
     ')
 
-    SwitchAudioSource -s "$DEFAULT_OUT_DEV"
-    sleep 0.5
     osascript -e "set volume output volume 50"
+    sleep 0.5
+    SwitchAudioSource -s "$DEFAULT_OUT_DEV"
 }
 
 
@@ -86,7 +101,7 @@ function switch_remote_source {
     # Conmutamos la entrada en el FIRtro remoto.
     # OjO debe ser una source predefinida en el config.yml remoto
     echo 'Conmutando la fuente en el lado remoto ...'
-    echo "source $1" | nc $REMOTE_IP 9990
+    echo "source $1" | nc $REMOTE 9990
     echo
 }
 
@@ -98,10 +113,13 @@ function jacktrip_start {
     local LOGPATH="$HOME"/pAudio/log/jacktrip_client_"$1"_"$(date "+%Y%m%d_%H%M%S")"".log"
 
     jacktrip --pingtoserver "$remote_host" --srate 44100 --bufsize 1024 \
+        --queue 6 \
+        --redundancy 1 \
         --bitres 16 --numchannels 2 \
         --remotename "$REMOTE_SRC_NAME" \
         --iostat 10 --iostatlog "$LOGPATH" \
-        --rtaudio --audiodevice "$RTAudioDEV" &
+        --rtaudio --audiodevice "$RTAudioDEV" \
+        --srate "$SRATE" &
 }
 
 
@@ -119,13 +137,23 @@ if [[ $1 == *"stop"* ]]; then
     exit 0
 fi
 
-# Se necesita recibir la IP remota como argumento, 'hostname.local' NO funciona
-REMOTE_IP=$1
+# Se necesita la IP remota como argumento, 'hostname.local' NO funciona
+REMOTE=$1
+REMOTE=$(get_ip $REMOTE)
 
-if ping -c 1 -W 1 $REMOTE_IP > /dev/null; then
-    echo "Detectado host remoto "$REMOTE_IP
+
+# Sample rate es opcional para adaptarse al remoto
+if [[ $2 ]]; then
+    SRATE=$2
 else
-    echo "No hay respuesta de "$REMOTE_IP
+    SRATE='44100'
+fi
+
+
+if ping -c 1 -W 1 $REMOTE > /dev/null; then
+    echo "Detectado host remoto "$REMOTE
+else
+    echo "No hay respuesta de "$REMOTE
     exit 0
 fi
 
@@ -133,7 +161,8 @@ fi
 OUT_DEV='BlackHole 2ch'
 REMOTE_SRC_NAME=$(system_profiler SPHardwareDataType | grep "Model Name" | awk -F: '{print $2}' | xargs)
 
-jacktrip_start $REMOTE_IP
+
+jacktrip_start $REMOTE
 
 switch_macOS_output
 
@@ -146,9 +175,9 @@ echo 'Iniciando bucle de auto arranque en caso de que se desconecte ...'
 while true; do
     if [[ ! $(pgrep -fla "remotename $REMOTE_SRC_NAME") ]]; then
         echo "**************************************************"
-        echo "Rearrancando cliente jacktrip con ""$REMOTE_IP""..."
+        echo "Rearrancando cliente jacktrip con ""$REMOTE""..."
         echo "**************************************************"
-        start $REMOTE_IP
+        start $REMOTE
     fi
     sleep 10
 done
