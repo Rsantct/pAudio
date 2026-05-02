@@ -205,8 +205,9 @@ def prepare_jacktrip_server(iostat=False):
     if iostat:
         cmd += iostat_cmd
 
+
+    print(f'{Fmt.GRAY}(start) (i) Running JackTrip server ...{Fmt.END}')
     with open(log_path, 'w') as flog:
-        print(f'{Fmt.GRAY}(start) (i) Running JackTrip server ...{Fmt.END}')
         sp.Popen(cmd, shell=True, stdout=flog, stderr=flog)
 
 
@@ -287,6 +288,9 @@ def stop():
         stop_zita_link()
         sleep(.25)
         sp.Popen(['pkill', '-f',  'jackd'])
+
+        # JackTrip if used
+        sp.Popen(['pkill', '-f', 'jacktrip'])
 
     sleep(1)
 
