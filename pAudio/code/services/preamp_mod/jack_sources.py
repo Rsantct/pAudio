@@ -113,7 +113,13 @@ def select(source):
         if source == 'none':
             return 'ordered'
 
-        res = jm.connect_bypattern( SOURCES[source]["jport"], 'pre_in_loop' )
+        # In not configured, use the source name as jack port
+        jport = SOURCES[source].get("jport", source)
+
+        try:
+            res = jm.connect_bypattern( jport, 'pre_in_loop' )
+        except Exception as e:
+            res = str(e)
 
         # close the temporary jack.Client
         del jm.JCLI
