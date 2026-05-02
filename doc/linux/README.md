@@ -9,6 +9,7 @@ This is for a black box Linux machine (say a little Raspberry Pi 3B+ and up), or
 ### Generic tools and control web page software:
 
     sudo apt install alsa-utils alsa-ucm-conf jackd2 jackmeter xdotool cdtool \
+                     zita-njbridge jacktrip \
                      libportaudio2 libffi-dev git nodejs npm
 
 ### Python packages from Debian:
