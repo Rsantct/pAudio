@@ -133,7 +133,12 @@ def init():
             else:
                 STATE["source"] = ''
 
-        set_mute( STATE["muted"] )
+        # Unmute by default
+        if CONFIG.get('on_init', {}).get('keep_muted', False):
+            set_mute( STATE["muted"] )
+        else:
+            STATE["muted"] = False
+            set_mute(False)
 
         save_json_file(STATE, PREAMP_STATE_PATH)
 
