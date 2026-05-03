@@ -572,7 +572,7 @@ def set_source(sname):
                 print('(preamp.py) cannot set local delay')
 
         def set_remote():
-            if send_cmd(f'add_delay {rd}', host=remote_ip, port=remote_port) == 'done':
+            if send_cmd(f'add_delay {rd}', host=remote_addr, port=remote_port) == 'done':
                 print(f'(preamp.py) set remote delay: {rd}')
             else:
                 print('(preamp.py) cannot set remote delay')
@@ -613,14 +613,14 @@ def set_source(sname):
 
         # Remote source
         if 'remote' in sname:
-            remote_cfg         = read_remote_source_config(sname)
-            zita_buff          = remote_cfg.get('zita_buffer_ms', 50)
-            remote_ip          = remote_cfg.get('remote_addr')
-            remote_port        = remote_cfg.get('remote_port', 9990)
-            do_track_level     = remote_cfg.get('remote_track_level', True)
-            compensation_delay = remote_cfg.get('compensation_delay', 0)
+            rc = read_remote_source_config(sname)
+            zita_buff          = rc.get('zita_buffer_ms', 50)
+            remote_addr        = rc.get('remote_addr')
+            remote_port        = rc.get('remote_port', 9990)
+            do_track_level     = rc.get('remote_track_level', True)
+            compensation_delay = rc.get('compensation_delay', 0)
 
-            remote_state        = get_remote_state(remote_ip, remote_port)
+            remote_state        = get_remote_state(remote_addr, remote_port)
             remote_xo_latency   = remote_state.get('xo_latency',  0)
             remote_extra_delay  = remote_state.get('extra_delay', 0)            # not used
             local_xo_latency    = read_state_from_disk().get('xo_latency', 0)
@@ -632,7 +632,7 @@ def set_source(sname):
 
             # Tell the remote to track its volume to the local end (optional)
             if do_track_level:
-                send_cmd('hello', host=remote_ip, port=remote_port + 5)
+                send_cmd('hello', host=remote_addr, port=remote_port + 5)
 
             # Remote zita-j2n sender. We force to restart zita-j2n at the sender end.
             # (the local zita-n2j is supposed to be listening from start up)
@@ -658,7 +658,7 @@ def set_source(sname):
                         order_local_and_remote_delays(0, 0)
 
                     # Balance the local volume as that at the remote side
-                    tmp = send_cmd(f'state', host=remote_ip, port=remote_port)
+                    tmp = send_cmd(f'state', host=remote_addr, port=remote_port)
                     try:
                         rem_vol = tmp.get('level', -30)
                     except:
@@ -672,7 +672,7 @@ def set_source(sname):
             #
             # If a new buffer setting is found under the current config.yml,
             # then we restart the local zita-n2j
-            if zita_buff != CONFIG["jack"]["sources"][sname]["zita_buffer_ms"]:
+            if zita_buff != CONFIG["jack"]["sources"][sname].get('zita_buffer_ms', 0):
                 print(f'{Fmt.BLUE}zita-n2j appliyng new buffer: {zita_buff} ms{Fmt.END}')
                 zita_local_restart(raddr, rudpport, zita_buff)
                 CONFIG["jack"]["sources"][sname]["zita_buffer_ms"] = zita_buff
@@ -680,7 +680,7 @@ def set_source(sname):
             #
             # Anyway we check if the local zita-n2j receiver is listening from start up.
             else:
-                pattern = f'zita_n2j_{ remote_ip.split(".")[-1] }'
+                pattern = f'zita_n2j_{ remote_addr.split(".")[-1] }'
                 if not process_is_running( pattern ):
                     zita_local_restart(raddr, rudpport, zita_buff)
 
