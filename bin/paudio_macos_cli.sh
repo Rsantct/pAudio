@@ -144,10 +144,12 @@ function jacktrip_start {
 
     echo "Iniciando el envío con JackTrip ..."
 
+    mkdir -p "$HOME"/tmp
+
     local remote_host=$1
     local RTAudioDEV=$(get_RTAudioDEV)
-    local LOGPATH="$HOME""/pAudio/log/jacktrip_client.log"
-    local STATSPATH="$HOME""/pAudio/log/jacktrip_client.stats"
+    local LOGPATH="$HOME""/tmp/jacktrip_client.log"
+    local STATSPATH="$HOME""/tmp/jacktrip_client.stats"
 
     /usr/local/bin/jacktrip --pingtoserver "$remote_host" \
         --bufsize 1024 \
