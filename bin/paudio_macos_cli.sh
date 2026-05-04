@@ -10,14 +10,30 @@ cat <<EOF
 
     Uso:
 
-        iniciar:    paudio_macos_cli.sh   HOST_REMOTO [SAMPLE_RATE]
+        iniciar:    paudio_macos_cli.sh   HOST_REMOTO [SRATE]
+
+                        SRATE opcional, por defecto es autodetectado
+
         detener:    paudio_macos_cli.sh   stop (restaura la salida de sonido del escritorio)
 
 EOF
 }
 
 
+function is_integer {
+
+    # regular expression para comprobar si $1 es entero
+    [[ "$1" =~ ^-?[0-9]+$ ]]
+}
+
+
 function get_ip {
+    # Obtiene la IP a partir de un host
+
+    if is_integer $1; then
+        echo $1
+        return 0
+    fi
 
     host=$1
 
@@ -51,6 +67,7 @@ function get_RTAudioDEV {
 function switch_macOS_output {
     # Conmutamos la salida de audio del Mac
     # (brew install switchudiosource-osx)
+
     tmp=$(SwitchAudioSource -a -t output | grep "$OUT_DEV")
     SwitchAudioSource -s "$tmp"
     sleep 0.5
@@ -98,11 +115,26 @@ function restore_macOS_default_output {
 
 
 function switch_remote_source {
+
     # Conmutamos la entrada en el FIRtro remoto.
     # OjO debe ser una source predefinida en el config.yml remoto
     echo 'Conmutando la fuente en el lado remoto ...'
     echo "source $1" | nc $REMOTE 9990
     echo
+}
+
+
+function get_remote_srate {
+
+    # Consultamos la samplerate del host remoto
+    tmp=$(echo "state" | nc $REMOTE 9990 | grep "samplerate" | sed 's/.*: //;s/,//')
+
+    # comprobamos el valor, por defecto devolvemos 44100
+    if is_integer $tmp; then
+        echo $tmp
+    else
+        echo 44100
+    fi
 }
 
 
@@ -137,7 +169,7 @@ if [[ $1 == *"stop"* ]]; then
     exit 0
 fi
 
-# Se necesita la IP remota como argumento, 'hostname.local' NO funciona
+# Se necesita la IP remota, direcciones 'xxxx.local' no funcionan
 REMOTE=$1
 REMOTE=$(get_ip $REMOTE)
 
@@ -146,7 +178,7 @@ REMOTE=$(get_ip $REMOTE)
 if [[ $2 ]]; then
     SRATE=$2
 else
-    SRATE='44100'
+    SRATE=$(get_remote_srate)
 fi
 
 
