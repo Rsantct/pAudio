@@ -3,18 +3,20 @@
 function help {
 cat <<EOF
 
-    Enviador de audio por LAN basado en JackTrip.
+    Enviador de audio para macOS, a un sistema pAudio remoto basado en JackTrip.
 
-        Cambia la salida del escritorio a "BlackHole 2ch" y ejecuta JackTrip
-        capturando el audio de BlackHole y enviándolo al HOST_REMOTO
+    Cambia la salida de audio del Mac a "BlackHole 2ch" y ejecuta JackTrip
+    capturando el audio de BlackHole y enviándolo al host remoto indicado
+    en el archivo de configuración, ejemplo:
 
-    Uso:
+        ~/bin/paudio_macos_cli.conf
 
-        iniciar:    paudio_macos_cli.sh   HOST_REMOTO [SRATE]
+            remote = mi_dsp_host.local    (o dirección IP)
 
-                        SRATE opcional, por defecto es autodetectado
-
-        detener:    paudio_macos_cli.sh   stop (restaura la salida de sonido del escritorio)
+    NOTA: el Mac debe disponer de las utilidades siguientes (ver documentación pAudio)
+        - BlackHole
+        - AdjustVolume
+        - SwitchAudioSource
 
 EOF
 }
@@ -43,7 +45,7 @@ function get_ip {
     if [[ $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo $IP
     else
-        echo "ERROR"
+        echo ''
     fi
 }
 
@@ -60,7 +62,7 @@ function get_RTAudioDEV {
     #   [CoreAudio - 132]: "Apple Inc.: MacBook Pro (micr?fono)" (1 ins, 0 outs)
     #   [CoreAudio - 133]: "Apple Inc.: MacBook Pro (altavoces)" (0 ins, 2 outs)
 
-    jacktrip --rtaudio --listdevices | grep "$OUT_DEV" | sed -E 's/.*"([^"]+)".*/\1/'
+    /usr/local/bin/jacktrip --rtaudio --listdevices | grep "$OUT_DEV" | sed -E 's/.*"([^"]+)".*/\1/'
 }
 
 
@@ -68,8 +70,8 @@ function switch_macOS_output {
     # Conmutamos la salida de audio del Mac
     # (brew install switchudiosource-osx)
 
-    tmp=$(SwitchAudioSource -a -t output | grep "$OUT_DEV")
-    SwitchAudioSource -s "$tmp"
+    tmp=$(/opt/homebrew/bin/SwitchAudioSource -a -t output | grep "$OUT_DEV")
+    /opt/homebrew/bin/SwitchAudioSource -s "$tmp"
     sleep 0.5
     osascript -e "set volume output volume 100"
 }
@@ -110,7 +112,7 @@ function restore_macOS_default_output {
 
     osascript -e "set volume output volume 25"
     sleep 0.5
-    SwitchAudioSource -s "$DEFAULT_OUT_DEV"
+    /opt/homebrew/bin/SwitchAudioSource -s "$DEFAULT_OUT_DEV"
 }
 
 
@@ -140,48 +142,118 @@ function get_remote_srate {
 
 function jacktrip_start {
 
+    echo "Iniciando el envío con JackTrip ..."
+
     local remote_host=$1
     local RTAudioDEV=$(get_RTAudioDEV)
-    local LOGPATH="$HOME"/pAudio/log/jacktrip_client_"$1"_"$(date "+%Y%m%d_%H%M%S")"".log"
+    local LOGPATH="$HOME""/pAudio/log/jacktrip_client.log"
+    local STATSPATH="$HOME""/pAudio/log/jacktrip_client.stats"
 
-    jacktrip --pingtoserver "$remote_host" --srate 44100 --bufsize 1024 \
+    /usr/local/bin/jacktrip --pingtoserver "$remote_host" \
+        --bufsize 1024 \
         --queue 6 \
         --redundancy 1 \
         --bitres 16 --numchannels 2 \
         --remotename "$REMOTE_SRC_NAME" \
-        --iostat 10 --iostatlog "$LOGPATH" \
+        --iostat 10 --iostatlog "$STATSPATH" \
         --rtaudio --audiodevice "$RTAudioDEV" \
-        --srate "$SRATE" &
+        --srate "$SRATE" \
+        1>"$LOGPATH" 2>&1 &
 }
 
 
-if [[ $1 == *"-h"* || ! $1 ]]; then
+function load_conf {
+
+    CONFPATH="$HOME""/bin/paudio_macos_cli.conf"
+
+    if [[ ! -f "$CONFPATH" ]]; then
+        echo "Falta archivo de configuración ""$CONFPATH"
+        exit 0
+    fi
+
+    # Lee cualquier sintaxis, ejemplos:
+    #   remote = 'mi_pc.local'
+    #   REMOTO: mi_pc.local
+
+    REMOTE=$( grep -Ei '^[[:space:]]*(remote|remoto)' $CONFPATH | \
+        head -n 1 | sed -E 's/^[[:space:]]*(remote|remoto)[[:space:]]*[:=][[:space:]]*//I' | \
+        sed 's/["'\'']//g' | \
+        xargs )
+}
+
+
+function is_valid_ip {
+
+    local ip=$1
+
+    # Definición de la expresión regular para IPv4 (0-255 en cada octeto)
+    local regex="^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$"
+
+    if [[ $ip =~ $regex ]]; then
+        return 0 # ok
+    else
+        return 1 # bad
+    fi
+}
+
+
+function confirma {
+
+    MENSAJE=$1
+
+    respuesta=$(osascript -e "display dialog \"$MENSAJE\" buttons {\"No\", \"Sí\"} default button \"Sí\" with title \"JackTrip\"")
+
+    if [[ "$respuesta" == *"button returned:Sí"* ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
+# Ayuda
+if [[ $1 == *"-h"* ]]; then
     help
     exit 0
 fi
 
 
-killall jacktrip
-
-if [[ $1 == *"stop"* ]]; then
-    restore_macOS_default_output
-    echo Bye
-    exit 0
-fi
+# Lee el archivo de configuración
+load_conf
 
 # Se necesita la IP remota, direcciones 'xxxx.local' no funcionan
-REMOTE=$1
 REMOTE=$(get_ip $REMOTE)
 
+# Mecanismo toggle: si ya está enviando lo detiene
+if pgrep -f jacktrip 1>/dev/null ; then
 
-# Sample rate es opcional para adaptarse al remoto
-if [[ $2 ]]; then
-    SRATE=$2
+    if ! confirma "¿DETENER el envío de audio al remoto?"; then
+        exit 0
+    fi
+
+    # Detiene JackTrip
+    echo "Deteniendo el envío JackTrip ..."
+    killall jacktrip 1>/dev/null 2>&1
+
+    # Restaura la salida de audio del Mac
+    restore_macOS_default_output
+
+    # FIN
+    exit 0
+
 else
-    SRATE=$(get_remote_srate)
+
+    if ! confirma "¿INICIAR el envío de audio a $REMOTE?"; then
+        exit 0
+    fi
 fi
 
 
+# Comprobamos comunicación con el Host Remoto
+if ! is_valid_ip $REMOTE; then
+    echo "Host remoto no válido."
+    exit 1
+fi
 if ping -c 1 -W 1 $REMOTE > /dev/null; then
     echo "Detectado host remoto "$REMOTE
 else
@@ -189,27 +261,17 @@ else
     exit 0
 fi
 
-
+# Constantes
 OUT_DEV='BlackHole 2ch'
 REMOTE_SRC_NAME=$(system_profiler SPHardwareDataType | grep "Model Name" | awk -F: '{print $2}' | xargs)
+SRATE=$(get_remote_srate)
 
-
+# Iniciamos el cliente JackTrip
 jacktrip_start $REMOTE
 
+# Enviamos el audio a BlaclHole > JackTrip > Host_Remoto
 switch_macOS_output
 
+# Ordenamos al Host Remoto que seleccione la fuente de nuestro JackTrip
 switch_remote_source "$REMOTE_SRC_NAME"
 
-exit 0
-
-# Bucle de autoarranque
-echo 'Iniciando bucle de auto arranque en caso de que se desconecte ...'
-while true; do
-    if [[ ! $(pgrep -fla "remotename $REMOTE_SRC_NAME") ]]; then
-        echo "**************************************************"
-        echo "Rearrancando cliente jacktrip con ""$REMOTE""..."
-        echo "**************************************************"
-        start $REMOTE
-    fi
-    sleep 10
-done
