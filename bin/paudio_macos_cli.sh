@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Constante
+OUT_DEV='BlackHole 2ch'
+
+
 function help {
 cat <<EOF
 
@@ -14,6 +18,7 @@ cat <<EOF
             remote = mi_dsp_host.local    (o dirección IP)
 
     NOTA: el Mac debe disponer de las utilidades siguientes (ver documentación pAudio)
+        - JackTrip
         - BlackHole
         - AdjustVolume
         - SwitchAudioSource
@@ -126,17 +131,33 @@ function switch_remote_source {
 }
 
 
-function get_remote_srate {
+function get_remote_samplerate {
+
+    local samplerate=44100
+    local tmp=''
 
     # Consultamos la samplerate del host remoto
     tmp=$(echo "state" | nc $REMOTE 9990 | grep "samplerate" | sed 's/.*: //;s/,//')
-
-    # comprobamos el valor, por defecto devolvemos 44100
     if is_integer $tmp; then
-        echo $tmp
-    else
-        echo 44100
+        samplerate=$tmp
     fi
+
+    echo $samplerate
+}
+
+
+function get_remote_jack_buffer {
+
+    local jack_buffer=1024
+    local tmp=''
+
+    # Consultamos el jack_buffer del host remoto
+    tmp=$(echo "state" | nc $REMOTE 9990 | grep "jack_buffer" | sed 's/.*: //;s/,//')
+    if is_integer $tmp; then
+        jack_buffer=$tmp
+    fi
+
+    echo $jack_buffer
 }
 
 
@@ -146,15 +167,14 @@ function jacktrip_start {
 
     mkdir -p "$HOME"/tmp
 
-    local remote_host=$1
     local RTAudioDEV=$(get_RTAudioDEV)
     local LOGPATH="$HOME""/tmp/jacktrip_client.log"
     local STATSPATH="$HOME""/tmp/jacktrip_client.stats"
 
-    /usr/local/bin/jacktrip --pingtoserver "$remote_host" \
-        --bufsize 1024 \
-        --queue 6 \
-        --redundancy 1 \
+    /usr/local/bin/jacktrip --pingtoserver "$REMOTE" \
+        --bufsize "$BUFFER" \
+        --queue "$QUEUE" \
+        --redundancy "$REDUNDANCY" \
         --bitres 16 --numchannels 2 \
         --remotename "$REMOTE_SRC_NAME" \
         --iostat 10 --iostatlog "$STATSPATH" \
@@ -166,7 +186,11 @@ function jacktrip_start {
 
 function load_conf {
 
-    CONFPATH="$HOME""/bin/paudio_macos_cli.conf"
+    local this_path=$(readlink -f "$0")
+    CONFPATH="${this_path%.sh}.conf"
+
+    QUEUE=3
+    REDUNDANCY=1
 
     if [[ ! -f "$CONFPATH" ]]; then
         echo "Falta archivo de configuración ""$CONFPATH"
@@ -179,6 +203,16 @@ function load_conf {
 
     REMOTE=$( grep -Ei '^[[:space:]]*(remote|remoto)' $CONFPATH | \
         head -n 1 | sed -E 's/^[[:space:]]*(remote|remoto)[[:space:]]*[:=][[:space:]]*//I' | \
+        sed 's/["'\'']//g' | \
+        xargs )
+
+    QUEUE=$( grep -Ei '^[[:space:]]*(queue)' $CONFPATH | \
+        head -n 1 | sed -E 's/^[[:space:]]*(queue)[[:space:]]*[:=][[:space:]]*//I' | \
+        sed 's/["'\'']//g' | \
+        xargs )
+
+    REDUNDANCY=$( grep -Ei '^[[:space:]]*(redundancy)' $CONFPATH | \
+        head -n 1 | sed -E 's/^[[:space:]]*(redundancy)[[:space:]]*[:=][[:space:]]*//I' | \
         sed 's/["'\'']//g' | \
         xargs )
 }
@@ -223,8 +257,10 @@ fi
 # Lee el archivo de configuración
 load_conf
 
+
 # Se necesita la IP remota, direcciones 'xxxx.local' no funcionan
 REMOTE=$(get_ip $REMOTE)
+
 
 # Mecanismo toggle: si ya está enviando lo detiene
 if pgrep -f jacktrip 1>/dev/null ; then
@@ -263,13 +299,14 @@ else
     exit 0
 fi
 
-# Constantes
-OUT_DEV='BlackHole 2ch'
+
+# Variables
 REMOTE_SRC_NAME=$(system_profiler SPHardwareDataType | grep "Model Name" | awk -F: '{print $2}' | xargs)
-SRATE=$(get_remote_srate)
+SRATE=$(get_remote_samplerate)
+BUFFER=$(get_remote_jack_buffer)
 
 # Iniciamos el cliente JackTrip
-jacktrip_start $REMOTE
+jacktrip_start
 
 # Enviamos el audio a BlaclHole > JackTrip > Host_Remoto
 switch_macOS_output
