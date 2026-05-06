@@ -248,10 +248,12 @@ def init():
     #
     if CONFIG.get('jack'):
 
-        STATE["jack_buffer"]    = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
         STATE["input_dev"]      = ''
         STATE["output_dev"]     = ''
-        STATE["output_latency"] = round(STATE["jack_buffer"] / STATE["samplerate"] * 1000, 1)
+        STATE["jack_period"]    = CONFIG["jack"]["period"]
+        STATE["jack_nperiods"]  = CONFIG["jack"]["nperiods"]
+        jack_buffer             = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
+        STATE["output_latency"] = round(jack_buffer / STATE["samplerate"] * 1000, 1)
 
         # open a temporary jack.Client
         try:
@@ -285,11 +287,11 @@ def init():
     # Update state with jack buffer if so
     if not CONFIG.get('jack'):
         try:
-            del STATE["jack_buffer_size"]
-            del STATE["jack_buffer_ms"]
-        except:
-            pass
-
+            keys_to_remove = [k for k in STATE if 'jack' in k]
+            for k in keys_to_remove:
+                del STATE[k]
+        except Exception as e:
+            print(f'{Fmt.RED}(preamp) error removing jack* keys inside STATE: {str(e)}{Fmt.END}')
 
     # Force values
     STATE["extra_delay"] = 0
