@@ -165,6 +165,10 @@ function get_remote_jack_buffer {
 
 function jacktrip_start {
 
+    local srate=$(get_remote_samplerate)
+    local buffer=$(get_remote_jack_buffer)
+
+
     echo "Iniciando el envío con JackTrip ..."
 
     mkdir -p "$HOME"/tmp
@@ -175,14 +179,14 @@ function jacktrip_start {
 
     /usr/local/bin/jacktrip --pingtoserver "$REMOTE" \
         --udprt \
-        --bufsize "$BUFFER" \
+        --bufsize "$buffer" \
         --queue "$QUEUE" \
         --redundancy "$REDUNDANCY" \
         --numchannels 2 \
         --remotename "$REMOTE_SRC_NAME" \
         --iostat 10 --iostatlog "$STATSPATH" \
         --rtaudio --audiodevice "$RTAudioDEV" \
-        --srate "$SRATE" \
+        --srate "$srate" \
         1>"$LOGPATH" 2>&1 &
 }
 
@@ -305,8 +309,6 @@ fi
 
 # Variables
 REMOTE_SRC_NAME=$(system_profiler SPHardwareDataType | grep "Model Name" | awk -F: '{print $2}' | xargs)
-SRATE=$(get_remote_samplerate)
-BUFFER=$(get_remote_jack_buffer)
 
 # Iniciamos el cliente JackTrip
 jacktrip_start
