@@ -123,10 +123,12 @@ function restore_macOS_default_output {
 
 function switch_remote_source {
 
+    local src=$1
+
     # Conmutamos la entrada en el FIRtro remoto.
     # OjO debe ser una source predefinida en el config.yml remoto
     echo 'Conmutando la fuente en el lado remoto ...'
-    echo "source $1" | nc $REMOTE 9990
+    echo "source $src" | nc $REMOTE 9990
     echo
 }
 
@@ -148,16 +150,16 @@ function get_remote_samplerate {
 
 function get_remote_jack_buffer {
 
-    local jack_buffer=1024
+    local jack_period=1024
     local tmp=''
 
-    # Consultamos el jack_buffer del host remoto
-    tmp=$(echo "state" | nc $REMOTE 9990 | grep "jack_buffer" | sed 's/.*: //;s/,//')
+    # Consultamos el jack_period del host remoto
+    tmp=$(echo "state" | nc $REMOTE 9990 | grep "jack_period" | sed 's/.*: //;s/,//')
     if is_integer $tmp; then
-        jack_buffer=$tmp
+        jack_period=$tmp
     fi
 
-    echo $jack_buffer
+    echo $jack_period
 }
 
 
@@ -172,10 +174,11 @@ function jacktrip_start {
     local STATSPATH="$HOME""/tmp/jacktrip_client.stats"
 
     /usr/local/bin/jacktrip --pingtoserver "$REMOTE" \
+        --udprt \
         --bufsize "$BUFFER" \
         --queue "$QUEUE" \
         --redundancy "$REDUNDANCY" \
-        --bitres 16 --numchannels 2 \
+        --numchannels 2 \
         --remotename "$REMOTE_SRC_NAME" \
         --iostat 10 --iostatlog "$STATSPATH" \
         --rtaudio --audiodevice "$RTAudioDEV" \
