@@ -100,7 +100,7 @@ def bucle_escaneo(pnames):
 
                     if pname != last_detected:
 
-                        msg = f"detectado {pname}"
+                        msg = f"signal_detected {pname}"
                         enviar_aviso_tcp(msg)
                         if VERBOSE:
                             print(f"DETECTADO", end='')
