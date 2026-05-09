@@ -19,6 +19,8 @@ from    time        import sleep
 #
 # NOTICE:
 #
+#   - shairport-sync NEEDS Jack at 44100
+#
 #   - Debian package system service NEEDS to be disabled after installing:
 #       sudo systemctl stop shairport-sync.service
 #       sudo systemctl disable shairport-sync.service
