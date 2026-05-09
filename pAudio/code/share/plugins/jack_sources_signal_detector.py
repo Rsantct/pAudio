@@ -3,68 +3,171 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 """
-    Detector de señal en los puertos JACK de fuentes.
+    Signal detector for JACK ports of sources.
 
-    Envía un mensaje informativo al servidor pAudio
-    indicando el puerto en el que se detecta presencia de señal.
+    Sends an informational message to the pAudio server
+    indicating the port where a signal is detected.
+
+    Options:
+
+        -v      verbose
+
+        -s      displays the detected sources on JACK and terminates
+
+    Configuration file:
+
+        jack_sources_signal_detector.yml
+
 """
 
-import jack
-import numpy as np
-import socket
-from   time import sleep
-
-VERBOSE = False
-
-# pAudio port
-PA_PORT = 9990
-
-# Umbral en dB, OjO al ruido de fondo en system (analógico)
-THR_DB = -40.0
-
-# Muestras a tomar del buffer de jack
-N_SAMPLES   = 100
-
-# Segundos que escucha cada par antes de saltar
-TIEMPO_MONITORIZACION = 1
-
-# Flag de aviso entre procesos
-audio_detectado = False
-
-client = jack.Client("signal_detector")
+import  sys
+import  os
+import  jack
+import  numpy as np
+import  socket
+import  json
+import  yaml
+from    time import sleep, time
 
 
-def enviar_aviso_tcp(mensaje):
+client        = jack.Client("signal_detector")
+in_port       = client.inports.register("input")
+verbose       = False
+n_channels    = 2
+flag_detected = False
+
+
+def get_config():
+
+    global  cfg
+
+    cfg = {}
+
+    default_cfg = {
+        # Detection threshold in dB.
+        # Pay attention to background noise in system (A/D)
+        # if using a card with input ports.
+        'thr_db': -40.0,
+
+        # Samples to take from the jack buffer to speed up
+        # CPU usage in the 'jack_monitor' callback
+        'n_samples': 100,
+
+        # Seconds of listening before moving on to the next source.
+        'monitor_time': 1,
+
+        # Monitor the <system:input> port
+        'system_input': True,
+
+        # pAudio backend TCP port
+        'pa_port': 9990
+    }
+
+    my_fname = __file__
+    my_dir = os.path.dirname(my_fname)
+    my_name = os.path.basename(my_fname)[:-3]
+
+    config_dir = f'{my_dir}/{my_name}'
+    config_path = f'{config_dir}/{my_name}.yml'
+
+    if not os.path.isdir(config_dir):
+        os.mkdir(config_dir)
+
+    if not os.path.isfile(config_path):
+        print(f'Saving default config to {config_path}')
+        with open(config_path, 'w') as f:
+            f.write( yaml.safe_dump(default_cfg) )
+        cfg = default_cfg
+
+    else:
+        with open(config_path, 'r') as f:
+            cfg = yaml.safe_load( f.read() )
+
+
+def send_msg(mensaje):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(0.25)
-            s.connect(('localhost', PA_PORT))
+            s.connect(('localhost', cfg["pa_port"]))
             s.sendall(mensaje.encode())
     except Exception as e:
         print(f"Error TCP: {e}")
 
 
-@client.set_process_callback
-def process(frames):
-    """ Esta función se ejecuta en el hilo de tiempo real de JACK.
-        Debe ser lo más rápida posible.
+def get_jack_source_clients():
+    """ Returns all the found jack readable ports,
+        except those in 'reserved_names'
+
+        This takes about 1.5 ms in a Raspberry Pi 3
     """
 
-    global audio_detectado
+    # Nombres de puerto reservados (no son fuentes de audio)
+    reserved_names = [
+        'brutefir',
+        'cpal_client_out',
+        'pre_in_loop',
+        'mpd'
+    ]
 
-    data = in_port.get_array()[:N_SAMPLES]
+    if not cfg["system_input"]:
+        reserved_names.append('system')
 
+    clients = {}
+    names = []
+
+    out_ports = client.get_ports(is_output=True, is_audio=True)
+
+    for p in out_ports:
+
+        p_name = p.name.split(':')[0]
+
+        if not any(reserved_name == p_name for reserved_name in reserved_names):
+
+            if not p_name in names:
+                names.append(p_name)
+                clients[p_name] = []
+
+            clients[p_name].append(p)
+
+    return clients
+
+
+def clear_port_connections(p):
+    """ disconnect any port from <signal_detector:input>
+    """
+    try:
+        connections = client.get_all_connections(p)
+        for cp in connections:
+            client.disconnect(cp, p)
+    except:
+        pass
+
+
+# JACK REAL TIME CALLBAK
+@client.set_process_callback
+def jack_monitor(frames):
+    """ (i) This function runs on the JACK real-time thread,
+            therefore it must be as lightweight as possible.
+
+        It simply sets the flag.
+    """
+
+    global flag_detected
+
+    # We only took a few samples to speed up this routine.
+    data = in_port.get_array()[:cfg["n_samples"]]
+
+    # simplified detector, without rms math or similar
     if any(data):
-        s = sum( data )
-        if s > n_umbral:
-            audio_detectado = True
+        acc = sum( data )
+        if acc > acc_thr:
+            flag_detected = True
 
 
-def bucle_escaneo(pnames):
+# MAIN LOOP
+def scan_loop():
 
-    global audio_detectado
-
-    entrada_detector = 'signal_detector:input'
+    global flag_detected
 
     last_detected = ''
 
@@ -72,85 +175,83 @@ def bucle_escaneo(pnames):
 
         while True:
 
-            for pname in pnames:
+            jclients = get_jack_source_clients()
 
-                try:
-                    connections = client.get_all_connections(entrada_detector)
-                    for p in connections:
-                        client.disconnect(p, entrada_detector)
-                except:
-                    pass
+            for pname, ports in jclients.items():
 
-                ports = client.get_ports(pname, is_audio=True, is_output=True)
+                clear_port_connections(in_port)
+
+                n_channels = len(ports)
 
                 try:
                     for p in ports:
-                        client.connect(p, entrada_detector)
-                    if VERBOSE:
-                        print(f"\nescaneando {pname:<20}", end='')
+                        client.connect(p, in_port)
+                    if verbose:
+                        print(f"\nscanning {pname:<20}", end='')
 
                 except Exception as e:
-                    print(f"Error: No se pudo conectar a {pname}: {str(e)}")
+                    print(f"Error connecting: {str(e)}")
 
-                audio_detectado = False
+                flag_detected = False
 
-                sleep(TIEMPO_MONITORIZACION)
+                # We update the accumulated threshold, which depends on
+                # the number of channels from the source we have connected
+                # to the monitor input (usually 2 stereo channels).
+                acc_thr = thr_lin * cfg["n_samples"] / n_channels
 
-                if audio_detectado:
+                # During this sleep, the 'jack_monitor' callback will
+                # set the flag 'flag_detected' if it detects any signal
+                sleep( cfg["monitor_time"] )
+
+                if flag_detected:
 
                     if pname != last_detected:
 
                         msg = f"signal_detected {pname}"
-                        enviar_aviso_tcp(msg)
-                        if VERBOSE:
-                            print(f"DETECTADO", end='')
+                        send_msg(msg)
+                        if verbose:
+                            print(f"DETECTED", end='')
 
                     last_detected = pname
 
 
-def get_jack_source_clients():
-    """ Returns all the found jack readable ports,
-        except those in 'exclude_names'
-    """
-
-    # Estos nombres de puertos no son fuentes de audio
-    excluded_names = [
-        'brutefir',
-        'cpal_client_out',
-        'pre_in_loop',
-        'mpd'
-    ]
-
-    names = []
-
-    out_ports = client.get_ports(is_output=True, is_audio=True)
-
-    for p in out_ports:
-
-        j_client_name = p.name.split(':')[0]
-
-        if not any(name == j_client_name for name in excluded_names):
-
-            if not j_client_name in names:
-
-                names.append(j_client_name)
-
-    return names
-
-
 if __name__ == "__main__":
 
-    umbral_lineal = 10 ** (THR_DB / 20) # Conversión a escala lineal
-    n_umbral = umbral_lineal * N_SAMPLES
+    get_config()
 
-    in_port = client.inports.register("input")
+    only_view_jack_sources = False
 
-    jack_source_clients = get_jack_source_clients()
+    for opc in sys.argv[1:]:
 
-    print(f"Iniciando detector con pAudio ...")
+        if '-h' in opc:
+            print(__doc__)
+            sys.exit()
+
+        if opc == '-v':
+            verbose = True
+
+        elif opc == '-s':
+            only_view_jack_sources = True
+
+
+    if only_view_jack_sources:
+        t0 = time()
+        clients = get_jack_source_clients()
+        t_ms = round((time() - t0) * 1000, 2)
+        if verbose:
+            print(f'Elapsed time to get jack sources: {t_ms} ms')
+        for k, v in clients.items():
+            clients[k] = [p.name for p in v ]
+        print(json.dumps(clients, indent=2))
+        sys.exit()
+
+
+    print(f"Starting JACK sources signal detector ...")
+    thr_lin = 10 ** (cfg["thr_db"] / 20)
+    acc_thr = thr_lin * cfg["n_samples"] / n_channels
 
     try:
-        bucle_escaneo(jack_source_clients)
+        scan_loop()
 
     except KeyboardInterrupt:
-        print("\nDeteniendo detector.")
+        print("\nStopping detector.")
