@@ -13,6 +13,8 @@ jack:
     softmode:       false
     16bit:          false        # alias of  "shorts:  false"
 
+    sources_auto_switch: false
+
     sources:
         analog:
             jport:  system
