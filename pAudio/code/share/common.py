@@ -159,6 +159,19 @@ def get_remote_source_addr_port(src_name):
     return r_addr, r_port
 
 
+def get_source_of_jport(jport, mode='first'):
+    """ Find the source name that matches the provided jport name
+        mode: 'first' or 'last'
+    """
+    res = ''
+    for sname, params in CONFIG.get('jack', {}).get('sources', {}).items():
+        if jport == params["jport"]:
+            res = sname
+            if mode == 'first':
+                break
+    return res
+
+
 def read_mpd_config(mpd_config_path=''):
     """ mpd clients CANNOT access to MPD.config(),
         so them needs to rely in reading the mpd config file
