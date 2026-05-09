@@ -78,6 +78,10 @@ def get_sources():
 
             if not jsource in sources:
 
+                # If jport is omitted or void, will use the source name
+                if not params.get('jport'):
+                    params["jport"] = jsource
+
                 sources[jsource] = params
 
                 # Complete other parameters for remote sources
