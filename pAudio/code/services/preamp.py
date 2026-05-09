@@ -964,6 +964,16 @@ def do(cmd, args, add):
             if result == 'done':
                 STATE["extra_delay"] = round(float(new), 1)
 
+        case 'signal_detected':
+            if not CONFIG.get('jack', {}).get('sources_auto_switch', False):
+                result = 'jack.sources_auto_switch is not activated'
+            else:
+                jport = args[1:-1] # jack port name must come in quotation marks
+                new = get_source_of_jport(jport)
+                result = set_source(new)
+                if result in ('done', 'ordered'):
+                    STATE["source"] = new
+
         case 'set_source':
             new = args
             result = set_source(new)
