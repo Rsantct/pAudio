@@ -133,7 +133,12 @@ def init():
             else:
                 STATE["source"] = ''
 
-        set_mute( STATE["muted"] )
+        # Unmute by default
+        if CONFIG.get('on_init', {}).get('keep_muted', False):
+            set_mute( STATE["muted"] )
+        else:
+            STATE["muted"] = False
+            set_mute(False)
 
         save_json_file(STATE, PREAMP_STATE_PATH)
 
@@ -167,7 +172,7 @@ def init():
     DRC_SETS = ['none'] + list( CONFIG["drc"].keys() )
 
     # Default SOURCE set to 'Desktop' or 'none'
-    if not STATE["source"] in ('Desktop', 'none'):
+    if not STATE.get('source', '') in ('Desktop', 'none'):
         STATE["source"] = 'none'
 
     # ON_INIT optional user config settings having precedence over the saved state:
@@ -175,7 +180,11 @@ def init():
 
         valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
                        'lu_offset', 'equal_loudness', 'target', 'drc_set',
-                       'midside', 'mono' )
+                       'midside', 'mono')
+
+        # keep_muted is processed later in resume_audio()
+        if prop == 'keep_muted':
+            continue
 
         if not prop in valid_props:
             print(f'{Fmt.BOLD}(on_init) NOT valid: `{prop}`{Fmt.END}')
@@ -239,10 +248,12 @@ def init():
     #
     if CONFIG.get('jack'):
 
-        STATE["jack_buffer"]    = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
         STATE["input_dev"]      = ''
         STATE["output_dev"]     = ''
-        STATE["output_latency"] = round(STATE["jack_buffer"] / STATE["samplerate"] * 1000, 1)
+        STATE["jack_period"]    = CONFIG["jack"]["period"]
+        STATE["jack_nperiods"]  = CONFIG["jack"]["nperiods"]
+        jack_buffer             = CONFIG["jack"]["period"] * CONFIG["jack"]["nperiods"]
+        STATE["output_latency"] = round(jack_buffer / STATE["samplerate"] * 1000, 1)
 
         # open a temporary jack.Client
         try:
@@ -276,11 +287,11 @@ def init():
     # Update state with jack buffer if so
     if not CONFIG.get('jack'):
         try:
-            del STATE["jack_buffer_size"]
-            del STATE["jack_buffer_ms"]
-        except:
-            pass
-
+            keys_to_remove = [k for k in STATE if 'jack' in k]
+            for k in keys_to_remove:
+                del STATE[k]
+        except Exception as e:
+            print(f'{Fmt.RED}(preamp) error removing jack* keys inside STATE: {str(e)}{Fmt.END}')
 
     # Force values
     STATE["extra_delay"] = 0
@@ -563,7 +574,7 @@ def set_source(sname):
                 print('(preamp.py) cannot set local delay')
 
         def set_remote():
-            if send_cmd(f'add_delay {rd}', host=remote_ip, port=remote_port) == 'done':
+            if send_cmd(f'add_delay {rd}', host=remote_addr, port=remote_port) == 'done':
                 print(f'(preamp.py) set remote delay: {rd}')
             else:
                 print('(preamp.py) cannot set remote delay')
@@ -604,22 +615,26 @@ def set_source(sname):
 
         # Remote source
         if 'remote' in sname:
-            remote_cfg         = read_remote_source_config(sname)
-            zita_buff          = remote_cfg.get('zita_buffer_ms', 50)
-            remote_ip          = remote_cfg.get('remote_addr')
-            remote_port        = remote_cfg.get('remote_port', 9990)
-            do_track_level     = remote_cfg.get('remote_track_level', True)
-            compensation_delay = remote_cfg.get('compensation_delay', 0)
+            rc = read_remote_source_config(sname)
+            zita_buff          = rc.get('zita_buffer_ms', 50)
+            remote_addr        = rc.get('remote_addr')
+            remote_port        = rc.get('remote_port', 9990)
+            do_track_level     = rc.get('remote_track_level', True)
+            compensation_delay = rc.get('compensation_delay', 0)
 
-            remote_xo_latency   = get_remote_state(remote_ip, remote_port).get('xo_latency', 0)
+            remote_state        = get_remote_state(remote_addr, remote_port)
+            remote_xo_latency   = remote_state.get('xo_latency',  0)
+            remote_extra_delay  = remote_state.get('extra_delay', 0)            # not used
             local_xo_latency    = read_state_from_disk().get('xo_latency', 0)
 
-            latency_compensation = compensation_delay + remote_xo_latency - local_xo_latency
-            latency_compensation = round( abs(latency_compensation) )
+            latency_compensation =   compensation_delay     \
+                                   + remote_xo_latency      \
+                                   - local_xo_latency
+            latency_compensation = round( latency_compensation, 1 )
 
             # Tell the remote to track its volume to the local end (optional)
             if do_track_level:
-                send_cmd('hello', host=remote_ip, port=remote_port + 5)
+                send_cmd('hello', host=remote_addr, port=remote_port + 5)
 
             # Remote zita-j2n sender. We force to restart zita-j2n at the sender end.
             # (the local zita-n2j is supposed to be listening from start up)
@@ -636,7 +651,7 @@ def set_source(sname):
 
                     # Set local and remote delays
                     if latency_compensation < 0:
-                        order_local_and_remote_delays(0, latency_compensation)
+                        order_local_and_remote_delays(0, abs(latency_compensation))
 
                     elif latency_compensation > 0:
                         order_local_and_remote_delays(latency_compensation, 0)
@@ -645,7 +660,7 @@ def set_source(sname):
                         order_local_and_remote_delays(0, 0)
 
                     # Balance the local volume as that at the remote side
-                    tmp = send_cmd(f'state', host=remote_ip, port=remote_port)
+                    tmp = send_cmd(f'state', host=remote_addr, port=remote_port)
                     try:
                         rem_vol = tmp.get('level', -30)
                     except:
@@ -659,7 +674,7 @@ def set_source(sname):
             #
             # If a new buffer setting is found under the current config.yml,
             # then we restart the local zita-n2j
-            if zita_buff != CONFIG["jack"]["sources"][sname]["zita_buffer_ms"]:
+            if zita_buff != CONFIG["jack"]["sources"][sname].get('zita_buffer_ms', 0):
                 print(f'{Fmt.BLUE}zita-n2j appliyng new buffer: {zita_buff} ms{Fmt.END}')
                 zita_local_restart(raddr, rudpport, zita_buff)
                 CONFIG["jack"]["sources"][sname]["zita_buffer_ms"] = zita_buff
@@ -667,7 +682,7 @@ def set_source(sname):
             #
             # Anyway we check if the local zita-n2j receiver is listening from start up.
             else:
-                pattern = f'zita_n2j_{ remote_ip.split(".")[-1] }'
+                pattern = f'zita_n2j_{ remote_addr.split(".")[-1] }'
                 if not process_is_running( pattern ):
                     zita_local_restart(raddr, rudpport, zita_buff)
 
@@ -948,6 +963,16 @@ def do(cmd, args, add):
             result = set_delay(new)
             if result == 'done':
                 STATE["extra_delay"] = round(float(new), 1)
+
+        case 'signal_detected':
+            if not CONFIG.get('jack', {}).get('sources_auto_switch', False):
+                result = 'jack.sources_auto_switch is not activated'
+            else:
+                jport = args[1:-1] # jack port name must come in quotation marks
+                new = get_source_of_jport(jport)
+                result = set_source(new)
+                if result in ('done', 'ordered'):
+                    STATE["source"] = new
 
         case 'set_source':
             new = args

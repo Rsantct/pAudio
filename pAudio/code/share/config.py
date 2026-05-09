@@ -17,7 +17,6 @@ MAINFOLDER          = f'{UHOME}/pAudio'
 LSPKSFOLDER         = f'{MAINFOLDER}/loudspeakers'
 LSPKFOLDER          = f''
 LOUDSPEAKER         = f''   # to be found later
-LSPK_YML_PATH       = f''   #
 
 EQFOLDER            = f'{MAINFOLDER}/eq'
 CODEFOLDER          = f'{MAINFOLDER}/code'
@@ -175,18 +174,16 @@ def complete_config():
         CONFIG["jack"]["softmode"]  = softmode
 
         tmp = CONFIG["jack"].get('zita_udp_base', None)
-
         if type(tmp) != int:
             CONFIG["jack"]["zita_udp_base"] = 65000
             if tmp:
                 print(f'{Fmt.RED}(config) Bad value zita_udp_base: {tmp}, using 65000{Fmt.END}')
 
         tmp = CONFIG["jack"].get('zita_buffer_ms', None)
-
         if type(tmp) != int:
-            CONFIG["jack"]["zita_buffer_ms"] = 20
+            CONFIG["jack"]["zita_buffer_ms"] = 10
             if tmp:
-                print(f'{Fmt.RED}(config) Bad value zita_buffer_ms: {tmp}, using 20{Fmt.END}')
+                print(f'{Fmt.RED}(config) Bad value zita_buffer_ms: {tmp}, using 10{Fmt.END}')
 
 
     def get_lspk_config():
@@ -204,10 +201,11 @@ def complete_config():
 
             res = {}
 
-            if os.path.isfile(LSPK_YML_PATH):
+            lspk_yml_path = f'{LSPKFOLDER}/lspk.yml'
+            if os.path.isfile(lspk_yml_path):
 
                 try:
-                    with open(LSPK_YML_PATH, 'r') as f:
+                    with open(lspk_yml_path, 'r') as f:
                         res = yaml.safe_load( f.read() )
                         if CONFIG["verbose"]:
                             print(f'{Fmt.BLUE}(config) Loudspeaker config file `{CONFIG["loudspeaker"]}/lspk.yml` was found{Fmt.END}')
@@ -259,7 +257,10 @@ def complete_config():
 
                         fir_path = f'{LSPKFOLDER}/{fs}/drc.{ch}.{set_name}.pcm'
 
-                        channels[ch][1] = make_fir_filter(fir_path)
+                        if os.path.isfile(fir_path):
+                            channels[ch][1] = make_fir_filter(fir_path)
+                        else:
+                            raise Exception (f'DRC set file not found: {fir_path}')
 
                     LSPK_CONFIG["drc"][set_name] = channels
 
@@ -518,8 +519,6 @@ def complete_config():
     if not os.path.isdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}'):
         os.mkdir(f'{LSPKFOLDER}/{CONFIG["samplerate"]}')
 
-    LSPK_YML_PATH = f'{LSPKFOLDER}/lspk.yml'
-
     lspk_config = get_lspk_config()
     #
     # DEBUG
@@ -574,6 +573,9 @@ if pAudio_cfg_is_recent():
     except Exception as e:
         print(f'{Fmt.RED}{Fmt.BLINK}(config.py) PANIC reading: {PAUDIO_CFG_PATH}: {str(e)}{Fmt.END}')
         sys.exit()
+
+    LOUDSPEAKER   = CONFIG.get('loudspeaker', '')
+    LSPKFOLDER    = f'{LSPKSFOLDER}/{LOUDSPEAKER}'
 
 else:
     print(f'{Fmt.BLUE}(config) preparing pAudio_cfg ...{Fmt.END}')

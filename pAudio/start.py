@@ -174,6 +174,43 @@ def manage_loudness_monitor_daemon(mode='start'):
         sp.Popen(tmp, shell=True)
 
 
+def prepare_jacktrip_server(iostat=False):
+    """ run jacktrip in hub server mode
+    """
+
+    def jacktrip_wanted():
+
+        jack_sources = CONFIG.get('jack', {}).get('sources', {})
+
+        result = False
+
+        for s, params in jack_sources.items():
+            if params.get('jacktrip', None) == True:
+                result = True
+
+        return result
+
+
+    if not jacktrip_wanted():
+        print(f'{Fmt.GRAY}(start) (i) JackTrip server not needed{Fmt.END}')
+        return
+
+    log_path   = f'{MAINFOLDER}/log/jacktrip_hubserver.log'
+    stats_path = f'{MAINFOLDER}/log/jacktrip_hubserver.stats'
+
+    iostat_cmd = f' --iostat 5 --iostatlog '
+
+    cmd = f'jacktrip --jacktripserver --numchannels 2 --nojackportsconnect'
+
+    if iostat:
+        cmd += iostat_cmd
+
+
+    print(f'{Fmt.GRAY}(start) (i) Running JackTrip server ...{Fmt.END}')
+    with open(log_path, 'w') as flog:
+        sp.Popen(cmd, shell=True, stdout=flog, stderr=flog)
+
+
 def prepare_zita_links():
     """ A LAN audio connection based on zita-njbridge from Fons Adriaensen.
 
@@ -226,6 +263,18 @@ def stop_zita_link():
         zita_local_restart(jport=params["jport"], mode='stop')
 
 
+def manage_signal_detector(mode='start'):
+
+    if mode == 'stop':
+        print(f'{Fmt.GRAY}(start) killing JACK sources signal detector.{Fmt.END}')
+        sp.Popen(['pkill', '-f', 'jack_sources_signal_detector'])
+        return
+
+    jack_signal_detector_path = f'{MAINFOLDER}/code/share/jack_sources_signal_detector.py'
+    sp.Popen(['python3', jack_signal_detector_path])
+    print(f'{Fmt.GRAY}{Fmt.BOLD}(start) starting JACK sources signal detector ...{Fmt.END}')
+
+
 def stop():
 
     if VERBOSE:
@@ -252,6 +301,13 @@ def stop():
         sleep(.25)
         sp.Popen(['pkill', '-f',  'jackd'])
 
+        # JackTrip if used
+        sp.Popen(['pkill', '-f', 'jacktrip'])
+
+        # Optional
+        if CONFIG["jack"].get('sources_auto_switch', False):
+            manage_signal_detector('stop')
+
     sleep(1)
 
 
@@ -269,7 +325,9 @@ def start():
 
     # Run the pAudio main server 'paudio.py' to listen for commands
     srv_cmd = f'python3 {MAINFOLDER}/code/share/server.py paudio {CONFIG["paudio_addr"]} {CONFIG["paudio_port"]}'
-    server_timeout = estimate_server_delay() + 15
+
+    # Minimum timeout is 10 s
+    server_timeout = max(10, estimate_server_response_delay() * 1.5)
 
     if VERBOSE:
         srv_cmd += ' -v'
@@ -280,7 +338,7 @@ def start():
     t_srv_start = time()
     sp.Popen( srv_cmd.split() )
 
-    if wait4server(timeout=server_timeout):
+    if wait4server(timeout=server_timeout, verbose_seconds=5):
         t_srv_lapse = round(time() - t_srv_start, 1)
         print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
 
@@ -289,14 +347,22 @@ def start():
         stop()
         return
 
+    # Linux with Jack
     if sys.platform == 'linux' and CONFIG.get('jack'):
 
-        # Zita network to jack (Linux)
-        zljob = threading.Thread(target=prepare_zita_links)
-        zljob.start()
+        # JackTrip HUB server if needed
+        prepare_jacktrip_server()
 
-        # Rewire CamillaDSP ONLY with Linux JACK
+        # Zita network to jack receivers
+        zitalink_job = threading.Thread(target=prepare_zita_links)
+        zitalink_job.start()
+
+        # Rewire CamillaDSP
         rewire_camilladsp()
+
+        # Optional
+        if CONFIG["jack"].get('sources_auto_switch', False):
+            manage_signal_detector('start')
 
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon()

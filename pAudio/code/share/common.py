@@ -159,6 +159,19 @@ def get_remote_source_addr_port(src_name):
     return r_addr, r_port
 
 
+def get_source_of_jport(jport, mode='first'):
+    """ Find the source name that matches the provided jport name
+        mode: 'first' or 'last'
+    """
+    res = ''
+    for sname, params in CONFIG.get('jack', {}).get('sources', {}).items():
+        if jport == params["jport"]:
+            res = sname
+            if mode == 'first':
+                break
+    return res
+
+
 def read_mpd_config(mpd_config_path=''):
     """ mpd clients CANNOT access to MPD.config(),
         so them needs to rely in reading the mpd config file
@@ -887,21 +900,28 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=30, port=CONFIG.get('paudio_port', 9990)):
+def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 9990)):
 
+    elapsed = 0
     period = .5
     tries  = int(timeout / period)
+
+    print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}Wainting {timeout } s for server response ...{Fmt.END}')
 
     while tries:
 
         if check_output('localhost', port,' hello'):
             break
 
-        tries -= 1
+        if elapsed and not elapsed % verbose_seconds:
+            print(f'{Fmt.GRAY}{Fmt.ITALIC}elapsed {elapsed} s for server response ...{Fmt.END}')
+
         sleep(period)
-        #print(f'{Fmt.GRAY}waiting for server response ...{Fmt.END}')
+        elapsed += period
+        tries -= 1
 
     if tries:
+        print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}Server response was in {elapsed} s{Fmt.END}')
         return True
     else:
         return False
@@ -947,16 +967,19 @@ def wait4jackports( pattern, timeout=5 ):
         return False
 
 
-def estimate_server_delay():
-
-    my_bm = get_benkmarch(n=500e3)
-
-    delay = 5.14 * my_bm ** -0.62
-
-    return int(round(delay, 1))
-
-
 def get_benkmarch(n=500e3):
+    """ Calculate a CPU benchmark referring to Intel Core i3
+
+                            meas    estimated
+                            delay   bench
+                            500e3   500e3
+                            -----   -----
+        RPI 3 B             0.895   0.05
+        RPI 3 B+            0.450   0.11
+        Asus Tinker Board   0.225   0.22
+        Core i3             0.049   1.0
+        Apple M1            0.032   1.5
+    """
 
     start = perf_counter()
     _ = sum(i**2 for i in range(int(n)))
@@ -964,18 +987,37 @@ def get_benkmarch(n=500e3):
 
     cpu_score = end - start
 
-    #                   delay   bench       time to run
-    #                   500e3   500e3       the pAudio server
-    #                   -----   -----       -----
-    # RPI 3 B           0.895   0.05        32 s
-    # RPI 3 B+          0.450   0.11        22 s
-    # Asus Atinker      0.225   0.22        14 s
-    # Core i3           0.049   1.0          4 s
-    # Apple M1          0.032   1.5          1 s
-
+    # choosing Core i3 as reference
     reference_score = 0.049
 
     return 1 / (cpu_score / reference_score)
+
+
+def estimate_server_response_delay():
+    """ See the table (experimental):
+
+                            estimated
+                            bench       time to run
+                            500e3       the pAudio server
+                            -----       -----
+        RPI 3 B             0.05        36 s
+        RPI 3 B+            0.11        27 s
+        Asus Atinker Board  0.22        16 s
+        Core i3             1.0          4 s
+        Apple M1            1.5          2 s
+
+    """
+
+    my_bm = get_benkmarch(n=500e3)
+
+    # Exp function to find the estimated time of response
+    estimated = 4.88 * (my_bm ** -0.72)
+
+    estimated = int(round(estimated, 1))
+
+    print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}(i) Estimated server response is {estimated} s about{Fmt.END}')
+
+    return estimated
 
 
 def ip_is_reachable(ip):

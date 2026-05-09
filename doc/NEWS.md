@@ -11,11 +11,18 @@
 
 ## 2025-dec: players management
 
-- new code for players management: librespot (Spotify Connect client)
-- minor fixes
+- New code for players management: librespot (Spotify Connect client)
+- Minor fixes
 
-## 2026-jan CamillaDSP v3
+## 2026-jan: CamillaDSP v3
 - pycamilladsp volume commands changes
 
-## 2026-apr CamillaDSP v4
-- new format variants descriptors for devices an raw FIR filter encoding
+## 2026-apr: CamillaDSP v4
+- New format variants descriptors for devices and raw FIR filter encoding
+
+## 2026-may: 
+- Improvements on zita based remote peer sources (pAudio sources).
+- New Jacktrip based remote sources.
+- A new script for macOS users allows sending lossless and low latency desktop audio to pAudio via JackTrip.
+- New automatic jack source switching on signal detection.
+- Fix start timeout for the pAudio server to be alive on slow machines.

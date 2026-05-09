@@ -13,6 +13,8 @@ jack:
     softmode:       false
     16bit:          false        # alias of  "shorts:  false"
 
+    sources_auto_switch: false
+
     sources:
         analog:
             jport:  system
@@ -20,16 +22,22 @@ jack:
         cd:
             jport:  mpd_loop
 
+        # A remote pAudio native source based on zita-njbridge
         remoteSalon:
             remote_addr:        192.168.1.57
             remote_track_level: true
-            zita_buffer_ms:     50
-            # Experimental value that depends on zita_buffer.
+            # Default is 10 ms, but if you use WiFi you'll need about 100 ms (not recommended)
+            zita_buffer_ms:     20
+            # Compensation delay is an experimental value that depends
+            # on the *zita_buffer* as well on the *jack buffer*.
             # It must be taken by selecting the minimum delay
             # filtering sets available on both ends
-            # (if negative will be applied to the remote end)
-            compensation_delay: 13
+            # If the value is negative, it will be applied at the remote end.
+            compensation_delay: 12
 
+        # A special remote source based on JackTrip
+        MacBook Pro:
+            jacktrip: true
 
     # Optional config for zita-njbridge based multiroom remote sources
     # (default is 65000)

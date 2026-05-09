@@ -9,6 +9,8 @@ Fmt = None
 
 def update_lspk(pAudio_config, cam_config):
 
+    print(f'{Fmt.BLUE}(lspk.py) --- Prepare camilladsp init yml ---{Fmt.END}')
+
     # 1. Prepare filters sections
     if not cam_config.get('filters'):
         cam_config["filters"] = {}
@@ -86,20 +88,20 @@ def update_lspk(pAudio_config, cam_config):
         if f[:-2] not in ('_L', '_R'):
 
             pipeline_eq_L_step_names.append(f)
-            print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_eq_L_step["description"]}`{Fmt.END}')
+            print(f'{Fmt.BLUE}(lspk.py) Adding filter <{f}> to pipeline <{pipeline_eq_L_step["description"]}>{Fmt.END}')
             pipeline_eq_R_step_names.append(f)
-            print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_eq_R_step["description"]}`{Fmt.END}')
+            print(f'{Fmt.BLUE}(lspk.py) Adding filter <{f}> to pipeline <{pipeline_eq_R_step["description"]}>{Fmt.END}')
 
         # Filters for an specific channel
         else:
 
             if f[:-2] == '_L':
                 pipeline_eq_L_step_names.append(f)
-                print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_eq_L_step["description"]}`{Fmt.END}')
+                print(f'{Fmt.BLUE}(lspk.py) Adding filter <{f}> to pipeline <{pipeline_eq_L_step["description"]}>{Fmt.END}')
 
             if f[:-2] == '_R':
                 pipeline_eq_R_step_names.append(f)
-                print(f'{Fmt.BLUE}Adding filter `{f}` to pipeline `{pipeline_eq_R_step["description"]}`{Fmt.END}')
+                print(f'{Fmt.BLUE}(lspk.py) Adding filter <{f}> to pipeline <{pipeline_eq_R_step["description"]}>{Fmt.END}')
 
 
     # 4.b. DRC filters (will use the first drc set found as initial configuration)
@@ -123,11 +125,11 @@ def update_lspk(pAudio_config, cam_config):
 
                 if ch == 'L':
                     pipeline_drc_L_step_names.append(tmp)
-                    print(f'{Fmt.BLUE}Adding filter `{tmp}` to pipeline `{pipeline_drc_L_step["description"]}`{Fmt.END}')
+                    print(f'{Fmt.BLUE}(lspk.py) Adding filter <{tmp}> to pipeline <{pipeline_drc_L_step["description"]}>{Fmt.END}')
 
                 if ch == 'R':
                     pipeline_drc_R_step_names.append(tmp)
-                    print(f'{Fmt.BLUE}Adding filter `{tmp}` to pipeline `{pipeline_drc_R_step["description"]}`{Fmt.END}')
+                    print(f'{Fmt.BLUE}(lspk.py) Adding filter <{tmp}> to pipeline <{pipeline_drc_R_step["description"]}>{Fmt.END}')
 
 
     # 5. Populate step names
@@ -145,3 +147,5 @@ def update_lspk(pAudio_config, cam_config):
     if pipeline_drc_L_step["names"] or pipeline_drc_R_step["names"] :
         cam_config["pipeline"].append( pipeline_drc_L_step )
         cam_config["pipeline"].append( pipeline_drc_R_step )
+
+    print(f'{Fmt.BLUE}(lspk.py) --- End of prepare camilladsp init yml ---{Fmt.END}')
