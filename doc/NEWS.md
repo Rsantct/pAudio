@@ -21,8 +21,8 @@
 - New format variants descriptors for devices and raw FIR filter encoding
 
 ## 2026-may: 
-- Improvements on zita based remote peer sources (pAudio sources).
-- New Jacktrip based remote sources.
+- Improvements on zita based remote peer sources (pAudio native remote sources).
+- New JackTrip based remote sources.
 - A new script for macOS users allows sending lossless and low latency desktop audio to pAudio via JackTrip.
-- New automatic jack source switching on signal detection.
-- Fix start timeout for the pAudio server to be alive on slow machines.
+- New optional automatic jack source switching on signal detection.
+- Fix timeout for the pAudio server to be alive on slow machines.
