@@ -970,15 +970,15 @@ def wait4jackports( pattern, timeout=5 ):
 def get_benkmarch(n=500e3):
     """ Calculate a CPU benchmark referring to Intel Core i3
 
-                          meas    estimated
-                          delay   bench
-                          500e3   500e3
-                          -----   -----
-        RPI 3 B           0.895   0.05
-        RPI 3 B+          0.450   0.11
-        Asus Atinker      0.225   0.22
-        Core i3           0.049   1.0
-        Apple M1          0.032   1.5
+                            meas    estimated
+                            delay   bench
+                            500e3   500e3
+                            -----   -----
+        RPI 3 B             0.895   0.05
+        RPI 3 B+            0.450   0.11
+        Asus Tinker Board   0.225   0.22
+        Core i3             0.049   1.0
+        Apple M1            0.032   1.5
     """
 
     start = perf_counter()
@@ -996,15 +996,15 @@ def get_benkmarch(n=500e3):
 def estimate_server_response_delay():
     """ See the table (experimental):
 
-                          estimated
-                          bench       time to run
-                          500e3       the pAudio server
-                          -----       -----
-        RPI 3 B           0.05        36 s
-        RPI 3 B+          0.11        27 s
-        Asus Atinker      0.22        16 s
-        Core i3           1.0          4 s
-        Apple M1          1.5          2 s
+                            estimated
+                            bench       time to run
+                            500e3       the pAudio server
+                            -----       -----
+        RPI 3 B             0.05        36 s
+        RPI 3 B+            0.11        27 s
+        Asus Atinker Board  0.22        16 s
+        Core i3             1.0          4 s
+        Apple M1            1.5          2 s
 
     """
 
