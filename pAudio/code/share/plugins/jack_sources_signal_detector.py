@@ -49,7 +49,7 @@ def get_config():
         # if using a card with input ports.
         'thr_db': -40.0,
 
-        # Samples to take from the jack buffer to speed up
+        # A few samples to take from the jack buffer to speed up
         # CPU usage in the 'jack_monitor' callback
         'n_samples': 100,
 
@@ -149,7 +149,7 @@ def jack_monitor(frames):
     """ (i) This function runs on the JACK real-time thread,
             therefore it must be as lightweight as possible.
 
-        It simply sets the flag.
+        It simply sets the flag when some signal is detected
     """
 
     global flag_detected
