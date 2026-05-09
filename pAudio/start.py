@@ -263,6 +263,18 @@ def stop_zita_link():
         zita_local_restart(jport=params["jport"], mode='stop')
 
 
+def manage_signal_detector(mode='start'):
+
+    if mode == 'stop':
+        print(f'{Fmt.GRAY}(start) killing JACK sources signal detector.{Fmt.END}')
+        sp.Popen(['pkill', '-f', 'jack_sources_signal_detector'])
+        return
+
+    jack_signal_detector_path = f'{MAINFOLDER}/code/share/jack_sources_signal_detector.py'
+    sp.Popen(['python3', jack_signal_detector_path])
+    print(f'{Fmt.GRAY}{Fmt.BOLD}(start) starting JACK sources signal detector ...{Fmt.END}')
+
+
 def stop():
 
     if VERBOSE:
@@ -291,6 +303,10 @@ def stop():
 
         # JackTrip if used
         sp.Popen(['pkill', '-f', 'jacktrip'])
+
+        # Optional
+        if CONFIG["jack"].get('sources_auto_switch', False):
+            manage_signal_detector('stop')
 
     sleep(1)
 
@@ -344,6 +360,9 @@ def start():
         # Rewire CamillaDSP
         rewire_camilladsp()
 
+        # Optional
+        if CONFIG["jack"].get('sources_auto_switch', False):
+            manage_signal_detector('start')
 
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon()
