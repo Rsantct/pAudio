@@ -1,0 +1,17 @@
+# Detection threshold in dB.
+# Pay attention to background noise in system (A/D)
+# if using a card with input ports.
+thr_db: -40.0
+
+# Samples to take from the jack buffer to speed up
+# CPU usage in the 'jack_monitor' callback
+n_samples: 100
+
+# Seconds of listening before moving on to the next source.
+monitor_time: 1
+
+# Monitor the <system:input> port
+system_input: true
+
+# pAudio backend TCP port
+pa_port: 9990
