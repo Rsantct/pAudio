@@ -6,7 +6,9 @@
     Signal detector for JACK ports of sources.
 
     Sends an informational message to the pAudio server
-    indicating the port where a signal is detected.
+    indicating the port where a signal is detected:
+
+        signal_detected 'jack_port_name'
 
     Options:
 
@@ -171,6 +173,9 @@ def scan_loop():
 
     last_detected = ''
 
+    if verbose:
+        print('Scanning ports ...')
+
     with client:
 
         while True:
@@ -187,7 +192,7 @@ def scan_loop():
                     for p in ports:
                         client.connect(p, in_port)
                     if verbose:
-                        print(f"\nscanning {pname:<20}", end='')
+                        print(f"\n... {pname:<20}", end='')
 
                 except Exception as e:
                     print(f"Error connecting: {str(e)}")
@@ -207,7 +212,7 @@ def scan_loop():
 
                     if pname != last_detected:
 
-                        msg = f"signal_detected {pname}"
+                        msg = f"signal_detected '{pname}'"
                         send_msg(msg)
                         if verbose:
                             print(f"DETECTED", end='')
@@ -245,8 +250,8 @@ if __name__ == "__main__":
         print(json.dumps(clients, indent=2))
         sys.exit()
 
-
-    print(f"Starting JACK sources signal detector ...")
+    if verbose:
+        print(f"Starting JACK sources signal detector ...")
     thr_lin = 10 ** (cfg["thr_db"] / 20)
     acc_thr = thr_lin * cfg["n_samples"] / n_channels
 
@@ -254,4 +259,5 @@ if __name__ == "__main__":
         scan_loop()
 
     except KeyboardInterrupt:
-        print("\nStopping detector.")
+        if verbose:
+            print("\nStopping detector.")
