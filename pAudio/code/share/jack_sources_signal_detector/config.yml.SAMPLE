@@ -11,7 +11,7 @@ n_samples: 100
 monitor_time: 1
 
 # Monitor the physical <system:input> port
-system_input: true
+system_input: false
 
 # pAudio backend TCP port
 pa_port: 9990
