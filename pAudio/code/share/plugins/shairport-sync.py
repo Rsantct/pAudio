@@ -69,7 +69,7 @@ def start():
     # Former versions used alsa but recent debian package alows jack :-)
     cmdlist = ['shairport-sync',  '-a', gethostname(), '-o' , 'jack']
 
-    with open(log_path, 'a') as f:
+    with open(log_path, 'w') as f:
         sp.Popen( cmdlist, stdout=f, stderr=f )
 
     job = threading.Thread(target=run_watchdog)
