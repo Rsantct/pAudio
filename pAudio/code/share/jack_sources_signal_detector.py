@@ -8,7 +8,7 @@
         It sends an informational message to the pAudio server
         indicating the port where a signal is detected, example:
 
-            signal_detected 'system'
+            signal_detected 'system' -23.4 dB peak
 
     Options:
 
@@ -210,10 +210,10 @@ def scan_loop():
 
                     if pname != last_detected_port:
 
-                        msg = f"signal_detected '{pname}'"
+                        pk_dB = round(20 * np.log10(last_detected_peak), 1)
+                        msg = f"signal_detected '{pname}' {pk_dB} dB peak"
                         send_msg(msg)
                         if verbose:
-                            pk_dB = round(20 * np.log10(last_detected_peak), 1)
                             print(f'DETECTED peak {pk_dB} dB', end='')
 
                     last_detected_port = pname
