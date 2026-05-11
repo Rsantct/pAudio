@@ -965,8 +965,8 @@ def do(cmd, args, add):
                 STATE["extra_delay"] = round(float(new), 1)
 
         case 'signal_detected':
-            # jack port name is in quotation marks
-            jport = args[1:-1]
+            # example:   signal_detected 'system' -23.4 dB peak
+            jport = args.split("'")[1] if args.split("'")[1:] else ''
             new = get_source_of_jport(jport)
             result = set_source(new)
             if result in ('done', 'ordered'):
