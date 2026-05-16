@@ -63,15 +63,15 @@ def get_config():
         # if using a card with input ports.
         'pk_threshold': -50.0,
 
-        # A few samples to take from the jack buffer to speed up
-        # CPU usage in the jack_monitor real-time callback.
-        # Set about 100 for low speed CPU, or increase accuracy
+        # We only take a few samples from the jack buffer to speed up
+        # the CPU usage in the jack_monitor real-time callback.
+        # Set about 100 for low speed CPU, or increase it for accuracy.
         'n_samples': 100,
 
         # Seconds of listening before moving on to the next source.
         'monitor_time': 1,
 
-        # minimum duration in ms to be consider as signal presence
+        # Minimum duration in ms to be consider as signal presence
         'minimum_ms': 250,
 
         # Monitor the <system:input> port
