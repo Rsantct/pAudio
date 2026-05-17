@@ -26,3 +26,5 @@
 - A new script for macOS users allows sending lossless and low latency desktop audio to pAudio via JackTrip.
 - New optional automatic jack source switching on signal detection.
 - Fix timeout for the pAudio server to be alive on slow machines.
+- Fix libresport reading events for metadata retrieving.
+- Add shairplay-sync plugin for Airplay receiving.

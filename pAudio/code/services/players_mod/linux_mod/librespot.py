@@ -72,7 +72,7 @@ def get_info():
 
     try:
         # about 100 events old must be enough
-        for e in events[:100][::-1]:
+        for e in events[-100:][::-1]:
 
             if e["event"] in ('playing', 'paused'):
 

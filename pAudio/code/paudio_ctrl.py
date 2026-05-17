@@ -162,7 +162,7 @@ def get_camilladsp_state():
 
 def run_macro(mname):
 
-    result = 'nothing was done'
+    result = 'nothing to do'
 
     if not mname or 'clear_last' in mname:
 
