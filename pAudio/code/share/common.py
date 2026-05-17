@@ -275,26 +275,28 @@ def read_mpd_config(mpd_config_path=''):
 def get_player_from_source():
 
     source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
-    lowsource = source.lower()
 
-    if 'spotify' in lowsource:
+    if 'spotify' in source.lower():
 
         if any('librespot' in p for p in CONFIG['plugins']):
             player = 'librespot'
         else:
             player = 'spotify'
 
-    elif 'librespot' in lowsource:
+    elif 'librespot' in source.lower():
         player = 'librespot'
 
-    elif 'mpd' in lowsource or lowsource == 'cd':
+    elif 'mpd' in source.lower() or source.lower() == 'cd':
         player = 'mpd'
 
-    elif 'tdt' in lowsource or 'dvb' in lowsource:
+    elif 'tdt' in source.lower() or 'dvb' in source.lower():
         player = 'mplayer'
 
     elif source[:6] == 'remote':
         player = source
+
+    elif source == 'none':
+        player = ''
 
     else:
         jport = CONFIG["sources"].get(source, {}).get('jport', '')
