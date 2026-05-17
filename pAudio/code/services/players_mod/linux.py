@@ -50,31 +50,35 @@ def get_player_info():
     res = PLAYERTEMPLATE
 
     player = get_player_from_source()
-    lowplayer = player.lower()
 
     try:
 
-        if lowplayer[:6] == 'remote':
+        if player.lower()[:6] == 'remote':
             res = remotes.get_info(remoteID=player)
 
-        elif 'spotify' in lowplayer:
+        elif 'spotify' in player.lower():
             res = spotify.get_info()
 
-        elif 'librespot' in lowplayer:
+        elif 'librespot' in player.lower():
             res = librespot.get_info()
 
-        elif 'mpd' in lowplayer or lowplayer == 'cd':
+        elif 'mpd' in player.lower() or player.lower() == 'cd':
             res = mpd_mod.get_info()
 
-        elif 'mplayer' in lowplayer:
+        elif 'mplayer' in player.lower():
             res = mplayer.get_info('dvb')
 
         else:
-            res["player"] = player if player else ''
+            source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
+            res["player"] = player if player else source
+            if source != 'none':
+                res["title"]  = source
+            else:
+                res["title"] = ''
 
     # This can happens if the player App is not ready at this moment
     except Exception as e:
-        print(f'{Fmt.MAGENTA}(linux) ERROR getting info and metadata from {player}: {str(e)}{Fmt.END}')
+        print(f'{Fmt.MAGENTA}(linux) ERROR getting info and metadata from `{player}`: {str(e)}{Fmt.END}')
 
     return res
 
@@ -84,18 +88,17 @@ def playback_control(cmd):
     """
 
     player = get_player_from_source()
-    lowplayer = player.lower()
 
-    if lowplayer[:6] == 'remote':
+    if player.lower()[:6] == 'remote':
         res = remotes.playback_control(player, cmd)
 
-    elif 'spotify' in lowplayer:
+    elif 'spotify' in player.lower():
         res = spotify.playback_control(cmd)
 
-    elif 'mpd' in lowplayer or lowplayer == 'cd':
+    elif 'mpd' in player.lower() or player.lower() == 'cd':
         res = mpd_mod.playback_control(cmd)
 
-    elif 'mplayer' in lowplayer:
+    elif 'mplayer' in player.lower():
         res = mplayer.playback_control(cmd)
 
     else:
