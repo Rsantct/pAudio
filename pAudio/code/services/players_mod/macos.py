@@ -24,7 +24,7 @@ def loop_save_player_info(source=''):
 
     while True:
 
-        player_info = get_player_info()
+        player_info = macos_players.get_player_info()
 
         for k in 'time_pos', 'time_tot':
             if len(player_info.get(k, '')) > 5 and  player_info.get(k, '').startswith('00:'):
@@ -65,6 +65,6 @@ def playback_control(cmd):
         end tell
     '''
 
-    macos_player.run_applescript(pbk_script)
+    macos_players.run_applescript(pbk_script)
 
     return 'ordered'
