@@ -11,7 +11,7 @@ import yaml
 
 # (i) USER CONFIG in the accompanying file  ** macos_players.conf **
 # The first one has precedence if more than one are in 'play' state
-default_players_of_interest = [
+default_preferred_apps = [
     'Spotify',
     'Music',
     'QuickTime Player',
@@ -237,7 +237,7 @@ VOID_PLAYER_INFO = {
 
 def init():
 
-    global players_of_interest
+    global preferred_apps
 
     fname = __file__.replace('.py', '.conf')
     try:
@@ -247,10 +247,11 @@ def init():
         print(e)
         c = {}
 
-    players_of_interest = c.get('players of interest', [])
+    preferred_apps = c.get('preferred apps', [])
 
-    if not players_of_interest:
-        players_of_interest = default_players_of_interest
+    if not preferred_apps:
+        preferred_apps = default_preferred_apps
+
 
 # this is a copy from share/common.py
 def time_sec2hhmmss(x):
@@ -398,15 +399,15 @@ def run_applescript(script=''):
 
 
 def get_player_info():
-    """ Iterate over players_of_interest in preferred order
-        Returns: the player info of the first one found in 'play' state
+    """ Iterate over preferred_apps
+        Return: the app info of the first one found in 'play' state
     """
 
     players_info = []
 
-    for player in players_of_interest:
+    for app in preferred_apps:
 
-        script = PLAYERS[player]
+        script = PLAYERS[app]
 
         # run_applescript returns a raw string
         script_ans = run_applescript(script)
@@ -424,15 +425,15 @@ def get_player_info():
 
                 except Exception as e:
                     player_info  = VOID_PLAYER_INFO
-                    player_info["app"] = player
-                    print(f'(players_macos) Error decoding JSON from {player}: {str(e)}')
+                    player_info["app"] = app
+                    print(f'(players_macos) Error decoding JSON from {app}: {str(e)}')
 
             if type( player_info ) == dict:
                 players_info.append( player_info )
 
     for player_info in players_info:
 
-        # First player in play state has prececende
+        # First app in play state has prececende
         if 'play' in player_info.get('state'):
             break
 
