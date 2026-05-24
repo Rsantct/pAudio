@@ -9,6 +9,14 @@
 #   - a DBUS_SESSION_BUS_ADDRESS if neccessary for JACK when not in a X environment
 #
 
+
+BOLD="\033[1m"
+RED="\033[0;31m"
+BLUE="\033[0;34m"
+GRAY="\033[0;90m"
+NOCOLOR="\033[0m"
+
+
 function start_www {
 
     if [[ $(pgrep -f "paudio_www.js") ]]; then
@@ -17,7 +25,8 @@ function start_www {
         fi
 
     else
-        node $HOME/pAudio/code/share/www/paudio_www.js 1>/dev/null 2>&1 &
+        rm -f $NODEJS_LOGERR
+        node $HOME/pAudio/code/share/www/paudio_www.js 1>/dev/null 2>$NODEJS_LOGERR &
     fi
 }
 
@@ -130,6 +139,11 @@ function do_start {
         python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
                                             2> $HOME/pAudio/log/start.err &
     fi
+
+    # check for node js www server
+    if [[ -f $NODEJS_LOGERR ]]; then
+        echo -e ${RED}"ERROR loading web server, see pAudio/doc. Details: ""$NODEJS_LOGERR"${NOCOLOR}
+    fi
 }
 
 
@@ -152,6 +166,9 @@ if [[ ! $PA_PORT ]]; then
     PA_PORT=9990
 fi
 CTRL_PORT=$((PA_PORT + 1))
+
+# node js web server error log
+NODEJS_LOGERR=$HOME/pAudio/log/paudio_www.js.err
 
 VERBOSE='false'
 
