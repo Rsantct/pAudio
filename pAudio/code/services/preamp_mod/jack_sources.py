@@ -87,13 +87,15 @@ def get_sources():
                 # Complete other parameters for remote sources
                 if 'remote' in jsource:
 
-                    ip, port = get_remote_source_addr_port(params["remote_addr"])
-                    jport = f'zita_n2j_{ip.split(".")[-1]}'
-                    sources[jsource]["ip"]    = ip
-                    sources[jsource]["port"]  = port
-                    sources[jsource]["jport"] = jport
+                    remote_addr = params.get('remote_addr', '')
+                    if remote_addr:
+                        ip, port = get_remote_source_addr_port(remote_addr)
+                        jport = f'zita_n2j_{ip.split(".")[-1]}'
+                        sources[jsource]["ip"]    = ip
+                        sources[jsource]["port"]  = port
+                        sources[jsource]["jport"] = jport
 
-                    del sources[jsource]["remote_addr"]
+                        del sources[jsource]["remote_addr"]
 
             # It is a predefined source because we created it before
             # for well-known sources, for example for the mpd.py plugin
