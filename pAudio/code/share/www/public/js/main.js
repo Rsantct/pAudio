@@ -3,6 +3,7 @@
     This file is part of 'pAudio', a PC based personal audio system.
 */
 
+import config from '../config.json' with { type: 'json' };
 import * as mc  from "./miscel.js";
 import * as hl  from "./highlight.js";
 import * as hlp from "./help.js";
@@ -11,7 +12,8 @@ import * as hlp from "./help.js";
 //////// GLOBAL VARIABLES ////////
 
 var POLLING_DELAY       = 1000;     // millisec
-var STATE               = {};
+
+var STATE               = { "loudspeaker": config.loudspeaker };
 
 var player_info         = {};
 
