@@ -8,6 +8,7 @@ import * as mc  from "./miscel.js";
 import * as hl  from "./highlight.js";
 import * as hlp from "./help.js";
 
+document.title = 'pAudio ' + config.loudspeaker;
 
 //////// GLOBAL VARIABLES ////////
 
@@ -188,7 +189,7 @@ function fill_in_page_statics(){
     }
 
 
-    manage_main_cside( ':: pAudio :: ' + STATE.loudspeaker );
+    manage_main_cside( ':: pAudio : ' + STATE.loudspeaker );
 
 
     // updates level cell info with ref_SPL
@@ -212,7 +213,7 @@ async function init(){
     function preparare_UI(){
         document.getElementById("but_help").style.display = 'none';
         document.getElementById("but_restart").style.display = 'block';
-        document.getElementById("main_cside").innerHTML = ":: pAudio not connected ::";
+        document.getElementById("main_cside").innerHTML = ":: pAudio : " + STATE.loudspeaker + " ::<br>(not connected)";
         document.getElementById("levelInfo").innerHTML = "--";
     }
 
@@ -829,7 +830,7 @@ function manage_main_cside( msg = '' ){
         msg = '( sleeping )';
 
     } else if( ! CamillaDSP_is_ready() ) {
-        msg = 'DSP unloaded, needs restart';
+        msg = ':: pAudio : ' + STATE.loudspeaker + ' ::\n(DSP unloaded, needs restart)';
         document.getElementById("but_restart").style.display = "inline-block";
         document.getElementById("but_help").style.display = "none";
         mc.player_info_clear();
