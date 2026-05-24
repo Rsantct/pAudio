@@ -120,9 +120,9 @@ function do_stop {
 function do_start {
 
     if [[ $(uname) == "Linux" ]]; then
+        start_www                                           # Node WWW server
         start_jack                                          # Jack
         start_camilladsp                                    # CamillaDSP
-        start_www                                           # Node WWW server
         start_ctrl                                          # pAudio control server
 
     elif [[ $(uname) == "Darwin" ]]; then
@@ -140,9 +140,16 @@ function do_start {
                                             2> $HOME/pAudio/log/start.err &
     fi
 
-    # check for node js www server
-    if [[ -f $NODEJS_LOGERR ]]; then
+    # check for node js www server error log
+    if [[ -s $NODEJS_LOGERR ]]; then
         echo -e ${RED}"ERROR loading web server, see pAudio/doc. Details: ""$NODEJS_LOGERR"${NOCOLOR}
+
+    else
+        if [[ $(pgrep -f "paudio_www.js") ]]; then
+            echo -e ${GRAY}"(paudio_restart) pAudio web server is running :-)"${NOCOLOR}
+        else
+            echo -e ${RED}"(paudio_restart) pAudio web server NOT running :-/"${NOCOLOR}
+        fi
     fi
 }
 
