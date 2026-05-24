@@ -9,6 +9,17 @@
 #   - a DBUS_SESSION_BUS_ADDRESS if neccessary for JACK when not in a X environment
 #
 
+PA_CFG_PATH=$HOME/pAudio/config.yml
+WWW_CFG_PATH=$HOME/pAudio/code/share/www/public/config.json
+
+LSPK=$(awk '/^loudspeaker:/ {print $2}' FS=': ' $PA_CFG_PATH)
+rm -f $WWW_CFG_PATH
+cat << EOF > $WWW_CFG_PATH
+{
+  "loudspeaker": "$LSPK"
+}
+EOF
+
 
 BOLD="\033[1m"
 RED="\033[0;31m"
@@ -162,13 +173,13 @@ if [[ ! $VIRTUAL_ENV ]]; then
 fi
 
 # CamillaDSP port
-CAMILLADSP_PORT=$(awk '/^camilladsp_port:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
+CAMILLADSP_PORT=$(awk '/^camilladsp_port:/ {print $2}' FS=': ' $PA_CFG_PATH)
 if [[ ! $CAMILLADSP_PORT ]]; then
     CAMILLADSP_PORT=1234
 fi
 
 # pAudio port
-PA_PORT=$(awk '/^paudio_port:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
+PA_PORT=$(awk '/^paudio_port:/ {print $2}' FS=': ' $PA_CFG_PATH)
 if [[ ! $PA_PORT ]]; then
     PA_PORT=9990
 fi
