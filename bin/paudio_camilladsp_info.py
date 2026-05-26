@@ -3,7 +3,7 @@
   Monitor the  CamillaDSP signal level and status,
   or gets the current whole configuration or the pipeline
 
-  Usage:    paudio_camilla_info.py [--config] [--pipeline]
+  Usage:    paudio_camilladsp_info.py [--config] [--pipeline]
 """
 
 import  os
