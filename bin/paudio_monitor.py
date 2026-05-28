@@ -3,13 +3,14 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a CC based personal audio system.
 
-""" A naive tool to visualize camillaDSP pAudio settings in runtime
+""" A naive tool to visualize pAudio and camillaDSP in runtime
 """
 
 import  os
 import  sys
 from    time import sleep
 import  json
+import  psutil
 from    camilladsp import CamillaClient
 
 UHOME = os.path.expanduser('~')
@@ -19,8 +20,19 @@ from fmt import Fmt
 
 CC = CamillaClient("127.0.0.1", 1234)
 
+if sys.platform == 'linux':
+    import  jack
+    JC = jack.Client(name='paudio_camilladsp_viewer', no_start_server=True)
+    jack_RT = 'RT' if JC.realtime else '  '
+
+
 # Código ANSI para mover el cursor a la esquina superior izquierda
 CURSOR_HOME = "\033[H"
+
+
+def get_cpu_pcent(interval=0.25):
+    p = psutil.cpu_percent(interval=interval)
+    return p
 
 
 def get_drc_filters_type(c, drc_names):
@@ -34,7 +46,51 @@ def get_drc_filters_type(c, drc_names):
     return ' '.join(list(set(ftypes)))
 
 
-def print_things():
+def do_refresh():
+
+    def print_things():
+
+        # Visualize from the top of the terminal
+        sys.stdout.write(CURSOR_HOME)
+
+        print(f'{Fmt.BOLD}--- pAudio{Fmt.END}')
+        print()
+        print(f'{Fmt.BOLD}COMPRESSOR:     {Fmt.END}', not pp[0]["bypassed"])
+        print()
+        print(f'{Fmt.BOLD}PREAMP (L/R):{Fmt.END}')
+        print(f'source_gain:    {source_gain:5.1f}')
+        print(f'delay:          {delay:5.1f}')
+        print(f'LU_offset:      {lu_offset:5.1f}')
+        print(f'balance:        {balance:5.1f}')
+        print()
+        print(f'{Fmt.BOLD}LOUDSPEAKER EQ (L/R):{Fmt.END}')
+        print(f'{lspk_eq}')
+        print()
+        print(f'{Fmt.BOLD}DRC{Fmt.END} (gain {drc_gain:5.1f} dB):')
+        print('L:', f'{drc_L_numberOfFilters:2d} x', drc_L_typeOfFilters)
+        print('R:', f'{drc_R_numberOfFilters:2d} x', drc_R_typeOfFilters)
+        print()
+        print(f'{Fmt.BOLD}--- CamillaDSP{Fmt.END}')
+        print()
+        print(f'capture: {cap_dev:<20} playback: {pbk_dev}')
+        print(f'buffer:  {chunk_size:4d}')
+        print(f'state:   {state:<15}')
+        print()
+        print(f'input signal peak: {level[0]:7.1f} {level[1]:7.1f} ')
+        print(f'main volume:       {vol:7.1f} {muted}')
+        print()
+        print(f'{Fmt.BOLD}--- System load{Fmt.END}')
+        print()
+        print(f'CamillaDSP:  {Fmt.BG_YELLOW}{Fmt.BOLD}{Fmt.BLACK}{load:4.1f} %{Fmt.END}')
+        if sys.platform == 'linux':
+            print(f'Jack:        {JC.cpu_load():4.1f} % {jack_RT}')
+        print(f'CPU:         {get_cpu_pcent():4.1f} %')
+        print()
+
+        # hide cursor and force the terminal to display the changes immediately
+        sys.stdout.write("\033[?25l")
+        sys.stdout.flush()
+
 
     vol     = CC.volume.main_volume()
     muted   = CC.volume.main_mute()
@@ -105,42 +161,9 @@ def print_things():
     else:
         lspk_eq = 'n/a'
 
-    muted = f'{Fmt.BOLD}(muted){Fmt.END}' if muted else '       '
+    muted = f'{Fmt.BOLD}(muted){Fmt.END}' if muted else '    '
 
-    # Visualize from the top of the terminal
-    sys.stdout.write(CURSOR_HOME)
-
-    print(f'{Fmt.BOLD}--- pAudio{Fmt.END}')
-    print()
-    print(f'{Fmt.BOLD}COMPRESSOR:     {Fmt.END}', not pp[0]["bypassed"])
-    print()
-    print(f'{Fmt.BOLD}PREAMP (L/R):{Fmt.END}')
-    print(f'source_gain:    {source_gain:5.1f}')
-    print(f'delay:          {delay:5.1f}')
-    print(f'LU_offset:      {lu_offset:5.1f}')
-    print(f'balance:        {balance:5.1f}')
-    print()
-    print(f'{Fmt.BOLD}LOUDSPEAKER EQ (L/R):{Fmt.END}')
-    print(f'{lspk_eq}')
-    print()
-    print(f'{Fmt.BOLD}DRC{Fmt.END} (gain {drc_gain:5.1f} dB):')
-    print('L:', f'{drc_L_numberOfFilters:2d} x', drc_L_typeOfFilters)
-    print('R:', f'{drc_R_numberOfFilters:2d} x', drc_R_typeOfFilters)
-    print()
-    print(f'{Fmt.BOLD}--- CamillaDSP{Fmt.END}')
-    print()
-    print(f'buffer:  {chunk_size:4d}')
-    print(f'capture: {cap_dev:<15} playback: {pbk_dev}')
-    print(f'state:   {state:<15}')
-    print(f'load:    {Fmt.BG_YELLOW}{Fmt.BOLD}{Fmt.BLACK}{load:4.1f} %{Fmt.END}')
-    print()
-    print(f'input signal peak: {level[0]:7.1f} {level[1]:7.1f} ')
-    print(f'main volume:       {vol:7.1f} {muted}')
-    print()
-
-    # force the terminal to display the changes immediately
-    sys.stdout.flush()
-
+    print_things()
 
 
 if __name__ == "__main__":
@@ -150,5 +173,11 @@ if __name__ == "__main__":
     CC.connect()
 
     while True:
-        print_things()
-        sleep(1)
+        try:
+            do_refresh()
+            sleep(1)
+        except KeyboardInterrupt:
+            # restore cursor
+            sys.stdout.write("\033[?25h")
+            sys.stdout.flush()
+            sys.exit()
