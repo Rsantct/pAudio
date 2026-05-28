@@ -198,7 +198,10 @@ def _prepare_cam_config(pAudio_config):
         print(f'{Fmt.GREEN}(pcamilla) {mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
 
         # Adding the mixer to the pipeline
-        mwm_step = {'type': 'Mixer', 'name': mixer_name}
+        mwm_step = {'type':         'Mixer',
+                    'name':         mixer_name,
+                    'description':  'copy LR to multi-way xover'
+        }
         cam_config["pipeline"].append(mwm_step)
 
         # Making the XO as the final steps in the pipeline
