@@ -26,9 +26,11 @@ if sys.platform == 'linux':
     jack_RT = 'RT' if JC.realtime else '  '
 
 
-# Código ANSI para mover el cursor a la esquina superior izquierda
+# Códigos ANSI para manipular el terminal
+#   mover el cursor a la esquina superior izquierda
 CURSOR_HOME = "\033[H"
-
+CURSO_HIDE  = "\033[?25l"
+CURSO_SHOW  = "\033[?25h"
 
 def get_cpu_pcent(interval=0.25):
     p = psutil.cpu_percent(interval=interval)
@@ -76,8 +78,8 @@ def do_refresh():
         print(f'buffer:  {chunk_size:4d}')
         print(f'state:   {state:<15}')
         print()
-        print(f'input signal peak: {level[0]:7.1f} {level[1]:7.1f} ')
-        print(f'main volume:       {vol:7.1f} {muted}')
+        print(f'input signal peak: {level[0]:7.1f} {level[1]:7.1f}  (dB)')
+        print(f'main volume:       {vol:7.1f}          {muted}')
         print()
         print(f'{Fmt.BOLD}--- System load{Fmt.END}')
         print()
@@ -88,7 +90,7 @@ def do_refresh():
         print()
 
         # hide cursor and force the terminal to display the changes immediately
-        sys.stdout.write("\033[?25l")
+        sys.stdout.write(CURSO_HIDE)
         sys.stdout.flush()
 
 
@@ -161,7 +163,7 @@ def do_refresh():
     else:
         lspk_eq = 'n/a'
 
-    muted = f'{Fmt.BOLD}(muted){Fmt.END}' if muted else '    '
+    muted = f'{Fmt.BOLD}(muted){Fmt.END}' if muted else '       '
 
     print_things()
 
@@ -178,6 +180,6 @@ if __name__ == "__main__":
             sleep(1)
         except KeyboardInterrupt:
             # restore cursor
-            sys.stdout.write("\033[?25h")
+            sys.stdout.write(CURSO_SHOW)
             sys.stdout.flush()
             sys.exit()
