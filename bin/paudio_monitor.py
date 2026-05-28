@@ -10,6 +10,7 @@ import  os
 import  sys
 from    time import sleep
 import  json
+import  yaml
 import  psutil
 from    camilladsp import CamillaClient
 
@@ -32,6 +33,7 @@ CURSOR_HOME = "\033[H"
 CURSO_HIDE  = "\033[?25l"
 CURSO_SHOW  = "\033[?25h"
 
+
 def get_cpu_pcent(interval=0.25):
     p = psutil.cpu_percent(interval=interval)
     return p
@@ -48,6 +50,18 @@ def get_drc_filters_type(c, drc_names):
     return ' '.join(list(set(ftypes)))
 
 
+def get_lspk_name():
+
+    try:
+        with open(f'{UHOME}/pAudio/config.yml', 'r') as f:
+            return yaml.safe_load( f.read())["loudspeaker"]
+    except Exception as e:
+        #print(e)
+        print('CANNOT read pAudio loudspeaker')
+        sleep(3)
+        return 'unknown loudspeaker'
+
+
 def do_refresh():
 
     def print_things():
@@ -57,7 +71,7 @@ def do_refresh():
 
         print(f'{Fmt.BOLD}--- pAudio{Fmt.END}')
         print()
-        print(f'{Fmt.BOLD}COMPRESSOR:     {Fmt.END}', not pp[0]["bypassed"])
+        print(f'{Fmt.BOLD}compressor:     {Fmt.END}', not pp[0]["bypassed"])
         print()
         print(f'{Fmt.BOLD}PREAMP (L/R):{Fmt.END}')
         print(f'source_gain:    {source_gain:5.1f}')
@@ -65,7 +79,7 @@ def do_refresh():
         print(f'LU_offset:      {lu_offset:5.1f}')
         print(f'balance:        {balance:5.1f}')
         print()
-        print(f'{Fmt.BOLD}LOUDSPEAKER EQ (L/R):{Fmt.END}')
+        print(f'{Fmt.BOLD}{lspk} EQ (L/R):{Fmt.END}')
         print(f'{lspk_eq}')
         print()
         print(f'{Fmt.BOLD}DRC{Fmt.END} (gain {drc_gain:5.1f} dB):')
@@ -164,6 +178,7 @@ def do_refresh():
         lspk_eq = 'n/a'
 
     muted = f'{Fmt.BOLD}(muted){Fmt.END}' if muted else '       '
+    lspk  = get_lspk_name()
 
     print_things()
 
