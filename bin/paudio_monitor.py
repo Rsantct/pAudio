@@ -22,9 +22,40 @@ from fmt import Fmt
 CC = CamillaClient("127.0.0.1", 1234)
 
 if sys.platform == 'linux':
+
+    def get_jack_parameters():
+
+        res = ''
+        tmp = []
+
+        for proc in psutil.process_iter(['name', 'cmdline']):
+            if proc.info['name'] == 'jackd':
+                tmp = proc.info['cmdline']
+
+        # ['jackd', '-d', 'alsa', '-P', 'hw:UDJ6,0', '-r', '48000', '-p', '1024', '-n', '2', '-z', 'shaped', '--softmode']
+
+        hw_found = False
+        for x in tmp:
+            if not hw_found:
+                hw_found = 'hw:' in x
+            if hw_found:
+                res += f' {x}'
+
+        return res.strip()
+
+
     import  jack
-    JC = jack.Client(name='paudio_camilladsp_viewer', no_start_server=True)
-    jack_RT = 'RT' if JC.realtime else '  '
+
+    try:
+        JC = jack.Client(name='paudio_camilladsp_viewer', no_start_server=True)
+    except:
+        print(f'{Fmt.BOLD}Jack not detected{Fmt.END}')
+        sys.exit()
+
+    jack_RT         = 'RT' if JC.realtime else '  '
+    jack_rate       = JC.samplerate
+    jack_period     = JC.blocksize
+    jack_parameters = get_jack_parameters()
 
 
 # Códigos ANSI para manipular el terminal
@@ -50,16 +81,18 @@ def get_drc_filters_type(c, drc_names):
     return ' '.join(list(set(ftypes)))
 
 
-def get_lspk_name():
+def get_pa_config():
+    """ get pAudio config """
+
+    global PA_CONFIG
 
     try:
         with open(f'{UHOME}/pAudio/config.yml', 'r') as f:
-            return yaml.safe_load( f.read())["loudspeaker"]
+            PA_CONFIG = yaml.safe_load( f.read())
+
     except Exception as e:
-        #print(e)
-        print('CANNOT read pAudio loudspeaker')
-        sleep(3)
-        return 'unknown loudspeaker'
+        print('CANNOT read pAudio config')
+        sys.exit()
 
 
 def do_refresh():
@@ -87,20 +120,21 @@ def do_refresh():
         print('R:', f'{drc_R_numberOfFilters:2d} x', drc_R_typeOfFilters)
         print()
         print(f'{Fmt.BOLD}--- CamillaDSP{Fmt.END}')
+        print(f'samplerate:     {samplerate:<6}')
+        print(f'buffer:         {chunk_size:4d}')
+        print(f'state:          {state:<15}')
+        print(f'main volume:    {vol:7.1f}          {muted}')
+        print(f'input peak dB:  {level[0]:7.1f} {level[1]:7.1f}')
         print()
-        print(f'capture: {cap_dev:<20} playback: {pbk_dev}')
-        print(f'buffer:  {chunk_size:4d}')
-        print(f'state:   {state:<15}')
-        print()
-        print(f'input signal peak: {level[0]:7.1f} {level[1]:7.1f}  (dB)')
-        print(f'main volume:       {vol:7.1f}          {muted}')
-        print()
+        if sys.platform == 'linux':
+            print(f'{Fmt.BOLD}--- Jack{Fmt.END}')
+            print(f'{jack_parameters}')
+            print()
         print(f'{Fmt.BOLD}--- System load{Fmt.END}')
-        print()
+        print(f'CPU:         {get_cpu_pcent():4.1f} %')
         print(f'CamillaDSP:  {Fmt.BG_YELLOW}{Fmt.BOLD}{Fmt.BLACK}{load:4.1f} %{Fmt.END}')
         if sys.platform == 'linux':
-            print(f'Jack:        {JC.cpu_load():4.1f} % {jack_RT}')
-        print(f'CPU:         {get_cpu_pcent():4.1f} %')
+            print(f'Jack:        {JC.cpu_load():4.1f} % {Fmt.BOLD}{jack_RT}{Fmt.END}')
         print()
 
         # hide cursor and force the terminal to display the changes immediately
@@ -114,33 +148,34 @@ def do_refresh():
     state   = CC.general.state().name
     load    = round( CC.status.processing_load(), 1 )
 
-    c       = CC.config.active()
+    cc       = CC.config.active()
 
-    chunk_size = c.get('devices', {}).get('chunksize', 0)
+    chunk_size = cc.get('devices', {}).get('chunksize', 0)
+    samplerate = cc.get('devices', {}).get('samplerate', 0)
 
-    if c.get('devices', {}).get('capture', {}):
-        cap_dev = c['devices']['capture']['device']
+    if cc.get('devices', {}).get('capture', {}):
+        cap_dev = cc['devices']['capture']['device']
     else:
         cap_dev = '--'
 
-    if c.get('devices', {}).get('playback', {}):
-        pbk_dev = c['devices']['playback']['device']
+    if cc.get('devices', {}).get('playback', {}):
+        pbk_dev = cc['devices']['playback']['device']
     else:
         pbk_dev = '--'
 
     level     = CC.levels.capture_peak()
 
     # pAudio stuff
-    gainL       = c["filters"]["bal_pol_L"]["parameters"]["gain"]
-    gainR       = c["filters"]["bal_pol_R"]["parameters"]["gain"]
+    gainL       = cc["filters"]["bal_pol_L"]["parameters"]["gain"]
+    gainR       = cc["filters"]["bal_pol_R"]["parameters"]["gain"]
     balance     = - gainL + gainR
 
-    drc_gain    = c["filters"]["flat_gain_drc"]["parameters"]["gain"]
-    lu_offset   = c["filters"]["lu_offset"]["parameters"]["gain"]
-    source_gain = c["filters"]["source_gain_offset"]["parameters"]["gain"]
-    delay       = c["filters"]["preamp_delay"]["parameters"]["delay"]
+    drc_gain    = cc["filters"]["flat_gain_drc"]["parameters"]["gain"]
+    lu_offset   = cc["filters"]["lu_offset"]["parameters"]["gain"]
+    source_gain = cc["filters"]["source_gain_offset"]["parameters"]["gain"]
+    delay       = cc["filters"]["preamp_delay"]["parameters"]["delay"]
 
-    pp = c["pipeline"]
+    pp = cc["pipeline"]
 
     # pipeline steps scheme
     #   L   R
@@ -166,8 +201,8 @@ def do_refresh():
             lspk_eq_R_step = i
 
 
-    drc_L_typeOfFilters = get_drc_filters_type( c, pp[drc_L_step]["names"] )
-    drc_R_typeOfFilters = get_drc_filters_type( c, pp[drc_R_step]["names"] )
+    drc_L_typeOfFilters = get_drc_filters_type( cc, pp[drc_L_step]["names"] )
+    drc_R_typeOfFilters = get_drc_filters_type( cc, pp[drc_R_step]["names"] )
 
     drc_L_numberOfFilters = len(pp[drc_L_step]["names"])
     drc_R_numberOfFilters = len(pp[drc_R_step]["names"])
@@ -178,7 +213,7 @@ def do_refresh():
         lspk_eq = 'n/a'
 
     muted = f'{Fmt.BOLD}(muted){Fmt.END}' if muted else '       '
-    lspk  = get_lspk_name()
+    lspk  = PA_CONFIG.get('loudspeaker', 'unknown lspk')
 
     print_things()
 
@@ -186,6 +221,8 @@ def do_refresh():
 if __name__ == "__main__":
 
     os.system('cls' if os.name == 'nt' else 'clear')
+
+    get_pa_config()
 
     CC.connect()
 
