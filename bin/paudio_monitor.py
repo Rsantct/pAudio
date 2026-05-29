@@ -8,6 +8,7 @@
 
 import  os
 import  sys
+import  subprocess as sp
 from    time import sleep
 import  json
 import  yaml
@@ -16,12 +17,13 @@ from    camilladsp import CamillaClient
 
 UHOME = os.path.expanduser('~')
 sys.path.append(f'{UHOME}/pAudio/code/share')
-
 from fmt import Fmt
 
-CC = CamillaClient("127.0.0.1", 1234)
-
 if sys.platform == 'linux':
+
+    def get_jack_version():
+        tmp = sp.run(['jackd', '--version'], capture_output=True, text=True)
+        return tmp.stdout.strip()
 
     def get_jack_parameters():
 
@@ -56,6 +58,7 @@ if sys.platform == 'linux':
     jack_rate       = JC.samplerate
     jack_period     = JC.blocksize
     jack_parameters = get_jack_parameters()
+    jack_version    = get_jack_version()
 
 
 # Códigos ANSI para manipular el terminal
@@ -119,7 +122,7 @@ def do_refresh():
         print('L:', f'{drc_L_numberOfFilters:2d} x', drc_L_typeOfFilters)
         print('R:', f'{drc_R_numberOfFilters:2d} x', drc_R_typeOfFilters)
         print()
-        print(f'{Fmt.BOLD}--- CamillaDSP{Fmt.END}')
+        print(f'{Fmt.BOLD}--- CamillaDSP{Fmt.END} {Fmt.ITALIC}(ver: {cdsp_version} lib: {cdsp_lib_version}){Fmt.END}')
         print(f'samplerate:     {samplerate:<6}')
         print(f'buffer:         {chunk_size:4d}')
         print(f'state:          {state:<15}')
@@ -127,7 +130,7 @@ def do_refresh():
         print(f'input peak dB:  {level[0]:7.1f} {level[1]:7.1f}')
         print()
         if sys.platform == 'linux':
-            print(f'{Fmt.BOLD}--- Jack{Fmt.END}')
+            print(f'{Fmt.BOLD}--- Jack{Fmt.END} {Fmt.ITALIC}({jack_version}){Fmt.END}')
             print(f'{jack_parameters}')
             print()
         print(f'{Fmt.BOLD}--- System load{Fmt.END}')
@@ -141,6 +144,9 @@ def do_refresh():
         sys.stdout.write(CURSO_HIDE)
         sys.stdout.flush()
 
+
+    cdsp_version     = '.'.join(CC.versions.camilladsp())
+    cdsp_lib_version = '.'.join(CC.versions.library())
 
     vol     = CC.volume.main_volume()
     muted   = CC.volume.main_mute()
@@ -224,6 +230,7 @@ if __name__ == "__main__":
 
     get_pa_config()
 
+    CC = CamillaClient("127.0.0.1", 1234)
     CC.connect()
 
     while True:
