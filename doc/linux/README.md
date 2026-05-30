@@ -2,9 +2,20 @@
 
 This is for a black box Linux machine (say a little Raspberry Pi 3B+ and up), or even a Desktop machine.
 
+## Prepare a dedicated user (recommended)
+
+This is not mandatory but recommended
+
+    sudo adduser paudio
+    # add it to convenient groups
+    sudo usermod -a -G cdrom,audio,video,plugdev paudio
+    # also for serial access stuff (usbrelay, IR, etc)
+    udo usermod -a -G dialout paudio
+
 
 ## Install Linux Packages
 
+Please notice that only `sudo` commands must be executed under a priviligied user (for example `pi`), other commands such python enviroment, non Debian python packages, CamillaDSP compilation, must be executed under the regular `paudio` user.
 
 ### Generic tools and control web page software:
 
