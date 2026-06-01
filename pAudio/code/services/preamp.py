@@ -478,7 +478,7 @@ def set_source(sname):
                   'zita_buffer_ms':     50
                 }
         """
-        with open(f'{MAINFOLDER}/config.yml', 'r') as f:
+        with open(CONFIG_PATH, 'r') as f:
             config = yaml.safe_load(f)
 
         rem_cfg = config["jack"]["sources"].get(sname, {})
