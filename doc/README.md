@@ -130,13 +130,13 @@ You don't have to worry about preparing CamillaDSP configuration files.
 
 ## `config.yml`
 
-All settings are done inside **`pAudio/config.yml`**
+All settings are done inside **`pAudio/config/config.yml`**
 
 See the provided sample files.
             
 ## Sound Device
 
-Set the output device name to be used in **`~/pAudio/config.yml`**, for example:
+Set the output device name to be used in **`config.yml`**, for example:
 
     output:
         device:      E30 II      # DAC USB Topping E30
@@ -170,7 +170,7 @@ DRC tools:
 
 ## optional: PEQ parametric equalizer
 
-Just prepare a PEQ section inside `pAudio/config.yml`, see the given example file.
+Just prepare a PEQ section in `config.yml`, see the given example file.
 
 
 ## optional: Active loudspeaker FIR filtering: driver EQ and XOVER
