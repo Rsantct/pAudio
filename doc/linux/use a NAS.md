@@ -53,8 +53,8 @@ The systemd units will help you to automount remotes shared
 
 - Enable both
     ```
-    sudo systemctl enable mnt-pinas.mount
-    sudo systemctl enable mnt-pinas.automount
-    sudo systemctl start mnt-pinas.automount
+    sudo systemctl enable mnt-mynas.mount
+    sudo systemctl enable mnt-mynas.automount
+    sudo systemctl start mnt-mynas.automount
     ```
 
