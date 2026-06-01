@@ -7,7 +7,7 @@
 
     Usage:  play_m3u8.py    station_name*  [-n]
 
-        (*) as per configured in config/istreams.yml
+        (*) as per configured in pAudio/config/istreams.yml
 
         -n  disables the watchdog, see below.
 
@@ -33,7 +33,7 @@ UHOME = os.path.expanduser("~")
 
 MPD_PORT        = 6600
 LOG_PATH        = f'{UHOME}/pAudio/log/play_m3u8.log'
-ISTREAMS_PATH   = f'{UHOME}/pAudio/istreams.yml'
+ISTREAMS_PATH   = f'{UHOME}/pAudio/config/istreams.yml'
 
 # Timeout the terminate if the selected source is not 'radio' or 'mpd'
 WATCHDOG_TIMEOUT = 6
