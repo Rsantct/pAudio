@@ -4,6 +4,8 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 """
+    *** PENDING TO REVIEW ****
+
     Start or stop Mplayer for DVB-T playback.
 
     Also used to change on the fly the played stream.
@@ -12,7 +14,7 @@
         ~/.mplayer/channels.conf
 
     User settings (presets) can be configured at
-        pe.audio.sys/config/DVB-T.yml
+        pAudio/config/DVB-T.yml
 
     Usage:    DVB-T.py  start   [ <preset_num> | <channel_name> ]
                         stop
