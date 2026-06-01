@@ -6,7 +6,7 @@
 """ A JACK module for Linux based pAudio machines
 
     Command line usage only to prepare the jack server,
-    as per the configuration under pAudio/config.yml:
+    as per the configuration under pAudio/config/config.yml:
 
         jack_mod.py  --prepare
 """
