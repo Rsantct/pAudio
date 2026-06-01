@@ -90,7 +90,7 @@ def get_pa_config():
     global PA_CONFIG
 
     try:
-        with open(f'{UHOME}/pAudio/config.yml', 'r') as f:
+        with open(f'{UHOME}/pAudio/config/config.yml', 'r') as f:
             PA_CONFIG = yaml.safe_load( f.read())
 
     except Exception as e:
