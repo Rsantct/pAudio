@@ -9,10 +9,10 @@ OFF='\033[0m'
 GRAY='\033[0;90m'
 
 
-# Reading TCP address and port from the pe.audio.sy config file
-ADDR=$( grep paudio_addr ~/pAudio/config.yml | grep -v \# | awk '{print $NF}' )
+# Reading TCP address and port from the pAudio config file
+ADDR=$( grep paudio_addr ~/pAudio/config/config.yml | grep -v \# | awk '{print $NF}' )
 ADDR=${ADDR//\"/}; CTL_ADDR=${ADDR//\'/}
-PORT=$( grep paudio_port ~/pAudio/config.yml | grep -v \# | awk '{print $NF}' )
+PORT=$( grep paudio_port ~/pAudio/config/config.yml | grep -v \# | awk '{print $NF}' )
 if [[ ! $ADDR || ! $PORT ]]; then
     ADDR='localhost'
     PORT=9990
