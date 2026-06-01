@@ -9,7 +9,7 @@
 #   - a DBUS_SESSION_BUS_ADDRESS if neccessary for JACK when not in a X environment
 #
 
-PA_CFG_PATH=$HOME/pAudio/config.yml
+PA_CFG_PATH=$HOME/pAudio/config/config.yml
 WWW_CFG_PATH=$HOME/pAudio/code/share/www/public/config.json
 
 LSPK=$(awk '/^loudspeaker:/ {print $2}' FS=': ' $PA_CFG_PATH)
