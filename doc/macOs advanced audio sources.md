@@ -12,7 +12,7 @@ pAudio does this automatically on startup, also restores your previous Sound Out
 
 #### pAudio:
     
-    pAudio/config.yml
+    pAudio/config/config.yml
         coreaudio:
             devices:
                 capture:    BlackHole 2Ch
@@ -43,7 +43,7 @@ If you use your integrated Mac Line IN / OUT connections, set the **Source Clock
 
 #### pAudio:
     
-    pAudio/config.yml
+    pAudio/config/config.yml
         coreaudio:
             devices:
                 capture:    Aggregate Device
