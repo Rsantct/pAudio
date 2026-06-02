@@ -96,9 +96,19 @@ while read -r line; do
     # --modify-window=1 usa la marca de tiempo como FAT de 1 segundo
     # --no-links omite los symlink en origen
 
-    rsync -rt --relative --modify-window=1 --no-links \
-        --exclude-from="$exclude_path" \
-        /./"$item" "$dest_dir"
+    # If <item> ends with '*' we need to put it outside the double quotes
+    if [[ "$item" == *\* ]]; then
+
+        item="${item%\*}"
+        rsync -rt --relative --modify-window=1 --no-links \
+            --exclude-from="$exclude_path" \
+            /./"$item"* "$dest_dir"
+
+    else
+        rsync -rt --relative --modify-window=1 --no-links \
+            --exclude-from="$exclude_path" \
+            /./"$item" "$dest_dir"
+    fi
 
 done < "$list_path"
 
