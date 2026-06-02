@@ -1,4 +1,6 @@
-# NOTICE that you need read access to files or directories here
+# NOTICE:
+#   You need read access to files or directories here
+#   For similar directories you can use:  /path/to/similar*
 
 /etc/rc.local
 /etc/fstab
@@ -16,4 +18,4 @@
 /home/paudio/.config/mpd
 
 /home/paudio/pAudio/config
-/home/paudio/pAudio/loudspeakers/SeasFlat
+/home/paudio/pAudio/loudspeakers/Dyn*
