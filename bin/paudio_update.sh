@@ -58,7 +58,7 @@ fi
 
 # Copy all stuff
 cp -r ~/tmp/pAudio-$BRANCH/pAudio  ~/
-cp    ~/tmp/pAudio-$BRANCH/bin/*   ~/bin/
+cp -r ~/tmp/pAudio-$BRANCH/bin/*   ~/bin/
 chmod +x ~/bin/paudio*
 chmod +x ~/pAudio/start*
 chmod +x ~/pAudio/code/share/plugins/*
