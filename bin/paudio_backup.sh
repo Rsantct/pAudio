@@ -18,6 +18,11 @@ if [[ ! -d $dest_dir ]]; then
     exit 1
 fi
 
+# Ensures that dest_dir ends in '/'
+dest_dir="${dest_dir%/}"
+dest_dir="${dest_dir}/"
+
+
 # Creates the base folder of the copies on the destination.
 # A separate subfolder with the hostname will be used.
 dest_dir+=$HOSTNAME"/"
