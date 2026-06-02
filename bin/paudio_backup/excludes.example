@@ -1,0 +1,14 @@
+# ejemplos de patrones:
+# /descargas/*  (con la barra inicial) le dice a rsync que busque la carpeta
+#               "descargas" únicamente en la raíz del directorio que estás copiando.
+# node_modules/ excluirá la carpeta node_modules/
+                sin importar dónde se encuentre en la estructura
+
+.git
+node_modules/
+package*json
+__pycache__
+pAudio/eq/
+bin/camilladsp*
+bin/librespot*
+bin/devcontrol
