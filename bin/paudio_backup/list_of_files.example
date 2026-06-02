@@ -3,8 +3,8 @@
 /etc/rc.local
 /etc/fstab
 
-/etc/systemd/system/mnt-qnas-media.mount
-/etc/systemd/system/mnt-qnas-media.automount
+/etc/systemd/system/mnt-mynas-media.mount
+/etc/systemd/system/mnt-mynas-media.automount
 
 /home/paudio/bin
 
