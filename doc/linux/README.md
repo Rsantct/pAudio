@@ -10,7 +10,7 @@ This is not mandatory but recommended
     # add it to convenient groups
     sudo usermod -a -G cdrom,audio,video,plugdev paudio
     # also for serial access stuff (usbrelay, IR, etc)
-    udo usermod -a -G dialout paudio
+    sudo usermod -a -G dialout paudio
 
 
 ## Install Linux Packages
