@@ -42,6 +42,7 @@ fi
 
 cd
 mkdir -p ~/tmp
+mkdir -p ~/bin/paudio_backup
 
 cd ~/tmp
 rm -rf pAudio-$BRANCH
