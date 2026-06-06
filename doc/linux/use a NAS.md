@@ -3,58 +3,55 @@
 **DO NOT** configure any kind of cifs mount under your **`/etc/fstab`**
 
 
-## Prepare systemd units
-
-The systemd units will help you to automount remotes shared
-
-- Prepare mount point
+## Prepare the mount point
 
     `mkdir -p /mnt/mynas`
 
-- Prepare samba connection credentials, in a secure place, for example under /root
+## Prepare the samba connection credentials
 
-```
+In a secure place, for example under `/root/`
+
     /root/.mynas
 
         user=.....
         password=......
-```
 
-- Prepare two systemd units, the mount itself and the automount:
+## Prepare systemd units
 
-**`/etc/systemd/system/mnt-mynas.mount`**
+#### `/etc/systemd/system/mnt-mynas.mount`
 
     [Unit]
-    Description=Mount my NAS
-    After=network-online.target
+    Description=Montaje CIFS pinas
+    After=network-online.target NetworkManager-wait-online.service
     Wants=network-online.target
     
     [Mount]
-    What=//192.168.1.xxx/SHARED_NAME
-    Where=/mnt/mynas
+    What=//192.168.1.46/p128
+    Where=/mnt/pinas
     Type=cifs
-    Options=credentials=/root/.mynas,uid=YOUR_LOCAL_USER_HERE,gid=YOUR_LOCAL_USER_HERE,forceuid,forcegid,_netdev
+    
+    # x-systemd.automount ayuda a systemd a entender que está ligado a un automount
+    Options=credentials=/root/.pinas,uid=rafax,gid=rafax,forceuid,forcegid,_netdev,x-systemd.automount
     
     [Install]
     WantedBy=multi-user.target
 
-**`sudo nano /etc/systemd/system/mnt-mynas.automount`**
+#### `/etc/systemd/system/mnt-mynas.automount`
 
     [Unit]
-    Description=Automount my NAS
-    After=network-online.target
-    Wants=network-online.target
-
+    Description=Automontaje CIFS pinas
+    
     [Automount]
-    Where=/mnt/mynas
+    Where=/mnt/pinas
     
     [Install]
     WantedBy=multi-user.target
 
-- Enable both
-    ```
-    sudo systemctl enable mnt-mynas.mount
+
+## Enable ONLY automount
+
+    sudo systemctl daemon-reload
     sudo systemctl enable mnt-mynas.automount
     sudo systemctl start mnt-mynas.automount
-    ```
 
+    
