@@ -19,9 +19,10 @@ Please notice that only `sudo` commands must be executed under a priviligied use
 
 ### Generic tools and control web page software:
 
-    sudo apt install alsa-utils alsa-ucm-conf jackd2 jackmeter xdotool cdtool \
-                     zita-njbridge jacktrip \
-                     libportaudio2 libffi-dev git nodejs npm
+    sudo apt install alsa-utils alsa-ucm-conf libasound2-dev libasound2-plugins libpulse0  \
+                     jackd2 libjack-jackd2-dev jackmeter jacktrip zita-njbridge \
+                     libsamplerate0 libsamplerate0-dev xdotool cdtool mpd mpc \
+                     libportaudio2 libffi-dev git nodejs npm jq source-highlight
 
 ### Python packages from Debian:
 
