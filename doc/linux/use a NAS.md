@@ -29,9 +29,7 @@ In a secure place, for example under `/root/`
     What=//192.168.1.46/p128
     Where=/mnt/pinas
     Type=cifs
-    
-    # x-systemd.automount ayuda a systemd a entender que está ligado a un automount
-    Options=credentials=/root/.pinas,uid=rafax,gid=rafax,forceuid,forcegid,_netdev,x-systemd.automount
+    Options=credentials=/root/.pinas,uid=rafax,gid=rafax,forceuid,forcegid,_netdev
     
     [Install]
     WantedBy=multi-user.target
