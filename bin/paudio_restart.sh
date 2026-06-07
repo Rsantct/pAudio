@@ -9,6 +9,25 @@
 #   - a DBUS_SESSION_BUS_ADDRESS if neccessary for JACK when not in a X environment
 #
 
+PA_CFG_PATH=$HOME/pAudio/config/config.yml
+WWW_CFG_PATH=$HOME/pAudio/code/share/www/public/config.json
+
+LSPK=$(awk '/^loudspeaker:/ {print $2}' FS=': ' $PA_CFG_PATH)
+rm -f $WWW_CFG_PATH
+cat << EOF > $WWW_CFG_PATH
+{
+  "loudspeaker": "$LSPK"
+}
+EOF
+
+
+BOLD="\033[1m"
+RED="\033[0;31m"
+BLUE="\033[0;34m"
+GRAY="\033[0;90m"
+NOCOLOR="\033[0m"
+
+
 function start_www {
 
     if [[ $(pgrep -f "paudio_www.js") ]]; then
@@ -17,7 +36,8 @@ function start_www {
         fi
 
     else
-        node $HOME/pAudio/code/share/www/paudio_www.js 1>/dev/null 2>&1 &
+        rm -f $NODEJS_LOGERR
+        node $HOME/pAudio/code/share/www/paudio_www.js 1>/dev/null 2>$NODEJS_LOGERR &
     fi
 }
 
@@ -111,9 +131,9 @@ function do_stop {
 function do_start {
 
     if [[ $(uname) == "Linux" ]]; then
+        start_www                                           # Node WWW server
         start_jack                                          # Jack
         start_camilladsp                                    # CamillaDSP
-        start_www                                           # Node WWW server
         start_ctrl                                          # pAudio control server
 
     elif [[ $(uname) == "Darwin" ]]; then
@@ -130,6 +150,18 @@ function do_start {
         python3 $HOME/pAudio/start.py start 1> $HOME/pAudio/log/start.log \
                                             2> $HOME/pAudio/log/start.err &
     fi
+
+    # check for node js www server error log
+    if [[ -s $NODEJS_LOGERR ]]; then
+        echo -e ${RED}"ERROR loading web server, see pAudio/doc. Details: ""$NODEJS_LOGERR"${NOCOLOR}
+
+    else
+        if [[ $(pgrep -f "paudio_www.js") ]]; then
+            echo -e ${GRAY}"(paudio_restart) pAudio web server is running :-)"${NOCOLOR}
+        else
+            echo -e ${RED}"(paudio_restart) pAudio web server NOT running :-/"${NOCOLOR}
+        fi
+    fi
 }
 
 
@@ -141,17 +173,20 @@ if [[ ! $VIRTUAL_ENV ]]; then
 fi
 
 # CamillaDSP port
-CAMILLADSP_PORT=$(awk '/^camilladsp_port:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
+CAMILLADSP_PORT=$(awk '/^camilladsp_port:/ {print $2}' FS=': ' $PA_CFG_PATH)
 if [[ ! $CAMILLADSP_PORT ]]; then
     CAMILLADSP_PORT=1234
 fi
 
 # pAudio port
-PA_PORT=$(awk '/^paudio_port:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
+PA_PORT=$(awk '/^paudio_port:/ {print $2}' FS=': ' $PA_CFG_PATH)
 if [[ ! $PA_PORT ]]; then
     PA_PORT=9990
 fi
 CTRL_PORT=$((PA_PORT + 1))
+
+# node js web server error log
+NODEJS_LOGERR=$HOME/pAudio/log/paudio_www.js.err
 
 VERBOSE='false'
 

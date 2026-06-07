@@ -1,0 +1,21 @@
+# NOTICE:
+#   You need read access to files or directories here
+#   For similar directories you can use:  /path/to/similar*
+
+/etc/rc.local
+/etc/fstab
+
+/etc/systemd/system/mnt-mynas.mount
+/etc/systemd/system/mnt-mynas.automount
+
+/home/paudio/bin
+
+/home/paudio/.bashrc
+/home/paudio/.profile
+/home/paudio/.asoundrc
+/home/paudio/.mpdconf
+
+/home/paudio/.config/mpd
+
+/home/paudio/pAudio/config
+/home/paudio/pAudio/loudspeakers/Dyn*

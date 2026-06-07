@@ -127,7 +127,7 @@ def do_log(msg, mode='a'):
 
     msg = f'{get_timestamp()} {msg}'
 
-    print(msg)
+    print(f'(xrun_monitor) {msg}')
 
     if LOGPATH:
         with open(LOGPATH, mode) as f:
@@ -166,12 +166,12 @@ def start():
                     sleep(1)
 
             except KeyboardInterrupt:
-                print("Exiting Jack client...")
+                print("(xrun_monitor) Exiting Jack client...")
 
             finally:
                 jcli.deactivate()
                 jcli.close()
-                print("Jack client exited.")
+                print("(xrun_monitor) Jack client exited.")
 
     except Exception as e:
         do_log(f'cannot connect to JACK: {str(e)}')

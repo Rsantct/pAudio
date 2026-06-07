@@ -1,7 +1,7 @@
 
 ## pAudio `config.yml`
 
-The **`pAudio/config.yml`** main file is about sound devices, sources and an general settigns.
+The **`pAudio/config/config.yml`** main file is about sound devices, sources and an general settigns.
 
 ### Dither
 

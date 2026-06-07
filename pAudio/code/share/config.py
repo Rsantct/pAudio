@@ -20,10 +20,10 @@ LOUDSPEAKER         = f''   # to be found later
 
 EQFOLDER            = f'{MAINFOLDER}/eq'
 CODEFOLDER          = f'{MAINFOLDER}/code'
-CONFIG_PATH         = f'{MAINFOLDER}/config.yml'
+CONFIG_PATH         = f'{MAINFOLDER}/config/config.yml'
 LOGFOLDER           = f'{MAINFOLDER}/log'
 PLUGINSFOLDER       = f'{MAINFOLDER}/code/share/plugins'
-MACROSFOLDER        = f'{MAINFOLDER}/code/macros'
+MACROSFOLDER        = f'{MAINFOLDER}/macros'
 
 PREAMP_STATE_PATH   = f'{MAINFOLDER}/.preamp_state'
 LDCTRL_PATH         = f'{MAINFOLDER}/.loudness_control'
@@ -455,7 +455,7 @@ def complete_config():
     # CamillaDSP activation wait (default 0.1 s)
     # If you experience problems with CamillaDSP on JACK in slow machines, like
     #     BDB2034 unable to allocate memory for mutex; resize mutex region
-    # then slightly increase this value under pAudio/config.yml.
+    # then slightly increase this value under config.yml.
     CONFIG['camilladsp_activation_wait'] = CONFIG.get('camilladsp_activation_wait', 0.1)
 
 
@@ -571,7 +571,7 @@ if pAudio_cfg_is_recent():
     try:
         CONFIG = read_pAudio_cfg()
     except Exception as e:
-        print(f'{Fmt.RED}{Fmt.BLINK}(config.py) PANIC reading: {PAUDIO_CFG_PATH}: {str(e)}{Fmt.END}')
+        print(f'{Fmt.RED}{Fmt.BLINK}(config) PANIC reading: {PAUDIO_CFG_PATH}: {str(e)}{Fmt.END}')
         sys.exit()
 
     LOUDSPEAKER   = CONFIG.get('loudspeaker', '')

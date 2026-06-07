@@ -18,7 +18,7 @@
 
     Configuration file:
 
-        ./jack_sources_signal_detector/config.yml
+        pAudio/config/jack_sources_signal_detector.yml
 
 """
 
@@ -33,10 +33,13 @@ from    time import sleep, time
 
 try:
     client        = jack.Client("signal_detector", no_start_server=True)
-except:
+    IN_PORT = client.inports.register("input")
+
+except Exception as e:
+    print(f'(jack_sources_signal_detector) ERROR: {str(e)}')
     sys.exit()
 
-in_port       = client.inports.register("input")
+UHOME = os.path.expanduser('~')
 
 
 def print_default_cfg():
@@ -81,17 +84,13 @@ def get_config():
         'pa_port': 9990
     }
 
-    my_fname = __file__
-    my_dir = os.path.dirname(my_fname)
-    my_name = os.path.basename(my_fname)[:-3]
-
-    config_dir = f'{my_dir}/{my_name}'
-    config_path = f'{config_dir}/config.yml'
+    config_dir = f'{UHOME}/pAudio/config'
+    config_path = f'{config_dir}/jack_sources_signal_detector.yml'
 
     if not os.path.isdir(config_dir):
         os.mkdir(config_dir)
 
-    # If config.yml exists let's load it
+    # If jack_sources_signal_detector.yml exists let's load it
     if os.path.isfile(config_path):
         with open(config_path, 'r') as f:
             user_cfg = yaml.safe_load( f.read() )
@@ -108,10 +107,10 @@ def get_config():
 
         if k in cfg:
             if v != cfg[k]:
-                print(f'config.yml: {k} {v} overrides default {cfg[k]}')
+                print(f'jack_sources_signal_detector.yml: {k} {v} overrides default {cfg[k]}')
                 cfg[k] = v
         else:
-            print(f'config.yml: <{k}> unknown parameter')
+            print(f'jack_sources_signal_detector.yml: <{k}> unknown parameter')
 
 
 def send_msg(mensaje):
@@ -191,7 +190,7 @@ def jack_monitor(frames):
     global flag_detected, peaks_detected
 
     # We only took a few samples to speed up this routine.
-    samples = in_port.get_array()[:cfg["n_samples"]]
+    samples = IN_PORT.get_array()[:cfg["n_samples"]]
 
     # simplified detector, without rms math or similar
     if any(samples):
@@ -231,11 +230,11 @@ def scan_loop():
             # iterate ports
             for pname, ports in jclients.items():
 
-                clear_port_connections(in_port)
+                clear_port_connections(IN_PORT)
 
                 try:
                     for p in ports:
-                        client.connect(p, in_port)
+                        client.connect(p, IN_PORT)
                     if verbose:
                         print(f"\n... {pname:<20}", end='')
 

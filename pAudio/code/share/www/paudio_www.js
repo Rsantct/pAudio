@@ -19,7 +19,7 @@ var   PAUDIO_ADDR     = '0.0.0.0';
 var   PAUDIO_PORT     = 9990;
 const PAUDIO_TIMEOUT  = 500;
 
-const CONFIG_PATH = path.join(os.homedir(), 'pAudio/config.yml');
+const CONFIG_PATH = path.join(os.homedir(), 'pAudio/config/config.yml');
 var   CONFIG = {}
 
 // Load config yaml

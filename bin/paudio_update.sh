@@ -4,7 +4,7 @@ function update_camilladsp_plist {
 
     # Update CamillaDSP port if set under config.yml
 
-    CAMILLADSP_PORT=$(awk '/^camilladsp_port:/ {print $2}' FS=': ' $HOME/pAudio/config.yml)
+    CAMILLADSP_PORT=$(awk '/^camilladsp_port:/ {print $2}' FS=': ' $HOME/pAudio/config/config.yml)
     if [[ ! $CAMILLADSP_PORT ]]; then
         CAMILLADSP_PORT=1234
     fi
@@ -16,7 +16,7 @@ function update_camilladsp_plist {
     sed -i '' "s|$old|$new|g" "$fname"
 }
 
-if [[ -f ~/pAudio/config.yml ]]; then
+if [[ -f ~/pAudio/config/config.yml ]]; then
     CONFIG_EXISTS='yes'
 else
     CONFIG_EXISTS='no'
@@ -42,6 +42,7 @@ fi
 
 cd
 mkdir -p ~/tmp
+mkdir -p ~/bin/paudio_backup
 
 cd ~/tmp
 rm -rf pAudio-$BRANCH
@@ -53,19 +54,19 @@ cd
 
 # Backup config
 if [[ $CONFIG_EXISTS == 'yes' ]]; then
-    cp ~/pAudio/config.yml ~/pAudio/config.yml.BAK
+    cp ~/pAudio/config/config.yml ~/pAudio/config/config.yml.BAK
 fi
 
 # Copy all stuff
 cp -r ~/tmp/pAudio-$BRANCH/pAudio  ~/
-cp    ~/tmp/pAudio-$BRANCH/bin/*   ~/bin/
+cp -r ~/tmp/pAudio-$BRANCH/bin/*   ~/bin/
 chmod +x ~/bin/paudio*
 chmod +x ~/pAudio/start*
 chmod +x ~/pAudio/code/share/plugins/*
 
 # Restore config
 if [[ $CONFIG_EXISTS == 'yes' ]]; then
-    cp ~/pAudio/config.yml.BAK ~/pAudio/config.yml
+    cp ~/pAudio/config/config.yml.BAK ~/pAudio/config/config.yml
 fi
 
 # Stop the server, CamillaDSP, www and control

@@ -468,7 +468,7 @@ def restore_sound_card():
             ~/pAudio/alsactl.<YOUR_ALSA_CARD_NAME>
     """
 
-    with open(f'{UHOME}/pAudio/config.yml', 'r') as f:
+    with open(f'{UHOME}/pAudio/config/config.yml', 'r') as f:
         pa_config = yaml.safe_load( f.read() )
 
     if not pa_config.get('jack'):
@@ -479,7 +479,7 @@ def restore_sound_card():
 
     alsa_name = alsa_device.split(',')[0].split(':')[-1]
 
-    alsactl_path =  f'{UHOME}/pAudio/alsactl.{alsa_name}'
+    alsactl_path =  f'{UHOME}/pAudio/config/alsactl.{alsa_name}'
 
     cmd = f'alsactl --file {alsactl_path} restore {alsa_name}'
 
