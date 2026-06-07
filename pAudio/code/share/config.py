@@ -389,17 +389,26 @@ def complete_config():
 
             def get_fields(out, tmp):
 
-                # bind to system can be left blank
-                tmp = tmp.split() + ['']
+                # only name is mandatory
+                tmp = tmp.split() + ['', '', '','']
 
                 name, gain, polarity, delay, b2s = tmp[:5]
 
-                gain = float(gain)
+                if gain != '':
+                    gain = float(gain)
+                else:
+                    gain = 0.0
 
-                if not polarity in ('+', '-'):
-                    raise Exception(f"(lspk.yml) ERROR in output {out}, polarity must be '+' or '-'")
+                if not polarity:
+                    polarity = '+'
+                else:
+                    if not polarity in ('+', '-'):
+                        raise Exception(f"(lspk.yml) ERROR in output {out}, polarity must be '+' or '-'")
 
-                delay = float(delay)
+                if delay != '':
+                    delay = float(delay)
+                else:
+                    delay = 0.0
 
                 if b2s:
 
