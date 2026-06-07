@@ -166,15 +166,13 @@ def _prepare_cam_config(pAudio_config):
                     filter_name = f'xo.{way}.{set_name}'
                     cam_config["filters"][filter_name] = params
 
-            # Auxiliary delay filters definition
-            for _, pms in pAudio_config["outputs"].items():
-
-                if not pms["name"]:
+            # delay filters definition
+            for out, params in pAudio_config["outputs"].items():
+                if not params["name"]:
                     continue
+                cam_config["filters"][f'delay.{params["name"]}'] = make_delay_filter( params["delay"], params["name"] )
 
-                cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
-
-            # Auxiliary gain filters definitions
+            # gain filters definitions
             for xo_id, gains in pAudio_config["xo_gains"].items():
                 # apply negative to compensate the flat_region offset
                 flat_gain = - gains.get('flat_gain', 0.0)
@@ -195,7 +193,7 @@ def _prepare_cam_config(pAudio_config):
         mixer_name = f'from2to{ len(m["mapping"]) }channels'
         cam_config["mixers"][mixer_name] = m
 
-        print(f'{Fmt.GREEN}(pcamilla) {mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
+        print(f'(pcamilla) {Fmt.MAGENTA}{mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
 
         # Adding the mixer to the pipeline
         mwm_step = {'type':         'Mixer',
@@ -218,9 +216,8 @@ def _prepare_cam_config(pAudio_config):
     if pAudio_config.get('lspk_eq') or pAudio_config.get('drc'):
         lspk.update_lspk(pAudio_config, cam_config)
 
-    # Multiway if more than 2 outputs
-    outputs_in_use = [ x for x in pAudio_config["outputs"] if pAudio_config["outputs"][x].get('name') ]
-    if len(outputs_in_use) > 2:
+    # Multiway if more than L/R outputs
+    if list(pAudio_config["outputs"].keys()) != ['fr.L', 'fr.R']:
         prepare_multiway_structure()
 
     # Dither (will apply to the lasts steps of the pipeline)
