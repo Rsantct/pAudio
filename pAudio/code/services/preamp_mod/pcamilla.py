@@ -254,7 +254,7 @@ def init_camilladsp(pAudio_config):
 
             - no cpal ports are connected to system ports (optional)
 
-            NOTICE: cpal ports are default binded to system ports
+            NOTICE: all the cpal ports are bound to system ports by design
 
             (bool)
         """
