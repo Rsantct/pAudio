@@ -213,9 +213,8 @@ def make_mixer_preamp(midside_mode='normal', swap_LR=False):
     return m
 
 
-def make_mixer_multi_way(pAudio_outputs):
-    """ Makes a mixer to route L/R to multiway outputs
-        and returns the number of used outputs
+def make_expand_mixer(pAudio_outputs):
+    """ Makes a mixer to route L/R to several outputs
 
         Example of a weird 2+1 way
 
