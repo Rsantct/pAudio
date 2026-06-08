@@ -299,7 +299,6 @@ def stop():
         # Zita network to jack (Linux)
         stop_zita_link()
         sleep(.25)
-        sp.Popen(['pkill', '-f',  'jackd'])
 
         # JackTrip if used
         sp.Popen(['pkill', '-f', 'jacktrip'])
