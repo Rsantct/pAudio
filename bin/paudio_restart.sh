@@ -60,7 +60,7 @@ function start_ctrl {
 }
 
 
-function start_jack {
+function start_jack_mod {
 
     # needed for headless machines
     if [[ ! $DBUS_SESSION_BUS_ADDRESS ]]; then
@@ -114,7 +114,9 @@ function do_stop {
     if [[ $(uname) == "Linux" ]]; then
         pkill -KILL -f camilladsp 1>/dev/null 2>&1          # CamillaDSP
         sleep 1
-        pkill -KILL -f 'jackd'    1>/dev/null 2>&1          # Jack
+        if [[ KEEP_JACKD == 'false' ]]; then
+            pkill -KILL -f 'jackd'    1>/dev/null 2>&1      # Jack
+        fi
 
     elif [[ $(uname) == "Darwin" ]]; then
         $HOME/bin/paudio_launchagents.sh unload camilladsp  # CamillaDSP
@@ -132,7 +134,7 @@ function do_start {
 
     if [[ $(uname) == "Linux" ]]; then
         start_www                                           # Node WWW server
-        start_jack                                          # Jack
+        start_jack_mod                                      # Jack stuff includes loops
         start_camilladsp                                    # CamillaDSP
         start_ctrl                                          # pAudio control server
 
@@ -189,6 +191,7 @@ CTRL_PORT=$((PA_PORT + 1))
 NODEJS_LOGERR=$HOME/pAudio/log/paudio_www.js.err
 
 VERBOSE='false'
+KEEP_JACKD='false'
 
 # Main
 if [[ $1 == 'stop' ]]; then
@@ -200,6 +203,10 @@ elif [[ ! $1 || $1 == *'start' ]]; then
         VERBOSE='true'
     fi
     echo $VERBOSE > $HOME/pAudio/.verbose
+
+    if [[ $3 == *'-kj'* ]]; then
+        KEEP_JACKD='true'
+    fi
 
     do_stop
 
