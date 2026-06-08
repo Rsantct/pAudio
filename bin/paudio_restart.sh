@@ -216,6 +216,6 @@ else
     echo
     echo "USAGE:   paudio_restart.sh  [ stop |  start [-v] [-kj] ]"
     echo "              -v   verbose mode"
-    echo "              -kj  keep jackd server (for developers)"
+    echo "              -kj  keep jackd server (developers can have a dummy backend for testing)"
     echo
 fi
