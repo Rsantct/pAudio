@@ -43,12 +43,12 @@ xo:
 # (i) output index starts with `1` (to follow jack `system:playback_N` ports numbering)
 #
 outputs:
-
-    #           name         Gain dB    Polarity +/-    Delay ms
+    
+#   num     name    Gain dB    Polarity     Delay       bind to
+#                              +/-          ms          system
     1:
     2:
-    3:          lo.L          0.0       +               0.0
-    4:          lo.R          0.0       +               0.0
-    5:          hi.L         -7.0       +               0.0
-    6:          hi.R         -7.0       +               0.0
-    
+    3:      lo.L    0.0         +           0.0         true
+    4:      lo.R    0.0         +           0.0         true
+    5:      hi.L    0.0         +           0.0         true
+    6:      hi.R    0.0         +           0.0         true

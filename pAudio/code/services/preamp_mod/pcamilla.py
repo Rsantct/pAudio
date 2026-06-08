@@ -149,8 +149,8 @@ def _prepare_cam_config(pAudio_config):
         returns: the CamillaDSP config
     """
 
-    def prepare_multiway_structure():
-        """ The multiway N channel expander Mixer
+    def prepare_outputs_structure():
+        """ The multi-output N channels expander Mixer
         """
 
         def do_xo_stuff():
@@ -166,15 +166,13 @@ def _prepare_cam_config(pAudio_config):
                     filter_name = f'xo.{way}.{set_name}'
                     cam_config["filters"][filter_name] = params
 
-            # Auxiliary delay filters definition
-            for _, pms in pAudio_config["outputs"].items():
-
-                if not pms["name"]:
+            # delay filters definition
+            for out, params in pAudio_config["outputs"].items():
+                if not params["name"]:
                     continue
+                cam_config["filters"][f'delay.{params["name"]}'] = make_delay_filter( params["delay"], params["name"] )
 
-                cam_config["filters"][f'delay.{pms["name"]}'] = make_delay_filter(pms["delay"])
-
-            # Auxiliary gain filters definitions
+            # gain filters definitions
             for xo_id, gains in pAudio_config["xo_gains"].items():
                 # apply negative to compensate the flat_region offset
                 flat_gain = - gains.get('flat_gain', 0.0)
@@ -189,23 +187,30 @@ def _prepare_cam_config(pAudio_config):
                 cam_config["pipeline"].append(xo_step)
 
 
+        def get_set_of_output_names():
+            pa_outputs = pAudio_config["outputs"]
+            output_names = [ pa_outputs[x]["name"] for x in pa_outputs.keys() ]
+            output_names =[ x for x in set( output_names ) if x ]
+            return sorted(output_names)
+
+
         # Prepare the needed expander mixer ...
-
-        m          = make_mixer_multi_way( pAudio_config["outputs"] )
-        mixer_name = f'from2to{ len(m["mapping"]) }channels'
-        cam_config["mixers"][mixer_name] = m
-
-        print(f'{Fmt.GREEN}(pcamilla) {mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
+        m = make_expand_mixer( pAudio_config["outputs"] )
+        m_name = f'from2to{ len( pAudio_config["outputs"] ) }channels'
+        cam_config["mixers"][m_name] = m
+        print(f'(pcamilla) {Fmt.MAGENTA}{m_name} | {cam_config["mixers"][m_name]["description"]}{Fmt.END}')
 
         # Adding the mixer to the pipeline
-        mwm_step = {'type':         'Mixer',
-                    'name':         mixer_name,
-                    'description':  'copy LR to multi-way xover'
+        m_step = {  'type':         'Mixer',
+                    'name':         m_name,
+                    'description':  'expand LR to multi outputs'
         }
-        cam_config["pipeline"].append(mwm_step)
+        cam_config["pipeline"].append(m_step)
 
-        # Making the XO as the final steps in the pipeline
-        do_xo_stuff( )
+        # XO OVER (pipeline filtering steps) is needed when
+        # the set of outputs names is not a simple fr.L / fr.R
+        if get_set_of_output_names() != ['fr.L', 'fr.R']:
+            do_xo_stuff( )
 
 
     # From here `cam_config` will grow progressively
@@ -218,10 +223,10 @@ def _prepare_cam_config(pAudio_config):
     if pAudio_config.get('lspk_eq') or pAudio_config.get('drc'):
         lspk.update_lspk(pAudio_config, cam_config)
 
-    # Multiway if more than 2 outputs
-    outputs_in_use = [ x for x in pAudio_config["outputs"] if pAudio_config["outputs"][x].get('name') ]
-    if len(outputs_in_use) > 2:
-        prepare_multiway_structure()
+    # If more than 2 outputs it is needed to expand the pipeline
+    if len( pAudio_config["outputs"] ) > 2:
+        prepare_outputs_structure()
+
 
     # Dither (will apply to the lasts steps of the pipeline)
     if pAudio_config.get("coreaudio", {}).get("devices", {}).get("playback", {}).get("dither", {}):
@@ -242,12 +247,14 @@ def init_camilladsp(pAudio_config):
             'done' OR 'some problem description...'
     """
 
-    def cpal_ports_ok(cpal2system_alowed=True):
+    def cpal_ports_ok(clear_cpal2system=False):
         """ Check for:
 
             - no weird cpal ports named like `cpal_client_in-01`
 
             - no cpal ports are connected to system ports (optional)
+
+            NOTICE: all the cpal ports are bound to system ports by design
 
             (bool)
         """
@@ -263,23 +270,38 @@ def init_camilladsp(pAudio_config):
 
         cpal_ports = jcli.get_ports('cpal_client')
 
+        # Early return if any `cpal_client_in-01` is detected
         for cpal_port in cpal_ports:
 
-            # Early return if any `cpal_client_in-01` is detected
             if '-' in cpal_port.name:
                 print(f'{Fmt.BOLD}(pcamilla) Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
                 result = False
                 break
 
-            if cpal2system_alowed:
-                continue
+        if clear_cpal2system:
 
-            conns = jcli.get_all_connections( cpal_port )
+            # Clearing from system ports
+            for cpal_port in cpal_ports:
 
-            for c in conns:
-                if 'system' in c.name:
-                    print(f'{Fmt.BOLD}(pcamilla) CPAL <--> SYSTEM detected: {cpal_port.name} {c.name}{Fmt.END}')
-                    result = False
+                conns = None
+                tries = 10
+                while tries and not conns:
+
+                    conns = jcli.get_all_connections( cpal_port )
+
+                    for c in conns:
+                        if 'system' in c.name:
+                            jcli.disconnect(cpal_port, c)
+                            print(f'{Fmt.GRAY}(pcamilla) clearing {cpal_port.name} -- {c.name}{Fmt.END}')
+
+                    sleep(.2)
+                    tries -= 1
+
+            # Checking clearing
+            for cpal_port in cpal_ports:
+                conns = jcli.get_all_connections( cpal_port )
+                if conns:
+                    raise Exception(f'{Fmt.BOLD}(pcamilla) ERROR cannot clear: {cpal_port.name} from system port{Fmt.END}')
 
         jcli.close()
         del jcli

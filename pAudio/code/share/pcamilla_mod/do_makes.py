@@ -213,12 +213,20 @@ def make_mixer_preamp(midside_mode='normal', swap_LR=False):
     return m
 
 
-def make_mixer_multi_way(pAudio_outputs):
-    """ Makes a mixer to route L/R to multiway outputs
+def make_expand_mixer(pAudio_outputs):
+    """ Makes a mixer to route L/R to several outputs
 
-        --> and returns the number of used outputs
+        Example of a weird 2+1 way
 
-        Example for 2+1 way, with 'sw' way connected to the 6th output
+        out     way
+        ---     ---
+        0       sw
+        1
+        2       lo.L
+        3       lo.R
+        4       hi.L
+        5       hi.R
+
 
           from2to5channels:
             channels:
@@ -228,12 +236,10 @@ def make_mixer_multi_way(pAudio_outputs):
             - dest: 0
               sources:
               - channel: 0
-                gain: 0.0
+                gain: -3.0
                 inverted: false
-            - dest: 1
-              sources:
               - channel: 1
-                gain: 0.0
+                gain: -3.0
                 inverted: false
             - dest: 2
               sources:
@@ -245,18 +251,20 @@ def make_mixer_multi_way(pAudio_outputs):
               - channel: 1
                 gain: 0.0
                 inverted: false
-            - dest: 5
+            - dest: 4
               sources:
               - channel: 0
-                gain: -3.0
+                gain: 0.0
                 inverted: false
+            - dest: 5
+              sources:
               - channel: 1
-                gain: -3.0
+                gain: 0.0
                 inverted: false
     """
 
-    def ch2num(ch):
-        return {'L': 0, 'R': 1}[ch]
+    def audio_ch_to_cam_ch(ch):
+        return {'L': 0, 'R': 1}[ch.split('.')[-1]]
 
 
     def pol2inv(pol):
@@ -269,28 +277,29 @@ def make_mixer_multi_way(pAudio_outputs):
               }[pol]
 
 
+    description = f'Outputs map: '
     mapping     = []
-    description = f'Sound card map: '
 
-    for dest, params in pAudio_outputs.items():
+    for out, params in pAudio_outputs.items():
 
-        # This is because the configuration could be processed using json.dumps
-        dest = int(dest)
+        dest = int(out) - 1 # because the configuration could be processed using json
+        name = params["name"]
 
-        way = params["name"]
+        if name.endswith('.L') or name.endswith('.R'):
 
-        if way.endswith('.L') or way.endswith('.R'):
+            # L / R  --->  0 / 1
+            src_ch = audio_ch_to_cam_ch( params['name'] )
 
-            mapping.append( {   'dest': dest - 1,
-                                'sources': [ {  'channel':   ch2num(way[-1]),
+            mapping.append( {   'dest': dest,
+                                'sources': [ {  'channel':   src_ch,
                                                 'gain':      params["gain"],
                                                 'inverted':  pol2inv(params["polarity"])
                                       } ]
                         } )
 
-        elif 'sw' in way.lower():
+        elif 'sw' in name.lower():
 
-            mapping.append( {   'dest': dest - 1,
+            mapping.append( {   'dest': dest,
                                 'sources': [ {  'channel':   0,
                                                 'gain':      params["gain"] / 2.0 - 3.0,
                                                 'inverted':  pol2inv(params["polarity"])
@@ -302,14 +311,15 @@ def make_mixer_multi_way(pAudio_outputs):
                                            ]
                         } )
 
-        description += f'{dest}/{way}, '
 
+        description += f"{name if name else '-' }/{out}, "
 
     # remove tail
     description = description.strip()[:-1]
 
+
     m = {   'description':  description,
-            'channels':     { 'in': 2, 'out': len( pAudio_outputs ) },
+            'channels':     { 'in': 2, 'out': len(pAudio_outputs) },
             'mapping':      mapping
         }
 
@@ -319,73 +329,86 @@ def make_mixer_multi_way(pAudio_outputs):
 def make_xover_steps(pAudio_outputs, xo_filtername):
     """ Makes the Filter steps after the expander mixer of the pipeline
 
-        Example for 2+1 way, with 'sw' way connected to the 6th output
+            Example of a weird 2+1 way
+
+            out     way
+            ---     ---
+            0       sw
+            1
+            2       lo.L
+            3       lo.R
+            4       hi.L
+            5       hi.R
+
 
           - type: Filter
             channel: 0
+            names:
+              - sw
+              - sw_gain
+              - delay.sw
+
+          - type: Filter
+            channel: 2
             names:
               - lo.mp
               - lo.mp_gain
               - delay.lo.L
 
           - type: Filter
-            channel: 1
+            channel: 3
             names:
               - lo.mp
               - lo.mp_gain
               - delay.lo.R
 
           - type: Filter
-            channel: 2
+            channel: 4
             names:
               - hi.mp
               - hi.mp_gain
               - delay.hi.L
 
           - type: Filter
-            channel: 3
+            channel: 5
             names:
               - hi.mp
               - hi.mp_gain
               - delay.hi.R
 
-          - type: Filter
-            channel: 5
-            names:
-              - sw
-              - sw_gain
-              - delay.sw
     """
+
+
+    def audio_ch_to_cam_ch(ch):
+        return {'L': 0, 'R': 1}[ch]
 
     steps = []
 
-    for out_idx, out_params in pAudio_outputs.items():
+    for out, params in pAudio_outputs.items():
 
-        if not out_params["name"]:
+        dest = int(out) - 1 # because the configuration could be processed using json
+        name = params["name"]
+
+        if not name:
             continue
 
-        # This is because the configuration could be processed using json.dumps
-        out_idx = int(out_idx)
-
-        if not 'sw' in out_params["name"]:
+        if not 'sw' in name.lower():
             # lo.R --> lo
-            way = out_params["name"].replace('.L', '').replace('.R', '')
+            way = name.replace('.L', '').replace('.R', '')
         else:
-            way = 'sw'
+            way = name
 
-        ch = out_params["name"].split('.')[-1]
 
-        step = {    'description':  f'xover.{way}.{ch}',
+        step = {    'description':  f'xover.{name}',
 
                     'type':         'Filter',
 
-                                    # output indexes starts with `1` like
-                                    # jack `system:playback_N` ports numbering
-                    'channels':     [out_idx - 1],
+                    # must be a list
+                    'channels':     [dest],
 
                     'names':        [ f'xo.{way}.{xo_filtername}',
                                       f'xo.{way}.{xo_filtername}_gain',
-                                      f'delay.{way}.{ch}'
+                                      f'delay.{name}'
                                     ]
                 }
 

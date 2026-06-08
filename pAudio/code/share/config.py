@@ -307,113 +307,158 @@ def complete_config():
 
         def reformat_outputs():
             """
-                Outputs are given in NON standard YML, having 4 fields.
+                outputs section is given in NON standard YML, having 5 fields.
 
-                An output can be void, or at least must have a valid <Name>.
+                Valid names are:
 
-                Out# starts from 1 until the max number of available channels
-                of the used sound card.
+                    fullrange:  fr.L, fr.R
+                    xover:      [lo|mi|hi].[L|R]  (example: 'lo.L', 'hi.R')
+                    subwoofer:  sw
 
-                Valid names are '[lo|mi|hi].[L|R]' or 'sw', e.g.: 'lo.L', 'hi.L'
+                A void section will default to a basic fr.L + fr.L mapping
 
-                Example:
+                Example of 2 way stereo by using the physical sound card ports
+                as well other extra outputs:
 
-                    # Out       Name         Gain    Polarity  Delay (ms)
-                    1:          lo.L          0.0       +       0.0
-                    2:          lo.R          0.0       +       0.0
-                    3:          hi.L          0.0       -       0.15
-                    4:          hi.R          0.0       -       0.15
-                    5:
-                    6:          sw            0.0       +       0.0
+                outputs:
 
+                    # (i) Output numbers greater than the available sound card ports
+                    #     (jackd system:playback_N ) will be not bound to system:playback
+                    #     This alows you to send audio to other jack ports, for example
+                    #     to send it to a remote loudspeaker.
+
+                    # On this example the sound card has 2 playback ports (1 & 2)
+                    # used for the Left active loudspeaker LO & HI.
+                    # CamillaDSP (cpal 3 & 4) will be used to send to a remote Right loudspeaker pair
+
+                    #num    name    Gain dB    Polarity     Delay       bind to
+                    #                          +/-          ms
+                    1:      lo.L    0.0         +           0.0
+                    2:      hi.L    0.0         +           0.0
+                    3:      lo.R    0.0         +           0.0         remote_lo
+                    4:      hi.R    0.0         +           0.0         remote_hi
 
                 Here will convert the Human Readable fields into a dictionary.
             """
 
-            def make_paudio_output(o_name, gain=0.0, polarity='+', delay=0.0):
+            def check_LR_pairs():
 
-                res = {
-                    'name':         o_name,
-                    'gain':         gain,
-                    'polarity':     polarity,
-                    'delay':        delay
+                n_L = 0
+                n_R = 0
+
+                for out, params in LSPK_CONFIG["outputs"].items():
+
+                    name = params.get('name', '')
+
+                    if not name:
+                        continue
+
+                    if name.endswith('.L'):
+                        n_L += 1
+
+                    elif name.endswith('.R'):
+                        n_R += 1
+
+                    elif name == 'sw':
+                        pass
+
+                    else:
+                        raise Exception(f"(lspk.yml) ERROR bad output name {name}")
+
+                if n_L != n_R:
+                    raise Exception(f'(lspk.yml) ERROR number of outputs for L and R does not match')
+
+
+            def make_simple_LR_outputs_map():
+
+                LSPK_CONFIG["outputs"] = {
+                    0: {
+                        "name":         'fr.L',
+                        "gain":         0.0,
+                        "polarity":     "+",
+                        "delay":        0.0,
+                        "bindto":       ''
+                    },
+                    1: {
+                        "name":         'fr.R',
+                        "gain":         0.0,
+                        "polarity":     "+",
+                        "delay":        0.0,
+                        "bindto":       ''
+                    }
                 }
 
-                return res
+
+            def check_order():
+                """ The output numbers must be ordered and consecutive """
+                outs_list = list( LSPK_CONFIG["outputs"].keys() )
+                return outs_list == list(range(1, len(outs_list) + 1))
 
 
-            def check_output_params(out, params):
+            def get_fields(out, tmp):
 
-                out_name, gain, pol, delay = params
+                # only name is mandatory
+                tmp = tmp.split() + ['', '', '','']
 
-                if not out_name or not out_name.replace('.', '').replace('_', '').isalpha():
-                    raise Exception( f'Output {out} bad name: {out_name}' )
+                name, gain, polarity, delay, bindto = tmp[:5]
 
-                if not out_name[:2] == 'sw' and not out_name[-2:] in ('.L', '.R'):
-                    raise Exception( f'Output {out} bad name: {out_name}' )
-
-                if gain:
-                    gain = round(float(gain), 1)
+                if gain != '':
+                    gain = float(gain)
                 else:
                     gain = 0.0
 
-                if pol:
-                    valid_pol = ('+', '-', '1', '-1', 1, -1)
-                    if not pol in valid_pol:
-                        raise Exception( f'Polarity must be in {valid_pol}' )
+                if not polarity:
+                    polarity = '+'
                 else:
-                    pol = 1
+                    if not polarity in ('+', '-'):
+                        raise Exception(f"(lspk.yml) ERROR in output {out}, polarity must be '+' or '-'")
 
-                if delay:
-                    delay = round(float(delay), 3)
+                if delay != '':
+                    delay = float(delay)
                 else:
                     delay = 0.0
 
-                return out, (out_name, gain, pol, delay)
+                if bindto and 'system' in bindto:
+                    raise Exception(f"(lspk.yml) ERROR in output {out}, bindport cannot be 'system:...'")
+
+                return  name, gain, polarity, delay, bindto
 
 
-            def check_output_names():
-                """ Check L/R pairs
-                """
-                outputs = LSPK_CONFIG["outputs"]
-
-                L_outs  = [ pms["name"] for o, pms in outputs.items()
-                            if pms["name"] and pms["name"][-1]=='L' ]
-                R_outs  = [ pms["name"] for o, pms in outputs.items()
-                            if pms["name"] and pms["name"][-1]=='R' ]
-
-                if len(L_outs) != len(R_outs):
-                    raise Exception('Number of outputs for L and R does not match')
-
-
-            if not LSPK_CONFIG.get("outputs"):
-                # Default to full range
-                LSPK_CONFIG["outputs"] = {}
-                LSPK_CONFIG["outputs"][1] = make_paudio_output( 'fr.L' )
-                LSPK_CONFIG["outputs"][2] = make_paudio_output( 'fr.R' )
+            # Default simple stereo full range outputs
+            if not LSPK_CONFIG.get('outputs'):
+                make_simple_LR_outputs_map()
                 return
 
+            if not check_order():
+                raise Exception('(lspk.yml) ERROR outputs numbers map must be complete')
 
-            # Outputs
-            for out, params in LSPK_CONFIG["outputs"].items():
 
-                # It is expected 4 fields
-                params = params.split() if params else []
-                params += [''] * (4 - len(params))
+            for out, params_str in LSPK_CONFIG["outputs"].items():
 
-                # Redo in dictionary form
-                if not any(params):
-                    params = make_paudio_output('')
+                if params_str:
+
+                    # It is expected to found 5 fields in the params string
+                    name, gain, polarity, delay, bindto = get_fields(out, params_str)
+
+                    LSPK_CONFIG["outputs"][out] = {
+                        'name':         name,
+                        'gain':         gain,
+                        'polarity':     polarity,
+                        'delay':        delay,
+                        'bindto':       bindto
+                    }
 
                 else:
-                    _, p = check_output_params(out, params)
-                    name, gain, pol, delay = p
-                    params = make_paudio_output(name, gain, pol, delay)
-
-                LSPK_CONFIG["outputs"][out] = params
+                    LSPK_CONFIG["outputs"][out] = {
+                        'name':         '',
+                        'gain':         None,
+                        'polarity':     None,
+                        'delay':        None,
+                        'bindto':       ''
+                    }
 
             # Check L/R pairs
-            check_output_names()
+            check_LR_pairs()
 
 
         # Load lspk.yml
@@ -559,11 +604,6 @@ def complete_config():
 
 
     write_pAudio_cfg(CONFIG)
-
-    # DEBUG
-    #print('--- pAudio ----')
-    #print(CONFIG.keys())
-    #print( yaml.dump(CONFIG, default_flow_style=False, sort_keys=False, indent=2) )
 
 
 if pAudio_cfg_is_recent():

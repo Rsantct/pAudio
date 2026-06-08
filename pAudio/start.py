@@ -29,7 +29,7 @@ from    common  import *
 
 # import Jack stuff ONLY with LINUX
 if sys.platform == 'linux' and CONFIG.get('jack'):
-    import  jack_mod
+    import  jack
     from    jack_sources import SOURCES
 
 
@@ -73,64 +73,53 @@ def rewire_camilladsp():
         so CPAL acts as an intermediate layer.
     """
 
-    def cpal_alias():
+    def clear_camilla_input():
+        """ Clearing inputs from system ports """
 
-        def do_alias():
-            n = 3
-            while n:
-                try:
-                    sp.check_output(f'jack_alias cpal_client_{io}:{io}_{p} camilladsp:{io}.{ch}',
-                                    shell=True)
-                    break
-                except:
-                    sleep(.5)
-                    n -= 1
-            if not n:
-                return False
-            else:
-                return True
+        cpal_in_ports = jcli.get_ports('cpal_client', is_input=True)
 
-        result = []
+        for cp in cpal_in_ports:
 
-        for io in ('in', 'out'):
+            conns = None
+            tries = 10
+            while tries and not conns:
 
-            for p in ('0', '1'):
-                ch = {'0':'L', '1':'R'}[p]
-                result.append( do_alias() )
+                conns = jcli.get_all_connections( cp )
 
-        if all(result):
-            if VERBOSE:
-                print(f'{Fmt.BLUE}(start) set alias for camillaDSP jack ports.{Fmt.END}')
-        else:
-            print(f'{Fmt.BOLD}(start) ERROR setting alias for camillaDSP jack ports.{Fmt.END}')
+                for c in conns:
+                    if 'system' in c.name:
+                        jcli.disconnect(c, cp)
+                        print(f'{Fmt.GRAY}(start) clearing {c.name} -- {cp.name}{Fmt.END}')
 
-        return result
+                sleep(.2)
+                tries -= 1
+
+        # Checking clearing
+        for cp in cpal_in_ports:
+            conns = jcli.get_all_connections( cp )
+            if conns:
+                raise Exception(f'{Fmt.BOLD}(start) ERROR cannot clear: {cp.name} from system port{Fmt.END}')
 
 
-    # camillaDSP jack ports aliases
-    cpal_alias()
-
-    # Removing the CamillaDSP auto spawned Jack connections
-    # and connecting pAudio `pre_in_loop` to CamillaDSP Jack port
+    # Connecting pAudio `pre_in_loop` to CamillaDSP
     if VERBOSE:
         print(f'{Fmt.GRAY}(start) Trying to wire camillaDSP jack ports ...{Fmt.END}')
 
-    # open a temporary jack.Client
-    tmp = jack_mod._jcli_activate('wire_CamillaDSP')
+    try:
+        jcli = jack.Client('tmp', no_start_server=True)
+        jcli.activate()
 
-    if tmp == 'done':
+        # clear camilladsp input from system
+        clear_camilla_input()
 
-        # (i) system:capture ports may not exists, depending on sound card model
-        if jack_mod.get_ports('system', is_physical=True, is_output=True):
-            jack_mod.connect_bypattern('system',      'camilla', 'disconnect')
+        # wire camilladsp input
+        jcli.connect('pre_in_loop:output_1', 'cpal_client_in:in_0')
+        jcli.connect('pre_in_loop:output_2', 'cpal_client_in:in_1')
 
-        jack_mod.connect_bypattern('pre_in_loop', 'camilla', 'connect'   )
+        del jcli
 
-        # close the temporary jack.Client
-        del jack_mod.JCLI
-
-    else:
-        print(f'{Fmt.BOLD}(start) Cannot wire camillaDSP jack ports: {tmp}{Fmt.END}')
+    except Exception as e:
+        print(f'{Fmt.BOLD}(start) Cannot rewire camillaDSP jack ports: {str(e)}{Fmt.END}')
 
 
 def run_plugins(mode='start'):
@@ -288,7 +277,7 @@ def stop():
     run_plugins(mode='stop')
 
     # The loudness_monitor daemon
-    manage_loudness_monitor_daemon(mode='stop')
+    manage_loudness_monitor_daemon('stop')
 
     # The server
     sp.Popen(['pkill', '-f',  'server.py paudio '])
@@ -299,7 +288,6 @@ def stop():
         # Zita network to jack (Linux)
         stop_zita_link()
         sleep(.25)
-        sp.Popen(['pkill', '-f',  'jackd'])
 
         # JackTrip if used
         sp.Popen(['pkill', '-f', 'jacktrip'])
@@ -365,7 +353,7 @@ def start():
             manage_signal_detector('start')
 
     # The loudness_monitor daemon
-    manage_loudness_monitor_daemon()
+    manage_loudness_monitor_daemon('start')
 
 
 if __name__ == "__main__":
