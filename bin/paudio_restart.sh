@@ -114,7 +114,7 @@ function do_stop {
     if [[ $(uname) == "Linux" ]]; then
         pkill -KILL -f camilladsp 1>/dev/null 2>&1          # CamillaDSP
         sleep 1
-        if [[ KEEP_JACKD == 'false' ]]; then
+        if [[ $KEEP_JACKD == 'false' ]]; then
             pkill -KILL -f 'jackd'    1>/dev/null 2>&1      # Jack
         fi
 
