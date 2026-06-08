@@ -239,12 +239,14 @@ def init_camilladsp(pAudio_config):
             'done' OR 'some problem description...'
     """
 
-    def cpal_ports_ok(cpal2system_alowed=True):
+    def cpal_ports_ok(clear_cpal2system=True):
         """ Check for:
 
             - no weird cpal ports named like `cpal_client_in-01`
 
             - no cpal ports are connected to system ports (optional)
+
+            NOTICE: cpal ports are default binded to system ports
 
             (bool)
         """
@@ -260,23 +262,38 @@ def init_camilladsp(pAudio_config):
 
         cpal_ports = jcli.get_ports('cpal_client')
 
+        # Early return if any `cpal_client_in-01` is detected
         for cpal_port in cpal_ports:
 
-            # Early return if any `cpal_client_in-01` is detected
             if '-' in cpal_port.name:
                 print(f'{Fmt.BOLD}(pcamilla) Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
                 result = False
                 break
 
-            if cpal2system_alowed:
-                continue
+        if clear_cpal2system:
 
-            conns = jcli.get_all_connections( cpal_port )
+            # Clearing from system ports
+            for cpal_port in cpal_ports:
 
-            for c in conns:
-                if 'system' in c.name:
-                    print(f'{Fmt.BOLD}(pcamilla) CPAL <--> SYSTEM detected: {cpal_port.name} {c.name}{Fmt.END}')
-                    result = False
+                conns = None
+                tries = 10
+                while tries and not conns:
+
+                    conns = jcli.get_all_connections( cpal_port )
+
+                    for c in conns:
+                        if 'system' in c.name:
+                            jcli.disconnect(cpal_port, c)
+                            print(f'{Fmt.GRAY}(pcamilla) clearing {cpal_port.name} -- {c.name}{Fmt.END}')
+
+                    sleep(.2)
+                    tries -= 1
+
+            # Checking clearing
+            for cpal_port in cpal_ports:
+                conns = jcli.get_all_connections( cpal_port )
+                if conns:
+                    raise Exception(f'{Fmt.BOLD}(pcamilla) ERROR cannot clear: {cpal_port.name} from system port{Fmt.END}')
 
         jcli.close()
         del jcli
