@@ -35,8 +35,12 @@ def _jcli_activate(cli_name = 'jack_mod'):
 
 
 def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=2,
-                jloops_list=[], dither=False, softmode=False, shorts=False ):
+                jloops_list=[], dither=False, softmode=False, shorts=False, playback_ports=None ):
     """ Run JACK in a separate process, including jack_loops
+
+        playback_ports: this is for some weird sound interfaces as RPI 3B bcm2835 Headphones
+                        which exposes 8 channels but only 2 are operational
+
     """
 
     if VERBOSE:
@@ -57,7 +61,6 @@ def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=
     else:
         sh = ''
 
-
     if 'rec' in io_mode and 'play' in io_mode:
         mode = 'd'
 
@@ -70,7 +73,12 @@ def run_jackd(  alsa_dev='', io_mode='recplay', fs=44100, period=1024, nperiods=
         print(f'{Fmt.RED}(jack_mod) BAD io_mode{Fmt.END}')
         return False
 
-    jack_cmd = f'jackd -d alsa -{mode} {alsa_dev} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
+    if playback_ports:
+        pbk_ports = f'-o {playback_ports}'
+    else:
+        pbk_ports = ''
+
+    jack_cmd = f'jackd -d alsa -{mode} {alsa_dev} {pbk_ports} -r {fs} -p {period} -n {nperiods} -z {dither}' + \
                f' {sm} {sh} 1>{LOGFOLDER}/jackd.log 2>&1'
 
     with open(f'{LOGFOLDER}/jackd.log', 'w') as f:
@@ -326,14 +334,23 @@ def prepare_jack_stuff():
     dither   = CONFIG["jack"].get("dither", True)
     softmode = CONFIG["jack"].get("softmode", True)
     shorts   = CONFIG["jack"].get("shorts", False) or CONFIG["jack"].get("16bit", False)
+    io_mode  = CONFIG["jack"].get("io_mode", '')
 
-    io_mode  = detect_sound_card_io(alsa_dev)
+    # This is for some weird sound interfaces as RPI 3B bcm2835 Headphones
+    # which exposes 8 channels but only 2 are operational
+    playback_ports = CONFIG["jack"].get("playback_ports", None)
+
+
+    if not io_mode:
+        io_mode  = detect_sound_card_io(alsa_dev)
 
     if not run_jackd( alsa_dev=alsa_dev, io_mode=io_mode,
                       fs=fs, period=period, nperiods=nperiods,
                       jloops_list=jloops_list,
-                      dither=dither, softmode=softmode,
-                      shorts=shorts):
+                      dither=dither,
+                      softmode=softmode,
+                      shorts=shorts,
+                      playback_ports=playback_ports):
 
         print(f'{Fmt.BOLD}(jack_mod) Cannot run JACKD. See log folder. Exiting :-({Fmt.END}')
         sys.exit()
