@@ -288,7 +288,7 @@ def stop():
     run_plugins(mode='stop')
 
     # The loudness_monitor daemon
-    manage_loudness_monitor_daemon(mode='stop')
+    manage_loudness_monitor_daemon('stop')
 
     # The server
     sp.Popen(['pkill', '-f',  'server.py paudio '])
@@ -364,7 +364,7 @@ def start():
             manage_signal_detector('start')
 
     # The loudness_monitor daemon
-    manage_loudness_monitor_daemon()
+    manage_loudness_monitor_daemon('start')
 
 
 if __name__ == "__main__":
