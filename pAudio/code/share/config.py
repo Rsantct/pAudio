@@ -317,18 +317,26 @@ def complete_config():
 
                 A void section will default to a basic fr.L + fr.L mapping
 
-                Example of xover physical output mapping in lspk.yml:
+                Example of 2 way stereo by using the physical sound card ports
+                as well other extra outputs:
 
                 outputs:
 
-                #   num     name    Gain dB    Polarity     Delay       bind to
-                #                              +/-          ms          system
-                    1:
-                    2:
-                    3:      lo.L    0.0         +           0.0         true
-                    4:      lo.R    0.0         +           0.0         true
-                    5:      hi.L    0.0         +           0.0         true
-                    6:      hi.R    0.0         +           0.0         true
+                    # (i) Output numbers greater than the available sound card ports
+                    #     (jackd system:playback_N ) will be not bound to system:playback
+                    #     This alows you to send audio to other jack ports, for example
+                    #     to send it to a remote loudspeaker.
+
+                    # On this example the sound card has 2 playback ports (1 & 2)
+                    # used for the Left active loudspeaker LO & HI.
+                    # CamillaDSP (cpal 3 & 4) will be used to send to a remote Right loudspeaker pair
+
+                    #num    name    Gain dB    Polarity     Delay       bind to
+                    #                          +/-          ms
+                    1:      lo.L    0.0         +           0.0
+                    2:      hi.L    0.0         +           0.0
+                    3:      lo.R    0.0         +           0.0         remote_lo
+                    4:      hi.R    0.0         +           0.0         remote_hi
 
                 Here will convert the Human Readable fields into a dictionary.
             """
@@ -369,14 +377,14 @@ def complete_config():
                         "gain":         0.0,
                         "polarity":     "+",
                         "delay":        0.0,
-                        "bind2system":  True
+                        "bindto":       ''
                     },
                     1: {
                         "name":         'fr.R',
                         "gain":         0.0,
                         "polarity":     "+",
                         "delay":        0.0,
-                        "bind2system":  True
+                        "bindto":       ''
                     }
                 }
 
@@ -392,7 +400,7 @@ def complete_config():
                 # only name is mandatory
                 tmp = tmp.split() + ['', '', '','']
 
-                name, gain, polarity, delay, b2s = tmp[:5]
+                name, gain, polarity, delay, bindto = tmp[:5]
 
                 if gain != '':
                     gain = float(gain)
@@ -410,21 +418,10 @@ def complete_config():
                 else:
                     delay = 0.0
 
-                if b2s:
+                if bindto and 'system' in bindto:
+                    raise Exception(f"(lspk.yml) ERROR in output {out}, bindport cannot be 'system:...'")
 
-                    if b2s in (1, '1', 'true', 'True', True):
-                        b2s = True
-
-                    elif b2s in (0, '0', 'false', 'False', False):
-                        b2s = False
-
-                    else:
-                        raise Exception(f"(lspk.yml) ERROR in output {out}, bindport must have a ':'")
-
-                else:
-                    b2s = False
-
-                return  name, gain, polarity, delay, b2s
+                return  name, gain, polarity, delay, bindto
 
 
             # Default simple stereo full range outputs
@@ -441,14 +438,14 @@ def complete_config():
                 if params_str:
 
                     # It is expected to found 5 fields in the params string
-                    name, gain, polarity, delay, bind2system = get_fields(out, params_str)
+                    name, gain, polarity, delay, bindto = get_fields(out, params_str)
 
                     LSPK_CONFIG["outputs"][out] = {
                         'name':         name,
                         'gain':         gain,
                         'polarity':     polarity,
                         'delay':        delay,
-                        'bind2system':  bind2system
+                        'bindto':       bindto
                     }
 
                 else:
@@ -457,7 +454,7 @@ def complete_config():
                         'gain':         None,
                         'polarity':     None,
                         'delay':        None,
-                        'bind2system':  None
+                        'bindto':       ''
                     }
 
             # Check L/R pairs
