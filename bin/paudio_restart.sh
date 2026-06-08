@@ -214,7 +214,8 @@ elif [[ ! $1 || $1 == *'start' ]]; then
 
 else
     echo
-    echo "USAGE:   paudio_restart.sh  [ stop |  start [-v] ]"
+    echo "USAGE:   paudio_restart.sh  [ stop |  start [-v] [-kj] ]"
     echo "              -v   verbose mode"
+    echo "              -kj  keep jackd server (for developers)"
     echo
 fi
