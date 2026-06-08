@@ -149,8 +149,8 @@ def _prepare_cam_config(pAudio_config):
         returns: the CamillaDSP config
     """
 
-    def prepare_multiway_structure():
-        """ The multiway N channel expander Mixer
+    def prepare_outputs_structure():
+        """ The multi-output N channels expander Mixer
         """
 
         def do_xo_stuff():
@@ -187,23 +187,30 @@ def _prepare_cam_config(pAudio_config):
                 cam_config["pipeline"].append(xo_step)
 
 
+        def get_set_of_output_names():
+            pa_outputs = pAudio_config["outputs"]
+            output_names = [ pa_outputs[x]["name"] for x in pa_outputs.keys() ]
+            output_names =[ x for x in set( output_names ) if x ]
+            return sorted(output_names)
+
+
         # Prepare the needed expander mixer ...
-
-        m          = make_mixer_multi_way( pAudio_config["outputs"] )
-        mixer_name = f'from2to{ len(m["mapping"]) }channels'
-        cam_config["mixers"][mixer_name] = m
-
-        print(f'(pcamilla) {Fmt.MAGENTA}{mixer_name} | {cam_config["mixers"][mixer_name]["description"]}{Fmt.END}')
+        m = make_expand_mixer( pAudio_config["outputs"] )
+        m_name = f'from2to{ len( pAudio_config["outputs"] ) }channels'
+        cam_config["mixers"][m_name] = m
+        print(f'(pcamilla) {Fmt.MAGENTA}{m_name} | {cam_config["mixers"][m_name]["description"]}{Fmt.END}')
 
         # Adding the mixer to the pipeline
-        mwm_step = {'type':         'Mixer',
-                    'name':         mixer_name,
-                    'description':  'copy LR to multi-way xover'
+        m_step = {  'type':         'Mixer',
+                    'name':         m_name,
+                    'description':  'expand LR to multi outputs'
         }
-        cam_config["pipeline"].append(mwm_step)
+        cam_config["pipeline"].append(m_step)
 
-        # Making the XO as the final steps in the pipeline
-        do_xo_stuff( )
+        # XO OVER (pipeline filtering steps) is needed when
+        # the set of outputs names is not a simple fr.L / fr.R
+        if get_set_of_output_names() != ['fr.L', 'fr.R']:
+            do_xo_stuff( )
 
 
     # From here `cam_config` will grow progressively
@@ -216,9 +223,10 @@ def _prepare_cam_config(pAudio_config):
     if pAudio_config.get('lspk_eq') or pAudio_config.get('drc'):
         lspk.update_lspk(pAudio_config, cam_config)
 
-    # Multiway if more than L/R outputs
-    if list(pAudio_config["outputs"].keys()) != ['fr.L', 'fr.R']:
-        prepare_multiway_structure()
+    # If more than 2 outputs it is needed to expand the pipeline
+    if len( pAudio_config["outputs"] ) > 2:
+        prepare_outputs_structure()
+
 
     # Dither (will apply to the lasts steps of the pipeline)
     if pAudio_config.get("coreaudio", {}).get("devices", {}).get("playback", {}).get("dither", {}):
@@ -239,7 +247,7 @@ def init_camilladsp(pAudio_config):
             'done' OR 'some problem description...'
     """
 
-    def cpal_ports_ok(clear_cpal2system=True):
+    def cpal_ports_ok(clear_cpal2system=False):
         """ Check for:
 
             - no weird cpal ports named like `cpal_client_in-01`
