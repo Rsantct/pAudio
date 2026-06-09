@@ -24,4 +24,6 @@ Prepare a simple macro (bash script), for example **`pAudio/macros/01_RNE`**
     paudio_control input iRadio
     paudio_control lu_offset 12
 
+Make it executable `chmod +x pAudio/macros/01_RNE`
+
 This will appear as a button in the control web page
