@@ -12,7 +12,7 @@ MPC and GMPC are basic MPC clients (terminal and graphical)
 
     sudo apt install mpd mpc gmpc
 
-We use our own mpd session, please, after installing MPD, check that the global service is not enabled (recent versions does not):
+We use our own **user session**, please, after installing MPD, check that the global service is not enabled (recent versions does not):
 
     pi@rpi3wl-l:/home/paudio $ sudo systemctl status mpd.service 
     ○ mpd.service - Music Player Daemon
@@ -30,6 +30,27 @@ We use our own mpd session, please, after installing MPD, check that the global 
                  [::]:6600 (Stream)
 
 If enabled, please disable both of them.
+
+## Basic configuration
+
+MPD user session configuration needs at least an audio output section.
+
+This is for pAudio + JACK:
+
+    ~/.mpdconf
+    
+        audio_output {
+            type                    "jack"
+            enabled                 "yes"
+            name                    "jack"
+            client_name             "mpd"
+            always_on               "no"
+            source_ports            "out_0,out_1"
+            auto_destination_ports  "no"
+            # (!) MUST declare destination_ports to avoid autoconnect to system
+            destination_ports       "mpd_loop:input_1,mpd_loop:input_2"
+        }
+
 
 ## Prepare pAudio to use MPD
 
