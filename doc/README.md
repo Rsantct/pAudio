@@ -13,7 +13,7 @@
     ```
   
 
-## Other recommended audio software
+## Other recommended software
 
 In order to automatically switch the Mac system-wide audio playback to the pAudio BlackHole input, and restore later, you may want to install a couple of additional tools:
 
@@ -25,6 +25,18 @@ To alow the binary **AdjustVolume** to be executed, you'll need to unblock it, o
 
     xattr -d com.apple.quarantine ~/bin/AdjustVolume
 
+### Optional: send macOS audio to an external pAudio system.
+
+You can send the audio of your Mac to another pAudio system of your local network (WiFi or Ethernet)
+
+This is done from your Mac by simply running the provided script:
+
+    ~/bin/paudio_macos_cli.sh
+
+You'll need to install:
+
+- The **`dialog`** utility. Download and install the last release package **.pkg** from https://github.com/swiftDialog/swiftDialog/releases
+- **JackTrip** (go to the offcial site to download the macOS installer)
 
 ## CamillaDSP
 

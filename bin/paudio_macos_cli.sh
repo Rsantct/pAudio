@@ -1,11 +1,14 @@
 #!/bin/bash
 
-# Constante
+# The 'dialog' command needs to be installed:
+#   https://github.com/swiftDialog
+#
+
+
+# Constantes
 OUT_DEV='BlackHole 2ch'
 
-
-function help {
-cat <<EOF
+read -r -d '' AYUDA << 'EOF'
 
     Enviador de audio para macOS, a un sistema pAudio remoto basado en JackTrip.
 
@@ -24,6 +27,47 @@ cat <<EOF
         - SwitchAudioSource
 
 EOF
+AYUDA_HTML=$(printf '%s\n' "$AYUDA" | sed 's/$/<br>/' | tr -d '\n')
+
+
+# Archivo para volcar los mensajes que muestra la ventana de progreso
+CMD_FILE="/var/tmp/paudio_macos_cli.log"
+rm -f "$CMD_FILE"
+
+
+function aviso {
+    MENSAJE=$1
+    osascript -e "display dialog \"$MENSAJE\" buttons {\"OK\"} default button \"OK\" with title \"Información\""
+}
+
+
+function confirma {
+    MENSAJE=$1
+    respuesta=$(osascript -e "display dialog \"$MENSAJE\" buttons {\"No\", \"Sí\"} default button \"Sí\" with title \"JackTrip\"")
+
+    if [[ "$respuesta" == *"button returned:Sí"* ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
+function do_log {
+    echo "$1"
+    echo "message: +<br>""$1" >> "$CMD_FILE"
+}
+
+
+function end_log {
+    sleep 3
+    echo "quit:" >> "$CMD_FILE"
+}
+
+
+function help {
+    echo "$AYUDA"
+    echo "message: +<br>""$AYUDA_HTML" > "$CMD_FILE"
 }
 
 
@@ -115,9 +159,11 @@ function restore_macOS_default_output {
         }
     ')
 
+    do_log "Restaurando el audio en el Mac ..."
     osascript -e "set volume output volume 25"
     sleep 0.5
     /opt/homebrew/bin/SwitchAudioSource -s "$DEFAULT_OUT_DEV"
+
 }
 
 
@@ -127,7 +173,7 @@ function switch_remote_source {
 
     # Conmutamos la entrada en el FIRtro remoto.
     # OjO debe ser una source predefinida en el config.yml remoto
-    echo 'Conmutando la fuente en el lado remoto ...'
+    do_log 'Conmutando la fuente en el lado remoto ...'
     echo "source $src" | nc $REMOTE 9990
     echo
 }
@@ -169,7 +215,7 @@ function jacktrip_start {
     local buffer=$(get_remote_jack_buffer)
 
 
-    echo "Iniciando el envío con JackTrip ..."
+    do_log "Iniciando el envío con JackTrip ..."
 
     mkdir -p "$HOME"/tmp
 
@@ -200,7 +246,8 @@ function load_conf {
     REDUNDANCY=1
 
     if [[ ! -f "$CONFPATH" ]]; then
-        echo "Falta archivo de configuración ""$CONFPATH"
+        do_log "Falta archivo de configuración ""$CONFPATH"
+        end_log
         exit 0
     fi
 
@@ -208,7 +255,7 @@ function load_conf {
     #   remote = 'mi_pc.local'
     #   REMOTO: mi_pc.local
 
-    REMOTE=$( grep -Ei '^[[:space:]]*(remote|remoto)' $CONFPATH | \
+    REMOTE_IP_OR_NAME=$( grep -Ei '^[[:space:]]*(remote|remoto)' $CONFPATH | \
         head -n 1 | sed -E 's/^[[:space:]]*(remote|remoto)[[:space:]]*[:=][[:space:]]*//I' | \
         sed 's/["'\'']//g' | \
         xargs )
@@ -240,20 +287,6 @@ function is_valid_ip {
 }
 
 
-function confirma {
-
-    MENSAJE=$1
-
-    respuesta=$(osascript -e "display dialog \"$MENSAJE\" buttons {\"No\", \"Sí\"} default button \"Sí\" with title \"JackTrip\"")
-
-    if [[ "$respuesta" == *"button returned:Sí"* ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-
 # Ayuda
 if [[ $1 == *"-h"* ]]; then
     help
@@ -261,48 +294,75 @@ if [[ $1 == *"-h"* ]]; then
 fi
 
 
+# ----- INICIO ------
+
 # Lee el archivo de configuración
 load_conf
 
 
 # Se necesita la IP remota, direcciones 'xxxx.local' no funcionan
-REMOTE=$(get_ip $REMOTE)
+REMOTE=$(get_ip $REMOTE_IP_OR_NAME)
+
+
+if [[ $REMOTE != *"."* ]]; then
+    do_log "$REMOTE_IP_OR_NAME"" NO responde"
+    end_log
+    exit 1
+fi
 
 
 # Mecanismo toggle: si ya está enviando lo detiene
 if pgrep -f jacktrip 1>/dev/null ; then
 
     if ! confirma "¿DETENER el envío de audio al remoto?"; then
+        echo "quit:" >> "$CMD_FILE" # no espera 5 segundos
         exit 0
     fi
 
+    # Iniciamos ventana de progreso
+    dialog \
+      --title "macOS --x--> pAudio" \
+      --commandfile "$CMD_FILE" &
+
     # Detiene JackTrip
-    echo "Deteniendo el envío JackTrip ..."
+    do_log "Deteniendo el envío JackTrip ..."
     killall jacktrip 1>/dev/null 2>&1
 
     # Restaura la salida de audio del Mac
     restore_macOS_default_output
 
     # FIN
+    end_log
     exit 0
 
 else
 
     if ! confirma "¿INICIAR el envío de audio a $REMOTE?"; then
+        echo "quit:" >> "$CMD_FILE" # no espera 5 segundos
         exit 0
     fi
 fi
 
 
+# Iniciamos ventana de progreso
+dialog \
+  --title "macOS ----> pAudio" \
+  --commandfile "$CMD_FILE" &
+
+
 # Comprobamos comunicación con el Host Remoto
 if ! is_valid_ip $REMOTE; then
-    echo "Host remoto no válido."
+    do_log "Host remoto no válido."
+    end_log
     exit 1
 fi
+
 if ping -c 1 -W 1 $REMOTE > /dev/null; then
-    echo "Detectado host remoto "$REMOTE
+    do_log "Detectado host remoto ""$REMOTE"
+
 else
-    echo "No hay respuesta de "$REMOTE
+    do_log "No hay respuesta de ""$REMOTE"
+    end_log
     exit 0
 fi
 
@@ -319,3 +379,4 @@ switch_macOS_output
 # Ordenamos al Host Remoto que seleccione la fuente de nuestro JackTrip
 switch_remote_source "$REMOTE_SRC_NAME"
 
+end_log

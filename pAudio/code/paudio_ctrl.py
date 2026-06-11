@@ -54,7 +54,8 @@ def init():
     # ON/OFF button behavior (default pAudio)
     ONOFF_MODE = 'pAudio'
     if CONFIG.get('web_config'):
-        if 'amp' in CONFIG.get('web_config', {}).get('onoff', ''):
+        onoff_mode = CONFIG.get('web_config', {}).get('onoff')
+        if onoff_mode != None and 'amp' in onoff_mode:
             ONOFF_MODE = 'amplifier'
 
     # CamillaDSP monitoring
@@ -76,17 +77,17 @@ def save_aux_info():
 
     if ONOFF_MODE == 'amplifier':
 
-        AUXINFO['onoff'] = amp_switch('state')
+        AUXINFO["onoff"] = amp_switch('state')
 
     elif ONOFF_MODE == 'pAudio':
 
         if process_is_running('paudio '):
-            AUXINFO['onoff'] = 'on'
+            AUXINFO["onoff"] = 'on'
         else:
-            AUXINFO['onoff'] = 'off'
+            AUXINFO["onoff"] = 'off'
 
     else:
-        AUXINFO['onoff'] = '-'
+        AUXINFO["onoff"] = '-'
 
 
     # Dynamic update <CamillaDSP ERROR>

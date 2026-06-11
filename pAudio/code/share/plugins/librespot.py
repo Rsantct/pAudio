@@ -121,8 +121,9 @@ def start():
 
     moreopt_str = ' '.join(OTHER_OPTS)
 
+    # no dither here because Jack does it.
     cmd = f'{BINARY} --name {gethostname()} ' + \
-          f'--onevent {ONEVENT_PROGRAM} ' + \
+          f'--onevent {ONEVENT_PROGRAM} --dither none ' + \
           f'--bitrate {bitrate} {backend_opts} {moreopt_str}'
 
     with open('/dev/null', 'w') as f:

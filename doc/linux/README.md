@@ -12,6 +12,10 @@ This is not mandatory but recommended
     # also for serial access stuff (usbrelay, IR, etc)
     sudo usermod -a -G dialout paudio
 
+Add to **`~/.profile`**
+
+    export LESSOPEN='| /usr/share/source-highlight/src-hilite-lesspipe.sh %s'
+    export LESS=' -R'
 
 ## Install Linux Packages
 
@@ -22,7 +26,7 @@ Please notice that only `sudo` commands must be executed under a priviligied use
     sudo apt install alsa-utils alsa-ucm-conf libasound2-dev libasound2-plugins libpulse0  \
                      jackd2 libjack-jackd2-dev jackmeter jacktrip zita-njbridge \
                      libsamplerate0 libsamplerate0-dev xdotool cdtool mpd mpc \
-                     libportaudio2 libffi-dev git nodejs npm jq source-highlight
+                     libportaudio2 libffi-dev git nodejs npm jq source-highlight mc
 
 ### Python packages from Debian:
 

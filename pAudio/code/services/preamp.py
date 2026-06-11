@@ -75,6 +75,9 @@ def init():
 
     def resume_audio():
 
+        def print_failure(param):
+            print(f'{Fmt.RED}cannot resume state.{param}={STATE[param]}: {res}{Fmt.END}')
+
         set_mute( True )
 
         # Only multiway
@@ -84,35 +87,43 @@ def init():
             set_xo( STATE["xo_set"] )
 
         # All multiway and full-range
-        do_levels( 'level', dB=STATE["level"] )
+        res = do_levels( 'level', dB=STATE["level"] )
+        if res != 'done':
+            print_failure('level')
 
         set_polarity( STATE["polarity"] )
 
         set_solo( STATE["solo"] )
 
-        do_levels( 'balance', dB=STATE["balance"] )
+        res = do_levels( 'balance', dB=STATE["balance"] )
+        if res != 'done':
+            print_failure('level')
 
         set_midside( STATE["midside"] )
 
-        # tones can be clamped when ordered out of range
         res = do_levels( 'bass', dB=STATE["bass"] )
         if res != 'done':
-            print(f'{Fmt.BOLD}{res}{Fmt.END}')
-            STATE["bass"] = x2int(res.split()[-1])
+            print_failure('bass')
 
         res = do_levels( 'treble', dB=STATE["treble"] )
         if res != 'done':
-            print(f'{Fmt.BOLD}{res}{Fmt.END}')
-            STATE["treble"] = x2int(res.split()[-1])
+            print_failure('treble')
 
-        do_levels( 'lu_offset', dB=STATE["lu_offset"] )
+        res = do_levels( 'lu_offset', dB=STATE["lu_offset"] )
+        if res != 'done':
+            print_failure('lu_offset')
 
-        do_levels( 'target', tID=STATE["target"] )
+        res = do_levels( 'target', tID=STATE["target"] )
+        if res != 'done':
+            print_failure('target')
 
-        set_loudness( mode=STATE["equal_loudness"] )
+        res = set_loudness( mode=STATE["equal_loudness"] )
+        if res != 'done':
+            print_failure('equal_loudness')
 
         if not STATE["drc_set"] in DRC_SETS or not STATE["drc_set"] in DRC_SETS:
             STATE["drc_set"] = 'none'
+
         set_drc( STATE["drc_set"] )
 
         # Source needs a little care
