@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IP_PAUDIO='192.168.1.57'
+IP_PAUDIO='192.168.1.70'
 IP_LOCAL=$(ip route get 1 | awk '{print $(NF-2); exit}')
 
 # stop
