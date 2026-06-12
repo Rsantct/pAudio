@@ -10,21 +10,16 @@
 
     e.g:     server.py  peaudiosys localhost 9990
 
-    (use -v for VERBOSE debug info printout)
+    (use -v to include logging info level messages)
 """
 
-# UNDERSTANDING A SERVER:
-# https://realpython.com/python-sockets/#echo-client-and-server
-# One thing that’s imperative to understand is that we now have
-# a new socket object from accept(). This is important since
-# it’s the socket that you’ll use to communicate with the client.
-# It’s distinct from the listening socket that the server is using
-# to accept new connections. So two sockets are playing at the same time.
-
 import  socket
+import  threading
+import  logging
 import  os
 import  sys
-from    fmt import Fmt
+from    time import sleep
+from    fmt  import Fmt
 UHOME = os.path.expanduser("~")
 
 
@@ -34,45 +29,76 @@ MODULEFOLDER = f'{UHOME}/pAudio/code'
 # You can use these properties when importing this module:
 SERVICE = ''
 CLIADDR = ('', 0)
+CLIENT_TIMEOUT = 5
 
 
-def handle_client(srv):
+def handle_client(con, addr):
+    """ Handles a client connection on a separate thread
+    """
 
-    # The connection (the 2nd socket). Notice that accept() is BLOCKING
-    global CLIADDR
-    con, CLIADDR = srv.accept()
+    logging.info(f"(server-{SERVICE}) connected from {addr}")
 
-    # The 'with' context will close 'con' on exiting
-    with con:
-        # Receiving a command phrase
-        cmd = con.recv(1024).decode().strip()
-        if VERBOSE:
-            print( f'(server-{SERVICE}) Rx: {cmd}' )
+    try:
+        con.settimeout(CLIENT_TIMEOUT)
 
-        # Processing the command and reading the result of execution
-        result = PROCESSOR_MOD.do( cmd )
+        data = con.recv(1024)
+        if not data:
+            return
 
-        # Sending back the result
-        con.sendall( result.encode() )
-        if VERBOSE:
-            print( f'(server-{SERVICE}) Tx: {result}' )
+        cmd = data.decode('utf-8', errors='ignore').strip()
+        logging.info(f"(server-{SERVICE}) Rx: {cmd}")
+
+
+        # just to test the server client threading management
+        if cmd.split()[0] == 'wait':
+            try:
+                seconds = cmd.split()[-1]
+                sleep( int(seconds))
+                result = f'waited {seconds} sec'
+            except Exception as e:
+                result = f'{cmd} ERROR: {str(e)}'
+
+        else:
+            # If do takes long time, will only affect this client
+            result = PROCESSOR_MOD.do(cmd)
+
+        con.sendall(result.encode('utf-8'))
+        logging.info(f"(server-{SERVICE}) Tx: {result}")
+
+    except socket.timeout:
+        logging.warning(f"(server-{SERVICE}) Timeout with client {addr}")
+    except Exception as e:
+        logging.error(f"(server-{SERVICE}) Error processing client {addr}: {e}")
+    finally:
+        con.close()
+        logging.info(f"(server-{SERVICE}) closed client {addr}")
 
 
 def run_server(addr, port):
-    # (i) In a future, Python 3.8 will provide a higher level function
-    #     'create_server()' that can replace the below 4 commands for
-    #     srv creation. In the meanwhile, lets use the well known procedure:
 
-    # Prepare the server (the 1st listening socket)
+    global CLIADDR
+
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    srv.bind((addr, port))
-    # The backlog option allows to limit the number of future connections
-    srv.listen(10)
 
-    # MAIN LOOP to accept, process and close connections.
-    while True:
-        handle_client(srv)
+    try:
+        srv.bind((addr, port))
+        # backlog increased for safety
+        srv.listen(128)
+        logging.info(f"(server-{SERVICE}) listening at {addr}:{port}...")
+
+        while True:
+            # srv.accept() blocks here, but only until a connection comes in.
+            cli_con, CLIADDR = srv.accept()
+
+            # Threading the client
+            th_cli = threading.Thread(target=handle_client, args=(cli_con, CLIADDR), daemon=True)
+            th_cli.start()
+
+    except KeyboardInterrupt:
+        logging.info(f"(server-{SERVICE}) shutting down the server ...")
+    finally:
+        srv.close()
 
 
 if __name__ == "__main__":
@@ -84,10 +110,13 @@ if __name__ == "__main__":
         print(__doc__)
         sys.exit(-1)
 
+    myLoggingLevel = logging.WARNING
+
     if '-v' in sys.argv:
-        VERBOSE = True
-    else:
-        VERBOSE = False
+        myLoggingLevel = logging.INFO
+
+    # Apply logging level
+    logging.basicConfig(level=myLoggingLevel, format='%(asctime)s [%(levelname)s] %(threadName)s: %(message)s')
 
     # Importing the service module to be used later when processing commands
     # https://python-reference.readthedocs.io/en/latest/docs/functions/__import__.html
