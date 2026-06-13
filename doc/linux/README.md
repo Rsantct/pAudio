@@ -12,11 +12,6 @@ This is not mandatory but recommended
     # also for serial access stuff (usbrelay, IR, etc)
     sudo usermod -a -G dialout paudio
 
-Add to **`~/.profile`**
-
-    export LESSOPEN='| /usr/share/source-highlight/src-hilite-lesspipe.sh %s'
-    export LESS=' -R'
-
 ## Install Linux Packages
 
 Please notice that only `sudo` commands must be executed under a priviligied user (for example `pi`), other commands such python enviroment, non Debian python packages, CamillaDSP compilation, must be executed under the regular `paudio` user.
@@ -27,6 +22,22 @@ Please notice that only `sudo` commands must be executed under a priviligied use
                      jackd2 libjack-jackd2-dev jackmeter jacktrip zita-njbridge \
                      libsamplerate0 libsamplerate0-dev xdotool cdtool mpd mpc \
                      libportaudio2 libffi-dev git nodejs npm jq source-highlight mc
+
+#### Some nice settings
+
+Add to your user **`~/.profile`**
+
+    export LESSOPEN='| /usr/share/source-highlight/src-hilite-lesspipe.sh %s'
+    export LESS=' -R'
+
+Nano editor: use 4 spaces for indentation
+
+    sudo nano /etc/nanorc
+
+        set tabsize 4
+        set tabstospaces
+        set trimblanks
+
 
 ### Python packages from Debian:
 
