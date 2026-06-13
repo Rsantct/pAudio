@@ -3,6 +3,8 @@
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
 
+ALSA_CARD="hw:Headphones,0"
+
 function help {
 
     echo
@@ -45,7 +47,7 @@ sleep 1
 
 # jack
 echo "loading jack ..."
-jackd -d alsa -P hw:Headphones,0 -o 2 -r 44100 -p 1024 -n 2 -z shaped --softmode --shorts \
+jackd -d alsa -P $ALSA_CARD -o 2 -r 44100 -p 1024 -n 2 -z shaped --softmode --shorts \
 1> /tmp/jackd.stdout 2> /tmp/jackd.stderr &
 sleep 1
 
