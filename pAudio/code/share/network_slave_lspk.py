@@ -50,8 +50,8 @@ elif net_link == 'wifi':
     LSPK_IP   = '192.168.20.2'
 
 else:
-    raise Exception("(share/network_lspk) config.yml slave_loudspeaker must be 'eth' or 'wifi'")
-
+    print("(share/network_lspk) config.yml slave_loudspeaker must be 'eth' or 'wifi'")
+    sys.exit()
 
 JCLI = jack.Client('network_lspk', no_start_server=True)
 JCLI.activate()
