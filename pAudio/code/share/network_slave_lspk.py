@@ -14,6 +14,19 @@
         Eth     192.168.10.x
         WiFi    192.168.20.x
 
+    Routing:
+
+    LOCAL:                                                REMOTE:
+    cpal_client_out:out_1 --> system:playback_1
+    cpal_client_out:out_2 --> system:playback_2
+
+    cpal_client_out:out_3 --> right_lspk_send:in_1        zita_recv:1 -> system:pbk_1
+    cpal_client_out:out_4 --> right_lspk_send:in_2        zita_recv:2 -> system:pbk_2
+
+    Extra channel for delay measurement
+                              right_lspk_send:in_3  -->   zita_recv:3 --\
+    right_lspk_recv:out_1                           <--   zita_send:1 --/   loopback
+
 """
 
 from    common  import *
