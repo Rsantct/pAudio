@@ -47,7 +47,14 @@ jack:
     zita_udp_base:          65000
 
 
-loudspeaker: SeasFlat
+loudspeaker:         SeasFlat
+
+# Optional for a right channel network slave loudspeaker.
+# At least one dedicated network must be available (see bin/paudio_slave_tools)
+#     192.168.10.x for Eth
+#     192.168.20.x for WiFi
+slave_loudspeaker:            # must be 'eth', 'wifi', or void
+
 
 ref_level_gain_offset:  -3.0
 
