@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Rafael Sánchez
-# This file is part of 'pAudio', a CC based personal audio system.
+# This file is part of 'pAudio', a PC based personal audio system.
 
 import  os
 import  sys
