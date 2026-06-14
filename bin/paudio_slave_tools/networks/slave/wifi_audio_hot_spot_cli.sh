@@ -1,6 +1,8 @@
 #!/bin/bash
 
+########
 # This includes the wifi password here
+########
 
 PASSWORD="xxxxxxxxxxxxxxx"
 MASTER_BSSID="08:BE:AC:03:38:A0"
