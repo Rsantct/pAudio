@@ -1,4 +1,4 @@
-## ensure usage of wlanX interfaces
+## Ensure usage of wlanX interfaces
 
 After plugging an USB WiFi dongle **`wlan1`**, the OS can use it for your domestic WiFi in next reboots, example:
 
