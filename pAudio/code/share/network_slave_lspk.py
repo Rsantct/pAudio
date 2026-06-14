@@ -65,6 +65,8 @@ if __name__ == "__main__":
 
     # Start zita sender
     zita_j2n_cmd = f'zita-j2n --jname right_lspk_send {LSPK_IP} --16bit --chan 3 --ipv4 65000'
+    print(f'(share/network_lspk) {zita_j2n_cmd}')
+    print(f'(share/network_lspk) zita-j2n sender logs under /tmp')
     out_path = '/tmp/paudio_slave_zita_j2n.out'
     err_path = '/tmp/paudio_slave_zita_j2n.err'
     sp.Popen( f'{zita_j2n_cmd} 1>{out_path} 2>{err_path}', shell=True )
@@ -90,6 +92,8 @@ if __name__ == "__main__":
 
     # zita receiver
     zita_n2j_cmd = f'zita-n2j --jname right_lspk_recv --chan 1 --buff {ZITA_BUFF} {LOCAL_IP} 65000'
+    print(f'(share/network_lspk) {zita_n2j_cmd}')
+    print(f'(share/network_lspk) zita-n2j sender logs under /tmp')
     out_path = '/tmp/paudio_slave_zita_n2j.out'
     err_path = '/tmp/paudio_slave_zita_n2j.err'
     sp.Popen( f'{zita_n2j_cmd} 1>{out_path} 2>{err_path}', shell=True )
