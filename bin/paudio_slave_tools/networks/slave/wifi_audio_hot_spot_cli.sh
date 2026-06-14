@@ -1,39 +1,33 @@
 #!/bin/bash
 
-echo "Desactivando wlan1 en NetworkManager..."
-sudo nmcli device set wlan1 managed no
+# This includes the wifi password here
 
-# Limpieza total de procesos y IPs previas
-sudo killall wpa_supplicant &>/dev/null
-sudo ip addr flush dev wlan1
+PASSWORD="xxxxxxxxxxxxxxx"
+MASTER_BSSID="08:BE:AC:03:38:A0"
+CON_NAME="Enlace-Audio-Wifi"
 
-echo "Reiniciando interfaz física wlan1..."
-sudo ip link set wlan1 down
-sleep 1
-sudo ip link set wlan1 up
-sleep 1
+# Asegurar máxima estabilidad en el driver Realtek del cliente
+sudo iw dev wlan1 set power_save off
 
-echo "Forzando asociación directa a la red abierta 'AudioPrivateNet'..."
-# Configuramos la tarjeta por hardware sin intermediarios
-sudo iwconfig wlan1 mode Managed
-sudo iwconfig wlan1 enc off
-sudo iwconfig wlan1 essid AudioPrivateNet
+sudo nmcli connection delete "$CON_NAME" &>/dev/null
 
-echo "Esperando estabilización de la radio..."
-sleep 3
-
-echo "Configurando IP estática 192.168.20.2..."
-sudo ip addr add 192.168.20.2/24 dev wlan1
-
-echo "Verificando conectividad con RPI_A..."
-if ping -c 3 -w 4 192.168.20.1 > /dev/null; then
-    echo "--------------------------------------------------"
-    echo " ¡ENLACE DE AUDIO INALÁMBRICO ESTABLECIDO CON ÉXITO!"
-    echo "--------------------------------------------------"
-    iwconfig wlan1 | grep -E "(ESSID|Access Point)"
-else
-    echo "--- DIAGNÓSTICO ---"
-    echo "Estado de iwconfig wlan1:"
-    iwconfig wlan1
+if [[ $1 == *'-q'* ]]; then
+    echo "$CON_NAME has been removed"
+    exit 0
 fi
 
+sudo nmcli connection add type wifi ifname wlan1 con-name "$CON_NAME" ssid "zitawifi" \
+    802-11-wireless.mode infrastructure \
+    802-11-wireless.bssid "$MASTER_BSSID" \
+    ipv4.addresses 192.168.20.2/24 \
+    ipv4.method manual \
+    ipv4.never-default yes \
+    802-11-wireless-security.key-mgmt wpa-psk \
+    802-11-wireless-security.proto rsn \
+    802-11-wireless-security.pairwise ccmp \
+    802-11-wireless-security.group ccmp \
+    802-11-wireless-security.psk "$PASSWORD" \
+    802-11-wireless-security.psk-flags 0
+
+# Levantamos de forma totalmente automática (sin pedir nada por terminal)
+sudo nmcli connection up "$CON_NAME"
