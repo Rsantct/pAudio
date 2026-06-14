@@ -1,4 +1,4 @@
-## Ensure usage of wlanX interfaces
+## Static usage of wlan interfaces
 
 After plugging an USB WiFi dongle **`wlan1`**, the OS can use it for your domestic WiFi in next reboots, example:
 
@@ -8,9 +8,9 @@ After plugging an USB WiFi dongle **`wlan1`**, the OS can use it for your domest
     ....
 
 
-To keep domestic WiFi using **`wlan0`** (integrated):
+To keep domestic WiFi using **`wlan0`** (integrated chipset):
 
-- find your MAC, example:
+- find your integrated MAC, example:
     ```
     $ ifconfig wlan0
     wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
@@ -23,9 +23,10 @@ To keep domestic WiFi using **`wlan0`** (integrated):
 
     ```
     #!/bin/bash
-    
+
+    # *** Replace values with yours: ***
     WIFINAME="netplan-wlan0-MOVISTAR-WIFI6-3AC8"
-    MAC="b8:27:eb:83:c8:23"    # <---------- REPLACE WITH YOURS
+    MAC="b8:27:eb:83:c8:23"
     
     nmcli connwection modify "$WIFINAME" 802-11-wireless.mac-address "$MAC"
     nmcli connection modify "$WIFINAME" connection.interface-name wlan0
