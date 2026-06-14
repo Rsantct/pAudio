@@ -7,6 +7,7 @@ LOG_PATH="/tmp/lspk_delay_info.log"
 ERR_PATH="/tmp/lspk_delay_info.err"
 
 killall jack_delay
+sleep 1
 
 if [[ $1 == *"-q"* ]]; then
     echo "jack_delay stopped."
