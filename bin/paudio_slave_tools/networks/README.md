@@ -25,10 +25,12 @@ To keep domestic WiFi using an specific wireless interface, for example the one 
     #!/bin/bash
 
     # *** Replace values with yours: ***
+    WLAN_ID="wlan0"
     WIFINAME="netplan-wlan0-MOVISTAR-WIFI6-3AC8"
     MAC="b8:27:eb:83:c8:23"
     
     nmcli connwection modify "$WIFINAME" 802-11-wireless.mac-address "$MAC"
+    nmcli connection modify "$WIFINAME" connection.interface-name "$WLAN_ID"
     nmcli connection down "$WIFINAME"
     nmcli connection up "$WIFINAME"
     ```
