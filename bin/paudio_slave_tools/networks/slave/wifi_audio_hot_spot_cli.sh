@@ -18,9 +18,11 @@ if [[ $1 == *'-q'* ]]; then
     exit 0
 fi
 
+# powersave 2 (OFF)
 sudo nmcli connection add type wifi ifname wlan1 con-name "$CON_NAME" ssid "zitawifi" \
     802-11-wireless.mode infrastructure \
     802-11-wireless.bssid "$MASTER_BSSID" \
+    802-11-wireless.powersave 2 \
     ipv4.addresses 192.168.20.2/24 \
     ipv4.method manual \
     ipv4.never-default yes \
