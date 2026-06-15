@@ -1,16 +1,25 @@
 #!/bin/bash
 
-MINUTES=5
+MINUTES=$1
+
+if [[ ! $MINUTES ]]; then
+    echo
+    echo "    usage:    net_lspk_meas_delay_start.sh  N  (minutes)"
+    echo
+    exit 0
+fi
+
 duration_sec=$(($MINUTES * 60))
 
 LOG_PATH="/tmp/lspk_delay_info.log"
 ERR_PATH="/tmp/lspk_delay_info.err"
 
-killall jack_delay
-sleep 1
+if killall jack_delay 2>/dev/null; then
+    echo "jack_delay stopped."
+    sleep 1
+fi
 
 if [[ $1 == *"-q"* ]]; then
-    echo "jack_delay stopped."
     exit 0
 fi
 
