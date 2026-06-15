@@ -1,14 +1,16 @@
+#!/usr/bin/env python3
+
 import sys
 import numpy as np
-from scipy import stats # O la librería estándar 'statistics'
+from scipy import stats
 
 def calcular_jitter(archivo_log):
+
     latencias = []
 
     with open(archivo_log, 'r') as f:
+
         for linea in f:
-            # Aquí adaptas el split según el formato exacto de tu salida
-            # Supongamos que extraemos el valor numérico en milisegundos
             try:
                 if "ms" in linea:
                     valor = float(linea.split()[-2])
@@ -20,7 +22,7 @@ def calcular_jitter(archivo_log):
         print("No se encontraron métricas válidas.")
         return
 
-    # Convertir a array de NumPy para mayor facilidad de cálculo
+    # Convertir a NumPy array
     datos = np.array(latencias)
 
     # El jitter se define formalmente como la media de las diferencias absolutas consecutivas
@@ -36,9 +38,12 @@ def calcular_jitter(archivo_log):
     print(f"Jitter Medio (RFC):  {jitter_medio:.3f} ms")
     print(f"Jitter Máximo:       {np.max(diferencias):.3f} ms")
 
+
 if __name__ == "__main__":
 
-    if len(sys.argv) < 2:
-        print("Uso: python analizar.py <archivo_log.txt>")
-    else:
-        calcular_jitter(sys.argv[1])
+    archivo_log = '/tmp/lspk_delay_info.log'
+
+    if sys.argv[1:]:
+        archivo_log = sys.argv[1]
+
+    calcular_jitter(archivo_log)
