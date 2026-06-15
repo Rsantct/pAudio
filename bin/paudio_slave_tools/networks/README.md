@@ -8,7 +8,7 @@ After plugging an USB WiFi dongle **`wlan1`**, the OS can use it for your domest
     ....
 
 
-To keep domestic WiFi using **`wlan0`** (integrated chipset):
+To keep domestic WiFi using an specific wireless interface, for example the one of your integrated chipset:
 
 - find your integrated MAC, example:
     ```
@@ -29,16 +29,13 @@ To keep domestic WiFi using **`wlan0`** (integrated chipset):
     MAC="b8:27:eb:83:c8:23"
     
     nmcli connwection modify "$WIFINAME" 802-11-wireless.mac-address "$MAC"
-    nmcli connection modify "$WIFINAME" connection.interface-name wlan0
-    
     nmcli connection down "$WIFINAME"
     nmcli connection up "$WIFINAME"
     ```
 
 
-It should be ok now:
+Check devices MAC usage with:
 
     $ nmcli connection show
-    NAME                               UUID                                  TYPE      DEVICE 
-    netplan-wlan0-MOVISTAR-WIFI6-3AC8  4eaa98c2-2c0a-3922-b266-32f01adff233  wifi      wlan0 
-
+    $ iwconfig
+    $ ifconfig
