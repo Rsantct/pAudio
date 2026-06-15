@@ -15,6 +15,32 @@ Wifi can work if you assume some secure buffering therefore some audio latency.
 - Better to operate in **5 Ghz** band and non DFS channel (for example ch 36).
 - 2.4Ghz can work as well with stable 1 ms ping latencies 
 
+    ```
+    # first 7 ms because power saving chipset wake up process
+    # but zita UDP continuous usage will avoid that.
+    
+    pi@rpi3wl-l:~ $ ping -i 0.005 -c 100 192.168.20.2
+    PING 192.168.20.2 (192.168.20.2) 56(84) bytes of data.
+    64 bytes from 192.168.20.2: icmp_seq=1 ttl=64 time=7.75 ms
+    64 bytes from 192.168.20.2: icmp_seq=2 ttl=64 time=1.35 ms
+    64 bytes from 192.168.20.2: icmp_seq=3 ttl=64 time=1.48 ms
+    64 bytes from 192.168.20.2: icmp_seq=4 ttl=64 time=1.47 ms
+    64 bytes from 192.168.20.2: icmp_seq=5 ttl=64 time=1.32 ms
+    64 bytes from 192.168.20.2: icmp_seq=6 ttl=64 time=1.37 ms
+    64 bytes from 192.168.20.2: icmp_seq=7 ttl=64 time=1.32 ms
+    64 bytes from 192.168.20.2: icmp_seq=8 ttl=64 time=1.39 ms
+    64 bytes from 192.168.20.2: icmp_seq=9 ttl=64 time=1.39 ms
+    64 bytes from 192.168.20.2: icmp_seq=10 ttl=64 time=1.30 ms
+    ...
+    ...
+    64 bytes from 192.168.20.2: icmp_seq=98 ttl=64 time=1.08 ms
+    64 bytes from 192.168.20.2: icmp_seq=99 ttl=64 time=1.09 ms
+    64 bytes from 192.168.20.2: icmp_seq=100 ttl=64 time=1.33 ms
+    
+    --- 192.168.20.2 ping statistics ---
+    100 packets transmitted, 100 received, 0% packet loss, time 497ms
+    rtt min/avg/max/mdev = 1.064/1.218/7.751/0.664 ms
+    ```
 
 ## Static usage of wlan interfaces
 
