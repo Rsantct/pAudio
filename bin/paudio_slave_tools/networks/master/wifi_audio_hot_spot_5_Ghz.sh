@@ -19,10 +19,11 @@ if [[ $1 == *'-q'* ]]; then
 fi
 
 
-# Configuración AP en 5 GHz para enlace de audio dedicado
+# AP en 5 GHz para enlace de audio dedicado, powersave 2 (OFF)
 sudo nmcli connection add type wifi ifname "$WLAN_ID" con-name "$CON_NAME" ssid "zitawifi" \
     802-11-wireless.mode ap \
     802-11-wireless.band a \
+    802-11-wireless.powersave 2 \
     802-11-wireless.channel $CH \
     802-11-wireless.channel-width 20 \
     ipv4.addresses 192.168.20.1/24 \
