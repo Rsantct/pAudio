@@ -1,3 +1,21 @@
+## Overview
+
+We want to have a **dedicated network link for audio packets** (zita-njbridge)
+
+Use the provided scripts under master / slave folders
+
+### Wired Ethernet
+
+This is preferred
+
+### Wifi
+
+Wifi can work if you assume some secure buffering therefore some audio latency.
+
+- Better to operate in **5 Ghz** band and non DFS channel (for example ch 36).
+- 2.4Ghz can work as well with stable 1 ms ping latencies 
+
+
 ## Static usage of wlan interfaces
 
 After plugging an USB WiFi dongle **`wlan1`**, the OS can use it for your domestic WiFi in next reboots, example:
