@@ -9,15 +9,15 @@ if [[ ! $MINUTES ]]; then
     exit 0
 fi
 
+# kill others but not me
+pkill --older 1 -f "meas_delay"
+pkill -f jack_delay
+
 duration_sec=$(($MINUTES * 60))
 
 LOG_PATH="/tmp/lspk_delay_info.log"
 ERR_PATH="/tmp/lspk_delay_info.err"
 
-if killall jack_delay 2>/dev/null; then
-    echo "jack_delay stopped."
-    sleep 1
-fi
 
 if [[ $1 == *"-q"* ]]; then
     exit 0
@@ -27,6 +27,7 @@ jack_delay -O right_lspk_send:in_3 -I right_lspk_recv:out_1 1>"$LOG_PATH" 2>"$ER
 
 echo "running jack_delay for "$MINUTES" minutes"
 
+# timer in background to kill jack_delay
 (sleep $duration_sec && \
-killall jack_delay && \
+killall jack_delay 1>/dev/null && \
 echo "jack_delay stopped after "$MINUTES" minutes") &
