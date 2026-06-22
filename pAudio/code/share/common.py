@@ -1063,28 +1063,62 @@ def get_my_ip_with_socket():
         instead of using a dummy socket here
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
     try:
         # No se necesita conexión real, el IP puede ser cualquiera
         s.connect(('8.8.8.8', 1))
         IP = s.getsockname()[0]
+
     except Exception:
         IP = '127.0.0.1'
+
     finally:
         s.close()
+
     return IP
 
 
-def get_my_ip():
+def get_my_ip_with_hostname():
     """ retrieves the own IP address
         (string)
 
         We prefer this instead of using a dummy socket
+
+            $ hostname --all-ip-addresses
+            192.168.1.47 192.168.1.69
+
+        BUT if more than one (eth wifi) it is not guaranteed
+        that the first one is the one with best metric :-/
     """
     try:
         tmp = sp.check_output( 'hostname --all-ip-addresses'.split() ).decode()
         return tmp.split()[0]
     except:
         return ''
+
+
+def get_my_ip():
+    """ This ensures the one with best metric
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    try:
+        # It doesn't actually need to connect to the internet,
+        # it just asks the kernel to choose the best exit route.
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+
+    except Exception:
+        # If there is no connection or default route
+        ip = get_my_ip_with_hostname()
+
+    finally:
+        s.close()
+
+    if ip:
+        return ip
+    else:
+        return get_my_ip_with_hostname()
 
 
 def get_camilladsp_last_error():
