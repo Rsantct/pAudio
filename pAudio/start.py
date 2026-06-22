@@ -289,6 +289,9 @@ def stop():
         stop_zita_link()
         sleep(.25)
 
+        # A forwarder of level changes to remote pAudio listeners
+        sp.Popen(f'pkill -f remote_volume_daemon.py'.split())
+
         # JackTrip if used
         sp.Popen(['pkill', '-f', 'jacktrip'])
 
@@ -345,12 +348,16 @@ def start():
         zitalink_job = threading.Thread(target=prepare_zita_links)
         zitalink_job.start()
 
+        # A forwarder of level changes to remote pAudio listeners
+        sp.Popen(f'python3 {UHOME}/pAudio/code/share/remote_volume_daemon.py start'.split())
+
         # Rewire CamillaDSP
         rewire_camilladsp()
 
         # Optional
         if CONFIG["jack"].get('sources_auto_switch', False):
             manage_signal_detector('start')
+
 
     # The loudness_monitor daemon
     manage_loudness_monitor_daemon('start')
