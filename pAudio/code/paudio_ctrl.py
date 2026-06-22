@@ -13,6 +13,7 @@ import  os
 import  sys
 import  threading
 from    camilladsp  import  CamillaClient
+import  jack
 
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
