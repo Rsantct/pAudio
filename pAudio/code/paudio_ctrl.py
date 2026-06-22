@@ -409,6 +409,9 @@ def do( cmd_phrase):
             if args and not 'state' in args:
                 do_log = True
 
+        case 'get_paudio_config':
+            result = json.dumps(CONFIG, indent=2)
+
         case 'get_web_config':
             result = get_web_config()
 
