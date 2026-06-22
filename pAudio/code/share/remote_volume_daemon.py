@@ -28,7 +28,8 @@ UHOME           = os.path.expanduser("~")
 sys.path.append( f'{UHOME}/pAudio/code/share' )
 
 import  server
-from    common  import CONFIG, USER, send_cmd, read_json_file, read_last_line
+from    common  import CONFIG, USER, send_cmd, get_my_ip, \
+                       read_json_file, read_last_line
 
 LOG_DIR           = f'{UHOME}/pAudio/log'
 CMD_LOG_PATH      = f'{LOG_DIR}/paudio_cmd.log'
@@ -329,8 +330,8 @@ if __name__ == "__main__":
 
 
     # Retrieving basic data for this to work
-    my_hostname     = socket.gethostname()
-    my_ip           = socket.gethostbyname(f'{my_hostname}.local')
+    my_hostname = socket.gethostname()
+    my_ip = get_my_ip()
     discover_remotes()
 
     #   WATCHDOG to observe file changes
