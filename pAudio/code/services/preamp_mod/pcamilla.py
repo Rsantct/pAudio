@@ -270,13 +270,15 @@ def init_camilladsp(pAudio_config):
 
         cpal_ports = jcli.get_ports('cpal_client')
 
-        # Early return if any `cpal_client_in-01` is detected
+        # Early return if any 'cpal_client_in-01' or '..._out-01' is detected
+        bad_ports = []
         for cpal_port in cpal_ports:
-
             if '-' in cpal_port.name:
-                print(f'{Fmt.BOLD}(pcamilla) Weird CamillaDSP behavior having port: {cpal_port.name}{Fmt.END}')
-                result = False
-                break
+                bad_ports.append(cpal_port.name)
+
+        if bad_ports:
+            print(f'{Fmt.BOLD}(pcamilla) Weird CamillaDSP behavior having ports:\n    {bad_ports}{Fmt.END}')
+            result = False
 
         if clear_cpal2system:
 
