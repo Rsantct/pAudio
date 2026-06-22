@@ -25,14 +25,19 @@ Please notice that only `sudo` commands must be executed under a priviligied use
 
 #### Some nice settings
 
+Activate the Python environmnet in your terminal, edit **`~/.bashrc`**
+
+    # Load the Python environment for interactive sessions
+    if [ -n "$PS1" ]; then
+        source ~/.env/bin/activate
+    fi
+
 Add to your user **`~/.profile`**
 
     export LESSOPEN='| /usr/share/source-highlight/src-hilite-lesspipe.sh %s'
     export LESS=' -R'
 
-Nano editor: use 4 spaces for indentation
-
-    sudo nano /etc/nanorc
+Nano editor: use 4 spaces for indentation **`sudo nano /etc/nanorc`**
 
         set tabsize 4
         set tabstospaces
