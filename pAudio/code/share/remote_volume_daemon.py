@@ -332,6 +332,9 @@ if __name__ == "__main__":
     # Retrieving basic data for this to work
     my_hostname = socket.gethostname()
     my_ip = get_my_ip()
+    if not my_ip:
+        print( f'(remote_volume) ERROR GETTING MY IP ADDRESS !!!')
+
     discover_remotes()
 
     #   WATCHDOG to observe file changes
