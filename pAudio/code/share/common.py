@@ -779,10 +779,14 @@ def read_cmd_phrase(cmd_phrase):
         chunks = ['preamp', 'state']
 
     # If not prefix, will treat as a preamp command kind of
-    if not chunks[0] in ('preamp', 'player', 'ctrl'):
+    if not chunks[0] in ('preamp', 'player', 'ctrl', 'aux'):
         chunks.insert(0, 'preamp')
 
     pfx = chunks[0]
+
+    # 'aux' is a former prefix in pe.audio.sys
+    if pfx == 'aux':
+        pfx = 'ctrl'
 
     if chunks[1:]:
         cmd = chunks[1]
