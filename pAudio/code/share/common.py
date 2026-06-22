@@ -1054,6 +1054,9 @@ def is_IP(s):
 def get_my_ip_with_socket():
     """ retrieves the own IP address using socket
         (string)
+
+        We prefer the below version get_my_ip()
+        instead of using a dummy socket here
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
