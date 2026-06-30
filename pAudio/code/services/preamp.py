@@ -8,6 +8,9 @@
 
     Version with CamillaDSP processor (https://github.com/HEnquist/camilladsp)
 
+    NOTICE: This relays level related commands to the remote volume manager daemon
+            (Find 'forward to remotes manager daemon' below)
+
 """
 
 import  sys
@@ -836,6 +839,9 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         return round(hr, 1)
 
 
+    # --> forward to remotes manager daemon
+    send_to_remotes(f'{cmd} {dB} {"add" if add else ""}')
+
     # getting absolute values from relative command
     if add:
         dB += STATE[cmd]
@@ -901,10 +907,18 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         # dumps eq to png
         eq2png()
 
+
     if clamped:
         result =  f'clamped to {dB}'
 
     return result
+
+
+def send_to_remotes(cmd):
+    """ remotes are managed by remote_volume_daemon which listen at base port + 2
+    """
+    remotes_manager_port = CONFIG["paudio_port"] + 2
+    send_cmd( cmd, port=remotes_manager_port)
 
 
 # Entry function
@@ -946,6 +960,7 @@ def do(cmd, args, add):
         dosave = False
     else:
         dosave = True
+
 
     match cmd:
 
@@ -1088,6 +1103,9 @@ def do(cmd, args, add):
                 STATE['equal_loudness'] = new_mode
                 # dumps eq to png
                 eq2png()
+                # --> forward to remotes manager daemon
+                #     (this is managed here to ensure new_mode after a toggle command)
+                send_to_remotes(f'equal_loudness {"on" if new_mode else "off"}')
 
         case 'set_drc':
 
@@ -1170,8 +1188,10 @@ def do(cmd, args, add):
         case _:
             result = 'unknown command'
 
+
     if dosave:
         save_json_file(STATE, PREAMP_STATE_PATH)
+
 
     if type(result) != str:
         try:
