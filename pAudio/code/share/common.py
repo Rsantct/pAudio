@@ -517,10 +517,48 @@ def wait4ports( pattern, timeout=10 ):
         return False
 
 
-def check_output(host, port, message, timeout=1.0, chunk_size=4096):
+def tcp_server(addr='127.0.0.1', port=0, service_id='UNNAMED', processor=None, verbose=False):
+    """ a general purpose TCP server
     """
-    Envía 'message' a (host, port) vía TCP y devuelve la respuesta completa
-    como string, similar a subprocess.check_output().
+
+    def handle_client(srv):
+
+        con, cliaddr = srv.accept()
+
+        with con:
+
+            msg = con.recv(1024).decode().strip()
+            if verbose:
+                print( f'(server-{service_id}) Rx: {msg}' )
+
+            result = ''
+            if processor:
+
+                result = processor( addr=cliaddr[0], msg=msg )
+
+                if result:
+                    # Sending back the result
+                    con.sendall( result.encode() )
+                    if verbose:
+                        print( f'(server-{service_id}) Tx: {result}' )
+
+
+    if not port:
+        raise Exception('(common.server) missing port')
+
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind((addr, port))
+    srv.listen(10)
+
+    while True:
+        handle_client(srv)
+
+
+
+def send_msg(host, port, message, timeout=1.0, chunk_size=4096):
+    """ A general purspose TCP client that sends a message, then
+        returns a response if any.
     """
 
     if not host or not port or not message:
@@ -917,7 +955,7 @@ def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 99
 
     while tries:
 
-        if check_output('localhost', port,' hello'):
+        if send_msg('localhost', port,' hello'):
             break
 
         if elapsed and not elapsed % verbose_seconds:
