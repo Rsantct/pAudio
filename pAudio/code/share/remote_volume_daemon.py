@@ -217,14 +217,10 @@ def listen_to_preamp():
 
         # - LU_offset (usually a toggle command)
         if ('lu_offset' in cmd):
-            #lu_offset       = get_state()["lu_offset"]
-            #wanted_cmd      = f'lu_offset {lu_offset}'
             wanted_cmd      = cmd
 
         # - equal loudness (usually a toggle command)
         if ('loudness' in cmd):
-            #equal_loudness  = get_state()["equal_loudness"]
-            #wanted_cmd      = f'loudness {equal_loudness}'
             wanted_cmd      = cmd
 
         if not wanted_cmd:
