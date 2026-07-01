@@ -48,7 +48,7 @@ if not STATE:
     if not STATE:
         raise Exception('ERROR loading preamp state, exiting.')
 
-    STATE["application"] = 'pAudio'
+STATE["application"] = 'pAudio'
 
 
 def init():
