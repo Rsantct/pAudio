@@ -277,7 +277,7 @@ def init_camilladsp(pAudio_config):
                 bad_ports.append(cpal_port.name)
 
         if bad_ports:
-            print(f'{Fmt.BOLD}(pcamilla) Weird CamillaDSP behavior having ports:\n    {bad_ports}{Fmt.END}')
+            print(f'{Fmt.BOLD}(pcamilla) weird CamillaDSP behavior having ports:\n    {bad_ports}{Fmt.END}')
             result = False
 
         if clear_cpal2system:
