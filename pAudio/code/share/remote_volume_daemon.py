@@ -47,7 +47,7 @@ def do_ping(addr, timeout=0.1):
     return False
 
 
-def get_remote_config(addr, port=9990+1):
+def get_remote_config(addr, port=CONFIG['paudio_port']+1):
     """ Get the config dict from a remote
         pAudio / pe.audio.sys server
         (dict)
@@ -69,7 +69,7 @@ def get_remote_config(addr, port=9990+1):
     return result
 
 
-def get_remote_state(addr, port=9990):
+def get_remote_state(addr, port=CONFIG['paudio_port']):
     """ Get the current state from a remote
         pAudio / pe.audio.sys server
         (dict)
