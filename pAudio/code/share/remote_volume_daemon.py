@@ -30,6 +30,7 @@ from    common  import CONFIG, USER, send_cmd, get_my_ip, \
 
 LOG_DIR           = f'{UHOME}/pAudio/log'
 CLIENTS_LIST_PATH = f'{LOG_DIR}/remote_volume_daemon_clients'
+REMOTE_CLIENTS    = {}
 
 
 def do_ping(addr, timeout=0.1):
@@ -129,9 +130,6 @@ def discover_remotes():
         return res
 
 
-    global REMOTE_CLIENTS
-
-    REMOTE_CLIENTS    = {}
     save_clients()
 
     tmp = my_ip.split('.')[:-1]
