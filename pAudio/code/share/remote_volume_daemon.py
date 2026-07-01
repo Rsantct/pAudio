@@ -56,7 +56,7 @@ def get_remote_config(addr, port=CONFIG['paudio_port']+1):
     result = {}
 
     try:
-        tmp  = send_cmd('ctrl get_paudio_config', host=addr, port=port, timeout=1)
+        tmp  = send_cmd('ctrl get_config', host=addr, port=port, timeout=1)
 
         if not tmp.strip().startswith('{') or not tmp.endswith('}'):
             return result
