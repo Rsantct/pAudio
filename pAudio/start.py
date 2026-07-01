@@ -304,6 +304,47 @@ def stop():
 
 def start():
 
+    def weird_camilladsp_ports():
+        """ CamillaDSP, for unknown reason, sometimes emerged
+            weird jack ports like `cpal_client_in-01`
+        """
+        result = False
+
+        start_log_path = f'{MAINFOLDER}/log/start.log'
+        try:
+            with open(start_log_path, 'r') as f:
+                tmp = f.read()
+                if 'weird' in tmp.lower():
+                    result = True
+        except:
+            print(f'{Fmt.BOLD}(start) cannot read {start_log_path}{Fmt.END}')
+
+        return result
+
+
+    def start_server(tries=1, max_tries=3):
+        """ with recursive retries
+        """
+
+        t_srv_start = time()
+
+        sp.Popen( srv_cmd.split() )
+
+        if wait4server(timeout=server_timeout, verbose_seconds=5):
+            t_srv_lapse = round(time() - t_srv_start, 1)
+            print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
+            return True
+
+        # Recursive retry
+        else:
+            if weird_camilladsp_ports() and tries < max_tries:
+                print(f'{Fmt.BOLD}(start) detected weird CamillaDSP jack ports. WILL RETRY ...{Fmt.END}')
+                return start_server(tries + 1)
+
+            else:
+                return False
+
+
     # Plugins (stand-alone processes)
     run_plugins()
 
@@ -326,14 +367,8 @@ def start():
         srv_cmd += f' 1>{LOGFOLDER}/paudio.log 2>{LOGFOLDER}/paudio.err'
         print(f"{Fmt.BLUE}(start) Waiting {server_timeout} s for the the pAudio server to run in background ...{Fmt.END}")
 
-    t_srv_start = time()
-    sp.Popen( srv_cmd.split() )
 
-    if wait4server(timeout=server_timeout, verbose_seconds=5):
-        t_srv_lapse = round(time() - t_srv_start, 1)
-        print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
-
-    else:
+    if not start_server():
         print(f'{Fmt.RED}(start) No answer from `server.py paudio`, stopping all stuff.{Fmt.END}')
         stop()
         return
