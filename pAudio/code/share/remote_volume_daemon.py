@@ -176,6 +176,8 @@ def discover_remotes():
 
 
 def remote_send_cmd(cli_addr, cmd):
+    """ this is threaded
+    """
 
     print( f'(remote_volume_daemon) remote {cli_addr} sending \'{cmd}\'' )
 
