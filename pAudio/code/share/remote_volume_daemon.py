@@ -173,25 +173,30 @@ def discover_remotes():
             remote_update_levels(addr)
 
 
-def remote_send_cmd(cli_addr, cmd):
-    """ this is threaded
+def remote_update_levels(rem_addr):
+    """ this is threaded for each destination rem_addr,
+        but sending each command must be blocking
     """
 
-    print( f'(remote_volume_daemon) remote {cli_addr} sending \'{cmd}\'' )
+    def send_levels():
+        """ send current local level setting to a remote
+        """
+
+        param_list = ['level', 'lu_offset', 'equal_loudness']
+
+        for p in param_list:
+            value = get_state().get(p, None)
+            if value != None:
+                cmd = f'{p} {value}'
+                print( f'(remote_volume_daemon) remote {rem_addr} sending \'{cmd}\'' )
+                send_cmd(cmd=cmd, host=rem_addr)
+
 
     job = threading.Thread(
-        target = send_cmd,
-        kwargs = {'cmd': cmd, 'host': cli_addr, 'verbose': False}
+        target = send_levels,
+        daemon = True
     )
     job.start()
-
-
-def remote_update_levels(rem_addr, param_list=['level', 'lu_offset', 'equal_loudness']):
-
-    for p in param_list:
-        value = get_state().get(p, None)
-        if value != None:
-            remote_send_cmd(rem_addr, f'{p} {value}')
 
 
 def stop():
@@ -239,7 +244,8 @@ def listen_to_preamp():
             remote_config = get_remote_config(addr)
 
             if remote_is_listening_to_me(remote_state, remote_config):
-                remote_send_cmd(addr, wanted_cmd)
+                print( f'(remote_volume_daemon) remote {addr} sending \'{wanted_cmd}\'' )
+                send_cmd(cmd=wanted_cmd, host=addr)
 
             else:
                 resignations.append([addr, info])
