@@ -13,6 +13,15 @@
     (use -v to include logging info level messages)
 """
 
+# UNDERSTANDING A SERVER:
+# https://realpython.com/python-sockets/#echo-client-and-server
+# One thing that’s imperative to understand is that we now have
+# a new socket object from accept(). This is important since
+# it’s the socket that you’ll use to communicate with the client.
+# It’s distinct from the listening socket that the server is using
+# to accept new connections. So two sockets are playing at the same time.
+
+
 import  socket
 import  threading
 import  logging
