@@ -26,7 +26,7 @@ UHOME           = os.path.expanduser("~")
 sys.path.append( f'{UHOME}/pAudio/code/share' )
 
 from    common  import CONFIG, USER, send_cmd, get_my_ip, \
-                       read_json_file, tcp_server
+                       read_json_file, tcp_server, Fmt
 
 LOG_DIR           = f'{UHOME}/pAudio/log'
 CLIENTS_LIST_PATH = f'{LOG_DIR}/remote_volume_daemon_clients'
@@ -99,12 +99,29 @@ def get_state():
 
 def remote_is_listening_to_me(remote_state, remote_config):
 
+    if not remote_state or not remote_config:
+        return False
+
     remote_source_name = remote_state.get('source', '')
 
-    remote_source_addr = remote_config.get('jack', {})  \
-                        .get('sources', {})             \
-                        .get(remote_source_name, {})    \
-                        .get('remote_addr', '')
+    remote_app =         remote_state.get('application', '')
+
+
+    if remote_app == 'pAudio':
+        # (i) config.yml has 'remote_addr' but CONFIG has 'ip'
+        remote_source_addr = remote_config.get('jack', {})  \
+                            .get('sources', {})             \
+                            .get(remote_source_name, {})    \
+                            .get('ip', '')
+
+    elif remote_app == 'pe.audio.sys':
+        remote_source_addr = remote_config.get('sources', {})  \
+                            .get(remote_source_name, {})    \
+                            .get('jack_pname', '')
+    else:
+        print(f'{Fmt.RED}(remote_volume_daemon.remote_is_listening_to_me) ERROR {Fmt.END}')
+        remote_source_addr = ''
+
 
     if 'remote' in remote_source_name.lower() \
         and (my_ip in remote_source_addr or my_hostname in remote_source_addr):
