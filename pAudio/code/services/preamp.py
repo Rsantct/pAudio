@@ -504,7 +504,8 @@ def set_source(sname):
 
     def do_source_settings():
         """ will order specific source settings as configured,
-            otherwise will restore on_init settings if current differs
+            otherwise will restore on_init settings if current differs,
+            except for remoteXXXX sources
         """
 
         def do_setting(setting, value):
@@ -526,7 +527,7 @@ def set_source(sname):
             return ans
 
 
-        if sname == 'none' or not sname:
+        if sname == 'none' or not sname or sname.startswith('remote'):
             return
 
         print(f'{Fmt.MAGENTA}checking specific source settings for: {sname}{Fmt.END}')
@@ -662,9 +663,6 @@ def set_source(sname):
 
                 if not ('error' in ans or 'timed out' in ans):
 
-                    # Lower the local volume initially
-                    do_levels( 'level', -30.0 )
-
                     # Set local and remote delays
                     if latency_compensation < 0:
                         order_local_and_remote_delays(0, abs(latency_compensation))
@@ -674,14 +672,6 @@ def set_source(sname):
 
                     else:
                         order_local_and_remote_delays(0, 0)
-
-                    # Balance the local volume as that at the remote side
-                    tmp = send_cmd(f'state', host=remote_addr, port=remote_port)
-                    try:
-                        rem_vol = tmp.get('level', -30)
-                    except:
-                        rem_vol = -30
-                    do_levels( 'level', rem_vol )
 
                 else:
                     source_is_available = False
