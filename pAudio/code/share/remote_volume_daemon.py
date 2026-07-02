@@ -255,7 +255,7 @@ def listen_to_preamp():
             REMOTE_CLIENTS.pop( addr, None )
 
 
-    print( f'(remote_volume) Keep relaying level changes to remotes ...' )
+    print( f'(remote_volume_daemon) Keep relaying level changes to remotes ...' )
 
     # Start a server listening to LOCAL
     job = threading.Thread(
@@ -290,7 +290,7 @@ def listen_to_remotes():
 
             if cli_addr != my_ip and '127.0.' not in cli_addr:
 
-                print( f'(remote_volume) Received hello from: {cli_addr}' )
+                print( f'(remote_volume_daemon) Received hello from: {cli_addr}' )
 
                 if cli_addr not in REMOTE_CLIENTS:
 
@@ -314,7 +314,7 @@ def listen_to_remotes():
 
 
 
-    print( f'(remote_volume) Keep listening for new remotes ...' )
+    print( f'(remote_volume_daemon) Keep listening for new remotes ...' )
 
     # Start a server listening to ALL
     job = threading.Thread(
@@ -350,7 +350,7 @@ if __name__ == "__main__":
     my_hostname = socket.gethostname()
     my_ip       = get_my_ip()
     if not my_ip:
-        print( f'(remote_volume) ERROR GETTING MY IP ADDRESS !!!')
+        print( f'(remote_volume_daemon) ERROR GETTING MY IP ADDRESS !!!')
         exit()
 
     # this takes a while:
