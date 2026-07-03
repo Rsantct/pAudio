@@ -517,10 +517,48 @@ def wait4ports( pattern, timeout=10 ):
         return False
 
 
-def check_output(host, port, message, timeout=1.0, chunk_size=4096):
+def tcp_server(addr='127.0.0.1', port=0, service_id='UNNAMED', processor=None, verbose=False):
+    """ a general purpose TCP server
     """
-    Envía 'message' a (host, port) vía TCP y devuelve la respuesta completa
-    como string, similar a subprocess.check_output().
+
+    def handle_client(srv):
+
+        con, cliaddr = srv.accept()
+
+        with con:
+
+            msg = con.recv(1024).decode().strip()
+            if verbose:
+                print( f'(server-{service_id}) Rx: {msg}' )
+
+            result = ''
+            if processor:
+
+                result = processor( addr=cliaddr[0], msg=msg )
+
+                if result:
+                    # Sending back the result
+                    con.sendall( result.encode() )
+                    if verbose:
+                        print( f'(server-{service_id}) Tx: {result}' )
+
+
+    if not port:
+        raise Exception('(common.server) missing port')
+
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind((addr, port))
+    srv.listen(10)
+
+    while True:
+        handle_client(srv)
+
+
+
+def send_msg(host, port, message, timeout=1.0, chunk_size=4096):
+    """ A general purspose TCP client that sends a message, then
+        returns a response if any.
     """
 
     if not host or not port or not message:
@@ -779,10 +817,14 @@ def read_cmd_phrase(cmd_phrase):
         chunks = ['preamp', 'state']
 
     # If not prefix, will treat as a preamp command kind of
-    if not chunks[0] in ('preamp', 'player', 'ctrl'):
+    if not chunks[0] in ('preamp', 'player', 'ctrl', 'aux'):
         chunks.insert(0, 'preamp')
 
     pfx = chunks[0]
+
+    # 'aux' is a former prefix in pe.audio.sys
+    if pfx == 'aux':
+        pfx = 'ctrl'
 
     if chunks[1:]:
         cmd = chunks[1]
@@ -913,7 +955,7 @@ def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 99
 
     while tries:
 
-        if check_output('localhost', port,' hello'):
+        if send_msg('localhost', port,' hello'):
             break
 
         if elapsed and not elapsed % verbose_seconds:
@@ -1051,15 +1093,70 @@ def is_IP(s):
          return False
 
 
-def get_my_ip():
+def get_my_ip_through_socket():
+    """ retrieves the own IP address using socket
+        (string)
+
+        We prefer the below version get_my_ip()
+        instead of using a dummy socket here
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    try:
+        # No se necesita conexión real, el IP puede ser cualquiera
+        s.connect(('8.8.8.8', 1))
+        IP = s.getsockname()[0]
+
+    except Exception:
+        IP = '127.0.0.1'
+
+    finally:
+        s.close()
+
+    return IP
+
+
+def get_my_ip_through_hostname():
     """ retrieves the own IP address
         (string)
+
+        We prefer this instead of using a dummy socket
+
+            $ hostname --all-ip-addresses
+            192.168.1.47 192.168.1.69
+
+        BUT if more than one (eth wifi) it is not guaranteed
+        that the first one is the one with best metric :-/
     """
     try:
         tmp = sp.check_output( 'hostname --all-ip-addresses'.split() ).decode()
         return tmp.split()[0]
     except:
         return ''
+
+
+def get_my_ip():
+    """ This ensures the one with best metric
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    try:
+        # It doesn't actually need to connect to the internet,
+        # it just asks the kernel to choose the best exit route.
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+
+    except Exception:
+        # If there is no connection or default route
+        ip = get_my_ip_through_hostname()
+
+    finally:
+        s.close()
+
+    if ip:
+        return ip
+    else:
+        return get_my_ip_through_hostname()
 
 
 def get_camilladsp_last_error():

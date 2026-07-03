@@ -117,12 +117,6 @@ def pw_is_running():
         return False
 
 
-def jack_xrun_handler(x):
-
-    tmp = f'jackd XRUNS: {str(x)}'
-    do_log(tmp)
-
-
 def do_log(msg, mode='a'):
 
     msg = f'{get_timestamp()} {msg}'
@@ -132,6 +126,15 @@ def do_log(msg, mode='a'):
     if LOGPATH:
         with open(LOGPATH, mode) as f:
             f.write(f'{msg}\n')
+
+
+def jack_xrun_handler(estimated_xrun_us_delay):
+    """ do not enclose here any heavy duty process,
+        because this runs in real time,
+        neither do not interactuate with Jack here
+    """
+    tmp = f'jackd XRUN, estimated delay {str(estimated_xrun_us_delay)} us'
+    do_log(tmp)
 
 
 def stop():
@@ -156,6 +159,7 @@ def start():
     # Jack monitoring
     try:
         jcli = jack.Client('tmp', no_start_server=True)
+        # this must be done before activating the client
         jcli.set_xrun_callback(jack_xrun_handler)
 
         with jcli:

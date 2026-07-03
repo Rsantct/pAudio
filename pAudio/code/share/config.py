@@ -479,6 +479,8 @@ def complete_config():
 
     CONFIG = yaml.safe_load( open(CONFIG_PATH, 'r') )
 
+    CONFIG["application"] = 'pAudio'
+
     CONFIG["verbose"] = False
     try:
         with open(f'{MAINFOLDER}/.verbose', 'r') as f:

@@ -8,6 +8,9 @@
 
     Version with CamillaDSP processor (https://github.com/HEnquist/camilladsp)
 
+    NOTICE: This relays level related commands to the remote volume manager daemon
+            (Find 'forward to remotes manager daemon' below)
+
 """
 
 import  sys
@@ -44,6 +47,8 @@ if not STATE:
 
     if not STATE:
         raise Exception('ERROR loading preamp state, exiting.')
+
+STATE["application"] = 'pAudio'
 
 
 def init():
@@ -499,7 +504,8 @@ def set_source(sname):
 
     def do_source_settings():
         """ will order specific source settings as configured,
-            otherwise will restore on_init settings if current differs
+            otherwise will restore on_init settings if current differs,
+            except for remoteXXXX sources
         """
 
         def do_setting(setting, value):
@@ -521,7 +527,7 @@ def set_source(sname):
             return ans
 
 
-        if sname == 'none' or not sname:
+        if sname == 'none' or not sname or sname.startswith('remote'):
             return
 
         print(f'{Fmt.MAGENTA}checking specific source settings for: {sname}{Fmt.END}')
@@ -657,9 +663,6 @@ def set_source(sname):
 
                 if not ('error' in ans or 'timed out' in ans):
 
-                    # Lower the local volume initially
-                    do_levels( 'level', -30.0 )
-
                     # Set local and remote delays
                     if latency_compensation < 0:
                         order_local_and_remote_delays(0, abs(latency_compensation))
@@ -669,14 +672,6 @@ def set_source(sname):
 
                     else:
                         order_local_and_remote_delays(0, 0)
-
-                    # Balance the local volume as that at the remote side
-                    tmp = send_cmd(f'state', host=remote_addr, port=remote_port)
-                    try:
-                        rem_vol = tmp.get('level', -30)
-                    except:
-                        rem_vol = -30
-                    do_levels( 'level', rem_vol )
 
                 else:
                     source_is_available = False
@@ -836,6 +831,9 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         return round(hr, 1)
 
 
+    # --> forward to remotes manager daemon
+    send_to_remotes(f'{cmd} {dB} {"add" if add else ""}')
+
     # getting absolute values from relative command
     if add:
         dB += STATE[cmd]
@@ -901,10 +899,18 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
         # dumps eq to png
         eq2png()
 
+
     if clamped:
         result =  f'clamped to {dB}'
 
     return result
+
+
+def send_to_remotes(cmd):
+    """ remotes are managed by remote_volume_daemon which listen at base port + 2
+    """
+    remotes_manager_port = CONFIG["paudio_port"] + 2
+    send_cmd( cmd, port=remotes_manager_port)
 
 
 # Entry function
@@ -946,6 +952,7 @@ def do(cmd, args, add):
         dosave = False
     else:
         dosave = True
+
 
     match cmd:
 
@@ -1088,6 +1095,9 @@ def do(cmd, args, add):
                 STATE['equal_loudness'] = new_mode
                 # dumps eq to png
                 eq2png()
+                # --> forward to remotes manager daemon
+                #     (this is managed here to ensure new_mode after a toggle command)
+                send_to_remotes(f'equal_loudness {"on" if new_mode else "off"}')
 
         case 'set_drc':
 
@@ -1170,8 +1180,10 @@ def do(cmd, args, add):
         case _:
             result = 'unknown command'
 
+
     if dosave:
         save_json_file(STATE, PREAMP_STATE_PATH)
+
 
     if type(result) != str:
         try:
