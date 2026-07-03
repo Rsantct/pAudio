@@ -1093,7 +1093,7 @@ def is_IP(s):
          return False
 
 
-def get_my_ip_with_socket():
+def get_my_ip_through_socket():
     """ retrieves the own IP address using socket
         (string)
 
@@ -1116,7 +1116,7 @@ def get_my_ip_with_socket():
     return IP
 
 
-def get_my_ip_with_hostname():
+def get_my_ip_through_hostname():
     """ retrieves the own IP address
         (string)
 
@@ -1148,7 +1148,7 @@ def get_my_ip():
 
     except Exception:
         # If there is no connection or default route
-        ip = get_my_ip_with_hostname()
+        ip = get_my_ip_through_hostname()
 
     finally:
         s.close()
@@ -1156,7 +1156,7 @@ def get_my_ip():
     if ip:
         return ip
     else:
-        return get_my_ip_with_hostname()
+        return get_my_ip_through_hostname()
 
 
 def get_camilladsp_last_error():
