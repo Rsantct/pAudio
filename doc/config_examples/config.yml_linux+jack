@@ -27,10 +27,10 @@ jack:
 
         # A remote pAudio native source based on zita-njbridge
         remoteSalon:
-            remote_addr:        192.168.1.57
-            remote_track_level: true
-            zita_buffer_ms:        20
-            compensation_delay_ms: 0
+            remote_addr:            192.168.1.57
+            remote_track_level:     true
+            zita_buffer_ms:         20
+            compensation_delay_ms:  0
             # Zita default is 10 ms, but if you use WiFi (not recommended) you may want > 100 ms
             # Compensation delay is an experimental value that you need to fine tune AFTER setting the zita_buffer,
             # then an internal calculator will order convenient extra_delay commands to both local and remote.
