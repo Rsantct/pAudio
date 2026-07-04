@@ -29,14 +29,16 @@ jack:
         remoteSalon:
             remote_addr:        192.168.1.57
             remote_track_level: true
-            # Default is 10 ms, but if you use WiFi you'll need about 100 ms (not recommended)
+            # Zita default is 10 ms, but if you use WiFi (not recommended) you may want > 100 ms
             zita_buffer_ms:     20
-            # Compensation delay is an experimental value that depends
-            # on the *zita_buffer* as well on the *jack buffer*.
-            # It must be taken by selecting the minimum delay
-            # filtering sets available on both ends
-            # If the value is negative, it will be applied at the remote end.
-            compensation_delay: 12
+            # Experimental compensation value that you need to fine tune AFTER setting the zita_buffer,
+            # then an internal calculator will order an extra_delay command to both local or remote.
+            #     - A positive value will move the calculated extra_delay to the local system
+            #     - A negative value will move it to the remote end
+            compensation_delay_ms: 0
+            # (i) - Changes in both ___ms parameters will take effect dynamically when selecting a remote source.
+            #     - The internal calculator takes in account the current DSP latencies at both ends,
+            #       for instance when selecting linear phase filters.
 
         # A special remote source based on JackTrip
         MacBook Pro:
