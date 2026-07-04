@@ -633,19 +633,19 @@ def set_source(sname):
         # Remote source
         if 'remote' in sname:
             rc = read_remote_source_config(sname)
-            zita_buff          = rc.get('zita_buffer_ms', 50)
-            remote_addr        = rc.get('remote_addr')
-            remote_port        = rc.get('remote_port', 9990)
-            do_track_level     = rc.get('remote_track_level', True)
-            compensation_delay = rc.get('compensation_delay', 0)
+            zita_buff           = rc.get('zita_buffer_ms', 50)
+            remote_addr         = rc.get('remote_addr')
+            remote_port         = rc.get('remote_port', 9990)
+            do_track_level      = rc.get('remote_track_level', True)
+            compensation_delay  = rc.get('compensation_delay_ms', 0)
 
             remote_state        = get_remote_state(remote_addr, remote_port)
             remote_xo_latency   = remote_state.get('xo_latency',  0)
             remote_extra_delay  = remote_state.get('extra_delay', 0)            # not used
             local_xo_latency    = read_state_from_disk().get('xo_latency', 0)
 
-            latency_compensation =   compensation_delay     \
-                                   + remote_xo_latency      \
+            latency_compensation =   compensation_delay \
+                                   + remote_xo_latency \
                                    - local_xo_latency
             latency_compensation = round( latency_compensation, 1 )
 
