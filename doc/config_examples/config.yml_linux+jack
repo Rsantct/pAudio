@@ -35,7 +35,7 @@ jack:
             # Compensation delay is an experimental value that you need to fine tune AFTER setting the zita_buffer,
             # then an internal calculator will order convenient extra_delay commands to both local and remote.
             #     - A positive value will push the calculated extra_delay to the local system,
-            #       notice that you may prefere to use positive values in zita_buffer
+            #       notice that you may prefer to use positive values in zita_buffer
             #     - A negative value will push it to the remote end.
             # Changes in both ___ms parameters will take effect dynamically when selecting a remote source.
             # The internal calculator takes in account the current DSP latencies at both ends,
