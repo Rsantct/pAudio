@@ -310,7 +310,7 @@ def init():
             print(f'{Fmt.RED}(preamp) error removing jack* keys inside STATE: {str(e)}{Fmt.END}')
 
     # Force values
-    STATE["extra_delay"] = 0
+    STATE["extra_delay"] = 0.0
 
 
     # Initialize camillaDSP
@@ -585,7 +585,7 @@ def set_source(sname):
 
         def set_local():
             if set_delay( ld ) == 'done':
-                STATE["extra_delay"] = ld
+                STATE["extra_delay"] = round(ld, 1)
                 print(f'(preamp.py) set local delay: {ld}')
             else:
                 print('(preamp.py) cannot set local delay')
@@ -633,16 +633,16 @@ def set_source(sname):
         # Remote source
         if 'remote' in sname:
             rc = read_remote_source_config(sname)
-            zita_buff          = rc.get('zita_buffer_ms', 50)
+            zita_buff          = rc.get('zita_buffer_ms', 10)
             remote_addr        = rc.get('remote_addr')
             remote_port        = rc.get('remote_port', 9990)
             do_track_level     = rc.get('remote_track_level', True)
-            compensation_delay = rc.get('compensation_delay', 0)
+            compensation_delay = rc.get('compensation_delay_ms', 0.0)
 
             remote_state        = get_remote_state(remote_addr, remote_port)
-            remote_xo_latency   = remote_state.get('xo_latency',  0)
-            remote_extra_delay  = remote_state.get('extra_delay', 0)            # not used
-            local_xo_latency    = read_state_from_disk().get('xo_latency', 0)
+            remote_xo_latency   = remote_state.get('xo_latency',  0.0)
+            remote_extra_delay  = remote_state.get('extra_delay', 0.0)  # ignored, will force ours (**)
+            local_xo_latency    = read_state_from_disk().get('xo_latency', 0.0)
 
             latency_compensation =   compensation_delay     \
                                    + remote_xo_latency      \
@@ -663,7 +663,7 @@ def set_source(sname):
 
                 if not ('error' in ans or 'timed out' in ans):
 
-                    # Set local and remote delays
+                    # Set local and remote delays (**)
                     if latency_compensation < 0:
                         order_local_and_remote_delays(0, abs(latency_compensation))
 
