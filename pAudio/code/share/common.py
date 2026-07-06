@@ -1065,18 +1065,22 @@ def estimate_server_response_delay():
     return estimated
 
 
-def ip_is_reachable(ip):
-    """ ip (str) responds to a ping request.
-        (boolean)
+def do_ping(addr, timeout=0.1):
+    """ Try pinging the address once.
+        returns: True/False
     """
-    param = '-n' if sys.platform.lower().startswith('win') else '-c'
 
-    command = ['ping', param, '1', ip]
+    ping_cmd = f"ping -c 1 -W {timeout} {addr}"
 
-    # Run the command and redirect output to DEVNULL to keep the console clean
-    result = sp.run(command, stdout=sp.DEVNULL, stderr=sp.DEVNULL).returncode == 0
+    try:
+        res = sp.run(ping_cmd.split(), stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+        if res.returncode == 0:
+            return True
 
-    return result
+    except Exception as e:
+        print(f"{Fmt.RED}(common) Error with ping: {e}{Fmt.END}")
+
+    return False
 
 
 def is_IP(s):
