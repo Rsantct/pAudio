@@ -17,8 +17,8 @@ coreaudio:
             format: F32
 
             # special example for the Behringer UCA 202 USB sound card
-            #device: "USB Audio CODEC "     # notice the trailing space
-            #format:                        # void because S16LE fails
+            #device: "USB Audio CODEC "     # *** !!! notice the trailing space !!! ***
+            #format: S16
 
 
 loudspeaker: MyLoudspeaker
