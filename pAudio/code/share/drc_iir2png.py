@@ -45,6 +45,7 @@ def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
 
     filter_type = fcamilla_params.get('type')
     parameters  = fcamilla_params.get('parameters')
+    ab_coeffs   = (0, 0)
 
     if filter_type == 'Biquad' and isinstance(parameters, dict):
 
@@ -76,7 +77,7 @@ def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
             q     = parameters.get('q', None)
             slope = parameters.get('slope', None)
 
-            if all(v is not None for v in [freq, gain, q or slope]):
+            if all( v for v in [freq, gain, (q is not None) ^ (slope is not None)] ):
 
                 try:
                     ab_coeffs = eqbook.highshelf_biquad_coefficients(freq, gain, fs, q, slope)
@@ -88,7 +89,10 @@ def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
                     print(f"{Fmt.RED}'{fcamilla_name}' (Highshelf): error when calculating coefficients: {e}{Fmt.END}")
 
             else:
-                print(f"{Fmt.RED}'{fcamilla_name}' (Highshelf): bad paramenters{Fmt.END}")
+                if (q is not None) and (slope is not None):
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Highshelf): only one of \'q\' or \'slope\'{Fmt.END}")
+                else:
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Highshelf): bad paramenters{Fmt.END}")
 
 
         elif parameters.get('type') == 'Lowshelf':
@@ -98,7 +102,7 @@ def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
             q     = parameters.get('q', None)
             slope = parameters.get('slope', None)
 
-            if all(v is not None for v in [freq, gain, q or slope]):
+            if all( v for v in [freq, gain, (q is not None) ^ (slope is not None)] ):
 
                 try:
                     ab_coeffs = eqbook.lowshelf_biquad_coefficients(freq, gain, fs, q, slope)
@@ -110,7 +114,10 @@ def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
                     print(f"{Fmt.RED}'{fcamilla_name}' (Lowshelf): error when calculating coefficients: {e}{Fmt.END}")
 
             else:
-                print(f"{Fmt.RED}'{fcamilla_name}' (Lowshelf): bad paramenters{Fmt.END}")
+                if (q is not None) and (slope is not None):
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Lowshelf): only one of \'q\' or \'slope\'{Fmt.END}")
+                else:
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Lowshelf): bad paramenters{Fmt.END}")
 
 
         elif parameters.get('type') == 'LinkwitzTransform':
@@ -240,6 +247,10 @@ def plot_frequency_response(set_name, filters_L_R):
         for fcamilla_name, fcamilla_params in filters.items():
 
             b, a                = get_filter_ab_coeffs(fcamilla_name, fcamilla_params)
+
+            if not b and not a:
+                print(f"{Fmt.RED}filter '{fcamilla_name}' omitted.{Fmt.END}")
+                continue
 
             _, h_individual     = signal.freqz(b, a, worN=8192, fs=fs)
 
