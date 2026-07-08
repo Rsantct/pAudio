@@ -21,9 +21,9 @@ pAudio does this automatically on startup, also restores your previous Sound Out
 
 ## - Combined setup
 
-For example if you have a TV connected to Line In on your Mac, and you want not to take care of selecting the source:
+For example if you have a TV connected to OPTICAL LINE IN on your old 2014 model Mac Mini, and you want not to take care of selecting the source:
 - Mac Desktop sound
-- TV sound
+- TV sound (optical noise free)
 
 #### macOS MIDI Audio Configuration:
 
