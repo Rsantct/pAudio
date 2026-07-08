@@ -33,9 +33,6 @@ if sys.platform.lower() == 'linux' and CONFIG.get('jack'):
     import  jack
     import  jack_sources
 
-elif sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
-    import  coreaudio_sources
-
 
 # Main variable (preamplifier state)
 STATE = read_json_file(PREAMP_STATE_PATH, quiet=True)
@@ -53,27 +50,26 @@ STATE["application"] = 'pAudio'
 
 def init():
 
-    def get_coreaudio_source():
-        """ This retrieves the source name in coreaudio,
-            from the `capture:` section in config.yml
+    def get_coreaudio_sources():
+        """ Be aware that CONFIG["coreaudio"] HAS NOT the original
+            multiple capture devices tree if so, because it is a
+            non-standard CamillaDSP format.
+
+            So, we need to read again config/config.yml
         """
-        # default source
-        result = 'Desktop'
 
-        # 1. Read the 'normal' section, previously populated
-        #    even if the 'alternative' syntax was used
-        cap_device = CONFIG["coreaudio"]["devices"]["capture"]["device"]
+        cfg_path = f'{MAINFOLDER}/config/config.yml'
 
-        # 2. Check in there are any source entry under `capture:` in `config.yml`
-        config_yml = yaml.safe_load( open(CONFIG_PATH, 'r') )
+        with open(cfg_path, 'r') as f:
+            cfg = yaml.safe_load( f.read() )
 
-        for item, params in config_yml["coreaudio"]["devices"]["capture"].items():
+        coreaudio_capture = cfg["coreaudio"]["devices"]["capture"]
 
-            if not type(params) == dict:
-                continue
+        if 'device' in coreaudio_capture:
+            result = { 'Desktop': {} }
 
-            if params.get('device') == cap_device:
-                result = item
+        else:
+            result = coreaudio_capture
 
         return result
 
@@ -134,17 +130,17 @@ def init():
         # Source needs a little care
         last_source = STATE.get('source')
 
-        if last_source and last_source in SOURCES:
+        if last_source and last_source in CONFIG["sources"]:
 
             set_source( last_source )
 
         else:
 
-            if 'jack_sources' in sys.modules:
+            if CONFIG.get('jack'):
                 STATE["source"] = 'none'
 
-            elif 'coreaudio_sources' in sys.modules:
-                STATE["source"] = get_coreaudio_source()
+            elif CONFIG.get('coreaudio'):
+                STATE["source"] = 'Desktop'
 
             else:
                 STATE["source"] = ''
@@ -159,21 +155,18 @@ def init():
         save_json_file(STATE, PREAMP_STATE_PATH)
 
 
-    global STATE, CONFIG, SOURCES, TARGET_SETS, XO_SETS, DRC_SETS
+    global STATE, CONFIG, TARGET_SETS, XO_SETS, DRC_SETS
 
 
-    # (i) SOURCES can be populated internally with known plugins,
-    #     so the configured YAML should only contain user-defined sources.
-    if 'jack_sources' in sys.modules:
-        SOURCES = jack_sources.SOURCES
+    if CONFIG.get('jack'):
+        CONFIG["sources"] = jack_sources.SOURCES
 
-    elif 'coreaudio_sources' in sys.modules:
-        SOURCES = coreaudio_sources.SOURCES
+    elif CONFIG.get('coreaudio'):
+        CONFIG["sources"] = get_coreaudio_sources()
 
     else:
-        SOURCES = {}
+        CONFIG["sources"] = {}
 
-    CONFIG["sources"] = SOURCES
 
     # Dump CONFIG to disk
     write_pAudio_cfg(CONFIG)
@@ -605,8 +598,8 @@ def set_source(sname):
     source_is_available = True
     result = 'no changes'
 
-    if not sname in SOURCES:
-        return f'must be in: { list( SOURCES.keys() ) }'
+    if not sname in CONFIG["sources"]:
+        return f'must be in: { list( CONFIG["sources"].keys() ) }'
 
     # Deactivate compressor on change the source,
     # regardless source specific settings
@@ -620,7 +613,7 @@ def set_source(sname):
         if sname == 'Desktop':
             return 'no change available'
 
-        res = CAM.set_capture( SOURCES[sname] )
+        res = CAM.set_capture( CONFIG["sources"][sname] )
 
         # Extra in coreaudio update STATE.input_dev
         config_yml         = yaml.safe_load( open(CONFIG_PATH, 'r') )
@@ -698,7 +691,7 @@ def set_source(sname):
             result = jack_sources.select( sname )
 
             # and apply gain offset (usually for analaog)
-            gain = SOURCES[sname].get('gain', 0.0)
+            gain = CONFIG["sources"][sname].get('gain', 0.0)
             try:
                 gain = round(gain, 1)
                 if set_gain_offset( gain ) == 'done':
@@ -964,7 +957,7 @@ def do(cmd, args, add):
             result = json.dumps(STATE, indent=2)
 
         case 'get_sources':
-            result = json.dumps( list(SOURCES.keys()) )
+            result = json.dumps( list(CONFIG["sources"].keys()) )
 
         case 'get_target_sets':
             result = json.dumps(TARGET_SETS)
