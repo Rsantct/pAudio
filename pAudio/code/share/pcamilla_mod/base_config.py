@@ -169,7 +169,7 @@ def prepare_base_config(pAudio_config, cam_config):
 
 
     cam_config["title"] = 'pAudio'
-    cam_config["description"] = 'A PC based advanced preamplifier, with FIR based EQ and active loudspeaker XOVER management'
+    cam_config["description"] = 'pAudio is a PC based advanced preamplifier, with FIR based EQ and active loudspeaker XOVER management'
 
     prepare_devices()
     prepare_filters()
