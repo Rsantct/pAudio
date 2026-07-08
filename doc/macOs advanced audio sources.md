@@ -55,7 +55,7 @@ pAudio will select one of:
 - Mac Desktop sound
 - Line In (example: a TV)
 
-See below, normal and alternative source selection syntax are shown:
+Example for TV input on an external USB sound card and main output through by the integrated Mac audio sound output
 
     coreaudio:
 
@@ -63,31 +63,18 @@ See below, normal and alternative source selection syntax are shown:
 
             capture:
 
-                ---------------------------------------------------------------
-                Normal coreaudio input device directly specified:
-
-                channels: 2
-                device: BlackHole 2ch
-                format: F32_LE
-
-
-                ---------------------------------------------------------------
-                Alternative more than one section, to have source selection
-
                 Mac Desktop:
                     channels: 2
                     device: BlackHole 2ch
-                    format: F32_LE
+                    format: F32
 
                 TV:
                     channels: 2
-                    device: UMC204HD 192k
-                    format: S24_LE
-                ---------------------------------------------------------------
-
-
+                    device: "USB Audio CODEC "    # this card name includes a weird trailing space
+                    format: S16
+    
             playback:
 
                 channels: 2
                 device: Altavoces del MacBook Pro
-                format: F32_LE
+                format: F32
