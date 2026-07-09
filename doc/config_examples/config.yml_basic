@@ -4,12 +4,11 @@
 #
 coreaudio:
 
+    # DO NOT SPECIFY 'format' nor 'dither' because they are in charge of CoreAudio
     devices:
 
         capture:
 
-            # DO NOT SPECIFY <format> because it is in charge of CoreAudio (Audio MIDI Setup)
-            #
             channels: 2
             device: BlackHole 2ch
 
