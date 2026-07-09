@@ -12,8 +12,8 @@ MAINFOLDER  = f'{UHOME}/pAudio'
 def get_coreaudio_sources():
     """ config.yml syntax can have two flavours for the coreaudio/devices section
 
-            - standard camillaDSP like
-            - multiple capture devices as "source" selection in the Mac
+            - standard camillaDSP like (no pAudio source name is specified --> Desktop)
+            - multiple capture devices as "pAudio sources" available in the Mac
 
         (see pAudio/doc config examples for more info)
 
@@ -32,7 +32,7 @@ def get_coreaudio_sources():
     coreaudio_capture = cfg["coreaudio"]["devices"]["capture"]
 
     if 'device' in coreaudio_capture:
-        return { 'Desktop': {} }
+        return { 'Desktop':  coreaudio_capture}
 
     else:
         return coreaudio_capture
