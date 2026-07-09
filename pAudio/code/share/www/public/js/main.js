@@ -96,11 +96,6 @@ function fill_in_page_statics(){
                 option.text = sources[i];
                 mySel.add(option);
             }
-            // And adds the source 'none' as expected in core.Preamp
-            // so that all sources will be disconnected.
-            const option = document.createElement("option");
-            option.text = 'none';
-            mySel.add(option);
         }
 
 
