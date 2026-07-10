@@ -308,6 +308,9 @@ def init():
         # Saving state with user settings mods
         save_json_file(STATE, PREAMP_STATE_PATH)
 
+        # restarting loudness_monitor.py to get the current device (standalone process)
+        loudness_monitor_restart()
+
     else:
 
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
@@ -329,6 +332,11 @@ def eq2png():
     # Threading because saving the PNG file can take too long
     j1 = threading.Thread(target=fir2png)
     j1.start()
+
+
+def loudness_monitor_restart():
+    print(f'{Fmt.BLUE}(preamp) restarting loudness monitor.py{Fmt.END}')
+    sp.Popen( f'python3 {MAINFOLDER}/code/share/loudness_monitor.py start', shell=True )
 
 
 # Interface functions with the underlying modules
@@ -595,7 +603,8 @@ def set_source(sname):
         if result == 'done':
             # Capture device can change
             STATE["input_dev"] = new_capture_parameters["device"]
-
+            # restarting loudness_monitor.py to get the current device (standalone process)
+            loudness_monitor_restart()
 
     # JACK
     elif CONFIG.get('jack'):
