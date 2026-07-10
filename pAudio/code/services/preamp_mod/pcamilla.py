@@ -66,7 +66,7 @@ def set_config_sync(cfg, wait_multiplier=1):
     return result
 
 
-def dump_config(fname='camilladsp_active.yml'):
+def dump_config(config={}, fname='camilladsp_active.yml'):
     """ This is threaded so it does not slow down
         processing configuration changes
     """
@@ -74,12 +74,15 @@ def dump_config(fname='camilladsp_active.yml'):
     def do_it():
 
         with open(f'{LOGFOLDER}/{fname}', 'w', encoding='utf-8') as f:
-            yaml.dump( CC.config.active(),
+            yaml.dump( config,
                        f,
                        Dumper             = MyYamlIndent,
                        indent             = 2,
                        default_flow_style = False
             )
+
+    if not config:
+        config = CC.config.active()
 
     job = threading.Thread(target=do_it)
     job.start()
@@ -340,13 +343,11 @@ def init_camilladsp(pAudio_config):
         return
 
     # Prepare the camilladsp.yml as per the pAudio user configuration
+    #
     cfg_init = _prepare_cam_config(pAudio_config)
-
-
-    # Dumping the init config ...
-    dump_config(fname='camilladsp_init.yml')
-    # ... and the active one
-    dump_config()
+    #
+    # and dump it to disk
+    dump_config(cfg_init, fname='camilladsp_init.yml')
 
 
     # Loading configuration
@@ -355,9 +356,9 @@ def init_camilladsp(pAudio_config):
         print(f'(pcamilla) Trying to load configuration into the runnig CamillaDSP process. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
         set_config_sync(cfg_init)
         # First configuration takes a bit
-        sleep(.25)
+        sleep(.5)
         if not CC.config.active():
-            raise Exception('Falied to load the config into CamillaDSP, see LOG folder')
+            raise Exception('Failed to load the config into CamillaDSP, see LOG folder')
 
         # Check CPAL jack ports
         if pAudio_config.get('jack'):
