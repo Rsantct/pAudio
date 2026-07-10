@@ -22,48 +22,26 @@ MAINFOLDER      = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
 from common import  Fmt, CONFIG, LDMON_PATH, LDCTRL_PATH, \
-                    PREAMP_STATE_PATH, read_json_file
+                    PREAMP_STATE_PATH, read_json_file, Fmt
 
 
-# AUXILIAR for Coreaudio multi capture device syntax (see doc)
-def get_coreaudio_capture_device():
-    """ See pAudio doc for multi capture device syntax
-    """
+def get_capture_device():
 
-    result = ''
-
-
-    with open(PREAMP_STATE_PATH, 'r') as f:
-        state = json.loads( f.read() )
+    def get_input_device():
+        st = read_json_file(PREAMP_STATE_PATH)
+        return st.get('input_dev', '')
 
 
-    if CONFIG["coreaudio"]["devices"]["capture"].get('device'):
+    if CONFIG.get('jack'):
+        result = 'pre_in_loop'
 
-        result = CONFIG["coreaudio"]["devices"]["capture"]["device"]
+    elif CONFIG.get('coreaudio'):
+        result = get_input_device()
 
     else:
-
-        in_devices = CONFIG["coreaudio"]["devices"].get('capture')
-
-        result = in_devices[ state.get('source') ] .get('device')
+        result = ''
 
     return result
-
-
-if CONFIG.get('coreaudio'):
-    AUDIO_SOURCE = get_coreaudio_capture_device()
-
-elif CONFIG.get('jack'):
-    AUDIO_SOURCE = 'pre_in_loop'
-
-else:
-    print(f'(loudness_monitor.py) A sound server is needed. Exiting.')
-    sys.exit()
-
-
-if not AUDIO_SOURCE:
-    print(f'(loudness_monitor.py) ERROR getting a device to listen from. Exiting.')
-    sys.exit()
 
 
 def prepare_ldmon_path():
@@ -210,18 +188,24 @@ def save2disk():
         f.write( json.dumps(d, indent=2) )
 
 
+def stop():
+    print(f'{Fmt.GRAY}(loudness_monitor.py) stopping.{Fmt.END}')
+    Popen( 'pkill -KILL -o -f "loudness_monitor.py" 1>/dev/null 2>&1', shell=True )
+    with open(LDMON_PATH, 'w') as f:
+        f.write('{"LU_I": -99.0, "LU_M": -99.0, "scope": "album"}')
+
+
 if __name__ == '__main__':
 
     # Reading command line: start | stop
     if sys.argv[1:]:
 
         if sys.argv[1] == 'stop':
-            Popen( 'pkill -KILL -f "loudness_monitor.py start"', shell=True )
-            with open(LDMON_PATH, 'w') as f:
-                f.write('{"LU_I": -99.0, "LU_M": -99.0, "scope": "album"}')
-            sys.exit()
+            stop()
+            exit()
 
         elif sys.argv[1] == 'start':
+            stop()
             # (i) Only import LU_meter when 'start' because it takes a long time,
             # so it can trouble the stop pkill (can be too much delayed).
             from audiotools.loudness_meter  import  LU_meter
@@ -232,6 +216,13 @@ if __name__ == '__main__':
     else:
         print(__doc__)
         sys.exit()
+
+
+    AUDIO_SOURCE = get_capture_device()
+
+    if not AUDIO_SOURCE:
+        print(f'{Fmt.RED}(loudness_monitor.py) ERROR with AUDIO_SOURCE. Exiting.{Fmt.END}')
+        exit()
 
     # Prepare LDMON_PATH file on disk
     prepare_ldmon_path()
@@ -250,7 +241,7 @@ if __name__ == '__main__':
                       M_threshold=10.0,
                       I_threshold=1.0 )
     meter.start()
-    print(f'(loudness_monitor) getting audio from: "{AUDIO_SOURCE}"')
+    print(f'{Fmt.BLUE}(loudness_monitor) getting audio from: "{AUDIO_SOURCE}"{Fmt.END}')
 
     # Threading the fifo listening loop for controlling this module
     prepare_control_fifo(LDCTRL_PATH)
