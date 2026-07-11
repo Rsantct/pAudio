@@ -45,7 +45,14 @@ def get_capture_device():
 
 
 def prepare_ldmon_path():
-    init_values = {"LU_I": -77.0, "LU_M": -80.0, "scope": "track"}
+
+    init_values = {
+        "LU_I":     -99.0,
+        "LU_M":     -99.0,
+        "scope":    "track",
+        "source":   AUDIO_SOURCE
+    }
+
     with open( LDMON_PATH, 'w') as f:
         f.write( json.dumps(init_values, indent=2) )
 
@@ -176,23 +183,39 @@ def wait_I():
 
 
 def save2disk():
-    # Saving to disk rounded to 1 dB
+    """ Saving to disk rounded to 1 dB
+    """
+
+    # From dBFS to dBLU ( 0 dBLU = -23dBFS )
+    I_LU = meter.I - -23.0
+    M_LU = meter.M - -23.0
+
+    # Floor the value on disk as per the used threshold
+    I_LU = I_LU // meter.I_threshold * meter.I_threshold
+    M_LU = M_LU // meter.M_threshold * meter.M_threshold
+
+    d = {   "LU_I":     I_LU,
+            "LU_M":     M_LU,
+            "scope":    scope,
+            "source":   AUDIO_SOURCE
+    }
+
     with open( LDMON_PATH, 'w') as f:
-        # From dBFS to dBLU ( 0 dBLU = -23dBFS )
-        I_LU = meter.I - -23.0
-        M_LU = meter.M - -23.0
-        # Floor the value on disk as per the used threshold
-        I_LU = I_LU // meter.I_threshold * meter.I_threshold
-        M_LU = M_LU // meter.M_threshold * meter.M_threshold
-        d = { "LU_I":  I_LU, "LU_M":  M_LU, "scope": scope }
         f.write( json.dumps(d, indent=2) )
 
 
 def stop():
     print(f'{Fmt.GRAY}(loudness_monitor.py) stopping.{Fmt.END}')
     Popen( 'pkill -KILL -o -f "loudness_monitor.py" 1>/dev/null 2>&1', shell=True )
+
+    d = {   "LU_I":     -99.0,
+            "LU_M":     -99.0,
+            "scope":    "track",
+            "source":   ""
+    }
+
     with open(LDMON_PATH, 'w') as f:
-        f.write('{"LU_I": -99.0, "LU_M": -99.0, "scope": "album"}')
+        f.write( json.dumps(d, indent=2) )
 
 
 if __name__ == '__main__':
