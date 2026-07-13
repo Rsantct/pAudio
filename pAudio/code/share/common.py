@@ -891,9 +891,36 @@ def get_loudspeaker_ways():
     return list(set(lws))
 
 
-def get_target_sets(fs=44100):
-    """ looks for '+x.x-x.x_target_mag.dat files inside the eq folder
+def get_target_sets(fs=44100, lmin=3.0, lmax=6.0, hmin=1.0, hmax=4.0, hstep=0.5):
+    """ Search for
+
+            '+x.x-x.x_target_mag.dat'
+
+        files within the eq folder
     """
+
+    def limited_sets():
+
+        result = []
+
+        for s in sets:
+
+
+            try:
+                # "+4.5-1.0"
+                l = round( float(s[1:4]), 1)
+                h = round( float(s[5:8]), 1)
+
+                if (lmin <= l <= lmax) and (hmin <= h <= hmax):
+                    if not hstep or h % hstep == 0.0:
+                        result.append( s )
+
+            except Exception as e:
+                print(f'{Fmt.RED}get_target_sets {s} ERROR: {e}{Fmt.BOLD}')
+
+        return result
+
+
     targets_folder  = f'{EQFOLDER}/curves_{fs}_N11/room_target'
     files = []
     sets  = []
@@ -902,15 +929,19 @@ def get_target_sets(fs=44100):
         files = os.listdir(targets_folder)
         files = [x for x in files if os.path.isfile(f'{targets_folder}/{x}') ]
         files = [x for x in files if x.endswith('_target_mag.dat') ]
-    except:
-        pass
+    except Exception as e:
+        print(f'{Fmt.RED}get_target_sets ERROR getting target files: {e}{Fmt.BOLD}')
 
     for file in files:
         tID = file.split('_target')[0]
         if not tID in sets:
             sets.append(tID)
 
-    return sorted(sets)
+    sets = sorted(sets)
+
+    sets = limited_sets()
+
+    return sets
 
 
 def get_pid_cmdline(process_name=''):
