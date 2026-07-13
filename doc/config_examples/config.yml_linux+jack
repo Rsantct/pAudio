@@ -81,3 +81,10 @@ expert_zone:
     # Default is false. Notice that CPU load will not decrease anymore, so you may
     # consider to include a 'paudio_restart.sh stop' entry in your daily crontab.
     disable_silence_timeout: true
+
+    # Limited offer of target curves, default limits are:
+    # low_min: 3.0, low_max: 6.0, high_min: 1.0, high_max: 4.0, high_step: 1.0
+    target_curves_dB_limits:        
+        high_step: 0.5
+        high_min:  0.0
+
