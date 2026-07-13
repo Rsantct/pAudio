@@ -920,6 +920,15 @@ def get_target_sets(fs=44100, lmin=3.0, lmax=6.0, hmin=1.0, hmax=4.0, hstep=0.5)
 
         return result
 
+    # Optional limits within config.yml
+    limits = CONFIG.get('expert_zone', {}) \
+                  .get('target_curves_dB_limits', {})
+    hstep =  limits.get('high_step', hstep)
+    hmin  =  limits.get('high_min',  hmin)
+    hmax  =  limits.get('high_max',  hmax)
+    lmin  =  limits.get('low_min',   lmin)
+    lmax  =  limits.get('low_max',   lmax)
+
 
     targets_folder  = f'{EQFOLDER}/curves_{fs}_N11/room_target'
     files = []
