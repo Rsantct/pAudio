@@ -66,15 +66,12 @@ Example for TV input on an external USB sound card and main output through by th
                 Mac Desktop:
                     channels: 2
                     device: BlackHole 2ch
-                    format: F32
 
                 TV:
                     channels: 2
                     device: "USB Audio CODEC "    # this card name includes a weird trailing space
-                    format: S16
     
             playback:
 
                 channels: 2
                 device: Altavoces del MacBook Pro
-                format: F32
