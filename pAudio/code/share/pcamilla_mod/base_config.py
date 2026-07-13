@@ -200,11 +200,11 @@ def append_dither(pAudio_config, cam_config):
 
 
     if pAudio_config.get("coreaudio"):
-        print(f"{Fmt.BOLD}'dither' must not be set when using CoreAudio{Fmt.END}")
+        print(f"{Fmt.RED}'dither' must not be set when using CoreAudio{Fmt.END}")
         return
 
     if pAudio_config.get("jack"):
-        print(f"{Fmt.BOLD}'dither' must not be set when using Jack{Fmt.END}")
+        print(f"{Fmt.RED}'dither' must not be set when using Jack{Fmt.END}")
         return
 
     # First of all we need to remove the pAudio dither parameter.
