@@ -7,6 +7,7 @@ import  os
 import  sys
 import  shutil
 import  subprocess      as      sp
+import  threading
 from    time            import  sleep
 import  json
 from    camilladsp      import  CamillaClient
@@ -36,34 +37,55 @@ if sys.platform == 'linux' and CONFIG.get('jack'):
 # The CamillaDSP client
 CC   = CamillaClient('127.0.0.1', CONFIG["camilladsp_port"])
 
-# Optional to dump active config to disk
-DUMP_ACTIVE = True
 
 #######################################################33##########
 # (!) use ALWAYS THIS FUNCTION to load a new config into CamillaDSP
 ###################################################################
-def set_config_sync(cfg, wait=CONFIG['camilladsp_activation_wait']):
+def set_config_sync(cfg, wait_multiplier=1):
     """ (i) When ordering set config some time is needed to be running
         This is a fake sync, but just works  >:-)
     """
 
     try:
         CC.config.set_active(cfg)
-        res = 'done'
+
+        # Default wait usually 0.1 is enough for most activations,
+        # but when changing the device you need to apply some multiplier
+        sleep( CONFIG['camilladsp_activation_wait'] * wait_multiplier )
+
+        result = 'done'
 
     except Exception as e:
 
         print(f'{Fmt.BOLD}(pcamilla) Error in config.set_active(): {str(e)}{Fmt.END}')
-        res = str(e)
+        result = str(e)
 
-    if res == 'done' and DUMP_ACTIVE:
-        with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w', encoding='utf-8') as f:
-            yaml.dump( cfg, f, Dumper=MyYamlIndent,
-                       indent=2, default_flow_style=False)
+    if result == 'done':
+        dump_config()
 
-    sleep(wait)
+    return result
 
-    return res
+
+def dump_config(config={}, fname='camilladsp_active.yml'):
+    """ This is threaded so it does not slow down
+        processing configuration changes
+    """
+
+    def do_it():
+
+        with open(f'{LOGFOLDER}/{fname}', 'w', encoding='utf-8') as f:
+            yaml.dump( config,
+                       f,
+                       Dumper             = MyYamlIndent,
+                       indent             = 2,
+                       default_flow_style = False
+            )
+
+    if not config:
+        config = CC.config.active()
+
+    job = threading.Thread(target=do_it)
+    job.start()
 
 
 def _connect_to_camilla():
@@ -321,17 +343,12 @@ def init_camilladsp(pAudio_config):
         return
 
     # Prepare the camilladsp.yml as per the pAudio user configuration
+    #
     cfg_init = _prepare_cam_config(pAudio_config)
+    #
+    # and dump it to disk
+    dump_config(cfg_init, fname='camilladsp_init.yml')
 
-    # Dumping init config
-    with open(f'{LOGFOLDER}/camilladsp_init.yml', 'w') as f:
-        yaml.dump( cfg_init, f, Dumper=MyYamlIndent,
-                   indent=2, default_flow_style=False)
-
-    if DUMP_ACTIVE:
-        with open(f'{LOGFOLDER}/camilladsp_active.yml', 'w') as f:
-            yaml.dump( cfg_init, f, Dumper=MyYamlIndent,
-                       indent=2, default_flow_style=False)
 
     # Loading configuration
     try:
@@ -339,9 +356,9 @@ def init_camilladsp(pAudio_config):
         print(f'(pcamilla) Trying to load configuration into the runnig CamillaDSP process. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
         set_config_sync(cfg_init)
         # First configuration takes a bit
-        sleep(.25)
+        sleep(.5)
         if not CC.config.active():
-            raise Exception('Falied to load the config into CamillaDSP, see LOG folder')
+            raise Exception('Failed to load the config into CamillaDSP, see LOG folder')
 
         # Check CPAL jack ports
         if pAudio_config.get('jack'):
@@ -384,18 +401,35 @@ def reload_eq():
 
 # Setting AUDIO, allways **MUST** return some string, usually 'done'
 
-# SOURCE SELECTOR function
-def set_capture( source ):
+# CAPTURE DEVICE CHANGE
+def set_capture( capture_params ):
+    """
+        (i) This is used only for a Coreaudio multidevice config.yml setup,
+            emulating a "source selector" mechanism.
+
+            CamillaDSP can change on the fly the capture device.
+
+            'format' is preferred to leave not specified because it is
+            in charge of CoreAudio (MIDI Audio Setup)
+
+            https://github.com/HEnquist/camilladsp/blob/master/backend_coreaudio.md
+
+        capture_params example:
+
+            {'channels': 2, 'device': 'USB Audio CODEC '}
+
+    """
 
     c = CC.config.active()
 
-    c["devices"]["capture"]["channels"] = source["channels"]
-    c["devices"]["capture"]["device"]   = source["device"]
-    c["devices"]["capture"]["format"]   = source["format"]
+    c["devices"]["capture"]["channels"] = capture_params["channels"]
+    c["devices"]["capture"]["device"]   = capture_params["device"]
+    c["devices"]["capture"]["format"]   = capture_params.get('format', None)
 
-    set_config_sync(c)
+    # Changing the device takes more than usual
+    result = set_config_sync(c, wait_multiplier=4)
 
-    return "done"
+    return result
 
 
 # RELOAD EQ setting audio functions

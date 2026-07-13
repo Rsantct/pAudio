@@ -36,22 +36,24 @@ def prepare_IMGFOLDER():
 
 def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
     """ Currently only Biquad filters of type
-        - 'Peaking'
-        - 'LinkwitzTransform'
+        - Peaking
+        - Lowshelf (Q or slope)
+        - Highshelf (Q or slope)
+        - Peaking
+        - LinkwitzTransform
     """
 
     filter_type = fcamilla_params.get('type')
     parameters  = fcamilla_params.get('parameters')
+    ab_coeffs   = (0, 0)
 
     if filter_type == 'Biquad' and isinstance(parameters, dict):
 
-        param_type = parameters.get('type')
-
-        if param_type == 'Peaking':
+        if parameters.get('type') == 'Peaking':
 
             freq = parameters.get('freq')
             gain = parameters.get('gain')
-            q = parameters.get('q')
+            q    = parameters.get('q')
 
             if all(v is not None for v in [freq, gain, q]):
 
@@ -67,7 +69,58 @@ def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
             else:
                 print(f"{Fmt.RED}'{fcamilla_name}' (Peaking): bad paramenters{Fmt.END}")
 
-        elif param_type == 'LinkwitzTransform':
+
+        elif parameters.get('type') == 'Highshelf':
+
+            freq  = parameters.get('freq')
+            gain  = parameters.get('gain')
+            q     = parameters.get('q', None)
+            slope = parameters.get('slope', None)
+
+            if all( v for v in [freq, gain, (q is not None) ^ (slope is not None)] ):
+
+                try:
+                    ab_coeffs = eqbook.highshelf_biquad_coefficients(freq, gain, fs, q, slope)
+
+                    if VERBOSE:
+                        print(fcamilla_name, parameters)
+
+                except Exception as e:
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Highshelf): error when calculating coefficients: {e}{Fmt.END}")
+
+            else:
+                if (q is not None) and (slope is not None):
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Highshelf): only one of \'q\' or \'slope\'{Fmt.END}")
+                else:
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Highshelf): bad paramenters{Fmt.END}")
+
+
+        elif parameters.get('type') == 'Lowshelf':
+
+            freq  = parameters.get('freq')
+            gain  = parameters.get('gain')
+            q     = parameters.get('q', None)
+            slope = parameters.get('slope', None)
+
+            if all( v for v in [freq, gain, (q is not None) ^ (slope is not None)] ):
+
+                try:
+                    ab_coeffs = eqbook.lowshelf_biquad_coefficients(freq, gain, fs, q, slope)
+
+                    if VERBOSE:
+                        print(fcamilla_name, parameters)
+
+                except Exception as e:
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Lowshelf): error when calculating coefficients: {e}{Fmt.END}")
+
+            else:
+                if (q is not None) and (slope is not None):
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Lowshelf): only one of \'q\' or \'slope\'{Fmt.END}")
+                else:
+                    print(f"{Fmt.RED}'{fcamilla_name}' (Lowshelf): bad paramenters{Fmt.END}")
+
+
+        elif parameters.get('type') == 'LinkwitzTransform':
 
             freq_act    = parameters.get('freq_act')
             q_act       = parameters.get('q_act')
@@ -89,7 +142,7 @@ def get_filter_ab_coeffs(fcamilla_name, fcamilla_params):
                 print(f"{Fmt.RED}'{fcamilla_name}' (LinkwitzTransform): bad paramenters{Fmt.END}")
 
         else:
-            print(f"{Fmt.RED}'{fcamilla_name}' ({param_type}): NOT supported{Fmt.END}")
+            print(f"{Fmt.RED}'{fcamilla_name}' ({parameters.get('type')}): NOT supported{Fmt.END}")
 
 
     return ab_coeffs
@@ -195,6 +248,10 @@ def plot_frequency_response(set_name, filters_L_R):
 
             b, a                = get_filter_ab_coeffs(fcamilla_name, fcamilla_params)
 
+            if not b and not a:
+                print(f"{Fmt.RED}filter '{fcamilla_name}' omitted.{Fmt.END}")
+                continue
+
             _, h_individual     = signal.freqz(b, a, worN=8192, fs=fs)
 
             h_combined_channel  *= h_individual
@@ -213,7 +270,7 @@ def plot_frequency_response(set_name, filters_L_R):
         ax_mag.legend( facecolor=FACECOLOR, loc='lower right')
         png_path = f'{IMGFOLDER}/drc_{set_name}.png'
         plt.savefig( png_path, facecolor=FACECOLOR )
-        print(f'(drc_iif2png) saved: {png_path}')
+        print(f'(drc_iir2png) saved: {png_path}')
 
         if VERBOSE:
             plt.show()

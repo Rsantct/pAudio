@@ -17,6 +17,7 @@
 
 import  sys
 import  os
+import  subprocess  as sp
 from    time        import sleep, time
 from    camilladsp  import CamillaClient
 
@@ -142,27 +143,6 @@ def run_plugins(mode='start'):
             sp.Popen(f'{PLUGINSFOLDER}/{plugin} stop', shell=True)
 
 
-def manage_loudness_monitor_daemon(mode='start'):
-
-    if mode == 'stop':
-
-        if not process_is_running('loudness_monitor.py'):
-            return()
-
-        if VERBOSE:
-            print(f'{Fmt.GRAY}(start) Stopping loudness_monitor.py{Fmt.END}')
-
-        tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py stop'
-        sp.call(tmp, shell=True)
-
-    else:
-        if VERBOSE:
-            print(f'{Fmt.GRAY}(start) Running loudness_monitor.py in background ...{Fmt.END}')
-
-        tmp = f'python3 {MAINFOLDER}/code/share/loudness_monitor.py start'
-        sp.Popen(tmp, shell=True)
-
-
 def prepare_jacktrip_server(iostat=False):
     """ run jacktrip in hub server mode
     """
@@ -264,6 +244,14 @@ def manage_signal_detector(mode='start'):
     print(f'{Fmt.GRAY}{Fmt.BOLD}(start) starting JACK sources signal detector ...{Fmt.END}')
 
 
+def stop_loudness_monitor():
+    """ starting is in charge of preamp.py because the device can be changed when using CoreAudio
+    """
+    print(f'{Fmt.GRAY}(start) killing loudness monitor.{Fmt.END}')
+    sp.Popen( 'pkill -KILL -f "loudness_monitor.py" 1>/dev/null 2>&1', shell=True )
+    with open(LDMON_PATH, 'w') as f:
+        f.write('{"LU_I": -99.0, "LU_M": -99.0, "scope": "album"}')
+
 def stop():
 
     if VERBOSE:
@@ -275,9 +263,6 @@ def stop():
 
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
-
-    # The loudness_monitor daemon
-    manage_loudness_monitor_daemon('stop')
 
     # The server
     sp.Popen(['pkill', '-f',  'server.py paudio '])
@@ -298,6 +283,9 @@ def stop():
         # Optional
         if CONFIG["jack"].get('sources_auto_switch', False):
             manage_signal_detector('stop')
+
+    # Stop standalone preocess loudness_monitor.py
+    stop_loudness_monitor()
 
     sleep(1)
 
@@ -392,10 +380,6 @@ def start():
         # Optional
         if CONFIG["jack"].get('sources_auto_switch', False):
             manage_signal_detector('start')
-
-
-    # The loudness_monitor daemon
-    manage_loudness_monitor_daemon('start')
 
 
 if __name__ == "__main__":

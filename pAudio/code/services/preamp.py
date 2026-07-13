@@ -53,31 +53,6 @@ STATE["application"] = 'pAudio'
 
 def init():
 
-    def get_coreaudio_source():
-        """ This retrieves the source name in coreaudio,
-            from the `capture:` section in config.yml
-        """
-        # default source
-        result = 'Desktop'
-
-        # 1. Read the 'normal' section, previously populated
-        #    even if the 'alternative' syntax was used
-        cap_device = CONFIG["coreaudio"]["devices"]["capture"]["device"]
-
-        # 2. Check in there are any source entry under `capture:` in `config.yml`
-        config_yml = yaml.safe_load( open(CONFIG_PATH, 'r') )
-
-        for item, params in config_yml["coreaudio"]["devices"]["capture"].items():
-
-            if not type(params) == dict:
-                continue
-
-            if params.get('device') == cap_device:
-                result = item
-
-        return result
-
-
     def resume_audio():
 
         def print_failure(param):
@@ -131,23 +106,26 @@ def init():
 
         set_drc( STATE["drc_set"] )
 
+
         # Source needs a little care
         last_source = STATE.get('source')
 
-        if last_source and last_source in SOURCES:
+        if last_source and last_source in CONFIG["sources"]:
 
             set_source( last_source )
 
         else:
 
-            if 'jack_sources' in sys.modules:
+            if CONFIG.get('jack'):
                 STATE["source"] = 'none'
 
-            elif 'coreaudio_sources' in sys.modules:
-                STATE["source"] = get_coreaudio_source()
+            elif CONFIG.get('coreaudio'):
+                # the first one as inserted
+                STATE["source"] = next(iter( CONFIG["sources"] ))
 
             else:
                 STATE["source"] = ''
+
 
         # Unmute by default
         if CONFIG.get('on_init', {}).get('keep_muted', False):
@@ -159,21 +137,18 @@ def init():
         save_json_file(STATE, PREAMP_STATE_PATH)
 
 
-    global STATE, CONFIG, SOURCES, TARGET_SETS, XO_SETS, DRC_SETS
+    global STATE, CONFIG, TARGET_SETS, XO_SETS, DRC_SETS
 
 
-    # (i) SOURCES can be populated internally with known plugins,
-    #     so the configured YAML should only contain user-defined sources.
-    if 'jack_sources' in sys.modules:
-        SOURCES = jack_sources.SOURCES
+    if CONFIG.get('jack'):
+        CONFIG["sources"] = jack_sources.SOURCES
 
-    elif 'coreaudio_sources' in sys.modules:
-        SOURCES = coreaudio_sources.SOURCES
+    elif CONFIG.get('coreaudio'):
+        CONFIG["sources"] = coreaudio_sources.get_coreaudio_sources()
 
     else:
-        SOURCES = {}
+        CONFIG["sources"] = {}
 
-    CONFIG["sources"] = SOURCES
 
     # Dump CONFIG to disk
     write_pAudio_cfg(CONFIG)
@@ -292,7 +267,7 @@ def init():
 
         STATE["input_dev"]      = CONFIG["coreaudio"]["devices"]["capture"] ["device"]
         STATE["output_dev"]     = CONFIG["coreaudio"]["devices"]["playback"]["device"]
-        STATE["output_latency"] = 12   # PENDING TO ESTIMATE BY QUERYING COREAUDIO
+        STATE["output_latency"] = 0   # PENDING TO ESTIMATE BY QUERYING COREAUDIO
 
     else:
 
@@ -312,9 +287,10 @@ def init():
     # Force values
     STATE["extra_delay"] = 0.0
 
-
+    #
     # Initialize camillaDSP
     cdsp_init = CAM.init_camilladsp( pAudio_config=CONFIG )
+    #
 
     if cdsp_init == 'done':
 
@@ -332,6 +308,9 @@ def init():
         # Saving state with user settings mods
         save_json_file(STATE, PREAMP_STATE_PATH)
 
+        # restarting loudness_monitor.py to get the current device (standalone process)
+        loudness_monitor_restart()
+
     else:
 
         print(f'{Fmt.BOLD}ERROR RUNNING CamillaDSP, check:')
@@ -344,7 +323,7 @@ def init():
         send_cmd(f"ctrl warning clear", port=CONFIG["paudio_port"]+1)
         send_cmd(f"ctrl warning set {camilla_error['error']}", port=CONFIG["paudio_port"]+1)
 
-        sys.exit()
+        exit()
 
 
 def eq2png():
@@ -353,6 +332,11 @@ def eq2png():
     # Threading because saving the PNG file can take too long
     j1 = threading.Thread(target=fir2png)
     j1.start()
+
+
+def loudness_monitor_restart():
+    print(f'{Fmt.BLUE}(preamp) restarting loudness monitor.py{Fmt.END}')
+    sp.Popen( f'python3 {MAINFOLDER}/code/share/loudness_monitor.py start', shell=True )
 
 
 # Interface functions with the underlying modules
@@ -603,29 +587,24 @@ def set_source(sname):
 
 
     source_is_available = True
-    result = 'no changes'
 
-    if not sname in SOURCES:
-        return f'must be in: { list( SOURCES.keys() ) }'
+    result = 'n/a'
 
-    # Deactivate compressor on change the source,
-    # regardless source specific settings
-    if set_compressor('off') == 'done':
-        STATE["compressor"] = 'off'
+    if not sname in CONFIG["sources"]:
+        return f'must be in: { list( CONFIG["sources"].keys() ) }'
 
     # COREAUDIO
     if CONFIG.get('coreaudio'):
 
-        # 'Desktop' is used when there are no alternative capture devices in config.yml
-        if sname == 'Desktop':
-            return 'no change available'
+        # CamillaDSP can change on the fly the capture device
+        new_capture_parameters = CONFIG["sources"][sname]
+        result = CAM.set_capture( new_capture_parameters )
 
-        res = CAM.set_capture( SOURCES[sname] )
-
-        # Extra in coreaudio update STATE.input_dev
-        config_yml         = yaml.safe_load( open(CONFIG_PATH, 'r') )
-        STATE["input_dev"] = config_yml["coreaudio"]["devices"]["capture"][sname]["device"]
-
+        if result == 'done':
+            # Capture device can change
+            STATE["input_dev"] = new_capture_parameters["device"]
+            # restarting loudness_monitor.py to get the current device (standalone process)
+            loudness_monitor_restart()
 
     # JACK
     elif CONFIG.get('jack'):
@@ -698,7 +677,7 @@ def set_source(sname):
             result = jack_sources.select( sname )
 
             # and apply gain offset (usually for analaog)
-            gain = SOURCES[sname].get('gain', 0.0)
+            gain = CONFIG["sources"][sname].get('gain', 0.0)
             try:
                 gain = round(gain, 1)
                 if set_gain_offset( gain ) == 'done':
@@ -716,6 +695,10 @@ def set_source(sname):
     else:
         result = 'bad config.yml'
 
+    # Deactivate compressor on change the source,
+    # regardless source specific settings
+    if set_compressor('off') == 'done':
+        STATE["compressor"] = 'off'
 
     return result
 
@@ -964,7 +947,7 @@ def do(cmd, args, add):
             result = json.dumps(STATE, indent=2)
 
         case 'get_sources':
-            result = json.dumps( list(SOURCES.keys()) )
+            result = json.dumps( list(CONFIG["sources"].keys()) )
 
         case 'get_target_sets':
             result = json.dumps(TARGET_SETS)

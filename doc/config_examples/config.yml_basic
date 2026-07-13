@@ -1,24 +1,25 @@
 # Please see doc/ and doc/config_examples for more features or Linux + Jack environment
-
+#
+# MORE INFO HERE: https://github.com/HEnquist/camilladsp/blob/master/backend_coreaudio.md
+#
 coreaudio:
 
+    # DO NOT SPECIFY 'format' nor 'dither' because they are in charge of CoreAudio
     devices:
 
         capture:
 
             channels: 2
             device: BlackHole 2ch
-            format: F32
 
         playback:
 
             channels: 2
             device: Altavoces del MacBook Pro
-            format: F32
 
-            # special example for the Behringer UCA 202 USB sound card
-            #device: "USB Audio CODEC "     # notice the trailing space
-            #format:                        # void because S16LE fails
+            # Special note for the Behringer UCA 202 USB sound card
+            # NOTICE that the card name has a weird trailing space in CoreAudio
+            #device: "USB Audio CODEC "
 
 
 loudspeaker: MyLoudspeaker

@@ -21,9 +21,9 @@ pAudio does this automatically on startup, also restores your previous Sound Out
 
 ## - Combined setup
 
-For example if you have a TV connected to Line In on your Mac, and you want not to take care of selecting the source:
+For example if you have a TV connected to OPTICAL LINE IN on your old 2014 model Mac Mini, and you want not to take care of selecting the source:
 - Mac Desktop sound
-- TV sound
+- TV sound (optical noise free)
 
 #### macOS MIDI Audio Configuration:
 
@@ -55,7 +55,7 @@ pAudio will select one of:
 - Mac Desktop sound
 - Line In (example: a TV)
 
-See below, normal and alternative source selection syntax are shown:
+Example for TV input on an external USB sound card and main output through by the integrated Mac audio sound output
 
     coreaudio:
 
@@ -63,31 +63,15 @@ See below, normal and alternative source selection syntax are shown:
 
             capture:
 
-                ---------------------------------------------------------------
-                Normal coreaudio input device directly specified:
-
-                channels: 2
-                device: BlackHole 2ch
-                format: F32_LE
-
-
-                ---------------------------------------------------------------
-                Alternative more than one section, to have source selection
-
                 Mac Desktop:
                     channels: 2
                     device: BlackHole 2ch
-                    format: F32_LE
 
                 TV:
                     channels: 2
-                    device: UMC204HD 192k
-                    format: S24_LE
-                ---------------------------------------------------------------
-
-
+                    device: "USB Audio CODEC "    # this card name includes a weird trailing space
+    
             playback:
 
                 channels: 2
                 device: Altavoces del MacBook Pro
-                format: F32_LE

@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 """
     Based on "The Audio Equalizer Cookbook" by Robert Bristow-Johnson.
+
+    Currently for biquad filters of type:
+
+        - Peaking
+        - Lowshelf (Q or slope)
+        - Highshelf (Q or slope)
+        - Peaking
+        - LinkwitzTransform
 """
 
 import numpy as np
@@ -34,6 +42,95 @@ def peaking_biquad_coefficients(freq, gain_db, q, fs):
     a2 = 1 - alpha / A
 
     # Normalize by a0
+    b0_norm = b0 / a0
+    b1_norm = b1 / a0
+    b2_norm = b2 / a0
+    a1_norm = a1 / a0
+    a2_norm = a2 / a0
+
+    return (b0_norm, b1_norm, b2_norm), (1.0, a1_norm, a2_norm)
+
+
+def highshelf_biquad_coefficients(freq, gain_db, fs, q=None, slope=None):
+    """
+    Calcula los coeficientes biquad para un filtro Highshelf (Shelving de agudos).
+    Basado en "Audio EQ Cookbook" de Robert Bristow-Johnson.
+
+    Puedes pasar 'q' O 'slope' (pendiente). Si se pasan ambos, predomina 'q'.
+    """
+    # 1. Conversión de ganancia lineal (específica para shelving)
+    A = 10**(gain_db / 40.0)
+
+    # 2. Frecuencia angular y su coseno/seno
+    omega = 2 * np.pi * freq / fs
+    sin_omega = np.sin(omega)
+    cos_omega = np.cos(omega)
+
+    # 3. Cálculo de alfa (depende de si usas Q o Slope)
+    if q is not None:
+        alpha = sin_omega / (2 * q)
+    elif slope is not None:
+        # Fórmula del RBJ Cookbook para Slope (S)
+        # Nota: CamillaDSP asume que S es la pendiente en dB/octava dividida por un factor,
+        # que coincide con la definición estándar de S en el Cookbook de RBJ.
+        alpha = sin_omega / 2 * np.sqrt((A + 1/A) * (1/slope - 1) + 2)
+    else:
+        raise ValueError("Debes especificar el parámetro 'q' o el parámetro 'slope'")
+
+    # 4. Coeficientes específicos para Highshelf de RBJ
+    b0 =       A * ( (A+1) + (A-1)*cos_omega + 2*np.sqrt(A)*alpha )
+    b1 =  -2 * A * ( (A-1) + (A+1)*cos_omega                   )
+    b2 =       A * ( (A+1) + (A-1)*cos_omega - 2*np.sqrt(A)*alpha )
+
+    a0 =             (A+1) - (A-1)*cos_omega + 2*np.sqrt(A)*alpha
+    a1 =   2     * ( (A-1) - (A+1)*cos_omega                   )
+    a2 =             (A+1) - (A-1)*cos_omega - 2*np.sqrt(A)*alpha
+
+    # 5. Normalización por a0
+    b0_norm = b0 / a0
+    b1_norm = b1 / a0
+    b2_norm = b2 / a0
+    a1_norm = a1 / a0
+    a2_norm = a2 / a0
+
+    return (b0_norm, b1_norm, b2_norm), (1.0, a1_norm, a2_norm)
+
+
+def lowshelf_biquad_coefficients(freq, gain_db, fs, q=None, slope=None):
+    """
+    Calcula los coeficientes biquad para un filtro Lowshelf (Shelving de graves).
+    Basado en "Audio EQ Cookbook" de Robert Bristow-Johnson.
+
+    Puedes pasar 'q' O 'slope' (pendiente). Si se pasan ambos, predomina 'q'.
+    """
+    # 1. Conversión de ganancia lineal (específica para shelving)
+    A = 10**(gain_db / 40.0)
+
+    # 2. Frecuencia angular y su coseno/seno
+    omega = 2 * np.pi * freq / fs
+    sin_omega = np.sin(omega)
+    cos_omega = np.cos(omega)
+
+    # 3. Cálculo de alfa (depende de si usas Q o Slope)
+    if q is not None:
+        alpha = sin_omega / (2 * q)
+    elif slope is not None:
+        # Fórmula del RBJ Cookbook para Slope (S)
+        alpha = sin_omega / 2 * np.sqrt((A + 1/A) * (1/slope - 1) + 2)
+    else:
+        raise ValueError("Debes especificar el parámetro 'q' o el parámetro 'slope'")
+
+    # 4. Coeficientes específicos para Lowshelf de RBJ
+    # (Presta atención a los cambios de signo frente al Highshelf)
+    b0 =       A * ( (A+1) - (A-1)*cos_omega + 2*np.sqrt(A)*alpha )
+    b1 =   2 * A * ( (A-1) - (A+1)*cos_omega                   )
+    b2 =       A * ( (A+1) - (A-1)*cos_omega - 2*np.sqrt(A)*alpha )
+
+    a0 =             (A+1) + (A-1)*cos_omega + 2*np.sqrt(A)*alpha
+    a1 =  -2     * ( (A-1) + (A+1)*cos_omega                   )
+    a2 =             (A+1) + (A-1)*cos_omega - 2*np.sqrt(A)*alpha
+
+    # 5. Normalización por a0
     b0_norm = b0 / a0
     b1_norm = b1 / a0
     b2_norm = b2 / a0

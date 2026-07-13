@@ -169,7 +169,7 @@ def prepare_base_config(pAudio_config, cam_config):
 
 
     cam_config["title"] = 'pAudio'
-    cam_config["description"] = 'A PC based advanced preamplifier, with FIR based EQ and active loudspeaker XOVER management'
+    cam_config["description"] = 'pAudio is a PC based advanced preamplifier, with FIR based EQ and active loudspeaker XOVER management'
 
     prepare_devices()
     prepare_filters()
@@ -199,7 +199,12 @@ def append_dither(pAudio_config, cam_config):
             return 16
 
 
-    if not pAudio_config.get("coreaudio", {}).get("devices", {}).get("playback", {}).get("dither", False):
+    if pAudio_config.get("coreaudio"):
+        print(f"{Fmt.RED}'dither' must not be set when using CoreAudio{Fmt.END}")
+        return
+
+    if pAudio_config.get("jack"):
+        print(f"{Fmt.RED}'dither' must not be set when using Jack{Fmt.END}")
         return
 
     # First of all we need to remove the pAudio dither parameter.

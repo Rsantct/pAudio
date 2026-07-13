@@ -4,79 +4,36 @@
 # This file is part of 'pAudio', a PC based personal audio system.
 
 import os
-import sys
+import yaml
+
 UHOME       = os.path.expanduser('~')
 MAINFOLDER  = f'{UHOME}/pAudio'
-sys.path.append(f'{MAINFOLDER}/code/share')
 
-from   common   import CONFIG
+def get_coreaudio_sources():
+    """ config.yml syntax can have two flavours for the coreaudio/devices section
 
+            - standard camillaDSP like (no pAudio source name is specified --> Desktop)
+            - multiple capture devices as "pAudio sources" available in the Mac
 
-SOURCES = {}
+        (see pAudio/doc config examples for more info)
 
+        Be aware that CONFIG["coreaudio"] HAS NOT the original
+        multiple capture devices tree if that flavour was used,
+        CONFIG only has the first one found.
 
-def _init():
-    get_sources()
-
-
-def get_sources():
+        So, we need to read again config/config.yml
     """
-    (i) THERE ARE TWO syntax options for Coreaudio capture device(s):
 
-    coreaudio:
+    cfg_path = f'{MAINFOLDER}/config/config.yml'
 
-        devices:
+    with open(cfg_path, 'r') as f:
+        cfg = yaml.safe_load( f.read() )
 
-            capture:
+    coreaudio_capture = cfg["coreaudio"]["devices"]["capture"]
 
-                ---------------------------------------------------------------
-                Normal coreaudio input device directly specified:
-
-                channels: 2
-                device: BlackHole 2ch
-                format: F32_LE
-
-
-                ---------------------------------------------------------------
-                Alternative more than one section, to have source selection
-
-                Mac Desktop:
-                    channels: 2
-                    device: BlackHole 2ch
-                    format: F32_LE
-
-                TV:
-                    channels: 2
-                    device: UMC204HD 192k
-                    format: S24_3_LE
-                ---------------------------------------------------------------
-
-
-            playback:
-
-                channels: 2
-                device: Altavoces del MacBook Pro
-                format: F32_LE
-
-
-    --> This function retrieves the ALTERNATIVE syntax sources is used
-        OR { 'Desktop': {} } if normal syntax is used.
-
-    """
-    global SOURCES
-
-    if CONFIG["coreaudio"]["devices"]["capture"].get('device'):
-        SOURCES = { 'Desktop': {} }
+    if 'device' in coreaudio_capture:
+        return { 'Desktop':  coreaudio_capture}
 
     else:
-        SOURCES = CONFIG["coreaudio"]["devices"].get('capture')
+        return coreaudio_capture
 
-    return SOURCES
-
-
-
-# (i) A select_source() function is not implemented here.
-#     Preamp will use pcamilla.set_capture()
-
-
-_init()

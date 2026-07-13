@@ -891,9 +891,36 @@ def get_loudspeaker_ways():
     return list(set(lws))
 
 
-def get_target_sets(fs=44100):
-    """ looks for '+x.x-x.x_target_mag.dat files inside the eq folder
+def get_target_sets(fs=44100, lmin=3.0, lmax=6.0, hmin=1.0, hmax=4.0, hstep=0.5):
+    """ Search for
+
+            '+x.x-x.x_target_mag.dat'
+
+        files within the eq folder
     """
+
+    def limited_sets():
+
+        result = []
+
+        for s in sets:
+
+
+            try:
+                # "+4.5-1.0"
+                l = round( float(s[1:4]), 1)
+                h = round( float(s[5:8]), 1)
+
+                if (lmin <= l <= lmax) and (hmin <= h <= hmax):
+                    if not hstep or h % hstep == 0.0:
+                        result.append( s )
+
+            except Exception as e:
+                print(f'{Fmt.RED}get_target_sets {s} ERROR: {e}{Fmt.BOLD}')
+
+        return result
+
+
     targets_folder  = f'{EQFOLDER}/curves_{fs}_N11/room_target'
     files = []
     sets  = []
@@ -902,15 +929,19 @@ def get_target_sets(fs=44100):
         files = os.listdir(targets_folder)
         files = [x for x in files if os.path.isfile(f'{targets_folder}/{x}') ]
         files = [x for x in files if x.endswith('_target_mag.dat') ]
-    except:
-        pass
+    except Exception as e:
+        print(f'{Fmt.RED}get_target_sets ERROR getting target files: {e}{Fmt.BOLD}')
 
     for file in files:
         tID = file.split('_target')[0]
         if not tID in sets:
             sets.append(tID)
 
-    return sorted(sets)
+    sets = sorted(sets)
+
+    sets = limited_sets()
+
+    return sets
 
 
 def get_pid_cmdline(process_name=''):
@@ -1065,18 +1096,22 @@ def estimate_server_response_delay():
     return estimated
 
 
-def ip_is_reachable(ip):
-    """ ip (str) responds to a ping request.
-        (boolean)
+def do_ping(addr, timeout=0.1):
+    """ Try pinging the address once.
+        returns: True/False
     """
-    param = '-n' if sys.platform.lower().startswith('win') else '-c'
 
-    command = ['ping', param, '1', ip]
+    ping_cmd = f"ping -c 1 -W {timeout} {addr}"
 
-    # Run the command and redirect output to DEVNULL to keep the console clean
-    result = sp.run(command, stdout=sp.DEVNULL, stderr=sp.DEVNULL).returncode == 0
+    try:
+        res = sp.run(ping_cmd.split(), stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+        if res.returncode == 0:
+            return True
 
-    return result
+    except Exception as e:
+        print(f"{Fmt.RED}(common) Error with ping: {e}{Fmt.END}")
+
+    return False
 
 
 def is_IP(s):
