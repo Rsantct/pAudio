@@ -437,6 +437,9 @@ def get_player_info():
         if 'play' in player_info.get('state'):
             break
 
+    if not player_info:
+        player_info = {}
+
     return info2paudio_format(player_info)
 
 
