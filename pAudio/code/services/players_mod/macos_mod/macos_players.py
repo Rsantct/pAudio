@@ -404,6 +404,7 @@ def get_player_info():
     """
 
     players_info = []
+    player_info = {}
 
     for app in preferred_apps:
 
@@ -431,14 +432,12 @@ def get_player_info():
             if type( player_info ) == dict:
                 players_info.append( player_info )
 
-    for player_info in players_info:
-
+    for pi in players_info:
+                
         # First app in play state has prececende
-        if 'play' in player_info.get('state'):
-            break
-
-    if not player_info:
-        player_info = {}
+        if 'play' in pi.get('state'):
+            player_info = pi
+            break           
 
     return info2paudio_format(player_info)
 
