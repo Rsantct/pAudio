@@ -33,6 +33,9 @@ def init():
     else:
         if os.path.isfile(f'{BREW}/bin/SwitchAudioSource'):
             SWITCHAUDIO_BIN = f'{BREW}/bin/SwitchAudioSource'
+        else:
+            if os.path.isfile('/usr/local/bin/SwitchAudioSource'):
+                SWITCHAUDIO_BIN = '/usr/local/bin/SwitchAudioSource'
 
 
     if os.path.isfile(f'{UHOME}/bin/AdjustVolume'):
