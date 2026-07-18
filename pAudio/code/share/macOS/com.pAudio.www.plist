@@ -12,8 +12,7 @@
         <string>/bin/sh</string>
         <string>-l</string>
         <string>-c</string>
-        <!-- string>exec /opt/homebrew/bin/node $HOME/pAudio/code/share/www/paudio_www.js</string -->
-        <string>exec /usr/local/bin/node $HOME/pAudio/code/share/www/paudio_www.js</string>
+        <string>exec /opt/homebrew/bin/node $HOME/pAudio/code/share/www/paudio_www.js</string>
     </array>
 
     <!-- run on sesion init -->
