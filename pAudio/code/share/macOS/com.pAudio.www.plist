@@ -24,11 +24,11 @@
     <false/>
 
     <!-- DEBUG
+    -->
     <key>StandardOutPath</key>
     <string>/tmp/com.pAudio.www.log</string>
     <key>StandardErrorPath</key>
     <string>/tmp/com.pAudio.www.err</string>
-    -->
 
 </dict>
 </plist>
