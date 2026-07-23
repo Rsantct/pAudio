@@ -272,6 +272,9 @@ def set_playback_device_volume(volume_dB = -20):
         0.95    -1.61
         1.00    0.0
 
+
+        The CoreAudio driver uses:  atten = 1 - sqrt(Value)
+
         dB = -63.5 * (1 - sqrt(Value))
 
         Value = (1 + dB / 63.5) ** 2
