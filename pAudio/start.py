@@ -259,7 +259,7 @@ def stop():
 
     # Only macOS
     if sys.platform == 'darwin':
-        macos.restore_playback_device()
+        macos.restore_playback_device( volume_dB = -30)
 
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
