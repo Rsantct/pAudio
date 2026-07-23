@@ -237,7 +237,7 @@ def change_default_sound_device(new_dev):
     set_device_vol(old_dev, '100')
 
 
-def restore_playback_device(volume_dB = -20):
+def set_playback_device_volume(volume_dB = -20):
     """
         Audio MIDI
 
@@ -289,19 +289,19 @@ def restore_playback_device(volume_dB = -20):
         dev = sp.check_output(cmd, shell=True).decode().strip()
 
     except Exception as e:
-        print(f'(restore_playback_device) ERROR getting Default System Output Device: {e}')
+        print(f'{Fmt.RED}(set_playback_device_volume) ERROR getting Default System Output Device: {e}{Fmt.END}')
 
     if dev:
         if SWITCHAUDIO_BIN:
             sp.call(f'{SWITCHAUDIO_BIN} -s "{dev}"', shell=True)
             sp.call(f"osascript -e 'set volume output volume '{volume_percent}", shell=True)
-            print(f'(restore_playback_device) Restoring Playback Device to {volume_dB} dB')
+            print(f'{Fmt.BLUE}(set_playback_device_volume) Restoring Playback Device volume to {volume_dB} dB{Fmt.END}')
 
         else:
-            print(f'(restore_playback_device) SwitchAudioSource NOT AVAILABLE')
+            print(f'{Fmt.RED}(set_playback_device_volume) SwitchAudioSource NOT AVAILABLE{Fmt.END}')
 
     else:
-            print(f'(restore_playback_device) UNABLE to find default system output device')
+            print(f'{Fmt.RED}(set_playback_device_volume) UNABLE to find default system output device{Fmt.END}')
 
 
 init()
