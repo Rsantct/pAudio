@@ -36,11 +36,10 @@
     <key>KeepAlive</key>
     <false/>
 
-    <!-- DEBUG (while testing)
+    <!-- DEBUG
     -->
     <key>StandardOutPath</key>
     <string>/tmp/com.pAudio.ctrl.log</string>
-
     <key>StandardErrorPath</key>
     <string>/tmp/com.pAudio.ctrl.err</string>
 
