@@ -16,6 +16,22 @@ function update_camilladsp_plist {
     sed -i '' "s|$old|$new|g" "$fname"
 }
 
+
+function update_www_plist {
+
+    NODE_PATH=$(which node)
+    if [[ ! $NODE_PATH ]]; then
+        NODE_PATH="/usr/local/bin/node"
+    fi
+
+    old="/opt/homebrew/bin/node"
+    new="$NODE_PATH"
+    fname=$HOME"/Library/LaunchAgents/com.pAudio.www.plist"
+
+    sed -i '' "s|$old|$new|g" "$fname"
+}
+
+
 if [[ -f ~/pAudio/config/config.yml ]]; then
     CONFIG_EXISTS='yes'
 else
@@ -78,9 +94,12 @@ pkill -f "server.py paudio_ctrl"    1>/dev/null 2>&1
 echo
 
 if [[ $(uname) == "Darwin" ]]; then
+    
     echo "Updating pAudio .plist files to ~/Library/LaunchAgents/"
     cp pAudio/code/share/macOS/com.pAudio.* ~/Library/LaunchAgents/
+
     update_camilladsp_plist
+    update_www_plist
 fi
 
 
