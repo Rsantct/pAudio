@@ -259,7 +259,8 @@ def stop():
 
     # Only macOS
     if sys.platform == 'darwin':
-        macos.restore_playback_device( volume_dB = -30)
+        restore_system_volume = CONFIG.get('coreaudio', {}).get('restore_volume', -30)
+        macos.set_playback_device_volume( volume_dB = restore_system_volume)
 
     # Plugins (stand-alone processes)
     run_plugins(mode='stop')
