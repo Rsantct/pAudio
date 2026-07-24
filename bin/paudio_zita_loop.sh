@@ -10,7 +10,7 @@ function help {
     echo "          HOSTNAME:   host colateral"
     echo "          BUFF:       valor obligatorio (ms)"
     echo "          loop:       para cablear el bucle de retorno en Jack"
-    echo "          delay:      para medir el retardo del bucle"
+    echo "          delay:      para medir el retardo del bucle con jack_delay por 30 s"
     echo "          stop:       detiene inmediatamente todos los procesos zita_loop"
     echo
     echo "Notas:    Los procesos zita_loop expirarán en 5 minutos automáticamente"
@@ -80,14 +80,14 @@ else
         jack_connect    zita_loop_n2j_$REM_ID:out_1  zita_loop_j2n_$REM_ID:in_1
         jack_connect    zita_loop_n2j_$REM_ID:out_2  zita_loop_j2n_$REM_ID:in_2
 
-    # medidor jack_delay por 10 segundos
+    # medidor jack_delay por 30 segundos
     elif [[ $3 == "delay" ]]; then
         sleep 5
         echo "*** ESPERE 30 SEGUNDOS PARA ESTABILIZAR ***"
         sleep 25
-        echo "MIDIENDO EL RETARDO DURANTE 15 s..."
+        echo "MIDIENDO EL RETARDO DURANTE 30 s..."
         jack_delay -O zita_loop_j2n_$REM_ID:in_1 -I zita_loop_n2j_$REM_ID:out_1 &
-        sleep 15
+        sleep 30
         killall jack_delay
     fi
 
