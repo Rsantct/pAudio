@@ -1,5 +1,7 @@
 #!/bin/bash
 
+T_ANALISIS=30
+
 function help {
     echo
     echo "Utilidad para evaluar el retardo entre dos servidores JACK unidos por ZITA-BRIDGE"
@@ -87,14 +89,14 @@ else
         echo "*** ESPERE 30 SEGUNDOS PARA ESTABILIZAR ***"
         sleep 25
 
-        echo "MIDIENDO EL RETARDO DURANTE 30 s..."
+        echo "MIDIENDO EL RETARDO DURANTE "$T_ANALISIS" s..."
         # el resultado se vuelca a /tmp
         rm -f /tmp/jack_delay
         jack_delay -O zita_loop_j2n_$REM_ID:in_1 -I zita_loop_n2j_$REM_ID:out_1 > /tmp/jack_delay &
         sleep .2
         # y se muestra con tail -f
         tail -f /tmp/jack_delay &
-        sleep 30
+        sleep $T_ANALISIS
         killall jack_delay
 
         # análisis
