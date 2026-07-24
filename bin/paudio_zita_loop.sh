@@ -76,8 +76,8 @@ else
     if [[ $3 == "loop" ]]; then
         echo "CABLEANDO BUCLE EN JACK ..."
         sleep 3
-        jack_connect    zita_loop_n2j_41:out_1  zita_loop_j2n_41:in_1
-        jack_connect    zita_loop_n2j_41:out_2  zita_loop_j2n_41:in_2
+        jack_connect    zita_loop_n2j_$REM_ID:out_1  zita_loop_j2n_$REM_ID:in_1
+        jack_connect    zita_loop_n2j_$REM_ID:out_2  zita_loop_j2n_$REM_ID:in_2
 
     # medidor jack_delay por 10 segundos
     elif [[ $3 == "delay" ]]; then
