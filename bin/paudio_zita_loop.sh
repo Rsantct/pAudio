@@ -4,13 +4,14 @@ function help {
     echo
     echo "Utilidad para evaluar el retardo entre dos servidores JACK unidos por ZITA-BRIDGE"
     echo
-    echo "Uso:  paudio_zita_loop HOSTNAME.local   BUFF | stop  [loop | delay]"
+    echo "Uso:  paudio_zita_loop HOSTNAME.local BUFF [loop | delay]"
+    echo "      paudio_zita_loop stop"
     echo
     echo "          HOSTNAME:   host colateral"
     echo "          BUFF:       valor obligatorio (ms)"
-    echo "          stop:       detiene los procesos zita_loop"
     echo "          loop:       para cablear el bucle de retorno en Jack"
     echo "          delay:      para medir el retardo del bucle"
+    echo "          stop:       detiene inmediatamente todos los procesos zita_loop"
     echo
     echo "Notas:    Los procesos zita_loop expirarán en 5 minutos automáticamente"
     echo "          Experimente probando valores de BUFF dependiendo de su conexión de red"
@@ -47,7 +48,7 @@ LOC_ID="${IP_LOCAL##*.}"
 pkill -f "zita_loop_"
 sleep 1
 
-if [[ $2 == *"s"* ]]; then
+if [[ $1 == *"stop"* || $2 == *"stop"* ]]; then
     echo "stopped"
     exit 0
 
