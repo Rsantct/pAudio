@@ -82,13 +82,25 @@ else
 
     # medidor jack_delay por 30 segundos
     elif [[ $3 == "delay" ]]; then
+
         sleep 5
         echo "*** ESPERE 30 SEGUNDOS PARA ESTABILIZAR ***"
         sleep 25
+
         echo "MIDIENDO EL RETARDO DURANTE 30 s..."
-        jack_delay -O zita_loop_j2n_$REM_ID:in_1 -I zita_loop_n2j_$REM_ID:out_1 &
+        # el resultado se vuelca a /tmp
+        rm -f /tmp/jack_delay
+        jack_delay -O zita_loop_j2n_$REM_ID:in_1 -I zita_loop_n2j_$REM_ID:out_1 > /tmp/jack_delay &
+        sleep .2
+        # y se muestra con tail -f
+        tail -f /tmp/jack_delay &
         sleep 30
         killall jack_delay
+
+        # análisis
+        echo
+        python3 $HOME/bin/paudio_slave_tools/net_lspk_jitter_stats.py /tmp/jack_delay
+        echo
     fi
 
     # Programar la terminación de zita_loops en 5 minutos en segundo plano desvinculado
