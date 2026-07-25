@@ -11,6 +11,7 @@ from    watchdog.events     import FileSystemEventHandler
 import  socket
 from    time        import sleep, strftime, perf_counter
 from    datetime    import datetime
+import  re
 import  yaml
 import  json
 import  shlex
@@ -1201,6 +1202,47 @@ def get_my_ip():
         return ip
     else:
         return get_my_ip_through_hostname()
+
+
+def get_network_type(ip_dest: str = "127.0.0.1") -> str:
+    """
+    Determina si una IP local es alcanzada vía Cable (Ethernet), Wi-Fi o Desconocido.
+    """
+    try:
+        # Ejecutamos 'ip route get <IP>' para obtener la ruta del kernel
+        resultado = sp.run(
+            ["ip", "route", "get", ip_dest],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        salida = resultado.stdout
+
+        # Buscamos la interfaz indicada tras el parámetro 'dev'
+        coincidencia = re.search(r"\bdev\s+(\S+)", salida)
+        if not coincidencia:
+            return f"No se pudo determinar la interfaz en la salida: '{salida.strip()}'"
+
+        interfaz = coincidencia.group(1)
+
+        # Reglas de identificación basadas en los prefijos de Linux
+        if interfaz.startswith(("eth", "enp", "eno", "ens", "enx")):
+            tipo = "Red Cableada (Ethernet)"
+        elif interfaz.startswith(("wlan", "wlp", "wlo", "wls", "wlx")):
+            tipo = "WiFi"
+        elif interfaz == "lo":
+            tipo = "Bucle local (Loopback / Misma máquina)"
+        elif interfaz.startswith(("veth", "br-", "docker", "virbr", "tap", "tun")):
+            tipo = f"Interfaz Virtual / Puente / VPN ({interfaz})"
+        else:
+            tipo = "Desconocido / Otro tipo de interfaz"
+
+        return f"La IP {ip_dest} se alcanza vía {tipo} (Interfaz: {interfaz})"
+
+    except subprocess.CalledProcessError:
+        return f"Error: La IP {ip_dest} no es alcanzable o la ruta no existe."
+    except FileNotFoundError:
+        return "Error: El comando 'ip' no está disponible en este sistema."
 
 
 def get_camilladsp_last_error():
