@@ -458,6 +458,21 @@ def set_source(sname):
                 will be dynamically changed if config.yml has been modified
     """
 
+    def get_zita_net_latency(dest_ip):
+        """ it depends on wired or wifi, experimental values
+        """
+        net_link_type = get_network_type(dest_ip).lower()
+
+        if "eth"  in net_link_type:
+            return 0.4
+
+        if "wifi" in net_link_type:
+            return 2.5
+
+        else:
+            return 0.0
+
+
     def get_remote_state(rhost, rport):
         rstate = send_cmd(f'state', host=rhost, port=rport, timeout=1)
         try:
@@ -611,22 +626,43 @@ def set_source(sname):
 
         # Remote source
         if 'remote' in sname:
-            rc = read_remote_source_config(sname)
-            zita_buff          = rc.get('zita_buffer_ms', 10)
-            remote_addr        = rc.get('remote_addr')
-            remote_port        = rc.get('remote_port', 9990)
-            do_track_level     = rc.get('remote_track_level', True)
-            compensation_delay = rc.get('compensation_delay_ms', 0.0)
 
-            remote_state        = get_remote_state(remote_addr, remote_port)
-            remote_xo_latency   = remote_state.get('xo_latency',  0.0)
-            remote_extra_delay  = remote_state.get('extra_delay', 0.0)  # ignored, will force ours (**)
-            local_xo_latency    = read_state_from_disk().get('xo_latency', 0.0)
+            # remote source settings
+            rsc = read_remote_source_config(sname)
+            zita_buff          = rsc.get('zita_buffer_ms', 10)
+            remote_addr        = rsc.get('remote_addr')
+            remote_port        = rsc.get('remote_port', 9990)
+            do_track_level     = rsc.get('remote_track_level', True)
+            relative_distance  = rsc.get('relative_distance', 10)
 
-            latency_compensation =   compensation_delay     \
-                                   + remote_xo_latency      \
-                                   - local_xo_latency
-            latency_compensation = round( latency_compensation, 1 )
+            # local behavior
+            zita_net_latency = get_zita_net_latency( remote_addr )
+            zita_resampler_samples = 48  # default zita value we do not override it
+            local_fs = CONFIG.get('samplerate', 44100)
+
+            lst = read_state_from_disk()
+            local_dsp_latency   = lst.get('dsp_latency',    20.0)
+            local_xo_latency    = lst.get('xo_latency',      0.0)
+            local_out_latency   = lst.get('output_latency', 20.0)
+
+            local_latency = (
+                zita_buff + zita_net_latency + zita_resampler_samples / local_fs * 1000 +
+                local_dsp_latency + local_xo_latency + local_out_latency
+            )
+
+            # remote behavior
+            rst = get_remote_state(remote_addr, remote_port)
+            remote_dsp_latency  = rst.get('dsp_latency',    20.0)
+            remote_xo_latency   = rst.get('xo_latency',      0.0)
+            remote_out_latency  = rst.get('output_latency', 20.0)
+
+            remote_latency = (
+                remote_dsp_latency + remote_xo_latency + remote_out_latency +
+                relative_distance / 340 * 1000
+            )
+
+            # latency compensation: remote vs local
+            latency_compensation = round( remote_latency - local_latency, 1 )
 
             # Tell the remote to track its volume to the local end (optional)
             if do_track_level:
