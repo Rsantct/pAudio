@@ -30,16 +30,14 @@ jack:
             remote_addr:            192.168.1.57
             remote_track_level:     true
             zita_buffer_ms:         20
-            compensation_delay_ms:  0
-            # Zita default is 10 ms, but if you use WiFi (not recommended) you may want > 100 ms
-            # Compensation delay is an experimental value that you need to fine tune AFTER setting the zita_buffer,
-            # then an internal calculator will order convenient extra_delay commands to both local and remote.
-            #     - A positive value will push the calculated extra_delay to the local system,
-            #       notice that you may prefer to use positive values in zita_buffer
-            #     - A negative value will push it to the remote end.
-            # Changes in both ___ms parameters will take effect dynamically when selecting a remote source.
+            relative_distance:     8
+            # 'zita_buffer_ms' default is 10 ms, but if you use WiFi (not recommended) you may want > 100 ms
+            # 'relative_distance' (meters) is an experimental value that you need to fine tune AFTER
+            # setting the zita_buffer, then an internal calculator will order convenient extra_delay
+            # commands to both local and remote.
+            # Changes in both parameters will take effect dynamically when selecting a remote source.
             # The internal calculator takes in account the current DSP latencies at both ends,
-            # for instance when selecting linear phase filters.
+            # for instance when selecting linear phase filters. Also the network type (wired or wifi)
 
         # A special remote source based on JackTrip
         MacBook Pro:
