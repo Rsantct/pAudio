@@ -11,6 +11,7 @@ from    watchdog.events     import FileSystemEventHandler
 import  socket
 from    time        import sleep, strftime, perf_counter
 from    datetime    import datetime
+import  copy        # for deep copy of dictionaries
 import  re
 import  yaml
 import  json
@@ -23,7 +24,7 @@ from    config      import *
 
 if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
     from    common_mod  import macos
-    macos.CONFIG = CONFIG.copy()
+    macos.CONFIG = copy.deepcopy(CONFIG)
 
 USER = getuser()
 
@@ -556,7 +557,6 @@ def tcp_server(addr='127.0.0.1', port=0, service_id='UNNAMED', processor=None, v
         handle_client(srv)
 
 
-
 def send_msg(host, port, message, timeout=1.0, chunk_size=4096):
     """ A general purspose TCP client that sends a message, then
         returns a response if any.
@@ -835,6 +835,43 @@ def read_cmd_phrase(cmd_phrase):
         argstring = ' '.join( chunks[2:] )
 
     return pfx, cmd, argstring, add
+
+
+def has_key_value(estructura, clave_buscada, valor_buscado) -> bool:
+    """
+    Recorre diccionarios y listas anidadas buscando cualquier pareja clave:valor.
+
+    :param estructura: Diccionario o lista (puede contener anidamientos)
+    :param clave_buscada: Nombre de la clave a localizar
+    :param valor_buscado: Valor exacto que debe tener la clave
+    :return: True si existe la combinación, False en caso contrario
+    """
+    if isinstance(estructura, dict):
+        for clave, valor in estructura.items():
+            # Condición generalizada
+            if clave == clave_buscada and valor == valor_buscado:
+                return True
+            # Búsqueda recursiva en subestructuras
+            if isinstance(valor, (dict, list)) and has_key_value(valor, clave_buscada, valor_buscado):
+                return True
+
+    elif isinstance(estructura, list):
+        for elemento in estructura:
+            if isinstance(elemento, (dict, list)) and has_key_value(elemento, clave_buscada, valor_buscado):
+                return True
+
+    return False
+
+
+def remove_keys(d: dict, patterns: list[str]) -> dict:
+    """ Devuelve una copia de 'd' sin las claves de primer nivel que contengan
+        alguna de las cadenas presentes en 'patterns'
+    """
+    return {
+        clave: valor
+        for clave, valor in d.items()
+        if not any(p in clave for p in patterns)
+    }
 
 
 def x2int(x):
