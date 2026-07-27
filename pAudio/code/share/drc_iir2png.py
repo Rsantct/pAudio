@@ -196,32 +196,10 @@ def prepare_plot():
     return ax_mag, ax_pha
 
 
-def plot_frequency_response(set_name, filters_L_R):
-    """
-        set_name:   string
-
-        filters_L_R:    { 'L':  { 1: { 'type': 'Biquad',
-                                       'parameters': {'type': 'Peaking',
-                                                      'freq': 53.8,
-                                                      'gain': -2.0,
-                                                      'q': 4.645
-                                                      }
-                                      }
-                                  2: ....
-                                },
-
-                          'R':  { ...
-                                }
-                        }
-    """
+def plot_frequency_response(set_name, drc_definition):
 
     if VERBOSE:
         print('\n--------')
-
-    # If not L or not R
-    for ch in ('L', 'R'):
-        if not ch in filters_L_R:
-            filters_L_R[ch] = {}
 
     # Subplots for magnitude, phase, group_delay
     ax_mag, ax_pha = prepare_plot()
@@ -234,27 +212,25 @@ def plot_frequency_response(set_name, filters_L_R):
     w_freqs, _ = signal.freqz([1], [1], worN=8192, fs=fs)
 
     traces_count = 0
-    for ch, filters in filters_L_R.items():
+    for ch, filters in drc_definition.items():
 
         # Initialize with ones for multiplication
         h_combined_channel = np.ones_like(w_freqs, dtype=complex)
 
-
         if VERBOSE:
             print(f"{set_name} {ch}, processing biquads: {list(filters.keys())}")
 
-
         for fcamilla_name, fcamilla_params in filters.items():
 
-            b, a                = get_filter_ab_coeffs(fcamilla_name, fcamilla_params)
+            b, a = get_filter_ab_coeffs(fcamilla_name, fcamilla_params)
 
             if not b and not a:
                 print(f"{Fmt.RED}filter '{fcamilla_name}' omitted.{Fmt.END}")
                 continue
 
-            _, h_individual     = signal.freqz(b, a, worN=8192, fs=fs)
+            _, h_individual = signal.freqz(b, a, worN=8192, fs=fs)
 
-            h_combined_channel  *= h_individual
+            h_combined_channel *= h_individual
 
         combined_magnitude_db  = 20 * np.log10(abs(h_combined_channel))
 
@@ -280,6 +256,36 @@ def plot_frequency_response(set_name, filters_L_R):
         plt.close()
 
 
+def clear_drc_definition(d):
+    """
+        cleared drc_definition example:
+
+        {
+            "L": {                    <---- filter item for L channel
+                "1": {
+                    "type": "Biquad",
+                    "parameters": {
+                        "type": "Peaking",
+                        "freq": 53.8,
+                        "gain": -2.0,
+                        "q": 4.645
+                    }
+                }
+            },
+
+            "R": {                   <---- filter item for R channel
+                ...
+            },
+
+            "flat_gain":  -1.5,       <---- NO FILTER item SHOULD BE REMOVED
+
+            "posit_gain":  3.6        <---- NO FILTER item SHOULD BE REMOVED
+        }
+    """
+
+    return remove_keys( d, ['gain', 'latency'] )
+
+
 if __name__ == "__main__":
 
     for opc in sys.argv[1:]:
@@ -295,21 +301,16 @@ if __name__ == "__main__":
     # Prepare loudspeaker image folder
     prepare_IMGFOLDER()
 
-    drc_sets = CONFIG["drc"]
-    fs       = CONFIG["samplerate"]
+    fs = CONFIG["samplerate"]
 
-    for set_name, filters_L_R in drc_sets.items():
+    for drc_name, drc_definition in CONFIG["drc"].items():
 
-        # skip FIR type
-        is_fir = False
-        for ch, filters in filters_L_R.items():
-            for f, params in filters.items():
-                if params.get('type', '') == 'Conv':
-                    is_fir = True
+        # skip if the drc_set is FIR
+        if has_key_value( drc_definition, "type", "Conv" ):
+            continue
 
-        if not is_fir:
-            plot_frequency_response(set_name, filters_L_R)
+        plot_frequency_response( drc_name, clear_drc_definition(drc_definition) )
 
-    plot_frequency_response('none', filters_L_R={})
+    plot_frequency_response('none', {})
 
 

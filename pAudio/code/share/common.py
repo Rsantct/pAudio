@@ -11,6 +11,8 @@ from    watchdog.events     import FileSystemEventHandler
 import  socket
 from    time        import sleep, strftime, perf_counter
 from    datetime    import datetime
+import  copy        # for deep copy of dictionaries
+import  re
 import  yaml
 import  json
 import  shlex
@@ -22,7 +24,7 @@ from    config      import *
 
 if sys.platform.lower() == 'darwin' and CONFIG.get('coreaudio'):
     from    common_mod  import macos
-    macos.CONFIG = CONFIG.copy()
+    macos.CONFIG = copy.deepcopy(CONFIG)
 
 USER = getuser()
 
@@ -555,7 +557,6 @@ def tcp_server(addr='127.0.0.1', port=0, service_id='UNNAMED', processor=None, v
         handle_client(srv)
 
 
-
 def send_msg(host, port, message, timeout=1.0, chunk_size=4096):
     """ A general purspose TCP client that sends a message, then
         returns a response if any.
@@ -836,6 +837,43 @@ def read_cmd_phrase(cmd_phrase):
     return pfx, cmd, argstring, add
 
 
+def has_key_value(estructura, clave_buscada, valor_buscado) -> bool:
+    """
+    Recorre diccionarios y listas anidadas buscando cualquier pareja clave:valor.
+
+    :param estructura: Diccionario o lista (puede contener anidamientos)
+    :param clave_buscada: Nombre de la clave a localizar
+    :param valor_buscado: Valor exacto que debe tener la clave
+    :return: True si existe la combinación, False en caso contrario
+    """
+    if isinstance(estructura, dict):
+        for clave, valor in estructura.items():
+            # Condición generalizada
+            if clave == clave_buscada and valor == valor_buscado:
+                return True
+            # Búsqueda recursiva en subestructuras
+            if isinstance(valor, (dict, list)) and has_key_value(valor, clave_buscada, valor_buscado):
+                return True
+
+    elif isinstance(estructura, list):
+        for elemento in estructura:
+            if isinstance(elemento, (dict, list)) and has_key_value(elemento, clave_buscada, valor_buscado):
+                return True
+
+    return False
+
+
+def remove_keys(d: dict, patterns: list[str]) -> dict:
+    """ Devuelve una copia de 'd' sin las claves de primer nivel que contengan
+        alguna de las cadenas presentes en 'patterns'
+    """
+    return {
+        clave: valor
+        for clave, valor in d.items()
+        if not any(p in clave for p in patterns)
+    }
+
+
 def x2int(x):
     return int(round(float(x)))
 
@@ -919,6 +957,15 @@ def get_target_sets(fs=44100, lmin=3.0, lmax=6.0, hmin=1.0, hmax=4.0, hstep=0.5)
                 print(f'{Fmt.RED}get_target_sets {s} ERROR: {e}{Fmt.BOLD}')
 
         return result
+
+    # Optional limits within config.yml
+    limits = CONFIG.get('expert_zone', {}) \
+                  .get('target_curves_dB_limits', {})
+    hstep =  limits.get('high_step', hstep)
+    hmin  =  limits.get('high_min',  hmin)
+    hmax  =  limits.get('high_max',  hmax)
+    lmin  =  limits.get('low_min',   lmin)
+    lmax  =  limits.get('low_max',   lmax)
 
 
     targets_folder  = f'{EQFOLDER}/curves_{fs}_N11/room_target'
@@ -1192,6 +1239,47 @@ def get_my_ip():
         return ip
     else:
         return get_my_ip_through_hostname()
+
+
+def get_network_type(ip_dest: str = "127.0.0.1") -> str:
+    """
+    Determina si una IP local es alcanzada vía Cable (Ethernet), Wi-Fi o Desconocido.
+    """
+    try:
+        # Ejecutamos 'ip route get <IP>' para obtener la ruta del kernel
+        resultado = sp.run(
+            ["ip", "route", "get", ip_dest],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        salida = resultado.stdout
+
+        # Buscamos la interfaz indicada tras el parámetro 'dev'
+        coincidencia = re.search(r"\bdev\s+(\S+)", salida)
+        if not coincidencia:
+            return f"No se pudo determinar la interfaz en la salida: '{salida.strip()}'"
+
+        interfaz = coincidencia.group(1)
+
+        # Reglas de identificación basadas en los prefijos de Linux
+        if interfaz.startswith(("eth", "enp", "eno", "ens", "enx")):
+            tipo = "Red Cableada (Ethernet)"
+        elif interfaz.startswith(("wlan", "wlp", "wlo", "wls", "wlx")):
+            tipo = "WiFi"
+        elif interfaz == "lo":
+            tipo = "Bucle local (Loopback / Misma máquina)"
+        elif interfaz.startswith(("veth", "br-", "docker", "virbr", "tap", "tun")):
+            tipo = f"Interfaz Virtual / Puente / VPN ({interfaz})"
+        else:
+            tipo = "Desconocido / Otro tipo de interfaz"
+
+        return f"La IP {ip_dest} se alcanza vía {tipo} (Interfaz: {interfaz})"
+
+    except subprocess.CalledProcessError:
+        return f"Error: La IP {ip_dest} no es alcanzable o la ruta no existe."
+    except FileNotFoundError:
+        return "Error: El comando 'ip' no está disponible en este sistema."
 
 
 def get_camilladsp_last_error():

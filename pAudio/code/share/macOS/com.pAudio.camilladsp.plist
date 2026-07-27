@@ -33,11 +33,11 @@
     <false/>
 
     <!-- DEBUG
+    -->
     <key>StandardOutPath</key>
     <string>/tmp/com.pAudio.camilladsp.log</string>
     <key>StandardErrorPath</key>
     <string>/tmp/com.pAudio.camilladsp.err</string>
-    -->
 
 </dict>
 </plist>

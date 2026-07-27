@@ -21,6 +21,8 @@ coreaudio:
             # NOTICE that the card name has a weird trailing space in CoreAudio
             #device: "USB Audio CODEC "
 
+    # Restore system volume in dB when pAudio is turned off
+    restore_volume: -30
 
 loudspeaker: MyLoudspeaker
 

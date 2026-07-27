@@ -6,6 +6,7 @@
 import  sys
 import  os
 from    time                    import time
+import  numpy as np
 import  yaml
 import  json
 from    fmt                     import Fmt
@@ -197,6 +198,34 @@ def complete_config():
 
         """
 
+        def get_fir_latency(fir_path):
+            """ Analize FIR latency
+
+                Example of xover PCM files:
+
+                    .../my_lspk/44100/xo.lo.set_name.pcm
+                    .../my_lspk/44100/xo.hi.set_name.pcm
+            """
+
+            def readPCM(fname, dtype=np.float32):
+                return np.fromfile(fname, dtype=dtype)
+
+
+            def get_peak(fir):
+                peak_pos = np.argmax(np.abs(fir))
+                fs = CONFIG['samplerate']
+                latency_ms = round(peak_pos / fs * 1000, 1)
+                return (latency_ms, peak_pos)
+
+            if not os.path.isfile(fir_path):
+                return f'not found: {fir_path}'
+
+            fir = readPCM( str(fir_path) )
+            latency, _ = get_peak(fir)
+
+            return latency
+
+
         def load_lspk_config():
 
             res = {}
@@ -233,15 +262,10 @@ def complete_config():
                 - IIR is assumed to have a regular complete filter syntax,
                   usually imported from Room Equalizer Wizard aka REW,
                   so nothing is done but gains fields.
-
-                Also will prepare an auxiliary CamillaDSP filter definition
-                for gain on each xo-set-name-way
             """
 
             if not 'drc' in LSPK_CONFIG or not LSPK_CONFIG.get('drc'):
                 return
-
-            LSPK_CONFIG["drc_gains"] = {}
 
             for set_name, values in LSPK_CONFIG.get('drc', {}).items():
 
@@ -268,9 +292,8 @@ def complete_config():
                 else:
                     pass
 
-                LSPK_CONFIG["drc_gains"][set_name] = { 'flat_gain':     values.pop('flat_gain',  0.0),
-                                                       'posit_gain':    values.pop('posit_gain', 0.0)
-                                                     }
+                LSPK_CONFIG["drc"][set_name]["flat_gain"]  = values.get('flat_gain',  0.0)
+                LSPK_CONFIG["drc"][set_name]["posit_gain"] = values.get('posit_gain', 0.0)
 
 
         def populate_xo_filters():
@@ -284,8 +307,6 @@ def complete_config():
             if not 'xo' in LSPK_CONFIG or not LSPK_CONFIG.get('xo'):
                 return
 
-            LSPK_CONFIG["xo_gains"] = {}
-
             for set_name, ways in LSPK_CONFIG["xo"].items():
 
                 for way, params in ways.items():
@@ -293,16 +314,18 @@ def complete_config():
                     # FIR
                     if params.get('type') == 'fir':
                         fir_path = f'{LSPKFOLDER}/{CONFIG["samplerate"]}/xo.{way}.{set_name}.pcm'
-                        LSPK_CONFIG["xo"][set_name][way] = make_fir_filter(fir_path)
+                        LSPK_CONFIG["xo"][set_name][way] = make_fir_filter( fir_path )
+                        LSPK_CONFIG["xo"][set_name][way]["parameters"]["latency"] = get_fir_latency( fir_path )
+
 
                     # IIR
                     else:
                         ftype, order, freq = params["type"], params["order"], params["freq"]
                         LSPK_CONFIG["xo"][set_name][way] = make_xo_iir_filter(way, ftype, order, freq)
+                        LSPK_CONFIG["xo"][set_name][way]["parameters"]["latency"] = 0.0
 
-                    LSPK_CONFIG["xo_gains"][f'{way}.{set_name}'] = { 'flat_gain':     params.pop('flat_gain',  0.0),
-                                                                     'posit_gain':    params.pop('posit_gain', 0.0)
-                                                                    }
+                    LSPK_CONFIG["xo"][set_name][way]["parameters"]["flat_gain"]  = params.get('flat_gain',  0.0)
+                    LSPK_CONFIG["xo"][set_name][way]["parameters"]["posit_gain"] = params.get('posit_gain', 0.0)
 
 
         def reformat_outputs():
@@ -575,9 +598,6 @@ def complete_config():
     if lspk_config.get('xo'):
         CONFIG["xo"] = lspk_config["xo"]
 
-    if lspk_config.get('xo_gains'):
-        CONFIG["xo_gains"] = lspk_config["xo_gains"]
-
     # 2. Loudspeaker EQ:
     CONFIG["lspk_eq"] = {}
 
@@ -591,10 +611,6 @@ def complete_config():
 
     if lspk_config.get('drc'):
         CONFIG["drc"] = lspk_config["drc"]
-
-    if lspk_config.get('drc_gains'):
-        CONFIG["drc_gains"] = lspk_config["drc_gains"]
-
 
     write_pAudio_cfg(CONFIG)
 

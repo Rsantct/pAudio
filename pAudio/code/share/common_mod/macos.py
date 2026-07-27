@@ -5,6 +5,7 @@
 
 import  os
 import  subprocess as sp
+import  math
 
 UHOME = os.path.expanduser('~')
 
@@ -33,6 +34,9 @@ def init():
     else:
         if os.path.isfile(f'{BREW}/bin/SwitchAudioSource'):
             SWITCHAUDIO_BIN = f'{BREW}/bin/SwitchAudioSource'
+        else:
+            if os.path.isfile('/usr/local/bin/SwitchAudioSource'):
+                SWITCHAUDIO_BIN = '/usr/local/bin/SwitchAudioSource'
 
 
     if os.path.isfile(f'{UHOME}/bin/AdjustVolume'):
@@ -50,6 +54,7 @@ def init():
         print(f'{Fmt.GREEN}(macos) AdjustVolume tool detected{Fmt.END}')
     else:
         print(f'{Fmt.GRAY}(macos) AdjustVolume NOT available{Fmt.END}')
+
 
 def get_default_device_PENDING():
     #
@@ -232,24 +237,74 @@ def change_default_sound_device(new_dev):
     set_device_vol(old_dev, '100')
 
 
-def restore_playback_device(volume=50):
+def set_playback_device_volume(volume_dB = -20):
+    """
+        Audio MIDI
 
-    cmd = """system_profiler SPAudioDataType \
-           | awk '/:$/ {device=$0} /Default System Output Device: Yes/ {print device}' \
-           | sed 's/^[ \t]*//;s/://'
+        Value    dB
+        0.0     -63.5
+        0.01    -57.15
+        0.02    -54.52
+        0.03    -52.5
+        0.04    -50.8
+        0.05    -49.3
+        0.06    -47.95
+        0.07    -46.7
+        0.08    -45.54
+        0.09    -44.45
+        0.10    -43.42
+        0.15    -38.91
+        0.20    -35.1
+        0.25    -31.75
+        0.30    -28.72
+        0.35    -25.93
+        0.40    -23.34
+        0.45    -20.9
+        0.50    -18.6
+        0.55    -16.41
+        0.60    -14.31
+        0.65    -12.3
+        0.70    -10.37
+        0.75    -8.51
+        0.80    -6.7
+        0.85    -4.96
+        0.90    -3.26
+        0.95    -1.61
+        1.00    0.0
+
+
+        The CoreAudio driver uses:  atten = 1 - sqrt(Value)
+
+        dB = -63.5 * (1 - sqrt(Value))
+
+        Value = (1 + dB / 63.5) ** 2
+
     """
 
+    volume_percent  = (1 + volume_dB / 63.5) ** 2 * 100
+    dev             = ''
+
     try:
+        cmd = """system_profiler SPAudioDataType \
+               | awk '/:$/ {device=$0} /Default System Output Device: Yes/ {print device}' \
+               | sed 's/^[ \t]*//;s/://'
+        """
         dev = sp.check_output(cmd, shell=True).decode().strip()
 
     except Exception as e:
-        print('(restore_playback_device) problems getting Default System Output Device')
+        print(f'{Fmt.RED}(set_playback_device_volume) ERROR getting Default System Output Device: {e}{Fmt.END}')
 
     if dev:
         if SWITCHAUDIO_BIN:
             sp.call(f'{SWITCHAUDIO_BIN} -s "{dev}"', shell=True)
-            sp.call(f"osascript -e 'set volume output volume '{volume}", shell=True)
-            print(f'(restore_playback_device) Restoring Playback Device')
+            sp.call(f"osascript -e 'set volume output volume '{volume_percent}", shell=True)
+            print(f'{Fmt.BLUE}(set_playback_device_volume) Restoring Playback Device volume to {volume_dB} dB{Fmt.END}')
+
+        else:
+            print(f'{Fmt.RED}(set_playback_device_volume) SwitchAudioSource NOT AVAILABLE{Fmt.END}')
+
+    else:
+            print(f'{Fmt.RED}(set_playback_device_volume) UNABLE to find default system output device{Fmt.END}')
 
 
 init()
