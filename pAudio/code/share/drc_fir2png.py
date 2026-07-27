@@ -294,7 +294,7 @@ if __name__ == '__main__':
 
             if DSP_IN_USE == 'camilladsp':
                 if drc_set in CONFIG["drc"]:
-                    atten = CONFIG["drc_gains"][drc_set].get('flat_gain', 0.0)
+                    atten = CONFIG["drc"][drc_set].get('flat_gain', 0.0)
 
             magdB -= atten
 
