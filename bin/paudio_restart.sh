@@ -30,6 +30,9 @@ NOCOLOR="\033[0m"
 
 function start_www {
 
+    # clear previous node js www server error log if any
+    rm -f $NODEJS_LOGERR
+
     if [[ $(pgrep -f "paudio_www.js") ]]; then
         if [[ $VERBOSE == 'true' ]]; then
             echo "(paudio_restart) pAudio web server is already running."
@@ -39,6 +42,7 @@ function start_www {
         rm -f $NODEJS_LOGERR
         node $HOME/pAudio/code/share/www/paudio_www.js 1>/dev/null 2>$NODEJS_LOGERR &
     fi
+    sleep .5
 }
 
 
