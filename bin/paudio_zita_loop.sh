@@ -4,7 +4,7 @@ T_ANALISIS=30
 
 function help {
     echo
-    echo "Utilidad para evaluar el retardo entre dos servidores JACK unidos por ZITA-BRIDGE"
+    echo "Utilidad para evaluar el retardo y jitter entre dos servidores JACK unidos por ZITA-BRIDGE"
     echo
     echo "Uso:  paudio_zita_loop HOSTNAME.local BUFF [loop | delay]"
     echo "      paudio_zita_loop stop"
@@ -12,7 +12,7 @@ function help {
     echo "          HOSTNAME:   host colateral"
     echo "          BUFF:       valor obligatorio (ms)"
     echo "          loop:       para cablear el bucle de retorno en Jack"
-    echo "          delay:      para medir el retardo del bucle con jack_delay por 30 s"
+    echo "          delay:      para medir el retardo y jitter del bucle con jack_delay por 30 s"
     echo "          stop:       detiene inmediatamente todos los procesos zita_loop"
     echo
     echo "Notas:    Los procesos zita_loop expirarán en 5 minutos automáticamente"
