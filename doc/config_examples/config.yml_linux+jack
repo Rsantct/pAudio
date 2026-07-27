@@ -30,11 +30,11 @@ jack:
             remote_addr:            192.168.1.57
             remote_track_level:     true
             zita_buffer_ms:         20
-            relative_distance:     8
+            relative_distance:      8
             # 'zita_buffer_ms' default is 10 ms, but if you use WiFi (not recommended) you may want > 100 ms
             # 'relative_distance' (meters) is an experimental value that you need to fine tune AFTER
             # setting the zita_buffer, then an internal calculator will order convenient extra_delay
-            # commands to both local and remote.
+            # commands to one of local or remote ends.
             # Changes in both parameters will take effect dynamically when selecting a remote source.
             # The internal calculator takes in account the current DSP latencies at both ends,
             # for instance when selecting linear phase filters. Also the network type (wired or wifi)
