@@ -123,6 +123,28 @@ def rewire_camilladsp():
         print(f'{Fmt.BOLD}(start) Cannot rewire camillaDSP jack ports: {str(e)}{Fmt.END}')
 
 
+def weird_camilladsp_ports():
+    """ CamillaDSP, for unknown reason, sometimes emerged
+        weird jack ports like `cpal_client_in-01`
+    """
+    result = False
+
+    try:
+        jcli = jack.Client('tmp', no_start_server=True)
+
+        cpal_ports = [ x for x in jcli.get_ports('cpal') ]
+        if any( x for x in cpal_ports if '-' in x.name ):
+            result = True
+
+        jcli.close()
+        del (jcli)
+
+    except Exception as e:
+        print(f'{Fmt.BOLD}(start) cannot check JACK CPAL ports: {e}{Fmt.END}')
+
+    return result
+
+
 def run_plugins(mode='start'):
     """ Run plugins (stand-alone processes)
     """
@@ -252,6 +274,7 @@ def stop_loudness_monitor():
     with open(LDMON_PATH, 'w') as f:
         f.write('{"LU_I": -99.0, "LU_M": -99.0, "scope": "album"}')
 
+
 def stop():
 
     if VERBOSE:
@@ -293,26 +316,8 @@ def stop():
 
 def start():
 
-    def weird_camilladsp_ports():
-        """ CamillaDSP, for unknown reason, sometimes emerged
-            weird jack ports like `cpal_client_in-01`
-        """
-        result = False
-
-        start_log_path = f'{MAINFOLDER}/log/start.log'
-        try:
-            with open(start_log_path, 'r') as f:
-                tmp = f.read()
-                if 'weird' in tmp.lower():
-                    result = True
-        except:
-            print(f'{Fmt.BOLD}(start) cannot read {start_log_path}{Fmt.END}')
-
-        return result
-
-
     def start_server(tries=1, max_tries=3):
-        """ with recursive retries
+        """ with RECURSIVE retries
         """
 
         t_srv_start = time()
