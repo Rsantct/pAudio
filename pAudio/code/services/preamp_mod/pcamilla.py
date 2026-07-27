@@ -159,10 +159,6 @@ def get_state():
     return CC.general.state()
 
 
-def get_config():
-    return CC.config.active()
-
-
 def _prepare_cam_config(pAudio_config):
     """
         1. Prepares a base CamillaDSP config
@@ -170,6 +166,30 @@ def _prepare_cam_config(pAudio_config):
 
         returns: the CamillaDSP config
     """
+
+    def clear_xo_parameters(xo):
+        """ Some pAudio fields, such as XO latency and gains, should not be passed to CamillaDSP
+
+            {   'type': 'Conv',
+                'parameters': {
+                    'filename': '/home/paudio/pAudio/loudspeakers/SeasFlat/48000/xo.lo.original.mp.pcm',
+                    'format': 'F32_LE',
+                    'type': 'Raw',
+                    'latency': 0.2,
+                    'flat_gain': -8.7,
+                    'posit_gain': 8.7
+                }
+            }
+        """
+
+        xo_copy = copy.deepcopy(xo)
+
+        xo_copy["parameters"].pop("latency",    None)
+        xo_copy["parameters"].pop("flat_gain",  None)
+        xo_copy["parameters"].pop("posit_gain", None)
+
+        return xo_copy
+
 
     def prepare_outputs_structure():
         """ The multi-output N channels expander Mixer
@@ -183,22 +203,20 @@ def _prepare_cam_config(pAudio_config):
             print(f'{Fmt.BLUE}{Fmt.BOLD}(pcamilla) XOVER sets: {xosets}{Fmt.END}')
 
             # xo filters
-            for set_name, values in pAudio_config["xo"].items():
-                for way, params in values.items():
+            for set_name, ways in pAudio_config["xo"].items():
+                for way, way_def in ways.items():
+                    # the filter itself
                     filter_name = f'xo.{way}.{set_name}'
-                    cam_config["filters"][filter_name] = params
+                    cam_config["filters"][filter_name] = clear_xo_parameters(way_def)
+                    # and its corresponding gain filter (apply negative to compensate the flat_region offset)
+                    g = -1 * way_def["parameters"].get('flat_gain', 0.0)
+                    cam_config["filters"][f'xo.{way}.{set_name}_gain'] = make_gain_filter(g, f'gain for xo.{way}.{set_name}')
 
             # delay filters definition
             for out, params in pAudio_config["outputs"].items():
                 if not params["name"]:
                     continue
                 cam_config["filters"][f'delay.{params["name"]}'] = make_delay_filter( params["delay"], params["name"] )
-
-            # gain filters definitions
-            for xo_id, gains in pAudio_config["xo_gains"].items():
-                # apply negative to compensate the flat_region offset
-                flat_gain = - gains.get('flat_gain', 0.0)
-                cam_config["filters"][f'xo.{xo_id}_gain'] = make_gain_filter(flat_gain, f'gain for xo.{xo_id}')
 
             # pipeline (will use the first configured xo set inside lspk.yml)
             default_xo_set = next( iter( pAudio_config["xo"] ) )
@@ -787,14 +805,7 @@ def set_balance(dB):
     return "done"
 
 
-def set_xo(xo_set, flat_gains={}):
-    """ example:
-
-            xo_set:     'sofa.mp'
-
-            flat_gains: {'lo.sofa.mp': -8.7,
-                         'hi.sofa.mp': -2.1}
-    """
+def set_xo(xo_set):
 
     cfg = CC.config.active()
 
@@ -847,8 +858,8 @@ def set_drc(drc_id, flat_gain=0.0):
         into the pipeline step `names` field
     """
 
-    cfg           = get_config()
-    fnames        = cfg.get('filters')
+    cfg = CC.config.active()
+    fnames = cfg.get('filters')
 
     # DRC filters are named 'drc_{drc_id}_NN_C', where:
     #   NN  number of stage (01 for FIR types, or several secuential NN for IIR types)
