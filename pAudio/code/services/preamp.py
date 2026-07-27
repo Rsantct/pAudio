@@ -170,7 +170,7 @@ def init():
     for prop, value in CONFIG.get('on_init', {}).items():
 
         valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
-                       'lu_offset', 'equal_loudness', 'target', 'drc_set',
+                       'lu_offset', 'equal_loudness', 'target', 'drc_set', 'xo_set',
                        'midside', 'mono')
 
         # keep_muted is processed later in resume_audio()
@@ -192,14 +192,22 @@ def init():
                 if value in TARGET_SETS + ['none']:
                     STATE["target"] = value
                 else:
-                    print(f'{Fmt.BOLD}(on_init) ERROR in target{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR in target: {value}{Fmt.END}')
+
+            case 'xo_set':
+
+                if value in XO_SETS or value == 'none':
+                    STATE["xo_set"]     = value
+                    STATE["xo_latency"] = get_xo_latency( value )
+                else:
+                    print(f'{Fmt.BOLD}(on_init) ERROR in xo_set: {value}{Fmt.END}')
 
             case 'drc_set':
 
                 if value in DRC_SETS or value == 'none':
                     STATE["drc_set"] = value
                 else:
-                    print(f'{Fmt.BOLD}(on_init) ERROR in drc_set{Fmt.END}')
+                    print(f'{Fmt.BOLD}(on_init) ERROR in drc_set: {value}{Fmt.END}')
 
             case 'midside':
 
@@ -289,7 +297,7 @@ def init():
 
     #
     # Initialize camillaDSP
-    cdsp_init = CAM.init_camilladsp( pAudio_config=CONFIG )
+    cdsp_init = CAM.init_camilladsp( pAudio_config=copy.deepcopy(CONFIG) )
     #
 
     if cdsp_init == 'done':
@@ -337,6 +345,16 @@ def eq2png():
 def loudness_monitor_restart():
     print(f'{Fmt.BLUE}(preamp) restarting loudness monitor.py{Fmt.END}')
     sp.Popen( f'python3 {MAINFOLDER}/code/share/loudness_monitor.py start', shell=True )
+
+
+def get_xo_latency(xo_set):
+    """ auxiliar to get the latency of a XO filter
+        so that the STATE can be updated
+    """
+    latencies = [0.0]
+    for band in CONFIG["xo"][xo_set].values():
+        latencies.append( band["parameters"]["latency"] )
+    return max(latencies)
 
 
 # Interface functions with the underlying modules
@@ -418,10 +436,12 @@ def set_drc(drcID):
         res = f'must be in: { DRC_SETS }'
 
     else:
+
         if drcID == 'none':
             flat_gain = 0.0
+
         else:
-            flat_gain = CONFIG["drc_gains"][drcID].get('flat_gain', 0.0)
+            flat_gain = CONFIG["drc"][drcID].get('flat_gain', 0.0)
 
         res = CAM.set_drc(drcID, flat_gain)
 
@@ -437,16 +457,7 @@ def set_xo(xoID):
         res = f'must be in: {XO_SETS}'
 
     else:
-
-        flat_gains = {}
-
-        for x, gains in CONFIG["xo_gains"].items():
-
-            # set slice
-            if x[3:] == xoID:
-                flat_gains[x] = gains["flat_gain"]
-
-        res = CAM.set_xo(xoID, flat_gains)
+        res = CAM.set_xo(xoID)
 
     return res
 
@@ -798,19 +809,13 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
             # DRC
             drc_posit_gain = 0.0
             if candidate["drc_set"] != 'none':
-                drc_posit_gain = CONFIG["drc_gains"][ candidate["drc_set"] ]["posit_gain"]
+                drc_posit_gain = CONFIG["drc"][ candidate["drc_set"] ].get('posit_gain', 0.0)
 
             # XO: we need to find out the greater one involved in the xo_set
             xo_posit_gains = [0.0]
-
-            if CONFIG.get('xo_gains'):
-
-                for filter_name, gains in CONFIG["xo_gains"].items():
-
-                    set_name = filter_name[3:]
-
-                    if set_name == candidate["xo_set"]:
-                        xo_posit_gains.append( gains.get('posit_gain', 0.0) )
+            for xo_definition in CONFIG["xo"][ candidate["xo_set"] ].values():
+                posit_gain = xo_definition["parameters"].get('posit_gain', 0.0)
+                xo_posit_gains.append( posit_gain )
 
             return  lspk_eq_posit_gain + drc_posit_gain + max( xo_posit_gains )
 
@@ -1133,10 +1138,11 @@ def do(cmd, args, add):
             new = args
 
             if STATE["xo_set"] != new:
-                result = set_xo(new)
+                result = set_xo( new )
 
                 if result == 'done':
-                    STATE["xo_set"] = new
+                    STATE["xo_set"]     = new
+                    STATE["xo_latency"] = get_xo_latency( new )
 
         case 'compressor':
             # notice that the status file stores
@@ -1211,6 +1217,5 @@ def do(cmd, args, add):
             result = f'Internal error: {e}'
 
     return result
-
 
 init()
