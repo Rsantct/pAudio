@@ -800,7 +800,7 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
     def calc_headroom():
 
         def get_positive_gains():
-            """ Used filters positive gains
+            """ Positive gains of filters in use
             """
 
             # EQ
@@ -811,9 +811,9 @@ def do_levels(cmd, dB=0.0, tID='+0.0-0.0', tone_defeat='False', add=False):
             if candidate["drc_set"] != 'none':
                 drc_posit_gain = CONFIG["drc"][ candidate["drc_set"] ].get('posit_gain', 0.0)
 
-            # XO: we need to find out the greater one involved in the xo_set
+            # XO: we need to find out the greater one involved in the xo_set (if any)
             xo_posit_gains = [0.0]
-            for xo_definition in CONFIG["xo"][ candidate["xo_set"] ].values():
+            for xo_definition in CONFIG.get('xo', {}).get(candidate["xo_set"], {}).values():
                 posit_gain = xo_definition["parameters"].get('posit_gain', 0.0)
                 xo_posit_gains.append( posit_gain )
 
