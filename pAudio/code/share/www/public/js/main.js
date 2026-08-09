@@ -91,9 +91,10 @@ function fill_in_page_statics(){
             // Filling in options in a selector
             // https://www.w3schools.com/jsref/dom_obx.length-1j_select.asp
             const mySel = document.getElementById("mainSelector");
-            for ( const i in sources) {
+            // for convenience with long lists, add "none" at the end.
+            for (const s of sources.concat(['none'])) {
                 const option = document.createElement("option");
-                option.text = sources[i];
+                option.text = s;
                 mySel.add(option);
             }
         }
