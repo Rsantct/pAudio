@@ -601,7 +601,7 @@ def set_source(sname):
                 print('(preamp.py) cannot set local delay')
 
         def set_remote():
-            if send_cmd(f'add_delay {rd}', host=remote_addr, port=remote_port) == 'done':
+            if send_cmd(f'set_delay {rd}', host=remote_addr, port=remote_port) == 'done':
                 print(f'(preamp.py) set remote delay: {rd}')
             else:
                 print('(preamp.py) cannot set remote delay')
@@ -1000,7 +1000,7 @@ def do(cmd, args, add):
             result = json.dumps(XO_SETS)
 
         # Change commands
-        case 'add_delay':
+        case 'set_delay':
             new = args
             result = set_delay(new)
             if result == 'done':
