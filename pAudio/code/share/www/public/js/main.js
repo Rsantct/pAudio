@@ -1117,9 +1117,9 @@ async function omd_delay_toggle(elem) {
     mc.flash_element( elem );
 
     if (STATE.extra_delay !== 0) {
-        await mc.send_cmd('preamp add_delay 0');
+        await mc.send_cmd('preamp set_delay 0');
     }else{
-        await mc.send_cmd('preamp add_delay ' + last_delay.toString());
+        await mc.send_cmd('preamp set_delay ' + last_delay.toString());
     }
 }
 
