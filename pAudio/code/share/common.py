@@ -274,7 +274,9 @@ def read_mpd_config(mpd_config_path=''):
     return config
 
 
-def get_player_from_source():
+def get_player_and_source():
+    """ returns a tuple (player, source)
+    """
 
     source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
 
@@ -309,7 +311,7 @@ def get_player_from_source():
         else:
             player = ''
 
-    return player
+    return (player, source)
 
 
 def get_web_config():
