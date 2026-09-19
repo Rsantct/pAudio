@@ -2,194 +2,229 @@
 
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
-
 """
-    *** PENDING TO REVIEW ****
+    Start or stop Mplayer in idle & slave mode for DVB-T playback.
 
-    Start or stop Mplayer for DVB-T playback.
-
-    Also used to change on the fly the played stream.
-
-    DVB-T tuned channels are ussually stored at
+    DVB-T tuned channels must be in:
         ~/.mplayer/channels.conf
 
-    User settings (presets) can be configured at
-        pAudio/config/DVB-T.yml
-
-    Usage:    DVB-T.py  start   [ <preset_num> | <channel_name> ]
+    Usage:    DVB-T.py  start           [-ac3] [-v]
                         stop
-                        preset  <preset_num>
-                        name    <channel_name>
+                        channel/load    channel_name
+                        pan             ITU-R (default) | LR | loud | quiet
+
+        -v      makes Mplayer verbosity in .dvb_events
+        -ac3    prepares Mplayer chain with 6 channels the received input stream
 
 
-    Notice:
-    When loading a new stream, Mplayer jack ports will dissapear for a while,
-    so you'll need to wait for Mplayer ports to re-emerge before switching
-    the preamp input.
-
-
-    VOLUME MANAGEMENT
-    http://www.mplayerhq.hu/DOCS/HTML/en/MPlayer.html#advaudio-volume
-
-    Mplayer SLAVE MODE
-    http://www.mplayerhq.hu/DOCS/tech/slave.txt
-
+    Mplayer SLAVE MODE doc:
+        http://www.mplayerhq.hu/DOCS/tech/slave.txt
 """
 
-""" Example of ERROR in Mplayer printout:
-
-        DVB CONFIGURATION IS EMPTY, exit
-
-    This is CONFUSING, because the real problem was that the DVB card was not detected
-    (wrong USB connection, see dmesg or journalctrl)
-"""
-
-
-""" Examples of Mplayer printouts when playing DVB-T radio channels
-
-rafax@salon64:~$ mplayer -nolirc -ao alsa "dvb://Radio Clasica HQ MPA"
-MPlayer 1.4 (Debian), built with gcc-11 (C) 2000-2019 MPlayer Team
-
-Playing dvb://Radio Clasica HQ MPA.
-dvb_tune Freq: 634000000
-TS file format detected.
-NO VIDEO! AUDIO MPA(pid=2010) NO SUBS (yet)!  PROGRAM N. 0
-==========================================================================
-Opening audio decoder: [mpg123] MPEG 1.0/2.0/2.5 layers I, II, III
-AUDIO: 48000 Hz, 2 ch, s16le, 160.0 kbit/10.42% (ratio: 20000->192000)
-Selected audio codec: [mpg123] afm: mpg123 (MPEG 1.0/2.0/2.5 layers I, II, III)
-==========================================================================
-AO: [alsa] 48000Hz 2ch s16le (2 bytes per sample)
-Video: no video
-Starting playback...
-A:17726.5 ( 4:55:26.4) of -0.8 (unknown) ??,?%
-[AO_ALSA] Write error: Broken pipe
-[AO_ALSA] Trying to reset soundcard.
-A:17737.3 ( 4:55:37.3) of -0.8 (unknown) 13.8%
-
-
-MPlayer interrupted by signal 2 in module: decode_audio
-dvb_streaming_read, attempt N. 6 failed with errno 4 when reading 24 bytes
-A:17737.4 ( 4:55:37.4) of -0.8 (unknown) 13.9%
-
-Exiting... (Quit)
-
-
-rafax@salon64:~$ mplayer -nolirc -ao alsa "dvb://Radio Clasica HQ A52"
-MPlayer 1.4 (Debian), built with gcc-11 (C) 2000-2019 MPlayer Team
-
-Playing dvb://Radio Clasica HQ A52.
-dvb_tune Freq: 634000000
-TS file format detected.
-NO VIDEO! AUDIO A52(pid=2012) NO SUBS (yet)!  PROGRAM N. 0
-==========================================================================
-Opening audio decoder: [ffmpeg] FFmpeg/libavcodec audio decoders
-libavcodec version 58.134.100 (external)
-AUDIO: 48000 Hz, 2 ch, floatle, 256.0 kbit/8.33% (ratio: 32000->384000)
-Selected audio codec: [ffac3] afm: ffmpeg (FFmpeg AC-3)
-==========================================================================
-AO: [alsa] 48000Hz 2ch floatle (4 bytes per sample)
-Video: no video
-Starting playback...
-A:17840.4 ( 4:57:20.4) of -0.6 (unknown) 69.5%
-
-
-MPlayer interrupted by signal 2 in module: decode_audio
-dvb_streaming_read, attempt N. 6 failed with errno 4 when reading 776 bytes
-A:17840.5 ( 4:57:20.5) of -0.6 (unknown) 69.8%
-
-Exiting... (Quit)
-"""
-
-from    pathlib      import Path
-from    time         import sleep
-from    subprocess   import Popen, run, check_output
-import  yaml
 import  sys
 import  os
-from    configparser import ConfigParser
+from    pathlib import Path
+from    time    import sleep
+import  subprocess as sp
+import  jack
 
 UHOME       = os.path.expanduser("~")
-MAINFOLDER  = f'{UHOME}/pAudio'
-sys.path.append(f'{MAINFOLDER}/code/share')
+MAINFOLDER  = f'{UHOME}/pe.audio.sys'
+sys.path.append(f'{MAINFOLDER}/share/miscel')
 
-from common import wait4ports, Fmt, USER
-
+from miscel import wait4ports, Fmt, USER
 
 CHANNELS_PATH   = f'{UHOME}/.mplayer/channels.conf'
-PRESETS_PATH    = f'{MAINFOLDER}/DVB-T.yml'
-REDIR_PATH      = f'{MAINFOLDER}/.dvb_events'
+EVENTS_PATH     = f'{MAINFOLDER}/.dvb_events'
 INPUT_FIFO      = f'{MAINFOLDER}/.dvb_fifo'
 
 
-# (i) STREAM LEVEL management
-#     '-softvol-max 400' alows to amplify 12 dB for AC3 encoded streams, see
-#     above examples. Then later, we can issue a slave mode volume command.
-MPLAYER_OPTIONS = '-quiet -nolirc -slave -idle -softvol -softvol-max 400'
+def make_pan(mode='itu'):
+    r"""
+        ITU-R Downmix for 5.1(side)
 
-
-def check_Mplayer_config_file(profile='istreams'):
-    """ Checks the Mplayer config file
-        (result: string)
+                  \     in:
+                   \    0       1       2       3       4       5
+                    \   FL      FR      SL      SR      FC      LFE
+             out:  L    1.0     0.0     0.707   0.0     0.707   0.5
+                   R    0.0     1.0     0.0     0.707   0.707   0.5
     """
-    cpath = f'{UHOME}/.mplayer/config'
 
-    # This never happens because Mplayer autodumps an empty .mplayer/config file
-    if not os.path.exists(cpath):
-        return f'ERROR Mplayer config file not found'
+    mode = mode.lower()
 
-    mplayercfg = ConfigParser()
-    try:
-        mplayercfg.read( cpath )
-    except:
-        return f'ERROR bad Mplayer config file'
+    # LR mode just routes FL--> L, FR --> R
+    if mode == 'lr':
+        L = [1.0, 0.0, 0.0,   0.0,   0.0,  0.0]
+        R = [0.0, 1.0, 0.0,   0.0,   0.0,  0.0]
 
-    if not profile in mplayercfg:
-        return f'ERROR Mplayer profile \'{profile}\' not found'
-    if 'ao' in mplayercfg[profile] and \
-        mplayercfg[profile]['ao'].strip()[:9] == 'jack:name':
-        return 'ok'
+    # ITU-R downmix
+    elif mode == 'itu-r':
+        L = [1.0, 0.0, 0.707, 0.0,   0.707, 0.5]
+        R = [0.0, 1.0, 0.0,   0.707, 0.707, 0.5]
+
+    # for testing
+    elif mode == 'quiet':
+        L = [0.2, 0.0, 0.707, 0.0,   0.707, 0.5]
+        R = [0.0, 0.2, 0.0,   0.707, 0.707, 0.5]
+
+    # for testing
+    elif mode == 'loud':
+        L = [3.0, 0.0, 0.707, 0.0,   0.707, 0.5]
+        R = [0.0, 3.0, 0.0,   0.707, 0.707, 0.5]
+
     else:
-        return f'ERROR bad Mplayer profile \'{profile}\''
+        print(f'BAD pan ID: {mode}')
+        return ''
+
+    pan = '2'
+
+    for l, r in zip(L, R):
+        pan += f':{l}:{r}'
+
+    # example  2:1.0:0.0:0.0:1.0:0.707:0.0:0.0:0.707:0.707:0.707:0.5:0.5
+
+    return pan
 
 
-def select_by_preset(pnum):
-    """ loads a stream by its presets file number id """
+def make_msglevel():
+    """
+        Available levels:
+         -1   complete silence
+          0   fatal messages only
+          1   error messages
+          2   warning messages
+          3   short hints
+          4   informational messages
+          5   status messages (default)
+          6   verbose messages
+          7   debug level 2
+          8   debug level 3
+          9   debug level 4
+    """
+
+
+    # use (d)efault) or (v)erbose below
+    matrix = """
+        Available msg modules:
+           global     - common player errors/information
+           cplayer    - console player (mplayer.c)
+           gplayer    - gui player
+           vo         - libvo
+        v  ao         - libao
+        v  demuxer    - demuxer.c (general stuff)
+           ds         - demux stream (add/read packet etc)
+           demux      - fileformat-specific stuff (demux_*.c)
+           header     - fileformat-specific header (*header.c)
+           avsync     - mplayer.c timer stuff
+           autoq      - mplayer.c auto-quality stuff
+           cfgparser  - cfgparser.c
+        v  decaudio   - av decoder
+           decvideo
+           seek       - seeking code
+           win32      - win32 dll stuff
+           open       - open.c (stream opening)
+           dvd        - open.c (DVD init/read/seek)
+           parsees    - parse_es.c (mpeg stream parser)
+           lirc       - lirc_mp.c and input lirc driver
+           stream     - stream.c
+           cache      - cache2.c
+           mencoder
+           xacodec    - XAnim codecs
+           tv         - TV input subsystem
+           osdep      - OS-dependent parts
+           spudec     - spudec.c
+           playtree   - Playtree handling (playtree.c, playtreeparser.c)
+           input
+           vfilter
+           osd
+           network
+           cpudetect
+           codeccfg
+           sws
+           vobsub
+           subreader
+           osd-menu   - OSD menu messages
+        v  afilter    - Audio filter messages
+           netst      - Netstream
+           muxer      - muxer layer
+           identify   - identify output
+           ass        - libass messages
+           statusline - playback/encoding status line
+           fixme      - messages not yet fixed to map to module
+    """
+
+    parts = []
+
+    for line in matrix.splitlines():
+
+        line = line.split()
+
+        if line and len(line[0]) == 1:
+
+            if line[0].lower() == 'd':
+                level = 5
+            elif line[0].lower() == 'v':
+                level = 6
+
+            module = line[1]
+
+            parts.append( f'{module}={level}' )
+
+    result = '-msglevel ' + ':'.join(parts)
+
+    return result
+
+
+def connect_to_jkmeter():
+
+    jcli = jack.Client('DVB-T', no_start_server=True)
+
+    for i in range(6):
+        try:
+            jcli.connect(f'mplayer_dvb:out_{i}', f'jkmeter:in-{i+1}')
+        except:
+            pass
+
+    del(jcli)
+
+
+def connect_to_ebumeter():
+
+    jcli = jack.Client('DVB-T', no_start_server=True)
 
     try:
-        channel_name = PRESETS[pnum]['name']
-        select_by_name(channel_name)
-
+        jcli.connect(f'mplayer_dvb:out_0', f'ebumeter:in.L')
+        jcli.connect(f'mplayer_dvb:out_1', f'ebumeter:in.R')
     except:
-        tmp = f'(DVB-T.py) error with preset # {pnum}'
-        print(f'{Fmt.BOLD}{tmp}{Fmt.END}')
-        sys.exit()
+        pass
+
+    del(jcli)
 
 
-def select_by_name(channel_name):
+def set_pan(pan_id):
+    """ af_cmdline modifies on the fly the initially loaded pan instance
+    """
+
+    pan = make_pan(pan_id)
+
+    if pan:
+        issue_cmd(f'af_cmdline pan {pan}')
+
+
+def issue_cmd(command):
+
+    with open( INPUT_FIFO, 'w') as f:
+        f.write( f"{command}\n" )
+
+    print( f"(DVB-T.py) issued: {command}" )
+
+
+def load_channel(channel_name):
     """ loads a stream by its channel.conf name """
-
-
-    def get_volume():
-        """ Boost 12 dB if 'codec' is AC3 kind of as per the PRESETS user file.
-        """
-
-        volume = 0
-
-        for pnum in PRESETS:
-
-            if PRESETS[pnum]['name'] == channel_name:
-                if 'codec' in  PRESETS[pnum] and PRESETS[pnum]['codec']:
-                    if 'ac3' in  PRESETS[pnum]['codec'].lower():
-                        volume = 400 # 12 dB in percent
-                break
-
-        return volume
-
 
     # Searching the channel_name in channels file
     try:
-        check_output( ['grep', channel_name, CHANNELS_PATH] ).decode()
+        sp.check_output( ['grep', channel_name, CHANNELS_PATH] ).decode()
 
     except:
         print( f"(DVB-T.py) Channel NOT found: '{channel_name}'" )
@@ -197,80 +232,65 @@ def select_by_name(channel_name):
 
 
     # Loading the DVB-T station
-    try:
-
-        # The whole address after 'loadfile' needs to be SINGLE quoted to load properly
-        command = f"loadfile 'dvb://{channel_name}'"
-
-        with open( INPUT_FIFO, 'w') as f:
-            f.write( f"{command}\n" )
-
-        print( f"(DVB-T.py) issued: {command}" )
-
-
-        # Optional VOLUME for multichannel codec 'ffac3'
-        volume = get_volume()
-
-        if volume:
-
-            # see Mplayer docs: slave.txt
-            command = f"volume {volume} 1"
-
-            with open( INPUT_FIFO, 'w') as f:
-                f.write( f"{command}\n" )
-
-            print( f"(DVB-T.py) issued: {command}" )
-
-
-    except:
-
-        print( f"(DVB-T.py) failed to load '{channel_name}'" )
-        sys.exit()
+    # The whole address after 'loadfile' needs to be SINGLE quoted to load properly
+    issue_cmd( f"loadfile 'dvb://{channel_name}'" )
 
 
     # Wait a bit for the new Mplayer ports to emerge (informational only)
     sleep(2)
     if wait4ports('mplayer_dvb', 5):
         print( f"(DVB-T.py) Mplayer JACK ports emerged" )
+        connect_to_ebumeter()
+        connect_to_jkmeter()
     else:
         print( f"(DVB-T.py) Mplayer JACK ports NOT available" )
 
 
 def start():
 
-    cmd = f'mplayer {MPLAYER_OPTIONS} -profile dvb -input file={INPUT_FIFO}'
+    # Check the necessary files for this to work
+    do_check_files()
 
-    # (i) The "redir" file grows about 200K per hour while running mplayer
-    with open(REDIR_PATH, 'w') as f:
+    if VERBOSE:
+        MSGLEVEL = make_msglevel()
+    else:
+        MSGLEVEL = ''
+
+    OPTIONS  = f'-quiet -nolirc -slave -idle -ao jack:name=mplayer_dvb:noconnect -channels {nCH}'
+
+    # This only computes 16 bit samples, so additional conversions will be applied (see console in verbose mode)
+    RESAMPLER16 = 'lavcresample=44100:32:0:12'
+    # This computes 32 bit samples
+    RESAMPLER32 = 'resample=44100:0:2'
+
+    # Run by flushing the events file, which grows about 200K per hour while running mplayer
+    with open(EVENTS_PATH, 'w') as f:
+
         # clearing the file for this session
         f.write('')
-        Popen( cmd.split(), shell=False, stdout=f, stderr=f )
+
+        if nCH == 2:
+            cmd = f'mplayer {OPTIONS} -af {RESAMPLER32} {MSGLEVEL} -input file={INPUT_FIFO}'
+        elif nCH == 6:
+            cmd = f'mplayer {OPTIONS} -af {RESAMPLER32},pan={make_pan("itu-r")} {MSGLEVEL} -input file={INPUT_FIFO}'
+
+        sp.Popen( cmd.split(), shell=False, stdout=f, stderr=f )
 
 
 def stop():
     # Killing our mplayer instance
-    run( ['pkill', '-u', USER, '-KILL', '-f', 'profile dvb'] )
+    sp.call( ['pkill', '-u', USER, '-KILL', '-f', 'dvb_fifo'] )
 
 
 def do_check_files():
     """ Check the necessary files for this to work
     """
 
-    global PRESETS
-
     # Input FIFO for Mplayer -slave mode
     f = Path( INPUT_FIFO )
     if not f.is_fifo():
-        run( f'rm -f {INPUT_FIFO}'.split() )
-        Popen( f'mkfifo {INPUT_FIFO}'.split() )
+        sp.Popen( f'mkfifo {INPUT_FIFO}'.split() )
     del(f)
-
-    # Mplayer config file
-    tmp = check_Mplayer_config_file(profile='dvb')
-
-    if tmp != 'ok':
-        print( f'{Fmt.RED}(DVB-T.py) {tmp}{Fmt.END}' )
-        sys.exit()
 
     # Channels file
     f = Path( CHANNELS_PATH )
@@ -279,51 +299,85 @@ def do_check_files():
         sys.exit()
     del(f)
 
-    # DVB-T presets file
+
+def check_mplayer_channels():
+    """ Check how many channels were configured in the running Mplayer process
+    """
+    res = 2
+
     try:
-        with open(PRESETS_PATH, 'r') as f:
-            PRESETS = yaml.safe_load(f)
+        tmp = sp.check_output('pgrep -fla "pe.audio.sys/.dvb_fifo"', shell=True).decode()
+        if '-channels 6' in tmp:
+            res = 6
     except:
-        print( f"(DVB-T.py) ERROR reading user presets file: '{PRESETS_PATH}'" )
-        sys.exit()
+        pass
+
+    return res
 
 
 if __name__ == '__main__':
 
-    # Check the necessary files for this to work
-    do_check_files()
+    # NOTICE that for AC3 input streams we need to prepare Mplayer to manage up to 6 ch.
+    # Later, the `pan` filter will mix to 2ch stereo as desired.
+    # If so, please use 'DVB-T.py start -ac3'
+    nCH = 2
+
+    # -- VERBOSE (use tail -f .dvb_events), see details under make_msglevel()
+    VERBOSE = False
 
     ### Reading the command line
     if sys.argv[1:]:
 
         opc = sys.argv[1]
 
-        # STARTS the plugin and optionally load a preset/name
+        # STARTS the plugin
         if opc == 'start':
+
             stop()
+
+            for x in sys.argv[2:]:
+                if x == '-v':
+                    VERBOSE = True
+                if '-ac3' in x.lower() or '-6ch' in x.lower():
+                    nCH = 6
+
             start()
-            if sys.argv[2:]:
-                opc2 = sys.argv[2]
-                if opc2.isdigit():
-                    select_by_preset( int(opc2) )
-                elif opc2.isalpha():
-                    select_by_name(opc2)
 
         # STOPS all this stuff
         elif opc == 'stop':
             stop()
 
-        # ON THE FLY changing to a preset number or rotates recent
-        elif opc == 'preset':
-            select_by_preset( int(sys.argv[2]) )
+        # ON THE FLY tuning
+        elif opc in ('channel', 'load'):
+            if sys.argv[2:]:
+                load_channel( sys.argv[2] )
+            else:
+                print(__doc__)
 
-        # ON THE FLY changing to a preset name
-        elif opc == 'name':
-            select_by_name( sys.argv[2] )
+        # ON THE FLY changing PAN
+        elif opc == 'pan':
+
+            if check_mplayer_channels() == 6:
+                if sys.argv[2:]:
+                    set_pan( sys.argv[2] )
+                else:
+                    print('missing pan ID')
+            else:
+                print('pan only works if started with 6ch')
+
+        elif opc == 'pan_view':
+
+            if check_mplayer_channels() == 6:
+                if sys.argv[2:]:
+                    tmp = make_pan( sys.argv[2] )
+                    print(f'pan: {tmp}')
+                else:
+                    print('missing pan ID')
+            else:
+                print('pan only works if started with 6ch')
 
         elif '-h' in opc:
             print(__doc__)
-            sys.exit()
 
         else:
             print( '(DVB-T.py) Bad option' )
