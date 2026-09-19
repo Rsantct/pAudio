@@ -29,7 +29,7 @@ elif 'darwin' in sys.platform:
 
 def clear_player_info():
     md = PLAYERTEMPLATE.copy()
-    md["player"] = get_player_from_source()
+    md["player"] = get_player_and_source()[0]
     save_json_file(md, PLAYER_INFO_PATH)
 
 
@@ -108,7 +108,7 @@ def playback_control(cmd):
 
 
 # Entry function
-def do(cmd, args):
+def do(cmd='', args=''):
 
     match cmd:
 
