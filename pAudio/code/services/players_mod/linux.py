@@ -22,7 +22,7 @@ sys.path.append(f'{UHOME}/pAudio/code/share')
 
 from common import  save_json_file, time_sec2hhmmss, read_json_file,     \
                     PLAYERTEMPLATE, PLAYER_INFO_PATH, PREAMP_STATE_PATH, \
-                    get_player_from_source, Fmt
+                    get_player_and_source, Fmt
 
 
 def loop_save_player_info():
@@ -49,7 +49,7 @@ def get_player_info():
 
     res = PLAYERTEMPLATE
 
-    player = get_player_from_source()
+    player, source = get_player_and_source()
 
     try:
 
@@ -69,7 +69,6 @@ def get_player_info():
             res = mplayer.get_info('dvb')
 
         else:
-            source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
             res["player"] = player if player else source
             if source != 'none':
                 res["title"]  = source
@@ -80,6 +79,9 @@ def get_player_info():
     except Exception as e:
         print(f'{Fmt.MAGENTA}(linux) ERROR getting info and metadata from `{player}`: {str(e)}{Fmt.END}')
 
+    if not res["artist"]:
+        res["artist"] = source
+
     return res
 
 
@@ -87,7 +89,7 @@ def playback_control(cmd):
     """ as per the current pAudio source
     """
 
-    player = get_player_from_source()
+    player, _ = get_player_and_source()
 
     if player.lower()[:6] == 'remote':
         res = remotes.playback_control(player, cmd)
