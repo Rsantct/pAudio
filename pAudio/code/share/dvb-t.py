@@ -2,13 +2,14 @@
 
 # Copyright (c) Rafael Sánchez
 # This file is part of 'pAudio', a PC based personal audio system.
+
 """
     Start or stop Mplayer in idle & slave mode for DVB-T playback.
 
     DVB-T tuned channels must be in:
         ~/.mplayer/channels.conf
 
-    Usage:    DVB-T.py  start           [-ac3] [-v]
+    Usage:    dvb-t.py  start           [-ac3] [-v]
                         stop
                         channel/load    channel_name
                         pan             ITU-R (default) | LR | loud | quiet
@@ -29,17 +30,17 @@ import  subprocess as sp
 import  jack
 
 UHOME       = os.path.expanduser("~")
-MAINFOLDER  = f'{UHOME}/pe.audio.sys'
-sys.path.append(f'{MAINFOLDER}/share/miscel')
+MAINFOLDER  = f'{UHOME}/pAudio'
+sys.path.append(f'{MAINFOLDER}/code/share')
 
-from miscel import wait4ports, Fmt, USER
+from    common import wait4ports, Fmt, USER
 
 CHANNELS_PATH   = f'{UHOME}/.mplayer/channels.conf'
 EVENTS_PATH     = f'{MAINFOLDER}/.dvb_events'
 INPUT_FIFO      = f'{MAINFOLDER}/.dvb_fifo'
 
 
-def make_pan(mode='itu'):
+def make_pan(mode='itu-r'):
     r"""
         ITU-R Downmix for 5.1(side)
 
@@ -177,7 +178,7 @@ def make_msglevel():
 
 def connect_to_jkmeter():
 
-    jcli = jack.Client('DVB-T', no_start_server=True)
+    jcli = jack.Client('dvb-t', no_start_server=True)
 
     for i in range(6):
         try:
@@ -190,7 +191,7 @@ def connect_to_jkmeter():
 
 def connect_to_ebumeter():
 
-    jcli = jack.Client('DVB-T', no_start_server=True)
+    jcli = jack.Client('dvb-t', no_start_server=True)
 
     try:
         jcli.connect(f'mplayer_dvb:out_0', f'ebumeter:in.L')
@@ -216,7 +217,7 @@ def issue_cmd(command):
     with open( INPUT_FIFO, 'w') as f:
         f.write( f"{command}\n" )
 
-    print( f"(DVB-T.py) issued: {command}" )
+    print( f"(dvb-t.py) issued: {command}" )
 
 
 def load_channel(channel_name):
@@ -227,7 +228,7 @@ def load_channel(channel_name):
         sp.check_output( ['grep', channel_name, CHANNELS_PATH] ).decode()
 
     except:
-        print( f"(DVB-T.py) Channel NOT found: '{channel_name}'" )
+        print( f"(dvb-t.py) Channel NOT found: '{channel_name}'" )
         sys.exit()
 
 
@@ -239,11 +240,11 @@ def load_channel(channel_name):
     # Wait a bit for the new Mplayer ports to emerge (informational only)
     sleep(2)
     if wait4ports('mplayer_dvb', 5):
-        print( f"(DVB-T.py) Mplayer JACK ports emerged" )
+        print( f"(dvb-t.py) Mplayer JACK ports emerged" )
         connect_to_ebumeter()
         connect_to_jkmeter()
     else:
-        print( f"(DVB-T.py) Mplayer JACK ports NOT available" )
+        print( f"(dvb-t.py) Mplayer JACK ports NOT available" )
 
 
 def start():
@@ -295,7 +296,7 @@ def do_check_files():
     # Channels file
     f = Path( CHANNELS_PATH )
     if not f.is_file():
-        print( f"(DVB-T.py) ERROR reading channels file: '{CHANNELS_PATH}'" )
+        print( f"(dvb-t.py) ERROR reading channels file: '{CHANNELS_PATH}'" )
         sys.exit()
     del(f)
 
@@ -319,7 +320,7 @@ if __name__ == '__main__':
 
     # NOTICE that for AC3 input streams we need to prepare Mplayer to manage up to 6 ch.
     # Later, the `pan` filter will mix to 2ch stereo as desired.
-    # If so, please use 'DVB-T.py start -ac3'
+    # If so, please use 'dvb-t.py start -ac3'
     nCH = 2
 
     # -- VERBOSE (use tail -f .dvb_events), see details under make_msglevel()
@@ -380,7 +381,7 @@ if __name__ == '__main__':
             print(__doc__)
 
         else:
-            print( '(DVB-T.py) Bad option' )
+            print( '(dvb-t.py) Bad option' )
 
     else:
         print(__doc__)
