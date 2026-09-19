@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+
+import templates.dvbt_macro as dvb
+
+dvb.channel         = 'Radio Nacional de España'
+dvb.lu_offset       = 12
+
+dvb.main()
