@@ -19,8 +19,12 @@ jack:
     sources_auto_switch: false
 
     sources:
+
         analog:
             jport:  system
+
+        DVB-T:
+            jport:      mplayer_dvb
 
         cd:
             jport:  mpd_loop
