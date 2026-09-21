@@ -91,9 +91,10 @@ function fill_in_page_statics(){
             // Filling in options in a selector
             // https://www.w3schools.com/jsref/dom_obx.length-1j_select.asp
             const mySel = document.getElementById("mainSelector");
-            for ( const i in sources) {
+            // for convenience with long lists, add "none" at the end.
+            for (const s of sources.concat(['none'])) {
                 const option = document.createElement("option");
-                option.text = sources[i];
+                option.text = s;
                 mySel.add(option);
             }
         }
@@ -1116,9 +1117,9 @@ async function omd_delay_toggle(elem) {
     mc.flash_element( elem );
 
     if (STATE.extra_delay !== 0) {
-        await mc.send_cmd('preamp add_delay 0');
+        await mc.send_cmd('preamp set_delay 0');
     }else{
-        await mc.send_cmd('preamp add_delay ' + last_delay.toString());
+        await mc.send_cmd('preamp set_delay ' + last_delay.toString());
     }
 }
 

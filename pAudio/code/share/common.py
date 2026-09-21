@@ -274,7 +274,9 @@ def read_mpd_config(mpd_config_path=''):
     return config
 
 
-def get_player_from_source():
+def get_player_and_source():
+    """ returns a tuple (player, source)
+    """
 
     source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
 
@@ -309,7 +311,7 @@ def get_player_from_source():
         else:
             player = ''
 
-    return player
+    return (player, source)
 
 
 def get_web_config():
@@ -395,19 +397,19 @@ def amp_switch(mode):
                 res = sp.check_output(f'{AMP_CMD} {new}', shell=True).decode().strip().lower()
                 # (**) see docstring
                 res = res.strip().split()[-1]
+                if res in (1, '1', 'on'):
+                    res = 'on'
+                else:
+                    res = 'off'
 
             except Exception as e:
+                res = f'error with {AMP_CMD}'
                 print(f'(common.amp_switch) set_state ERROR: {str(e)}')
-
-        if res in (1, '1', 'on'):
-            res = 'on'
-        else:
-            res = 'off'
 
         return res
 
 
-    AMP_CMD     = CONFIG.get('amplifier_switch', {}).get('command', '~/bin/ampli.sh')
+    AMP_CMD     = CONFIG.get('amplifier_switch', {}).get('command', f'{UHOME}/bin/ampli.sh')
 
     res = 'NAK'
 

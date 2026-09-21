@@ -149,12 +149,12 @@ def get_info(service='dvb'):
     # Communicates to Mplayer trough by its input fifo
     # to get the current media filename and bitrate:
 
-    mplayer_control(cmd='get_audio_samples', service=service)   # ANS_AUDIO_SAMPLES='48000 Hz, 2 ch.'
-    mplayer_control(cmd='get_audio_codec',   service=service)   # ANS_AUDIO_CODEC='ffac3'
-    mplayer_control(cmd='get_audio_bitrate', service=service)   # ANS_AUDIO_BITRATE='160 kbps'
-    mplayer_control(cmd='get_file_name',     service=service)   # ANS_FILENAME='Radio Clasica HQ'
-    mplayer_control(cmd='get_time_pos',      service=service)   # ANS_TIME_POSITION=3840.1
-    mplayer_control(cmd='get_time_length',   service=service)   # ANS_LENGTH=-1.24
+    send_mplayer_cmd(cmd='get_audio_samples', service=service)   # ANS_AUDIO_SAMPLES='48000 Hz, 2 ch.'
+    send_mplayer_cmd(cmd='get_audio_codec',   service=service)   # ANS_AUDIO_CODEC='ffac3'
+    send_mplayer_cmd(cmd='get_audio_bitrate', service=service)   # ANS_AUDIO_BITRATE='160 kbps'
+    send_mplayer_cmd(cmd='get_file_name',     service=service)   # ANS_FILENAME='Radio Clasica HQ'
+    send_mplayer_cmd(cmd='get_time_pos',      service=service)   # ANS_TIME_POSITION=3840.1
+    send_mplayer_cmd(cmd='get_time_length',   service=service)   # ANS_LENGTH=-1.24
 
     # Triyng to read Mplayer output from its redirected file
     lines = []
@@ -187,7 +187,7 @@ def get_info(service='dvb'):
             pi['codec'] = line.split('=')[-1].replace("'", "")
 
         if 'ANS_AUDIO_SAMPLES=' in line:
-            Hz = line.split('=')[-1].replace("'", "").split('Hz')[0]
+            Hz = line.split('=')[-1].replace("'", "").split('Hz')[0].strip()
             ch = line.split('=')[-1].replace("'", "").split('ch')[0].split()[-1]
             pi['format'] = f'{Hz}:-:{ch}'
 
