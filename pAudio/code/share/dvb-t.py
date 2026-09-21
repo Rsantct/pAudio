@@ -35,6 +35,8 @@ sys.path.append(f'{MAINFOLDER}/code/share')
 
 from    common import wait4ports, Fmt, USER
 
+# Use 'adapter0' or your own udev symlink under /dev/dvb/
+CARD_NAME       = 'adapter0'
 CHANNELS_PATH   = f'{UHOME}/.mplayer/channels.conf'
 EVENTS_PATH     = f'{MAINFOLDER}/.dvb_events'
 INPUT_FIFO      = f'{MAINFOLDER}/.dvb_fifo'
@@ -234,7 +236,7 @@ def load_channel(channel_name):
 
     # Loading the DVB-T station
     # The whole address after 'loadfile' needs to be SINGLE quoted to load properly
-    issue_cmd( f"loadfile 'dvb://{channel_name}'" )
+    issue_cmd( f"loadfile 'dvb://{CARD_NAME}@{channel_name}'" )
 
 
     # Wait a bit for the new Mplayer ports to emerge (informational only)
