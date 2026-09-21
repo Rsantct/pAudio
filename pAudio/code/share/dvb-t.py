@@ -33,10 +33,8 @@ UHOME       = os.path.expanduser("~")
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
-from    common import wait4ports, Fmt, USER
+from    common import wait4ports, Fmt, USER, CONFIG
 
-# Use 'adapter0' or your own udev symlink under /dev/dvb/
-CARD_NAME       = 'adapter0'
 CHANNELS_PATH   = f'{UHOME}/.mplayer/channels.conf'
 EVENTS_PATH     = f'{MAINFOLDER}/.dvb_events'
 INPUT_FIFO      = f'{MAINFOLDER}/.dvb_fifo'
@@ -233,6 +231,10 @@ def load_channel(channel_name):
         print( f"(dvb-t.py) Channel NOT found: '{channel_name}'" )
         sys.exit()
 
+    CARD_NAME = 'adapter0'
+    configured_card = CONFIG.get('expert_zone', {}).get('dvb_adapter_id', '')
+    if configured_card:
+        CARD_NAME = configured_card
 
     # Loading the DVB-T station
     # The whole address after 'loadfile' needs to be SINGLE quoted to load properly
