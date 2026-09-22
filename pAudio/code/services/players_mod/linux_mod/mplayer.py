@@ -195,6 +195,7 @@ def get_info(service='dvb'):
             pi['bitrate'] = line.split('=')[-1].replace("'", "").split()[0]
 
         if 'ANS_FILENAME=' in line:
-            pi['title'] = line.split('=')[-1].replace("'", "")
+            # remove adapterN@
+            pi['title'] = line.split('=')[-1].replace("'", "").split('@')[-1]
 
     return pi
