@@ -2,7 +2,7 @@
 
 import templates.dvbt_macro as dvb
 
-dvb.channel         = 'Radio Clasica HQ RNE audio_pid_2021'
+dvb.channel         = 'Radio Clasica HQ RNE pid_2021'
 dvb.ac3             = True
 dvb.lu_offset       = 3
 
