@@ -20,5 +20,7 @@ Elegir la deseada en **`config.yml`**
 
     # optional
     expert_zone:
-        # Optional for more than one under /dev/dvb/
-        dvb_adapter_id:          adapter0
+    
+        # Optional for more than one USB DVB-T device:
+        # use a name identifier string here, as it appears when running the 'lsusb' command
+        dvb_device_name:  Siano

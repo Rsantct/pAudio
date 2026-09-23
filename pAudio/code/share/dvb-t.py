@@ -29,6 +29,8 @@ from    time    import sleep
 import  subprocess as sp
 import  jack
 
+from    dvb_mod import dvb_usb
+
 UHOME       = os.path.expanduser("~")
 MAINFOLDER  = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
@@ -231,14 +233,9 @@ def load_channel(channel_name):
         print( f"(dvb-t.py) Channel NOT found: '{channel_name}'" )
         sys.exit()
 
-    CARD_NAME = 'adapter0'
-    configured_card = CONFIG.get('expert_zone', {}).get('dvb_adapter_id', '')
-    if configured_card:
-        CARD_NAME = configured_card
-
     # Loading the DVB-T station
     # The whole address after 'loadfile' needs to be SINGLE quoted to load properly
-    issue_cmd( f"loadfile 'dvb://{CARD_NAME}@{channel_name}'" )
+    issue_cmd( f"loadfile 'dvb://{channel_name}'" )
 
 
     # Wait a bit for the new Mplayer ports to emerge (informational only)
@@ -260,6 +257,15 @@ def start():
         MSGLEVEL = make_msglevel()
     else:
         MSGLEVEL = ''
+
+    ADAPTER_NUM = 0
+    CARD_DESCRIPTION = ''
+    configured_device = CONFIG.get('expert_zone', {}).get('dvb_device_name', '')
+    if configured_device:
+        ADAPTER_NUM, CARD_DESCRIPTION = dvb_usb.find_by_name(configured_device)
+
+    CARD_NUM = ADAPTER_NUM + 1
+    print(f'{Fmt.BLUE}(dvb-t.py) Using /dev/dvb/adapter{ADAPTER_NUM} {CARD_DESCRIPTION}{Fmt.END}')
 
     OPTIONS  = f'-quiet -nolirc -slave -idle -ao jack:name=mplayer_dvb:noconnect -channels {nCH}'
 
