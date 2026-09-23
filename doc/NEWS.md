@@ -29,3 +29,6 @@
 - Fix libresport reading events for metadata retrieving.
 - Add shairplay-sync plugin for Airplay receiving.
 - All custom configurations now under the pAudio/config/ folder
+
+## 2026-sept
+- DVB-T
