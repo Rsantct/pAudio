@@ -7,6 +7,10 @@
 
 # Constantes
 OUT_DEV='BlackHole 2ch'
+# JackTrip defaults are 4464 and 61002, we use here non standard
+BIND_PORT=4465
+UDP_PORT=62002
+
 
 read -r -d '' AYUDA << 'EOF'
 
@@ -224,6 +228,9 @@ function jacktrip_start {
     local STATSPATH="$HOME""/tmp/jacktrip_client.stats"
 
     /usr/local/bin/jacktrip --pingtoserver "$REMOTE" \
+        --bindport "$BIND_PORT" \
+        --peerport "$BIND_PORT" \
+        --udpbaseport "$UDP_PORT" \
         --udprt \
         --bufsize "$buffer" \
         --queue "$QUEUE" \
