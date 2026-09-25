@@ -20,7 +20,7 @@ read -r -d '' AYUDA << 'EOF'
     capturando el audio de BlackHole y enviándolo al host remoto indicado
     en el archivo de configuración, ejemplo:
 
-        ~/bin/paudio_macos_cli.conf
+        ~/bin/paudio_from_macos_cli.conf
 
             remote = mi_dsp_host.local    (o dirección IP)
 
