@@ -11,6 +11,8 @@
 from    subprocess  import Popen
 import  os
 import  sys
+import  shlex
+import  argparse
 import  threading
 from    camilladsp  import  CamillaClient
 
@@ -385,6 +387,64 @@ def manage_amp(amp_mode):
     return amp_result
 
 
+def jack_get_params():
+
+    jack_cmdline = ''
+
+    tmp = sp.check_output('pgrep -fla jackd'.split()).decode().split('\n')
+    for line in tmp:
+        if line.split()[1:] and line.split()[1] == 'jackd':
+            jack_cmdline = ' '.join(line.split()[1:])
+
+    # shlex.split maneja correctamente espacios y subargumentos
+    tokens = shlex.split(jack_cmdline)
+
+    # Quitamos el nombre del ejecutable si está al inicio
+    if tokens and tokens[0] == "jackd":
+        tokens = tokens[1:]
+
+    # Configuración del parser para los parámetros de JACK
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # -p / --period: Tamaño del periodo (frames)
+    parser.add_argument("-p", "--period", type=int, default=None)
+
+    # -r / --rate: Frecuencia de muestreo (sample rate)
+    parser.add_argument("-r", "--rate", type=int, default=None)
+
+    # Parseamos solo los argumentos conocidos para ignorar flags como -R, -d, etc.
+    args, _ = parser.parse_known_args(tokens)
+
+    #return {"sample_rate": args.rate, "period_size": args.period}
+    return f'{args.rate} {args.period}'
+
+
+def jacktrip_sender_restart(mode):
+
+    # defaults are 4464 and 61002, we use here non standard ports
+    BIND_PORT = 4466
+    UDP_PORT  = 63002
+
+    sp.run(f'pkill -KILL -f "bindport {BIND_PORT}"', shell=True)
+
+    if mode == 'stop':
+        return 'stopped'
+
+    jtlog = f'{UHOME}/pAudio/log/jacktrip.log'
+    sp.Popen(f'jacktrip --bindport {BIND_PORT} --udpbaseport {UDP_PORT} --nojackportsconnect -s 1>{jtlog} 2>&1', shell=True)
+
+    return 'ordered'
+
+
+def jacktrip_sender_connect():
+
+    for n in 1,2:
+        cmd = f'jack_connect pre_in_loop:output_{n} JackTrip:send_{n}'
+        sp.run(cmd, shell=True)
+
+    return 'ordered'
+
+
 # Interface function for this module
 def do( cmd_phrase):
 
@@ -444,6 +504,17 @@ def do( cmd_phrase):
             result = warning_msg_manager(args)
             do_log = True
 
+        case 'jacktrip_sender_restart':
+            result = jacktrip_sender_restart(args)
+            do_log = True
+
+        case 'jacktrip_sender_connect':
+            result = jacktrip_sender_connect()
+            do_log = True
+
+        case 'jack_get_params':
+            result = jack_get_params()
+            do_log = True
 
     if do_log:
         logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd} {args}; {result}'
