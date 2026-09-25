@@ -181,6 +181,10 @@ def prepare_jacktrip_server(iostat=False):
 
         return result
 
+    # default is 4464
+    BIND_PORT = 4465
+    # default is 61002 ~ 62000
+    UDP_PORT = 62002
 
     if not jacktrip_wanted():
         print(f'{Fmt.GRAY}(start) (i) JackTrip server not needed{Fmt.END}')
@@ -191,11 +195,10 @@ def prepare_jacktrip_server(iostat=False):
 
     iostat_cmd = f' --iostat 5 --iostatlog '
 
-    cmd = f'jacktrip --jacktripserver --numchannels 2 --nojackportsconnect'
+    cmd = f'jacktrip --jacktripserver --bindport {BIND_PORT} --udpbaseport {UDP_PORT} --numchannels 2 --nojackportsconnect'
 
     if iostat:
         cmd += iostat_cmd
-
 
     print(f'{Fmt.GRAY}(start) (i) Running JackTrip server ...{Fmt.END}')
     with open(log_path, 'w') as flog:
