@@ -61,7 +61,9 @@ if pgrep -f "bindport $BIND_PORT" 1>/dev/null ; then
 
     # Iniciamos ventana de progreso
     dialog \
+      --mini \
       --title "pAudio  --  x  -->  macOS" \
+      --message "DISCONNECTED" \
       --commandfile "$CMD_FILE" &
 
     # Terminate any local JackTrip instance if it is running.
@@ -83,7 +85,9 @@ fi
 
 # Iniciamos ventana de progreso
 dialog \
+  --mini \
   --title "pAudio  -------->  macOS" \
+  --message "CONNECTED" \
   --commandfile "$CMD_FILE" &
 
 # Retrieves audio parameters from the sender.
