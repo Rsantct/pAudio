@@ -75,7 +75,7 @@ if pgrep -f "bindport $BIND_PORT" 1>/dev/null ; then
 
 else
 
-    if ! confirma "¿START receiving from $REMOTE?"; then
+    if ! confirma "¿START receiving from $REMOTE_IP?"; then
         echo "quit:" >> "$CMD_FILE" # no espera 5 segundos
         exit 0
     fi
