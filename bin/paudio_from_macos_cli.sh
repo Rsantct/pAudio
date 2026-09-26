@@ -1,9 +1,13 @@
 #!/bin/bash
 
+# Copyright (c) Rafael Sánchez
+# This file is part of 'pAudio', a PC based personal audio system.
+
+# A network audio sender for Coreaudio macOS to a pAudio system,
+# based on JackTrip.
+
 # The 'dialog' command needs to be installed:
 #   https://github.com/swiftDialog
-#
-
 
 # Constantes
 OUT_DEV='BlackHole 2ch'
@@ -328,7 +332,7 @@ if pgrep -f jacktrip 1>/dev/null ; then
 
     # Iniciamos ventana de progreso
     dialog \
-      --title "macOS --x--> pAudio" \
+      --title "macOS  -- x -->  pAudio" \
       --commandfile "$CMD_FILE" &
 
     # Detiene JackTrip
@@ -353,7 +357,7 @@ fi
 
 # Iniciamos ventana de progreso
 dialog \
-  --title "macOS ----> pAudio" \
+  --title "macOS  -------->  pAudio" \
   --commandfile "$CMD_FILE" &
 
 
