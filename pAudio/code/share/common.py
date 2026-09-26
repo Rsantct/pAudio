@@ -278,7 +278,7 @@ def get_player_and_source():
     """ returns a tuple (player, source)
     """
 
-    source = read_json_file(PREAMP_STATE_PATH).get('source', 'none')
+    source = read_json_file(PREAMP_STATE_PATH).get('source', '')
 
     if 'spotify' in source.lower():
 
