@@ -51,7 +51,7 @@ function end_log {
 
 # -- begin ---
 
-# Mecanismo toggle: si ya está enviando lo detiene
+# Toggle: if it is running, then stop and exit
 if pgrep -f "bindport $BIND_PORT" 1>/dev/null ; then
 
     if ! confirma "¿STOP Jacktrip sender and receiver?"; then
@@ -59,20 +59,23 @@ if pgrep -f "bindport $BIND_PORT" 1>/dev/null ; then
         exit 0
     fi
 
-    # Iniciamos ventana de progreso
+    # Terminate local JackTrip
+    do_log "Stopping ..."
+    pkill -KILL -f "bindport $BIND_PORT" #1>/dev/null 2>&1
+    sleep .2
+
+    # Terminate remote JackTrip
+    echo "ctrl jacktrip_sender_restart stop" | nc "$REMOTE_IP" 9990 1>/dev/null 2>&1
+
+    end_log
+
+    # User dialog
     dialog \
       --mini \
       --title "pAudio  --  x  -->  macOS" \
       --message "DISCONNECTED" \
       --commandfile "$CMD_FILE" &
 
-    # Terminate any local JackTrip instance if it is running.
-    do_log "Stopping ..."
-    pkill -KILL -f "bindport $BIND_PORT" #1>/dev/null 2>&1
-    sleep .2
-
-    # FIN
-    end_log
     exit 0
 
 else
@@ -83,7 +86,8 @@ else
     fi
 fi
 
-# Iniciamos ventana de progreso
+
+# User dialog
 dialog \
   --mini \
   --title "pAudio  -------->  macOS" \
