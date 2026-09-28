@@ -10,7 +10,7 @@
 #   https://github.com/swiftDialog
 
 # CONFIGURE HERE the pAudio sender IP
-REMOTE_IP=192.168.1.41  # kef c35
+REMOTE_IP=192.168.1.41
 
 # Constants
 # JackTrip defaults are 4464 and 61002, we use here non standard
@@ -87,16 +87,28 @@ else
 fi
 
 
+
+# Retrieves audio parameters from the sender.
+read -r FS BUF <<< $(echo "ctrl jack_get_params" | nc -w 1 -G 1 $REMOTE_IP 9990)
+echo "remote info: samplerate "$FS", buffer "$BUF
+
+if [[ ! $FS || ! $BUF ]]; then
+    echo 'No answer from remote '$REMOTE_IP
+    dialog \
+      --mini \
+      --title "pAudio  ---- X --->  macOS" \
+      --message "NO ANSWER from "$REMOTE_IP \
+      --commandfile "$CMD_FILE" &
+    exit -1
+fi
+
+
 # User dialog
 dialog \
   --mini \
   --title "pAudio  -------->  macOS" \
-  --message "CONNECTED" \
+  --message "STARTING CONNECTION ..." \
   --commandfile "$CMD_FILE" &
-
-# Retrieves audio parameters from the sender.
-read -r FS BUF <<< $(echo "ctrl jack_get_params" | nc $REMOTE_IP 9990)
-echo "remote info: samplerate "$FS", buffer "$BUF
 
 
 # Start the local JackTrip receiver.
@@ -114,3 +126,4 @@ echo "remote: restart JackTrip sender"
 echo "ctrl jacktrip_sender_restart" | nc "$REMOTE_IP" 9990 1>/dev/null 2>&1
 sleep 1
 echo "ctrl jacktrip_sender_connect" | nc "$REMOTE_IP" 9990 1>/dev/null 2>&1
+
