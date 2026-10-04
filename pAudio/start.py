@@ -17,8 +17,6 @@
 
 import  sys
 import  os
-import  subprocess  as sp
-from    time        import sleep, time
 from    camilladsp  import CamillaClient
 
 UHOME       = os.path.expanduser('~')
@@ -92,7 +90,7 @@ def rewire_camilladsp():
                         jcli.disconnect(c, cp)
                         print(f'{Fmt.GRAY}(start) clearing {c.name} -- {cp.name}{Fmt.END}')
 
-                sleep(.2)
+                time.sleep(.2)
                 tries -= 1
 
         # Checking clearing
@@ -181,10 +179,9 @@ def prepare_jacktrip_server(iostat=False):
 
         return result
 
-    # default is 4464
+    # defaults are 4464 and 61002, we use here non standard ports
     BIND_PORT = 4465
-    # default is 61002 ~ 62000
-    UDP_PORT = 62002
+    UDP_PORT  = 62002
 
     if not jacktrip_wanted():
         print(f'{Fmt.GRAY}(start) (i) JackTrip server not needed{Fmt.END}')
@@ -299,7 +296,7 @@ def stop():
 
         # Zita network to jack (Linux)
         stop_zita_link()
-        sleep(.25)
+        time.sleep(.25)
 
         # A forwarder of level changes to remote pAudio listeners
         sp.Popen(f'pkill -f remote_volume_daemon.py'.split())
@@ -314,7 +311,7 @@ def stop():
     # Stop standalone preocess loudness_monitor.py
     stop_loudness_monitor()
 
-    sleep(1)
+    time.sleep(1)
 
 
 def start():
@@ -323,12 +320,12 @@ def start():
         """ with RECURSIVE retries
         """
 
-        t_srv_start = time()
+        t_srv_start = time.time()
 
         sp.Popen( srv_cmd.split() )
 
         if wait4server(timeout=server_timeout, verbose_seconds=5):
-            t_srv_lapse = round(time() - t_srv_start, 1)
+            t_srv_lapse = round(time.time() - t_srv_start, 1)
             print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
             return True
 
