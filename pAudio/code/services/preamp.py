@@ -56,17 +56,26 @@ def init():
     def resume_audio():
 
         def print_failure(param):
-            print(f'{Fmt.RED}cannot resume state.{param}={STATE[param]}: {res}{Fmt.END}')
+            print(f'{Fmt.RED}(preamp.init) cannot resume state.{param}={STATE[param]}: {res}{Fmt.END}')
+
+
+        def print_info(txt):
+            print(f'{Fmt.GRAY}(preamp.init): {txt}{Fmt.END}')
+
 
         set_mute( True )
+
+        t0 = time.time()
+        print(f'{Fmt.GRAY}(preamp.init) Resuming audio settings as per the STATE file{Fmt.END}')
 
         # Only multiway
         if XO_SETS:
             if not STATE["xo_set"] in XO_SETS:
                 STATE["xo_set"] = XO_SETS[0]
+            print_info('resuming XO')
             set_xo( STATE["xo_set"] )
 
-        # All multiway and full-range
+        # All: multiway or full-range
         res = do_levels( 'level', dB=STATE["level"] )
         if res != 'done':
             print_failure('level')
@@ -77,7 +86,7 @@ def init():
 
         res = do_levels( 'balance', dB=STATE["balance"] )
         if res != 'done':
-            print_failure('level')
+            print_failure('balance')
 
         set_midside( STATE["midside"] )
 
@@ -106,19 +115,27 @@ def init():
 
         set_drc( STATE["drc_set"] )
 
+        t1 = time.time()
+        elapsed_seconds = round( t1 - t0, 1)
+        print(f'{Fmt.GRAY}{Fmt.BOLD}(preamp.init) Resumed audio settings in {elapsed_seconds} seconds{Fmt.END}')
+
 
         # Source needs a little care
-        last_source = STATE.get('source')
+        st_source = STATE.get('source', '')
 
-        if last_source and last_source in CONFIG["sources"]:
+        if st_source != 'none':
 
-            set_source( last_source )
+            res = set_source( st_source )
+            print(f'{Fmt.GRAY}{Fmt.BOLD}(preamp.init) Source [{st_source}] selection: {res}{Fmt.END}')
+
 
         else:
 
+            # Linux
             if CONFIG.get('jack'):
                 STATE["source"] = 'none'
 
+            # macOS
             elif CONFIG.get('coreaudio'):
                 # the first one as inserted
                 STATE["source"] = next(iter( CONFIG["sources"] ))
@@ -166,12 +183,12 @@ def init():
     if not STATE.get('source', '') in ('Desktop', 'none'):
         STATE["source"] = 'none'
 
-    # ON_INIT optional user config settings having precedence over the saved state:
+    # ON_INIT are optional user custom STATE settings having precedence over the saved ones.
+    valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
+                   'lu_offset', 'equal_loudness', 'target', 'drc_set', 'xo_set',
+                   'midside', 'mono')
+    #
     for prop, value in CONFIG.get('on_init', {}).items():
-
-        valid_props = ('source', 'level', 'balance', 'bass', 'treble', 'tone_defeat',
-                       'lu_offset', 'equal_loudness', 'target', 'drc_set', 'xo_set',
-                       'midside', 'mono')
 
         # keep_muted is processed later in resume_audio()
         if prop == 'keep_muted':
@@ -231,10 +248,18 @@ def init():
                 else:
                     print(f'{Fmt.BOLD}(on_init) ERROR mono must be in: {mono_values}{Fmt.END}')
 
+            case 'source':
+
+                if value in CONFIG["sources"]:
+                    STATE["source"] = value
+                    print(f'{Fmt.GRAY}(on_init) source to be restored: {value}{Fmt.END}')
+                else:
+                    print(f'{Fmt.BOLD}(on_init) ERROR bad source: {value}{Fmt.END}')
+
+
             case _:
 
                 STATE[prop] = value
-
 
     # Forced init settings
     STATE["loudspeaker"]    = CONFIG["loudspeaker"]
@@ -568,7 +593,7 @@ def set_source(sname):
             # if not, do restore the generic on_init setting if the current one differs:
             else:
 
-                # 'mono' is a human readable alias for 'midside'
+                # 'midside' alias
                 if setting == 'mono':
 
                     setting = 'midside'
@@ -616,7 +641,7 @@ def set_source(sname):
 
     result = 'n/a'
 
-    if not sname in CONFIG["sources"]:
+    if sname not in CONFIG["sources"]:
         return f'must be in: { list( CONFIG["sources"].keys() ) }'
 
     # COREAUDIO
