@@ -10,7 +10,7 @@
 """
 import sys
 import os
-from subprocess import Popen
+import subprocess as sp
 from time import sleep
 import json
 import threading
@@ -205,8 +205,9 @@ def save2disk():
 
 
 def stop():
+
     print(f'{Fmt.GRAY}(loudness_monitor.py) stopping.{Fmt.END}')
-    Popen( 'pkill -KILL -o -f "loudness_monitor.py" 1>/dev/null 2>&1', shell=True )
+    sp.run( 'pkill -KILL --older 3 -f loudness_monitor.py', shell=True )
 
     d = {   "LU_I":     -99.0,
             "LU_M":     -99.0,
