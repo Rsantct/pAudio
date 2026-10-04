@@ -5,7 +5,7 @@
 
 import  sys
 import  os
-from    time                    import time
+import  time
 import  numpy as np
 import  yaml
 import  json
@@ -73,7 +73,7 @@ def pAudio_cfg_is_recent(seconds_old=30):
 
     if os.path.exists(PAUDIO_CFG_PATH):
         mtime = os.path.getmtime(PAUDIO_CFG_PATH)
-        now = time()
+        now = time.time()
         if (now - mtime) < seconds_old:
             return True
 
