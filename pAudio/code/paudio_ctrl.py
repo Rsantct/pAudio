@@ -109,9 +109,9 @@ def init():
 
     # Reset paudio_ctrl.log
     with open(LOGFNAME, 'w') as FLOG:
-        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
+        logline = f'{time.strftime("%Y/%m/%d %H:%M:%S")}; STARTING paudio_ctrl'
         FLOG.write(f'{logline}\n')
-        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; (i) will log only the commands that make changes.'
+        logline = f'{time.strftime("%Y/%m/%d %H:%M:%S")}; (i) will log only the commands that make changes.'
         FLOG.write(f'{logline}\n')
 
     # ON/OFF button behavior (default pAudio)
@@ -517,7 +517,7 @@ def do( cmd_phrase):
             do_log = True
 
     if do_log:
-        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {cmd} {args}; {result}'
+        logline = f'{time.strftime("%Y/%m/%d %H:%M:%S")}; {cmd} {args}; {result}'
         with open(LOGFNAME, 'a') as FLOG:
                 FLOG.write(f'{logline}\n')
 
