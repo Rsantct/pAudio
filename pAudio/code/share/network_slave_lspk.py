@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     # Kill zita
     sp.run(['pkill', '-f', 'right_lspk'])
-    sleep(.25)
+    time.sleep(.25)
 
     # Start zita sender
     zita_j2n_cmd = f'zita-j2n --jname right_lspk_send {LSPK_IP} --16bit --chan 3 --ipv4 65000'
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     out_path = '/tmp/paudio_slave_zita_j2n.out'
     err_path = '/tmp/paudio_slave_zita_j2n.err'
     sp.Popen( f'{zita_j2n_cmd} 1>{out_path} 2>{err_path}', shell=True )
-    sleep(1)
+    time.sleep(1)
 
     # Wire to camilladsp outputs
     tries = 5
@@ -81,7 +81,7 @@ if __name__ == "__main__":
             break
         except Exception as e:
             pass
-        sleep(.2)
+        time.sleep(.2)
         tries -= 1
 
     if tries:
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     out_path = '/tmp/paudio_slave_zita_n2j.out'
     err_path = '/tmp/paudio_slave_zita_n2j.err'
     sp.Popen( f'{zita_n2j_cmd} 1>{out_path} 2>{err_path}', shell=True )
-    sleep(1)
+    time.sleep(1)
 
     if process_is_running('zita-n2j --jname right_lspk'):
         print('(share/network_lspk) receiver ok')
