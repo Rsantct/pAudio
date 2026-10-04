@@ -9,7 +9,7 @@ import  threading
 from    watchdog.observers  import Observer
 from    watchdog.events     import FileSystemEventHandler
 import  socket
-from    time        import sleep, strftime, perf_counter
+import  time
 from    datetime    import datetime
 import  copy        # for deep copy of dictionaries
 import  re
@@ -513,7 +513,7 @@ def wait4ports( pattern, timeout=10 ):
         if len( tmp ) >= 2:
             break
         tries -= 1
-        sleep(period)
+        time.sleep(period)
 
     if tries:
         return True
@@ -686,7 +686,7 @@ def read_json_file(fpath, timeout=1, quiet=False):
 
         except:
             tries -= 1
-            sleep(period)
+            time.sleep(period)
 
     if not quiet:
         if not tries:
@@ -713,7 +713,7 @@ def save_json_file(d, fpath, timeout=.5):
             return True
         except:
             tries -= 1
-            sleep(period)
+            time.sleep(period)
 
     return False
 
@@ -1041,7 +1041,7 @@ def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 99
         if elapsed and not elapsed % verbose_seconds:
             print(f'{Fmt.GRAY}{Fmt.ITALIC}elapsed {elapsed} s for server response ...{Fmt.END}')
 
-        sleep(period)
+        time.sleep(period)
         elapsed += period
         tries -= 1
 
@@ -1063,7 +1063,7 @@ def wait4source( wanted='', timeout=5 ):
         if current == wanted:
             print(f'(common) source has changed to: {wanted}')
             return True
-        sleep(1)
+        time.sleep(1)
         tries -= 1
 
     return False
@@ -1084,7 +1084,7 @@ def wait4jackports( pattern, timeout=5 ):
         if len( tmp ) >= 2:
             break
         tries -= 1
-        sleep(period)
+        time.sleep(period)
 
     if tries:
         return True
@@ -1106,9 +1106,9 @@ def get_benkmarch(n=500e3):
         Apple M1            0.032   1.5
     """
 
-    start = perf_counter()
+    start = time.perf_counter()
     _ = sum(i**2 for i in range(int(n)))
-    end = perf_counter()
+    end = time.perf_counter()
 
     cpu_score = end - start
 
