@@ -252,7 +252,7 @@ def connect(p1, p2, mode='connect', verbose=True):
             if verbose:
                 print( f'(jack_mod) Exception: {result}' )
 
-        sleep(.1)
+        time.sleep(.1)
         times -= 1
 
     return result
