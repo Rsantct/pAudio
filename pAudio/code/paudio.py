@@ -37,9 +37,9 @@ def _init():
 
     # Reset pAudio log
     with open(LOGFNAME, 'w') as FLOG:
-        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; STARTING pAudio (preamp & players)'
+        logline = f'{time.strftime("%Y/%m/%d %H:%M:%S")}; STARTING pAudio (preamp & players)'
         FLOG.write(f'{logline}\n')
-        logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; (i) will log only the commands that make changes.'
+        logline = f'{time.strftime("%Y/%m/%d %H:%M:%S")}; (i) will log only the commands that make changes.'
         FLOG.write(f'{logline}\n')
 
     # Prepare DRC FIR graphs
@@ -79,7 +79,7 @@ def do(cmd_phrase):
            not cmd.startswith('get_')  and not cmd.startswith('list_') and \
            not cmd.startswith('hi') and not cmd.startswith('hello'):
 
-            logline = f'{strftime("%Y/%m/%d %H:%M:%S")}; {prefix} {cmd_phrase}; {result}'
+            logline = f'{time.strftime("%Y/%m/%d %H:%M:%S")}; {prefix} {cmd_phrase}; {result}'
             with open(LOGFNAME, 'a') as FLOG:
                     FLOG.write(f'{logline}\n')
 
