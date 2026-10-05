@@ -55,12 +55,11 @@ def init():
 
     def resume_audio():
 
-        def print_failure(param):
-            print(f'{Fmt.RED}(preamp.init) cannot resume state.{param}={STATE[param]}: {res}{Fmt.END}')
-
-
-        def print_info(txt):
-            print(f'{Fmt.GRAY}(preamp.init): {txt}{Fmt.END}')
+        def print_info(param):
+            if res == 'done':
+                print(f'{Fmt.GREEN}(preamp.init) resume state.{param} = {STATE[param]}: {res}{Fmt.END}')
+            else:
+                print(f'{Fmt.RED}  (preamp.init) cannot resume state.{param} = {STATE[param]}: {res}{Fmt.END}')
 
 
         set_mute( True )
@@ -72,52 +71,50 @@ def init():
         if XO_SETS:
             if not STATE["xo_set"] in XO_SETS:
                 STATE["xo_set"] = XO_SETS[0]
-            print_info('resuming XO')
-            set_xo( STATE["xo_set"] )
+            res = set_xo( STATE["xo_set"] )
+            print_info('xo_set')
 
         # All: multiway or full-range
         res = do_levels( 'level', dB=STATE["level"] )
-        if res != 'done':
-            print_failure('level')
+        print_info('level')
 
-        set_polarity( STATE["polarity"] )
+        res = set_polarity( STATE["polarity"] )
+        print_info('polarity')
 
-        set_solo( STATE["solo"] )
+        res = set_solo( STATE["solo"] )
+        print_info('solo')
 
         res = do_levels( 'balance', dB=STATE["balance"] )
-        if res != 'done':
-            print_failure('balance')
+        print_info('balance')
 
-        set_midside( STATE["midside"] )
+        res = set_midside( STATE["midside"] )
+        print_info('midside')
 
         res = do_levels( 'bass', dB=STATE["bass"] )
-        if res != 'done':
-            print_failure('bass')
+        print_info('bass')
 
         res = do_levels( 'treble', dB=STATE["treble"] )
-        if res != 'done':
-            print_failure('treble')
+        print_info('treble')
 
         res = do_levels( 'lu_offset', dB=STATE["lu_offset"] )
-        if res != 'done':
-            print_failure('lu_offset')
+        print_info('lu_offset')
 
         res = do_levels( 'target', tID=STATE["target"] )
-        if res != 'done':
-            print_failure('target')
+        print_info('target')
 
         res = set_loudness( mode=STATE["equal_loudness"] )
-        if res != 'done':
-            print_failure('equal_loudness')
+        print_info('equal_loudness')
 
+        # DRC
         if not STATE["drc_set"] in DRC_SETS or not STATE["drc_set"] in DRC_SETS:
             STATE["drc_set"] = 'none'
-
-        set_drc( STATE["drc_set"] )
+        res = set_drc( STATE["drc_set"] )
+        print_info('drc_set')
 
         t1 = time.time()
         elapsed_seconds = round( t1 - t0, 1)
         print(f'{Fmt.GRAY}{Fmt.BOLD}(preamp.init) Resumed audio settings in {elapsed_seconds} seconds{Fmt.END}')
+        print(f'{Fmt.GRAY}{Fmt.BOLD}(preamp.init) Starting resuming source ...{Fmt.END}')
 
 
         # Source needs a little care
@@ -514,7 +511,7 @@ def set_source(sname):
         try:
             rstate = json.loads(rstate)
         except:
-            print(f'(preamp) error getting remote state')
+            print(f'(preamp.set_source) error getting remote state')
             rstate = {'xo_set':'mp', 'xo_latency':0}
         return rstate
 
@@ -563,9 +560,11 @@ def set_source(sname):
 
 
         if sname == 'none' or not sname or sname.startswith('remote'):
+            print(f'{Fmt.GRAY}{Fmt.ITALIC}(preamp.set_source) NO specific source settings for: {sname}{Fmt.END}')
             return
 
-        print(f'{Fmt.MAGENTA}checking specific source settings for: {sname}{Fmt.END}')
+        else:
+            print(f'{Fmt.MAGENTA}(preamp.set_source) checking specific source settings for: {sname}{Fmt.END}')
 
         valid_source_settings = (
             'mono', 'target', 'lu_offset', 'equal_loudness'
@@ -586,7 +585,7 @@ def set_source(sname):
                         source_value = 'off'
 
                 if do_setting(setting, source_value) == 'done':
-                    print(f'{Fmt.MAGENTA}    source specific:', setting, source_value, Fmt.END)
+                    print(f'{Fmt.MAGENTA}    (preamp.set_source) source specific:', setting, source_value, Fmt.END)
                     STATE[setting] = source_value
 
 
@@ -612,7 +611,7 @@ def set_source(sname):
                 if (on_init_value != None) and (curr_value != on_init_value):
 
                     if do_setting(setting, on_init_value) == 'done':
-                        print(f'{Fmt.GREEN2}{Fmt.BOLD}    restore on_init:', setting, on_init_value, Fmt.END)
+                        print(f'{Fmt.GREEN2}{Fmt.BOLD}    (preamp.set_source) restore on_init:', setting, on_init_value, Fmt.END)
                         STATE[setting] = on_init_value
 
 
@@ -621,15 +620,15 @@ def set_source(sname):
         def set_local():
             if set_delay( ld ) == 'done':
                 STATE["extra_delay"] = round(ld, 1)
-                print(f'(preamp.py) set local delay: {ld}')
+                print(f'(preamp.set_source) set local delay: {ld}')
             else:
-                print('(preamp.py) cannot set local delay')
+                print(f'(preamp.set_source) cannot set local delay')
 
         def set_remote():
             if send_cmd(f'set_delay {rd}', host=remote_addr, port=remote_port) == 'done':
-                print(f'(preamp.py) set remote delay: {rd}')
+                print(f'(preamp.set_source) set remote delay: {rd}')
             else:
-                print('(preamp.py) cannot set remote delay')
+                print(f'(preamp.set_source) cannot set remote delay')
 
         j1 = threading.Thread(target=set_local)
         j2 = threading.Thread(target=set_remote)
@@ -732,7 +731,7 @@ def set_source(sname):
             # If a new buffer setting is found under the current config.yml,
             # then we restart the local zita-n2j
             if zita_buff != CONFIG["jack"]["sources"][sname].get('zita_buffer_ms', 0):
-                print(f'{Fmt.BLUE}zita-n2j appliyng new buffer: {zita_buff} ms{Fmt.END}')
+                print(f'{Fmt.BLUE}(preamp.set_source) zita-n2j appliyng new buffer: {zita_buff} ms{Fmt.END}')
                 zita_local_restart(raddr, rudpport, zita_buff)
                 CONFIG["jack"]["sources"][sname]["zita_buffer_ms"] = zita_buff
                 write_pAudio_cfg(CONFIG)
@@ -1007,7 +1006,7 @@ def do(cmd, args, add):
 
         # Query commands
         case 'hello' | 'hi':
-            result = 'preamp'
+            result = 'this is the \'preamp\' module'
 
         case 'state':
             result = json.dumps(STATE, indent=2)
@@ -1228,7 +1227,7 @@ def do(cmd, args, add):
             result = CAM.get_config()["pipeline"]
 
         case _:
-            result = 'unknown command'
+            result = f'unknown command: {cmd}'
 
 
     if dosave:
