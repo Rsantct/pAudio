@@ -29,7 +29,7 @@ import  numpy as np
 import  socket
 import  json
 import  yaml
-from    time import sleep, time
+import  time
 
 try:
     client        = jack.Client("signal_detector", no_start_server=True)
@@ -244,7 +244,7 @@ def scan_loop():
                 # During this SLEEP, the 'jack_monitor' callback will
                 # set the flag 'flag_detected' if it detects any signal
                 flag_detected = False
-                sleep( cfg["monitor_time"] )
+                time.sleep( cfg["monitor_time"] )
 
                 if flag_detected:
 
@@ -298,9 +298,9 @@ if __name__ == "__main__":
 
     if only_jack_sources:
 
-        t0 = time()
+        t0 = time.time()
         clients = get_jack_source_clients()
-        t_ms = round((time() - t0) * 1000, 2)
+        t_ms = round((time.time() - t0) * 1000, 2)
 
         if verbose:
             print(f'Elapsed time to get jack sources: {t_ms} ms')
