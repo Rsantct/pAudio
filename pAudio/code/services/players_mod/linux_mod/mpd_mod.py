@@ -8,16 +8,13 @@
 import  os
 import  sys
 import  mpd
-from    time        import sleep
 import  json
 from    subprocess  import Popen, run
 
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  time_sec2hhmmss, time_sec2mmss, read_mpd_config, \
-                    read_json_file, get_pid_cmdline, Fmt,            \
-                    PLAYERTEMPLATE, MAINFOLDER, CDDA_META_PATH
+from common import  *
 
 MPD_PORT = 6600
 CDDA_MPD_PLAYLIST_PATH  = f'{MAINFOLDER}/.cdda_mpd_playlist'
@@ -213,7 +210,7 @@ def mpd_playlists(cmd, arg=''):
 
         try:
             CLI.clear()
-            sleep(.2)
+            time.sleep(.2)
             result = 'playlist cleared'
         except Exception as e:
             result = f'{str(e)}'
