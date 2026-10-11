@@ -11,7 +11,6 @@
 import sys
 import os
 import subprocess as sp
-from time import sleep
 import json
 import threading
 from watchdog.observers import Observer
@@ -21,8 +20,7 @@ UHOME           = os.path.expanduser("~")
 MAINFOLDER      = f'{UHOME}/pAudio'
 sys.path.append(f'{MAINFOLDER}/code/share')
 
-from common import  Fmt, CONFIG, LDMON_PATH, LDCTRL_PATH, \
-                    PREAMP_STATE_PATH, read_json_file, Fmt
+from common import  *
 
 
 def get_capture_device():
@@ -61,7 +59,7 @@ def prepare_control_fifo(fname):
     try:
         if os.path.exists(fname):
             os.remove(fname)
-        sleep(.2)
+        time.sleep(.2)
         os.mkfifo(fname)
     except:
         print(f'(loudness_monitor.py) ERROR preparing fifo {fname}')
@@ -118,7 +116,7 @@ class My_files_event_handler(FileSystemEventHandler):
             if source != new_source:
                 source = new_source
                 self.meter.reset()
-                sleep(.25)      # anti bouncing
+                time.sleep(.25)      # anti bouncing
 
         # Check if metadata album or title has changed, then RESET
         if PLAYER_INFO_PATH in path:
@@ -133,7 +131,7 @@ class My_files_event_handler(FileSystemEventHandler):
             if md[md_key] != self.last_album_track:
                 self.last_album_track = md[md_key]
                 self.meter.reset()
-                sleep(.25)      # anti bouncing
+                time.sleep(.25)      # anti bouncing
 
 
 def get_configured_scope():
