@@ -182,7 +182,7 @@ def save_aux_info():
 def flag_new_eq_graph():
     AUXINFO['new_eq_graph'] = True
     save_json_file(AUXINFO, AUXINFO_PATH)
-    sleep(2)
+    time.sleep(2)
     AUXINFO['new_eq_graph'] = False
     save_json_file(AUXINFO, AUXINFO_PATH)
 
@@ -208,7 +208,7 @@ def loop_camilladsp_state2disk(period=3):
 
             del(CC)
 
-            sleep(period)
+            time.sleep(period)
 
 
     jloop = threading.Thread( target=do_loop )
@@ -306,7 +306,7 @@ def warning_expire(timeout=5):
     """
 
     def mytimer(timeout):
-        sleep(timeout)
+        time.sleep(timeout)
         AUXINFO['warning'] = ''
         save_aux_info()
 
