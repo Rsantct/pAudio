@@ -8,7 +8,6 @@ import  sys
 import  shutil
 import  subprocess      as      sp
 import  threading
-from    time            import  sleep
 import  json
 from    camilladsp      import  CamillaClient
 
@@ -51,7 +50,7 @@ def set_config_sync(cfg, wait_multiplier=1):
 
         # Default wait usually 0.1 is enough for most activations,
         # but when changing the device you need to apply some multiplier
-        sleep( CONFIG['camilladsp_activation_wait'] * wait_multiplier )
+        time.sleep( CONFIG['camilladsp_activation_wait'] * wait_multiplier )
 
         result = 'done'
 
@@ -97,7 +96,7 @@ def _connect_to_camilla():
             CC.connect()
             break
         except:
-            sleep(.2)
+            time.sleep(.2)
             tries -= 1
 
     if not tries:
@@ -125,7 +124,7 @@ def check_cdsp_running(timeout=10):
         else:
             print(f'{Fmt.BLUE}{"." * int(tries * period)}{Fmt.END}')
 
-        sleep(.5)
+        time.sleep(.5)
         tries -= 1
 
     if tries:
@@ -336,7 +335,7 @@ def init_camilladsp(pAudio_config):
                             jcli.disconnect(cpal_port, c)
                             print(f'{Fmt.GRAY}(pcamilla) clearing {cpal_port.name} -- {c.name}{Fmt.END}')
 
-                    sleep(.2)
+                    time.sleep(.2)
                     tries -= 1
 
             # Checking clearing
@@ -374,7 +373,7 @@ def init_camilladsp(pAudio_config):
         print(f'(pcamilla) Trying to load configuration into the runnig CamillaDSP process. {Fmt.BOLD}{Fmt.BLUE}PLEASE WAIT{Fmt.END}')
         set_config_sync(cfg_init)
         # First configuration takes a bit
-        sleep(.5)
+        time.sleep(.5)
         if not CC.config.active():
             raise Exception('Failed to load the config into CamillaDSP, see LOG folder')
 
