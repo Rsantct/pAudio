@@ -27,7 +27,7 @@ import  threading
 import  logging
 import  os
 import  sys
-from    time import sleep
+import  time
 from    fmt  import Fmt
 UHOME = os.path.expanduser("~")
 
@@ -62,7 +62,7 @@ def handle_client(con, addr):
         if cmd.split()[0] == 'wait':
             try:
                 seconds = cmd.split()[-1]
-                sleep( int(seconds))
+                time.sleep( int(seconds))
                 result = f'waited {seconds} sec'
             except Exception as e:
                 result = f'{cmd} ERROR: {str(e)}'
