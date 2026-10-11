@@ -14,15 +14,13 @@
 # .{service}_events 'r'     Mplayer info output is redirected here
 #
 
-from    time import sleep
 import  os
 import  sys
 
 UHOME = os.path.expanduser("~")
 sys.path.append(f'{UHOME}/pAudio/code/share')
 
-from common import  MAINFOLDER, PLAYERTEMPLATE, time_sec2hhmmss, \
-                    read_last_lines, process_is_running
+from common import  *
 
 
 def playing_status(service='dvb'):
@@ -63,7 +61,7 @@ def send_mplayer_cmd(cmd, service='dvb'):
 
     if cmd == 'stop':
         # Mplayer needs a while to report the actual state ANS_pause=yes
-        sleep(2)
+        time.sleep(2)
 
 
 def playback_control(cmd, arg='', service='dvb'):
@@ -161,7 +159,7 @@ def get_info(service='dvb'):
     tries = 3
     while tries:
         # Waiting for Mplayer ANS_xxxx to be written to the output file
-        sleep(.10)
+        time.sleep(.10)
         try:
             # Reading a tail of 350 bytes from the Mplayer output file
             fsize = os.path.getsize(mplayer_redirection_path)
