@@ -1025,13 +1025,14 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 9990)):
+def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 9990), verbose=True):
 
     elapsed = 0
     period = .5
     tries  = int(timeout / period)
 
-    print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}Wainting {timeout } s for server response ...{Fmt.END}')
+    if verbose:
+        print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}Wainting {timeout } s for server response ...{Fmt.END}')
 
     while tries:
 
@@ -1039,14 +1040,16 @@ def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 99
             break
 
         if elapsed and not elapsed % verbose_seconds:
-            print(f'{Fmt.GRAY}{Fmt.ITALIC}elapsed {elapsed} s for server response ...{Fmt.END}')
+            if verbose:
+                print(f'{Fmt.GRAY}{Fmt.ITALIC}elapsed {elapsed} s for server response ...{Fmt.END}')
 
         time.sleep(period)
         elapsed += period
         tries -= 1
 
     if tries:
-        print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}Server response was in {elapsed} s{Fmt.END}')
+        if verbose:
+            print(f'{Fmt.GRAY}{Fmt.BOLD}{Fmt.ITALIC}Server response was in {elapsed} s{Fmt.END}')
         return True
     else:
         return False
