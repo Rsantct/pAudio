@@ -114,17 +114,14 @@ def init():
         t1 = time.time()
         elapsed_seconds = round( t1 - t0, 1)
         print(f'{Fmt.GRAY}{Fmt.BOLD}(preamp.init) Resumed audio settings in {elapsed_seconds} seconds{Fmt.END}')
-        print(f'{Fmt.GRAY}{Fmt.BOLD}(preamp.init) Starting resuming source ...{Fmt.END}')
+        print(f'{Fmt.BLACK}{Fmt.BOLD}(preamp.init) Starting resuming source ...{Fmt.END}')
 
 
         # Source needs a little care
-        st_source = STATE.get('source', '')
+        if STATE.get('source', '') != 'none':
 
-        if st_source != 'none':
-
-            res = set_source( st_source )
-            print(f'{Fmt.GRAY}{Fmt.BOLD}(preamp.init) Source [{st_source}] selection: {res}{Fmt.END}')
-
+            res = set_source( STATE["source"] )
+            print(f'{Fmt.BLACK}{Fmt.BOLD}(preamp.init) Source selection \'{STATE["source"]}\': {res}{Fmt.END}')
 
         else:
 
@@ -327,7 +324,7 @@ def init():
         STATE["dsp_buffer"]  = CAM.CC.config.active()["devices"]["chunksize"]
         STATE["dsp_latency"] = round(STATE["dsp_buffer"] / STATE["samplerate"] * 1000, 1)
 
-        # Resuming audio settings on the CAM
+        # Resuming audio settings
         resume_audio()
 
         # Changing macOS playback device
@@ -690,6 +687,8 @@ def set_source(sname):
             remote_dsp_latency  = rst.get('dsp_latency',    20.0)
             remote_xo_latency   = rst.get('xo_latency',      0.0)
             remote_out_latency  = rst.get('output_latency', 20.0)
+            remote_lu_offset    = rst.get('lu_offset',      STATE["lu_offset"])
+            remote_level        = rst.get('level',          STATE["level"])
 
             remote_latency = (
                 remote_dsp_latency + remote_xo_latency + remote_out_latency +
@@ -744,10 +743,12 @@ def set_source(sname):
 
         if source_is_available:
 
+            set_mute(True)
+
             # Switch to source
             result = jack_sources.select( sname )
 
-            # and apply gain offset (usually for analaog)
+            # Apply gain offset (usually for analaog)
             gain = CONFIG["sources"][sname].get('gain', 0.0)
             try:
                 gain = round(gain, 1)
@@ -758,6 +759,13 @@ def set_source(sname):
 
             # Other source specific settings
             do_source_settings()
+
+            # Align level and lu_offset with remoteXXXX
+            if 'remote' in sname:
+                do_levels('level',      dB=remote_level)
+                do_levels('lu_offset',  dB=remote_lu_offset)
+
+            set_mute(False)
 
         else:
             result = 'source not available'
