@@ -1025,7 +1025,7 @@ def process_is_running(pattern):
     return False
 
 
-def wait4server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 9990), verbose=True):
+def hello_server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 9990), verbose=True):
 
     elapsed = 0
     period = .5
