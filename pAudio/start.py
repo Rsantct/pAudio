@@ -324,7 +324,7 @@ def start():
 
         sp.Popen( srv_cmd.split() )
 
-        if wait4server(timeout=server_timeout, verbose_seconds=5):
+        if hello_server(timeout=server_timeout, verbose_seconds=5):
             t_srv_lapse = round(time.time() - t_srv_start, 1)
             print(f'{Fmt.BLUE}(start) pAudio server started in {t_srv_lapse} seconds :-){Fmt.END}')
             return True
