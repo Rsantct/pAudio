@@ -1026,6 +1026,8 @@ def process_is_running(pattern):
 
 
 def hello_server(timeout=30, verbose_seconds=5, port=CONFIG.get('paudio_port', 9990), verbose=True):
+    """ send 'hello' to a server and wait for a response
+    """
 
     elapsed = 0
     period = .5
